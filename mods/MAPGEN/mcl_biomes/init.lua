@@ -255,5 +255,5 @@ elseif mg_name == "flat" then
 	minetest.clear_registered_biomes()
 	minetest.clear_registered_decorations()
 	minetest.clear_registered_schematics()
-	register_classic_superflat_biome()
+--	register_classic_superflat_biome()
 end

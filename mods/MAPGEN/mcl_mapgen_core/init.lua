@@ -794,7 +794,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					num_water_around = num_water_around + 1 end
 				if num_water_around >= 2 then
 					is_shallow = false
-				end	
+				end
 				if is_shallow then
 					for x1=-divlen,divlen do
 					for z1=-divlen,divlen do
@@ -862,7 +862,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						break
 					end
 				end
-				
+
 				if ground_y then
 					local p = {x=x,y=ground_y+1,z=z}
 					local nn = minetest.get_node(p).name
@@ -880,7 +880,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						end
 					end
 				end
-				
+
 			end
 		end
 		end
@@ -888,14 +888,63 @@ minetest.register_on_generated(function(minp, maxp, seed)
 end)
 
 
+local mg_name = minetest.get_mapgen_setting("mg_name")
+
 -- Generate bedrock layer or layers
 local BEDROCK_MIN = mcl_vars.mg_bedrock_overworld_min
 local BEDROCK_MAX = mcl_vars.mg_bedrock_overworld_max
 
 -- Below the bedrock, generate air/void
 
+
+
 minetest.register_on_generated(function(minp, maxp)
-	if minp.y <= BEDROCK_MAX then
+	if mg_name == "flat" then
+		if minp.y <= mcl_vars.mg_overworld_max then--and minp.y <= (mcl_vars.mg_overworld_min + mcl_vars.mg_flat_layer_count) then
+			local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
+			local data = vm:get_data()
+			local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+
+			local c_void = minetest.get_content_id("mcl_core:void")
+
+			local node_ids = {}
+			local get_content_id = function(nodename)
+				if not node_ids[nodename] then
+					node_ids[nodename] = minetest.get_content_id(nodename)
+				end
+				return node_ids[nodename]
+			end
+
+			local layer_counter = 1
+			local repeat_counter = 1
+
+			local max = math.min(maxp.y, mcl_vars.mg_overworld_max)
+			max = math.min(max, mcl_vars.mg_overworld_min + #mcl_vars.mg_flat_layers)
+			for y = minp.y, max do
+				for x = minp.x, maxp.x do
+					for z = minp.z, maxp.z do
+						local p_pos = area:index(x, y, z)
+
+						if y < mcl_vars.mg_overworld_min then
+							data[p_pos] = c_void
+						else
+							local layer = mcl_util.y_to_layer(y)
+							local nodename = mcl_vars.mg_flat_layers[layer+1]
+							if nodename then
+								data[p_pos] = get_content_id(nodename)
+							end
+						end
+					end
+				end
+			end
+
+			vm:set_data(data)
+			vm:calc_lighting()
+			vm:update_liquids()
+			vm:write_to_map()
+
+		end
+	elseif minp.y <= BEDROCK_MAX then
 		local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 		local data = vm:get_data()
 		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
@@ -951,7 +1000,6 @@ minetest.register_on_generated(function(minp, maxp)
 end)
 
 -- Apply mapgen-specific mapgen code
-local mg_name = minetest.get_mapgen_setting("mg_name")
 if mg_name == "v6" then
 	register_mgv6_decorations()
 end

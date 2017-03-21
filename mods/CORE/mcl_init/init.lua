@@ -24,13 +24,40 @@ else
 	if not ground then
 		ground = 8
 	end
-	mcl_vars.mg_overworld_min = ground - 1
-	mcl_vars.mg_overworld_max = mcl_vars.mg_overworld_min + minecraft_height_limit
+	local layer_setting = minetest.get_mapgen_setting("mcl_superflat_layers")
+	local layers
+	if layer_setting then
+		layers = {}
+		local s_version, s_layers, _, _ = string.split(layer_setting, ";", true, 4)
+		if tonumber(s_version) == 3 then
+			local split_layers = string.split(s_layers, ",")
+			if split_layers then
+				for s=1, #split_layers do
+					local node, repetitions = string.match(split_layers[s], "([0-9a-zA-Z:]+)%*([0-9]+)")
+					if not node then
+						node = string.match(split_layers[s], "([0-9a-zA-Z:]+)")
+						repetitions = 1
+					end
+					for r=1, repetitions do
+						table.insert(layers, node)
+					end
+				end
+			end
+		end
+	end
+	if not layers then
+		layers = {
+			"mcl_core:bedrock",
+			"mcl_core:dirt",
+			"mcl_core:dirt",
+			"mcl_core:dirt_with_grass",
+		}
+	end
 
-	-- 1 perfectly flat bedrock layer
-	mcl_vars.mg_bedrock_overworld_min = mcl_vars.mg_overworld_min - 2
-	mcl_vars.mg_bedrock_overworld_max = mcl_vars.mg_bedrock_overworld_min
-	mcl_vars.mg_bedrock_is_rough = false
+	mcl_vars.mg_flat_layers = layers
+
+	mcl_vars.mg_overworld_min = ground - #layers + 1
+	mcl_vars.mg_overworld_max = mcl_vars.mg_overworld_min + minecraft_height_limit
 end
 
 -- Set default stack sizes
