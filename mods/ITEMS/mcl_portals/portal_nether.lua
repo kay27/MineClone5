@@ -338,22 +338,56 @@ minetest.register_abm({
 	interval = 1,
 	chance = 2,
 	action = function(pos, node)
-		minetest.add_particlespawner(
-			32, --amount
-			4, --time
-			{x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25}, --minpos
-			{x = pos.x + 0.25, y = pos.y + 0.25, z = pos.z + 0.25}, --maxpos
-			{x = -0.8, y = -0.8, z = -0.8}, --minvel
-			{x = 0.8, y = 0.8, z = 0.8}, --maxvel
-			{x = 0, y = 0, z = 0}, --minacc
-			{x = 0, y = 0, z = 0}, --maxacc
-			0.5, --minexptime
-			1, --maxexptime
-			1, --minsize
-			2, --maxsize
-			false, --collisiondetection
-			"mcl_portals_particle.png" --texture
-		)
+		local meta = minetest.get_meta(pos)
+		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1"))
+		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2"))
+		if not p1 or not p2 then
+			return
+		end
+
+		local axis
+		if node.param2 == 0 then
+			axis = "x"
+		else
+			axis = "z"
+		end
+
+		local v1, v2 = table.copy(pos), table.copy(pos)
+		v1.y = v1.y - 1
+		v1[axis] = v1[axis] - 1
+		v2.y = v2.y - 1
+		v2[axis] = v2[axis] + 1
+
+		if vector.equals(p1, v1) or vector.equals(p1, v2) then
+			local width = math.abs(p2[axis] - p1[axis]) - 2
+			local xwidth, zwidth
+			if axis == "x" then
+				xwidth = width
+				zwidth = 0
+			else
+				xwidth = 0
+				zwidth = width
+			end
+			local height = math.abs(p2.y - p1.y) - 2
+		
+			minetest.add_particlespawner(
+				32 * width * height, --amount
+				4, --time
+				{x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25}, --minpos
+				{x = pos.x + 0.25 + xwidth, y = pos.y + 0.25 + height, z = pos.z + 0.25 + zwidth}, --maxpos
+				{x = -0.8, y = -0.8, z = -0.8}, --minvel
+				{x = 0.8, y = 0.8, z = 0.8}, --maxvel
+				{x = 0, y = 0, z = 0}, --minacc
+				{x = 0, y = 0, z = 0}, --maxacc
+				0.5, --minexptime
+				1, --maxexptime
+				1, --minsize
+				2, --maxsize
+				false, --collisiondetection
+				"mcl_portals_particle.png" --texture
+			)
+		end
+
 		for _,obj in ipairs(minetest.get_objects_inside_radius(pos,1)) do		--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity() --maikerumine added for objects to travel
 			if obj:is_player() or lua_entity then
