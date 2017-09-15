@@ -53,6 +53,7 @@ local c_sand = minetest.get_content_id("mcl_core:sand")
 local c_sandstone = minetest.get_content_id("mcl_core:sandstone")
 local c_redsand = minetest.get_content_id("mcl_core:redsand")
 local c_redsandstone = minetest.get_content_id("mcl_core:redsandstone")
+local c_hardened_clay_orange = minetest.get_content_id("mcl_colorblocks:hardened_clay_orange")
 local c_void = minetest.get_content_id("mcl_core:void")
 local c_lava = minetest.get_content_id("mcl_core:lava_source")
 local c_water = minetest.get_content_id("mcl_core:water_source")
@@ -1044,7 +1045,7 @@ end
 -- Perlin noise objects
 local perlin_structures
 local perlin_vines, perlin_vines_fine, perlin_vines_upwards, perlin_vines_length, perlin_vines_density
-local perlin_clay
+local perlin_clay, perlin_red_desert_v6
 
 local function generate_clay(minp, maxp, seed, voxelmanip_data, voxelmanip_area, lvm_used)
 	-- TODO: Make clay generation reproducible for same seed.
@@ -1096,6 +1097,56 @@ local function generate_clay(minp, maxp, seed, voxelmanip_data, voxelmanip_area,
 	end
 	return lvm_used
 end
+
+-- Replaces parts of ordinary v6 deserts with red sand and sandstone
+local function generate_red_desert_v6(minp, maxp, seed, data, area, lvm_used)
+
+	if not perlin_red_desert_v6 then
+		local noise = minetest.get_noiseparams("mgv6_np_biome")
+		if not noise then
+			noise = {
+				offset = 0,
+				scale = 1,
+				spread = { x = 500, y = 500, z = 500 },
+				seed = 6932,
+				octaves = 3,
+				persist = 0.5,
+				lacunarity = 2.0,
+			}
+		else
+			noise.seed = noise.seed + 32
+		end
+
+		perlin_red_desert_v6 = minetest.get_perlin(noise)
+	end
+
+	local red_desert_min = 4
+	local red_desert_max = mcl_vars.mg_overworld_max
+
+	if maxp.y < red_desert_min or minp.y > red_desert_max then
+		return lvm_used
+	end
+
+	for x = minp.x, maxp.x do
+	for z = minp.z, maxp.z do
+	for y = math.max(red_desert_min, minp.y), math.min(red_desert_max, maxp.y) do
+		local p_pos = area:index(x, y, z)
+		if perlin_red_desert_v6:get2d({x=x, y=z}) > 0.5 then
+			if data[p_pos] == c_sand then
+				data[p_pos] = c_redsand
+				lvm_used = true
+			elseif data[p_pos] == c_sandstone then
+				data[p_pos] = c_hardened_clay_orange
+				lvm_used = true
+			end
+		end
+	end
+	end
+	end
+
+	return lvm_used
+end
+
 
 -- TODO: Try to use more efficient structure generating code
 local function generate_structures(minp, maxp, seed, biomemap)
@@ -1745,6 +1796,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 
 	-- Clay, vines, cocoas
 	lvm_used = generate_clay(minp, maxp, seed, data, area, lvm_used)
+
+	-- Red deserts / mesa-like biome in v6, so that red sand can be obtained
+	if mg_name == "v6" then
+		lvm_used = generate_red_desert_v6(minp, maxp, seed, data, area, lvm_used)
+	end
 
 	local biomemap = minetest.get_mapgen_object("biomemap")
 	lvm_used = generate_tree_decorations(minp, maxp, seed, data, param2_data, area, biomemap, lvm_used)
