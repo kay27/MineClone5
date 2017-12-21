@@ -170,7 +170,7 @@ local function furnace_node_timer(pos, elapsed)
 	local fuel
 
 	local update = true
-	while update do
+	while elapsed > 0 and update do
 		update = false
 
 		srclist = inv:get_list("src")
@@ -185,6 +185,11 @@ local function furnace_node_timer(pos, elapsed)
 		cooked, aftercooked = minetest.get_craft_result({method = "cooking", width = 1, items = srclist})
 		cookable = cooked.time ~= 0
 
+		local el = math.min(elapsed, fuel_totaltime - fuel_time)
+		if cookable then -- fuel lasts long enough, adjust el to cooking duration
+			el = math.min(el, cooked.time - src_time)
+		end
+
 		-- Check if src item has been changed
 		if srclist[1]:get_name() ~= src_item then
 			-- Reset cooking progress in this case
@@ -195,12 +200,12 @@ local function furnace_node_timer(pos, elapsed)
 		-- Check if we have enough fuel to burn
 		elseif fuel_time < fuel_totaltime then
 			-- The furnace is currently active and has enough fuel
-			fuel_time = fuel_time + elapsed
+			fuel_time = fuel_time + el
 			-- If there is a cookable item then check if it is ready yet
 			if cookable then
 				-- Successful cooking requires space in dst slot and time
 				if inv:room_for_item("dst", cooked.item) then
-					src_time = src_time + elapsed
+					src_time = src_time + el
 
 					-- Place result in dst list if done
 					if src_time >= cooked.time then
@@ -217,7 +222,12 @@ local function furnace_node_timer(pos, elapsed)
 							end
 						end
 
-						src_time = 0
+						-- MCL2 has src_time reset here:
+						-- src_time = 0
+						src_time = src_time - cooked.time
+						update = true
+					else
+						-- Item could not be cooked: probably missing fuel
 						update = true
 					end
 				elseif src_time ~= 0 then
@@ -241,8 +251,7 @@ local function furnace_node_timer(pos, elapsed)
 					-- Take fuel from fuel list
 					inv:set_stack("fuel", 1, afterfuel.items[1])
 					update = true
-					fuel_totaltime = fuel.time + (fuel_time - fuel_totaltime)
-					src_time = src_time + elapsed
+					fuel_totaltime = fuel.time + (fuel_totaltime - fuel_time)
 				end
 			else
 				-- We don't need to get new fuel since there is no cookable item
@@ -252,7 +261,7 @@ local function furnace_node_timer(pos, elapsed)
 			fuel_time = 0
 		end
 
-		elapsed = 0
+		elapsed = elapsed - el
 	end
 
 	if fuel and fuel_totaltime > fuel.time then
