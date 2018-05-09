@@ -4,6 +4,29 @@ local WATER_ALPHA = 179
 local WATER_VISC = 1
 local LAVA_VISC = 7
 
+local place_liquid = function(pos, itemstring)
+	local fullness = minetest.registered_nodes[itemstring].liquid_range
+	minetest.sound_play({name=minetest.registered_nodes[itemstring].sounds.place, gain=0.9}, {pos=pos})
+	minetest.add_node(pos, {name=itemstring, param2=fullness})
+end
+
+local dispense_simple = function(stack, pos, droppos, dropnode, dropdir, actual_placement)
+	local buildable = minetest.registered_nodes[dropnode.name].buildable_to
+	if buildable then
+		-- buildable; replace the node
+		if minetest.is_protected(droppos, "") then
+			return stack
+		end
+		if actual_placement then
+			place_liquid(droppos, actual_placement)
+		else
+			place_liquid(droppos, stack:get_name())
+		end
+		stack:take_item()
+		return stack
+	end
+end
+
 minetest.register_node("mcl_core:water_flowing", {
 	description = "Flowing Water",
 	_doc_items_create_entry = false,
@@ -42,6 +65,20 @@ minetest.register_node("mcl_core:water_flowing", {
 	_mcl_blast_resistance = 500,
 	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
 	_mcl_hardness = -1,
+	on_place = function(itemstack, placer, pointed_thing)
+		local dim = mcl_worlds.pos_to_dimension(pointed_thing.under)
+		if dim == "nether" then
+			if not minetest.settings:get_bool("creative_mode") then
+				itemstack:take_item()
+				return itemstack
+			end
+		else
+			return minetest.item_place_node(itemstack, placer, pointed_thing)
+		end
+	end,
+	_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
+		return dispense_simple(stack, pos, droppos, dropnode, dropdir)
+	end,
 })
 
 minetest.register_node("mcl_core:water_source", {
@@ -82,10 +119,12 @@ Water interacts with lava in various ways:
 	liquid_range = 7,
 	post_effect_color = {a=240, r=0x03, g=0x3C, b=0x5C},
 	stack_max = 64,
-	groups = { water=3, liquid=3, puts_out_fire=1, freezes=1, not_in_creative_inventory=1, dig_by_piston=1},
+	groups = { water=3, liquid=3, puts_out_fire=1, freezes=1, deco_block=1, dig_by_piston=1},
 	_mcl_blast_resistance = 500,
 	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
 	_mcl_hardness = -1,
+	on_place = minetest.registered_nodes["mcl_core:water_flowing"].on_place,
+	_on_dispense = minetest.registered_nodes["mcl_core:water_flowing"]._on_dispense,
 })
 
 minetest.register_node("mcl_core:lava_flowing", {
@@ -128,9 +167,27 @@ minetest.register_node("mcl_core:lava_flowing", {
 	damage_per_second = 4*2,
 	post_effect_color = {a=255, r=208, g=73, b=10},
 	groups = { lava=3, liquid=2, destroys_items=1, not_in_creative_inventory=1, dig_by_piston=1},
+	on_place = function(itemstack, placer, pointed_thing)
+		local dim = mcl_worlds.pos_to_dimension(pointed_thing.under)
+		local real_stack = ItemStack(itemstack)
+		if dim == "nether" then
+			real_stack:set_name("mcl_nether:nether_lava_flowing")
+		end
+		real_stack = minetest.item_place_node(real_stack, placer, pointed_thing)
+		real_stack:set_name("mcl_core:lava_flowing")
+		return real_stack
+	end,
 	_mcl_blast_resistance = 500,
 	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
 	_mcl_hardness = -1,
+	_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
+		local dim = mcl_worlds.pos_to_dimension(pos)
+		local actual_node
+		if dim == "nether" then
+			actual_node = "mcl_nether:nether_lava_flowing"
+		end
+		return dispense_simple(stack, pos, droppos, dropnode, dropdir, actual_node)
+	end,
 })
 
 minetest.register_node("mcl_core:lava_source", {
@@ -173,8 +230,27 @@ Lava interacts with water various ways:
 	damage_per_second = 4*2,
 	post_effect_color = {a=255, r=208, g=73, b=10},
 	stack_max = 64,
-	groups = { lava=3, liquid=2, destroys_items=1, not_in_creative_inventory=1, dig_by_piston=1},
+	groups = { lava=3, liquid=2, destroys_items=1, deco_block=1, dig_by_piston=1},
+	on_place = function(itemstack, placer, pointed_thing)
+		local dim = mcl_worlds.pos_to_dimension(pointed_thing.under)
+		local real_stack = ItemStack(itemstack)
+		if dim == "nether" then
+			real_stack:set_name("mcl_nether:nether_lava_source")
+		end
+		real_stack = minetest.item_place_node(real_stack, placer, pointed_thing)
+		real_stack:set_name("mcl_core:lava_source")
+		return real_stack
+	end,
 	_mcl_blast_resistance = 500,
 	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
+
 	_mcl_hardness = -1,
+	_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
+		local dim = mcl_worlds.pos_to_dimension(pos)
+		local actual_node
+		if dim == "nether" then
+			actual_node = "mcl_nether:nether_lava_source"
+		end
+		return dispense_simple(stack, pos, droppos, dropnode, dropdir, actual_node)
+	end,
 })
