@@ -2,9 +2,11 @@
 --package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
 --require('mobdebug').start()
 
-c_floor_material = "default:brick"
-c_roof_material = "default:wood"
-c_balcony_material = "default:dirt_with_grass"
+local c_floor_material = "default:brick"
+local c_roof_material = "default:wood"
+local c_balcony_material = "default:dirt_with_grass"
+local last_time = os.time()
+
 
 
 
@@ -226,8 +228,9 @@ local function find_locations(minp, maxp)
     local amount_of_buildings = 5 --math.random(5,10) 
     local location_list = {}
 -- Mindest und maxi Abstand
-    local radius = 25
+    local radius = 20
     local housemindist = 9
+    local housemaxdist = 50
     local centeroftown -- Erste location ist Mittelpunkt des Dorfes
 --
     for i = 1,amount_of_buildings do
@@ -242,12 +245,11 @@ local function find_locations(minp, maxp)
                 local distanceTohouses = math.sqrt(((saved_location.x - mpos.x)*(saved_location.x - mpos.x))+((saved_location.y - mpos.y)*(saved_location.y - mpos.y)))
 
 -- nicht weiter als 
-                if distanceToCenter > radius or distanceTohouses < housemindist then
+                if distanceToCenter > radius or distanceTohouses < housemindist or distanceTohouses > housemaxdist then
                     goto neuerversuch
                 end
             end
- --           minetest.chat_send_all(distanceToCenter.." "..distanceTohouses)
-
+            
 
             location_list[i] = mpos
         else
@@ -263,7 +265,10 @@ end
 minetest.register_on_generated(function(minp, maxp, seed)
 
 	if maxp.y < 0 then return end
-	if math.random(0,10)<9 then return end
+--    minetest.chat_send_all(last_time.." "..os.time())
+	if math.random(0,10)<9 or os.time() < last_time then return end
+-- wartezeit bis zum nächsten Buildversuch 
+        last_time = os.time() +30
         local location_list = find_locations(minp, maxp)
         local baumaterial = {"default:junglewood", "default:pine_wood", "default:wood",
             "default:aspen_wood", "default:acacia_wood", "default:junglewood", "default:pine_wood", "default:wood",
@@ -274,6 +279,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 --		local mpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)}
         for i, mpos in ipairs(location_list) do
             local material = baumaterial[i]
+            minetest.chat_send_all(minetest.pos_to_string(mpos).." "..material)
             minetest.after(0.5, function()
 	        	 p2 = minetest.find_node_near(mpos, 25, {"default:dirt_with_grass"})	
 	        	 if not p2 or p2 == nil or p2.y < 0 then return end
