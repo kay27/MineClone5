@@ -43,6 +43,30 @@ local function ground(pos)
 	end
 end
 
+local function find_surface(pos)
+	local p6 = shallowCopy(pos)
+	local cnt = 0
+  local cnt_max = 200
+	local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow"}
+	p6.y = p6.y-1
+	while cnt < cnt_max do
+		cnt = cnt+1
+        local s = minetest.get_node_or_nil(p6)
+        for i, mats in ipairs(surface_mat) do
+          if s and s.name == mats then 
+            return p6 
+          end
+        end
+		p6.y = p6.y-1
+	end
+--  if cnt >= cnt_max then
+  return nil
+--  else
+--    return p6
+--  end
+end
+
+
 local function door(pos, width, depth)
 	local p3 = shallowCopy(pos)
 	p3.y = p3.y+1
@@ -228,15 +252,19 @@ local function find_locations(minp, maxp)
     local amount_of_buildings = 5 --math.random(5,10) 
     local location_list = {}
 -- Mindest und maxi Abstand
-    local radius = 20
-    local housemindist = 9
-    local housemaxdist = 50
+    local radius = 1000
+    local housemindist = 15
+    local housemaxdist = 1000
     local centeroftown -- Erste location ist Mittelpunkt des Dorfes
 --
     for i = 1,amount_of_buildings do
 -- Zufallslocation finden
         ::neuerversuch:: -- Sprungpunkt, falls Abstand nicht passt
-        local mpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)}  
+        local tpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)} 
+        if tpos.y < 0 then goto neuerversuch end
+	    local mpos = find_surface(tpos)
+	    if not mpos or mpos == nil or mpos.y < 0 then goto neuerversuch end
+
 -- vor dem Ablegen in die Liste, Abstand zu bisherigen locations finden, sobald mehr als eine location gefunden wurde
         if i > 1 then
 -- bisherige Liste durchgehen und mit aktueller mpos vergleichen
@@ -281,9 +309,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
             local material = baumaterial[i]
             minetest.chat_send_all(minetest.pos_to_string(mpos).." "..material)
             minetest.after(0.5, function()
-	        	 p2 = minetest.find_node_near(mpos, 25, {"default:dirt_with_grass"})	
-	        	 if not p2 or p2 == nil or p2.y < 0 then return end
-	             make(p2,material)
+--	        	 p2 = minetest.find_node_near(mpos, 25, {"default:dirt_with_grass"})	
+--	        	 if not p2 or p2 == nil or p2.y < 0 then return end
+	             make(mpos,material)
 	    	end)
         end
 
