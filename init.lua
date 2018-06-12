@@ -1,6 +1,6 @@
---package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
---package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
---require('mobdebug').start()
+package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
+package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
+require('mobdebug').start()
 
 local c_floor_material = "default:brick"
 local c_roof_material = "default:wood"
@@ -48,16 +48,24 @@ local function find_surface(pos)
 	local cnt = 0
   local cnt_max = 200
 	local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow"}
-	p6.y = p6.y-1
+	local above_surface_mat = {"default:air","default:dirt_with_snow"}
+  local under_surface_mat = {"default:stone","default:dirt"}
+-- check, ob zu weit unten mit der Suche begonnen wird
+  local s = minetest.get_node_or_nil(p6)
+  if s and s.name ~= "air" then 
+	   p6.y = p6.y+50
+  end
 	while cnt < cnt_max do
 		cnt = cnt+1
-        local s = minetest.get_node_or_nil(p6)
+        s = minetest.get_node_or_nil(p6)
+        if s == nil or s.name == "ignore" then return nil end
         for i, mats in ipairs(surface_mat) do
           if s and s.name == mats then 
             return p6 
           end
         end
 		p6.y = p6.y-1
+    if p6.y < 0 then return nil end
 	end
 --  if cnt >= cnt_max then
   return nil
@@ -197,17 +205,18 @@ local function make(pos,material)
 					if xi < 1 or xi > width-1 or zi < 1 or zi > depth-1 then
 --					if math.random(1,yi) == 1 then
 						-- four corners of the house are tree trunks
---[[						if (xi == 0 and zi == 0) or 
+            local new
+            if (xi == 0 and zi == 0) or 
 							(xi == width and zi == depth) or 
 							(xi == 0 and zi == depth) or
 							(zi == 0 and xi == width) 
 						then 
-							material = "tree" 
+							 new = "default:tree" 
 						else
-							material = "cobble"
+							 new = baumaterial
 						end
---]]					
-						local new = baumaterial
+				
+						
  --                           minetest.chat_send_all(new)
 
 
@@ -249,17 +258,22 @@ end
 
 local function find_locations(minp, maxp)
 -- Anzahl Gebäude
-    local amount_of_buildings = 5 --math.random(5,10) 
+    local amount_of_buildings = 10 --math.random(5,10) 
     local location_list = {}
 -- Mindest und maxi Abstand
     local radius = 1000
-    local housemindist = 15
+    local housemindist = 1
     local housemaxdist = 1000
     local centeroftown -- Erste location ist Mittelpunkt des Dorfes
+    local tries = 500 -- 500 Versuche, ne geeignete Location zu finden
+    local count = 0
 --
     for i = 1,amount_of_buildings do
 -- Zufallslocation finden
         ::neuerversuch:: -- Sprungpunkt, falls Abstand nicht passt
+        count = count + 1
+        -- nicht unendlich oft probieren, sonst endlos schleife
+        if count > tries then return nil end
         local tpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)} 
         if tpos.y < 0 then goto neuerversuch end
 	    local mpos = find_surface(tpos)
@@ -273,7 +287,8 @@ local function find_locations(minp, maxp)
                 local distanceTohouses = math.sqrt(((saved_location.x - mpos.x)*(saved_location.x - mpos.x))+((saved_location.y - mpos.y)*(saved_location.y - mpos.y)))
 
 -- nicht weiter als 
-                if distanceToCenter > radius or distanceTohouses < housemindist or distanceTohouses > housemaxdist then
+ --               if distanceToCenter > radius or distanceTohouses < housemindist or distanceTohouses > housemaxdist then
+                if distanceTohouses < housemindist then
                     goto neuerversuch
                 end
             end
@@ -298,22 +313,24 @@ minetest.register_on_generated(function(minp, maxp, seed)
 -- wartezeit bis zum nächsten Buildversuch 
         last_time = os.time() +30
         local location_list = find_locations(minp, maxp)
-        local baumaterial = {"default:junglewood", "default:pine_wood", "default:wood",
+        if location_list then
+           local baumaterial = {"default:junglewood", "default:pine_wood", "default:wood",
             "default:aspen_wood", "default:acacia_wood", "default:junglewood", "default:pine_wood", "default:wood",
             "default:aspen_wood", "default:acacia_wood","default:junglewood", "default:pine_wood", "default:wood",
             "default:aspen_wood", "default:acacia_wood","default:junglewood", "default:pine_wood", "default:wood",
             "default:aspen_wood", "default:acacia_wood"  }
         
 --		local mpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)}
-        for i, mpos in ipairs(location_list) do
-            local material = baumaterial[i]
-            minetest.chat_send_all(minetest.pos_to_string(mpos).." "..material)
-            minetest.after(0.5, function()
+           for i, mpos in ipairs(location_list) do
+               local material = baumaterial[i]
+               minetest.chat_send_all(minetest.pos_to_string(mpos).." "..material)
+               minetest.after(0.5, function()
 --	        	 p2 = minetest.find_node_near(mpos, 25, {"default:dirt_with_grass"})	
 --	        	 if not p2 or p2 == nil or p2.y < 0 then return end
 	             make(mpos,material)
-	    	end)
+	        	end)
         end
+  end
 
 
 end)
