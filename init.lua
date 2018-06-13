@@ -46,14 +46,18 @@ end
 local function find_surface(pos)
 	local p6 = shallowCopy(pos)
 	local cnt = 0
+  local itter
   local cnt_max = 200
 	local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow"}
 	local above_surface_mat = {"default:air","default:dirt_with_snow"}
   local under_surface_mat = {"default:stone","default:dirt"}
 -- check, ob zu weit unten mit der Suche begonnen wird
   local s = minetest.get_node_or_nil(p6)
-  if s and s.name ~= "air" then 
-	   p6.y = p6.y+50
+  if s and string.find(s.name,"air") then 
+	   --p6.y = p6.y+50
+     itter = -1
+  else
+     itter = 1
   end
 	while cnt < cnt_max do
 		cnt = cnt+1
@@ -64,7 +68,7 @@ local function find_surface(pos)
             return p6 
           end
         end
-		p6.y = p6.y-1
+		p6.y = p6.y + itter
     if p6.y < 0 then return nil end
 	end
 --  if cnt >= cnt_max then
@@ -314,11 +318,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
         last_time = os.time() +30
         local location_list = find_locations(minp, maxp)
         if location_list then
-           local baumaterial = {"default:junglewood", "default:pine_wood", "default:wood",
-            "default:aspen_wood", "default:acacia_wood", "default:junglewood", "default:pine_wood", "default:wood",
-            "default:aspen_wood", "default:acacia_wood","default:junglewood", "default:pine_wood", "default:wood",
-            "default:aspen_wood", "default:acacia_wood","default:junglewood", "default:pine_wood", "default:wood",
-            "default:aspen_wood", "default:acacia_wood"  }
+           local baumaterial = {"default:junglewood", "default:pine_wood", "default:wood", "default:aspen_wood", "default:acacia_wood", 
+             "default:stonebrick", "default:cobble", "default:desert_stonebrick", "default:desert_cobble", "default:sandstone",
+             "default:junglewood", "default:pine_wood", "default:wood", "default:aspen_wood", "default:acacia_wood", 
+             "default:stonebrick", "default:cobble", "default:desert_stonebrick", "default:desert_cobble", "default:sandstone" }
         
 --		local mpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)}
            for i, mpos in ipairs(location_list) do
