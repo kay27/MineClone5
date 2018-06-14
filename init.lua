@@ -30,7 +30,7 @@ end
 --
 -- Function to fill empty space when building on a hill
 --
-local function ground(pos)
+local function ground(pos) -- Wendelsteinkircherl, Brannenburg
 	local p2 = pos
 	local cnt = 0
 	local mat = "dirt"
@@ -49,9 +49,9 @@ end
 local function find_surface(pos)
 	local p6 = shallowCopy(pos)
 	local cnt = 0
-  local itter
+  local itter -- nach oben oder nach unten zählen
   local cnt_max = 200
-	local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow"}
+	local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow","default:dirt_with_dray_grass"}
 	local above_surface_mat = {"default:air","default:dirt_with_snow"}
   local under_surface_mat = {"default:stone","default:dirt"}
 -- check, ob zu weit unten mit der Suche begonnen wird
@@ -74,7 +74,11 @@ local function find_surface(pos)
 		p6.y = p6.y + itter
     if p6.y < 0 then return nil end
 	end
+--  if cnt >= cnt_max then
   return nil
+--  else
+--    return p6
+--  end
 end
 --
 -- Function to place a door
@@ -260,7 +264,7 @@ local function find_locations(minp, maxp)
     local location_list = {}
 -- Mindest und maxi Abstand
     local radius = 1000
-    local housemindist = 1
+    local housemindist = 7
     local housemaxdist = 1000
     local centeroftown -- Erste location ist Mittelpunkt des Dorfes
     local tries = 500 -- 500 Versuche, ne geeignete Location zu finden
