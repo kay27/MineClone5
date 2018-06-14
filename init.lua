@@ -2,14 +2,13 @@ package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
 package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
 require('mobdebug').start()
 
-local c_floor_material = "default:brick"
+local c_floor_material = "default:wood"
 local c_roof_material = "default:wood"
 local c_balcony_material = "default:dirt_with_grass"
 local last_time = os.time()
-
-
-
-
+--
+-- Function to copy tables
+--
 local function shallowCopy(original)
     local copy = {}
     for key, value in pairs(original) do
@@ -28,7 +27,9 @@ local function can_replace(pos)
 		return false
 	end
 end
-
+--
+-- Function to fill empty space when building on a hill
+--
 local function ground(pos)
 	local p2 = pos
 	local cnt = 0
@@ -42,7 +43,9 @@ local function ground(pos)
 		p2.y = p2.y-1
 	end
 end
-
+--
+-- Function to find surface block y coordinate
+--
 local function find_surface(pos)
 	local p6 = shallowCopy(pos)
 	local cnt = 0
@@ -71,14 +74,11 @@ local function find_surface(pos)
 		p6.y = p6.y + itter
     if p6.y < 0 then return nil end
 	end
---  if cnt >= cnt_max then
   return nil
---  else
---    return p6
---  end
 end
-
-
+--
+-- Function to place a door
+--
 local function door(pos, width, depth)
 	local p3 = shallowCopy(pos)
 	p3.y = p3.y+1
@@ -207,7 +207,6 @@ local function make(pos,material)
 				else
 -- walls 
 					if xi < 1 or xi > width-1 or zi < 1 or zi > depth-1 then
---					if math.random(1,yi) == 1 then
 						-- four corners of the house are tree trunks
             local new
             if (xi == 0 and zi == 0) or 
@@ -219,11 +218,6 @@ local function make(pos,material)
 						else
 							 new = baumaterial
 						end
-				
-						
- --                           minetest.chat_send_all(new)
-
-
 						if yi == 2 and math.random(1,10) > 8 then new = "default:glass" end
 						local n = minetest.get_node_or_nil({x=pos.x+xi, y=pos.y+yi-1, z=pos.z+zi})
 --						if n and n.name ~= "air" then
@@ -334,8 +328,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	        	end)
         end
   end
-
-
 end)
 
 
