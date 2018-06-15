@@ -96,29 +96,3 @@ function settlements.find_locations(minp, maxp)
   end
   return location_list
 end
-
-function settlements.space_around_house(pos, height, width, depth)
-  local c_balcony_material = "default:dirt_with_grass"
-  local p5 = settlements.shallowCopy(pos)
-  p5.x = pos.x-1
-  p5.z = pos.z-1
-  local width = width + 2
-  local depth = depth + 2
-  local height = height - 1
-  for yi = 0,height do
-    for xi = 0,width do
-      for zi = 0,depth do
-        if xi < 1 or xi >= width or zi < 1 or zi >= depth then
-          if yi == 0 then
-            local p = {x=p5.x+xi, y=p5.y, z=p5.z+zi}
-            minetest.set_node(p, {name=c_balcony_material})
-            minetest.after(1,settlements.ground,p)--(p)
-          else
-            minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
-          end
-        end
-      end
-    end
-  end
-end
-

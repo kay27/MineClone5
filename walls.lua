@@ -1,6 +1,6 @@
 function settlements.walls(pos, height, width, depth, material)
-local c_floor_material = "default:wood"
- for yi = 0,height do
+  local c_floor_material = "default:wood"
+  for yi = 0,height do
     for xi = 0,width do
       for zi = 0,depth do
 -- floor
