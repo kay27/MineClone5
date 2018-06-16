@@ -13,6 +13,6 @@ function settlements.build_house(pos)
 --
   settlements.foundation(pos, height, width, depth)
   settlements.walls(pos, height, width, depth, material)
-  settlements.roof(pos, height, width, depth)
+  settlements.saddle_roof(pos, height, width, depth)
   settlements.door(pos, width, depth)
 end

@@ -1,4 +1,5 @@
 c_floor_material = "default:wood" -- not local because doors need it
+
 local function can_replace(pos)
   local n = minetest.get_node_or_nil(pos)
   if n and n.name and minetest.registered_nodes[n.name] and not minetest.registered_nodes[n.name].walkable then
@@ -30,7 +31,7 @@ end
 -- 2. remove everything above baseplate until height
 --
 function settlements.foundation(pos, height, width, depth)
-  local c_balcony_material = "default:dirt_with_grass" --todo depending on area snowy or grassy
+  local c_balcony_material =  minetest.get_node_or_nil(pos).name
   local c_floor_material = "default:wood"
   local p5 = settlements.shallowCopy(pos)
   p5.x = pos.x-1

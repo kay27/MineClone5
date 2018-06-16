@@ -40,11 +40,7 @@ function settlements.find_surface(pos)
     p6.y = p6.y + itter
     if p6.y < 0 then return nil end
   end
---  if cnt >= cnt_max then
   return nil
---  else
---    return p6
---  end
 end
 --
 -- Function to find random positions
@@ -86,8 +82,6 @@ function settlements.find_locations(minp, maxp)
           goto neuerversuch
         end
       end
-
-
       location_list[i] = mpos
     else
       location_list[i] = mpos
