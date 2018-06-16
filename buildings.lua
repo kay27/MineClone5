@@ -8,11 +8,12 @@ function settlements.build_house(pos)
   local width = math.random(4,5)
   local depth = math.random(4,5)
   -- set random material from list
-  material = baumaterial[math.random(1,baumaterial_count)]
+  material = baumaterial[math.random(1,#baumaterial)]
   minetest.chat_send_all(minetest.pos_to_string(pos).." "..material)
 --
   settlements.foundation(pos, height, width, depth)
   settlements.walls(pos, height, width, depth, material)
+--  settlements.random_roof(pos, height, width, depth)
   settlements.saddle_roof(pos, height, width, depth)
   settlements.door(pos, width, depth)
 end
