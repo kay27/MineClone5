@@ -7,7 +7,7 @@ settlements.modpath = minetest.get_modpath("settlements");
 
 dofile(settlements.modpath.."/roofs.lua")
 dofile(settlements.modpath.."/utils.lua")
-dofile(settlements.modpath.."/ground.lua")
+dofile(settlements.modpath.."/foundation.lua")
 dofile(settlements.modpath.."/doors.lua")
 dofile(settlements.modpath.."/walls.lua")
 dofile(settlements.modpath.."/buildings.lua")
