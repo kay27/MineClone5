@@ -50,7 +50,8 @@ minetest.register_craftitem("settlements:tool", {
     on_use = function(itemstack, placer, pointed_thing)
       local p = pointed_thing.under
       if p then
-        settlements.build_house(p)
+--        settlements.build_house(p)
+        settlements.build_blueprint_e(p)
       end
     end
   })
