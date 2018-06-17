@@ -51,7 +51,7 @@ minetest.register_craftitem("settlements:tool", {
       local p = pointed_thing.under
       if p then
 --        settlements.build_house(p)
-        settlements.build_blueprint_e(p)
+        settlements.build_blueprint(p)
       end
     end
   })

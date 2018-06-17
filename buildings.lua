@@ -33,6 +33,16 @@ function settlements.build_house(pos)
   settlements.saddle_roof(pos, height, width, depth)
   settlements.door(pos, width, depth)
 end
+--
+--
+-- blueprint section
+--
+--
+function settlements.build_blueprint(pos)
+  local blueprint_function_table = {settlements.build_blueprint_n, settlements.build_blueprint_s, settlements.build_blueprint_w, settlements.build_blueprint_o}
+  local random_index = math.random(1, #blueprint_function_table) --pick random index from 1 to #f_tbl
+  blueprint_function_table[random_index](pos) --execute function at the random_index we've picked
+end
 
 function settlements.build_blueprint_n(pos)
   x = 0
@@ -41,13 +51,7 @@ function settlements.build_blueprint_n(pos)
   for i = 1,#blueprint, 1 do   -- floor
     for j = 1, #blueprint[i], 1 do   -- row
       for k = 1, #blueprint[i][j], 1 do   -- block
-        if blueprint[i][j][k] == 1 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:wood"})
-        elseif blueprint[i][j][k] == 2 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:cobble"})
-        else
-          minetest.remove_node({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        end
+        settlements.build_blueprint_block(pos, blueprint[i][j][k])       
         x = x + 1
 --        minetest.chat_send_all(blocks)
       end
@@ -66,13 +70,7 @@ function settlements.build_blueprint_s(pos)
   for i = 1,#blueprint, 1 do   -- floor
     for j = #blueprint[i], 1, -1 do   
       for k = #blueprint[i][j], 1, -1 do   
-        if blueprint[i][j][k] == 1 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:wood"})
-        elseif blueprint[i][j][k] == 2 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:cobble"})
-        else
-          minetest.remove_node({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        end
+        settlements.build_blueprint_block(pos, blueprint[i][j][k])       
         x = x + 1
 --        minetest.chat_send_all(blocks)
       end
@@ -91,13 +89,7 @@ function settlements.build_blueprint_w(pos)
   for i = 1,#blueprint, 1 do   -- floor
     for j = 1, #blueprint[i], 1 do   -- row
       for k = 1, #blueprint[i][j], 1 do   -- block
-        if blueprint[i][j][k] == 1 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:wood"})
-        elseif blueprint[i][j][k] == 2 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:cobble"})
-        else
-          minetest.remove_node({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        end
+        settlements.build_blueprint_block(pos, blueprint[i][j][k])       
         z = z + 1
 --        minetest.chat_send_all(blocks)
       end
@@ -116,13 +108,7 @@ function settlements.build_blueprint_e(pos)
   for i = 1,#blueprint, 1 do   -- floor
     for j = #blueprint[i], 1, -1 do   
       for k = #blueprint[i][j], 1, -1 do   
-        if blueprint[i][j][k] == 1 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:wood"})
-        elseif blueprint[i][j][k] == 2 then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:cobble"})
-        else
-          minetest.remove_node({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        end
+        settlements.build_blueprint_block(pos, blueprint[i][j][k])       
         z = z + 1
 --        minetest.chat_send_all(blocks)
       end
@@ -133,3 +119,14 @@ function settlements.build_blueprint_e(pos)
     y = y + 1
   end
 end
+
+function settlements.build_blueprint_block(pos, blockid)
+  if blockid == 1 then
+    minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:wood"})
+  elseif blockid == 2 then
+    minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name="default:cobble"})
+  else
+    minetest.remove_node({x=pos.x+x, y=pos.y+y, z=pos.z+z})
+  end
+end
+
