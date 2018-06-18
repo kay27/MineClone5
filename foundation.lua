@@ -1,5 +1,3 @@
-c_floor_material = "default:wood" -- not local because doors need it
-
 local function can_replace(pos)
   local n = minetest.get_node_or_nil(pos)
   if n and n.name and minetest.registered_nodes[n.name] and not minetest.registered_nodes[n.name].walkable then

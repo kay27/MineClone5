@@ -17,9 +17,6 @@ function settlements.find_surface(pos)
   local cnt = 0
   local itter -- nach oben oder nach unten zählen
   local cnt_max = 200
-  local surface_mat = {"default:dirt_with_grass","default:dirt_with_snow","default:dirt_with_dray_grass"}
-  local above_surface_mat = {"default:air","default:dirt_with_snow"}
-  local under_surface_mat = {"default:stone","default:dirt"}
 -- check, ob zu weit unten mit der Suche begonnen wird
   local s = minetest.get_node_or_nil(p6)
   if s and string.find(s.name,"air") then 

@@ -6,11 +6,15 @@ settlements = {}
 settlements.modpath = minetest.get_modpath("settlements");
 
 dofile(settlements.modpath.."/roofs.lua")
+dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")
 dofile(settlements.modpath.."/doors.lua")
 dofile(settlements.modpath.."/walls.lua")
 dofile(settlements.modpath.."/buildings.lua")
+--dofile(settlements.modpath.."/bp_garden.lua")
+--dofile(settlements.modpath.."/bp_hut_pr.lua")
+dofile(settlements.modpath.."/bp_hut_sr.lua")
 
 local last_time = os.time()
 
@@ -51,7 +55,7 @@ minetest.register_craftitem("settlements:tool", {
       local p = pointed_thing.under
       if p then
 --        settlements.build_house(p)
-        settlements.build_blueprint(p)
+        settlements.build_blueprint(p,blueprint_hut_sr)
       end
     end
   })
