@@ -21,6 +21,8 @@ function settlements.build_blueprint(pos,blueprint)
   local blueprint_function_table = {settlements.build_blueprint_n, settlements.build_blueprint_s, settlements.build_blueprint_w, settlements.build_blueprint_e}
   local random_index = math.random(1, #blueprint_function_table) --pick random index from 1 to #f_tbl
   blueprint_function_table[random_index](pos,blueprint) --execute function at the random_index we've picked
+  w1 = baumaterial[math.random(1,#baumaterial)] -- global w1 = wall in every blueprint
+
 end
 
 function settlements.build_blueprint_n(pos,blueprint)
