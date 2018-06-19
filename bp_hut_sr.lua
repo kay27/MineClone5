@@ -47,9 +47,9 @@ blueprint_hut_sr = {
    {
     {a0,a0,a0,a0,a0,a0,a0},
     {a0,w3,w1,w1,w1,w3,a0},
+    {a0,w1,a0,a0,t1,w1,a0},
     {a0,w1,a0,a0,a0,w1,a0},
-    {a0,w1,a0,a0,a0,w1,a0},
-    {a0,w1,a0,a0,a0,w1,a0},
+    {a0,w1,t1,a0,a0,w1,a0},
     {a0,w3,w1,w1,w1,w3,a0},
     {a0,a0,a0,a0,a0,a0,a0},
    },
