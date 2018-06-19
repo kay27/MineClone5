@@ -25,8 +25,6 @@ function settlements.build_blueprint(pos,blueprint)
   local random_index = math.random(1, #blueprint_function_table) --pick random index from 1 to #f_tbl
   -- call one of those functions
   blueprint_function_table[random_index](pos,blueprint,material) --execute function at the random_index we've picked
-  minetest.chat_send_all("Dorf")
-
 end
 
 function settlements.build_blueprint_n(pos,blueprint,material)

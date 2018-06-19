@@ -24,6 +24,7 @@ local function place_settlement(minp, maxp)
   -- find locations for buildings
   local location_list = settlements.find_locations(minp, maxp)
   if location_list then
+    minetest.chat_send_all("Dorf")
     -- for each location, build something
     for i, mpos in ipairs(location_list) do
       minetest.after(0.5, function()
