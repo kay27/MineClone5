@@ -5,7 +5,6 @@ require('mobdebug').start()
 settlements = {}
 settlements.modpath = minetest.get_modpath("settlements");
 
-dofile(settlements.modpath.."/roofs.lua")
 dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")

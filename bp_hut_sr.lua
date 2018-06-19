@@ -9,6 +9,7 @@ local r1 = "default:wood"
 local w1 = "rwall"
 local w2 = "default:glass"
 local w3 = "default:tree"
+local t1 = "default:torch_wall"
 local zz = nil
 --
 blueprint_hut_sr = { 

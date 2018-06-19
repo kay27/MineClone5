@@ -1,22 +1,3 @@
-function settlements.build_house(pos)
-  local height = math.random(4,4)
-  local width = math.random(4,5)
-  local depth = math.random(4,5)
-  -- set random material from list
-  material = baumaterial[math.random(1,#baumaterial)]
-  minetest.chat_send_all(minetest.pos_to_string(pos).." "..material)
---
-  settlements.foundation(pos, height, width, depth)
-  settlements.walls(pos, height, width, depth, material)
---  settlements.random_roof(pos, height, width, depth)
-  settlements.saddle_roof(pos, height, width, depth)
-  settlements.door(pos, width, depth)
-end
---
---
--- blueprint section
---
---
 function settlements.build_blueprint(pos,blueprint)
   local material = baumaterial[math.random(1,#baumaterial)] -- global w1 = wall in every blueprint
   -- 4 building functions for each direction
