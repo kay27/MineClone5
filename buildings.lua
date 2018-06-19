@@ -1,14 +1,17 @@
 function settlements.build_blueprint(pos,blueprint)
+  -- randomly choose wall material
   local material = baumaterial[math.random(1,#baumaterial)] -- global w1 = wall in every blueprint
+  -- get building node material for better integration to surrounding
+  local balcony_material =  minetest.get_node_or_nil(pos).name
   -- 4 building functions for each direction
   local blueprint_function_table = {settlements.build_blueprint_n, settlements.build_blueprint_s, settlements.build_blueprint_w, settlements.build_blueprint_e}
   -- choose one of these functions
   local random_index = math.random(1, #blueprint_function_table) --pick random index from 1 to #f_tbl
   -- call one of those functions
-  blueprint_function_table[random_index](pos,blueprint,material) --execute function at the random_index we've picked
+  blueprint_function_table[random_index](pos,blueprint,material,balcony_material) --execute function at the random_index we've picked
 end
 
-function settlements.build_blueprint_n(pos,blueprint,material)
+function settlements.build_blueprint_n(pos,blueprint,material,balcony_material)
   x = 0
   y = 0
   z = 0
@@ -19,6 +22,8 @@ function settlements.build_blueprint_n(pos,blueprint,material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] == "rwall" then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=material})
+        elseif blueprint[i][j][k] == "balcony" then
+          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -36,7 +41,7 @@ function settlements.build_blueprint_n(pos,blueprint,material)
   end
 end
 --
-function settlements.build_blueprint_s(pos,blueprint,material)
+function settlements.build_blueprint_s(pos,blueprint,material,balcony_material)
   x = 0
   y = 0
   z = 0
@@ -47,6 +52,8 @@ function settlements.build_blueprint_s(pos,blueprint,material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] == "rwall" then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=material})
+        elseif blueprint[i][j][k] == "balcony" then
+          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -64,7 +71,7 @@ function settlements.build_blueprint_s(pos,blueprint,material)
   end
 end
 --
-function settlements.build_blueprint_w(pos,blueprint,material)
+function settlements.build_blueprint_w(pos,blueprint,material,balcony_material)
   x = 0
   y = 0
   z = 0
@@ -75,6 +82,8 @@ function settlements.build_blueprint_w(pos,blueprint,material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] == "rwall" then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=material})
+        elseif blueprint[i][j][k] == "balcony" then
+          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -92,7 +101,7 @@ function settlements.build_blueprint_w(pos,blueprint,material)
   end
 end
 --
-function settlements.build_blueprint_e(pos,blueprint,material)
+function settlements.build_blueprint_e(pos,blueprint,material,balcony_material)
   x = 0
   y = 0
   z = 0
@@ -103,6 +112,8 @@ function settlements.build_blueprint_e(pos,blueprint,material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] == "rwall" then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=material})
+        elseif blueprint[i][j][k] == "balcony" then
+          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
