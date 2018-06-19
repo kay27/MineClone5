@@ -27,7 +27,8 @@ local function place_settlement(minp, maxp)
     -- for each location, build something
     for i, mpos in ipairs(location_list) do
       minetest.after(0.5, function()
-          settlements.build_house(mpos)
+          --settlements.build_house(mpos)
+          settlements.build_blueprint(mpos,blueprint_hut_sr)
         end)
     end
   end
