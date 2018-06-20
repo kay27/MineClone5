@@ -1,16 +1,16 @@
 --
 -- blueprint for hut with saddle roof
 --
-function settlements.bp_hut_sr()
+function settlements.bp_hut_sr(balcony_material)
   local a0 = "air"
   local d1 = "doors:door_wood_b"
   local f1 = c_floor_material
-  local f2 = "balcony"
+  local f2 = balcony_material
   local r1 = "default:wood"
   local w1 = baumaterial[math.random(1,#baumaterial)]
   local w2 = "default:glass"
   local w3 = "default:tree"
-  local t1 = "default:torch_wall"
+  local t1 = "torch"
   local zz = nil
   --
   blueprint_hut_sr = { 

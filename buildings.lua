@@ -1,6 +1,4 @@
 function settlements.build_blueprint(pos,blueprint)
-  -- get building node material for better integration to surrounding
-  local balcony_material =  minetest.get_node_or_nil(pos).name
   -- 4 building functions for each direction
   local blueprint_function_table = {settlements.build_blueprint_n, settlements.build_blueprint_s, settlements.build_blueprint_w, settlements.build_blueprint_e}
   -- choose one of these functions
@@ -18,8 +16,8 @@ function settlements.build_blueprint_n(pos,blueprint,balcony_material)
       for k = 1, #blueprint[i][j], 1 do   -- block
         if string.find(blueprint[i][j][k],"door") then
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        elseif blueprint[i][j][k] == "balcony" then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
+        elseif string.find(blueprint[i][j][k],"torch") then
+          settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -46,8 +44,8 @@ function settlements.build_blueprint_s(pos,blueprint,balcony_material)
       for k = #blueprint[i][j], 1, -1 do   
         if string.find(blueprint[i][j][k],"door") then
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        elseif blueprint[i][j][k] == "balcony" then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
+        elseif string.find(blueprint[i][j][k],"torch") then
+          settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -74,8 +72,8 @@ function settlements.build_blueprint_w(pos,blueprint,balcony_material)
       for k = 1, #blueprint[i][j], 1 do   -- block
         if string.find(blueprint[i][j][k],"door") then
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        elseif blueprint[i][j][k] == "balcony" then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
+        elseif string.find(blueprint[i][j][k],"torch") then
+          settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -102,8 +100,8 @@ function settlements.build_blueprint_e(pos,blueprint,balcony_material)
       for k = #blueprint[i][j], 1, -1 do   
         if string.find(blueprint[i][j][k],"door") then
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
-        elseif blueprint[i][j][k] == "balcony" then
-          minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=balcony_material})
+        elseif string.find(blueprint[i][j][k],"torch") then
+          settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end

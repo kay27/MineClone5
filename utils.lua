@@ -87,3 +87,35 @@ function settlements.find_locations(minp, maxp)
   end
   return location_list
 end
+--
+-- Function to place a door
+--
+function settlements.torch(pos)
+  local p3 = settlements.shallowCopy(pos)
+-- find door facedir
+  local wallmounted
+
+  local e = minetest.get_node_or_nil({x=p3.x+1, y=p3.y-1, z=p3.z})
+  local w = minetest.get_node_or_nil({x=p3.x-1, y=p3.y-1, z=p3.z})
+  local n = minetest.get_node_or_nil({x=p3.x, y=p3.y-1, z=p3.z+1})
+  local s = minetest.get_node_or_nil({x=p3.x, y=p3.y-1, z=p3.z-1})
+  if e and e.name ~= "air" then
+--        minetest.chat_send_all('e')
+--        minetest.chat_send_all(e.name)
+    wallmounted = 2
+  elseif w and w.name ~= "air" then
+--        minetest.chat_send_all('w')
+--        minetest.chat_send_all(w.name)
+    wallmounted = 3
+  elseif n and n.name ~= "air" then
+--        minetest.chat_send_all('n')
+--        minetest.chat_send_all(n.name)
+    wallmounted = 4
+  elseif s and s.name ~= "air" then
+--        minetest.chat_send_all('s')
+--        minetest.chat_send_all(s.name)
+    wallmounted = 5
+  end
+-- place door
+  minetest.set_node(p3,{name = "default:torch_wall", param2 = wallmounted})
+end
