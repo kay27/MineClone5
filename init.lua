@@ -28,7 +28,10 @@ local function place_settlement(minp, maxp)
     for i, mpos in ipairs(location_list) do
       minetest.after(0.5, function()
           --settlements.build_house(mpos)
-          settlements.build_blueprint(mpos,blueprint_hut_sr)
+          -- rebuild blueprint (random stuff)
+          local blueprint = settlements.bp_hut_sr()
+
+          settlements.build_blueprint(mpos,blueprint)
         end)
     end
   end
@@ -56,7 +59,9 @@ minetest.register_craftitem("settlements:tool", {
       local p = pointed_thing.under
       if p then
 --        settlements.build_house(p)
-        settlements.build_blueprint(p,blueprint_hut_sr)
+          -- rebuild blueprint (random stuff)
+        local blueprint = settlements.bp_hut_sr()
+        settlements.build_blueprint(p,blueprint)
       end
     end
   })
