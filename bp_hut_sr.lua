@@ -3,6 +3,8 @@
 --
 function settlements.bp_hut_sr(balcony_material)
   local a0 = "air"
+  local b1 = "beds:bed_top"
+  local b2 = "beds:bed_bottom"
   local d1 = "doors:door_wood_b"
   local f1 = c_floor_material
   local f2 = balcony_material
@@ -29,7 +31,7 @@ function settlements.bp_hut_sr(balcony_material)
       {a0,a0,a0,a0,a0,a0,a0},
       {a0,w3,w1,w1,w1,w3,a0},
       {a0,w1,a0,a0,a0,w1,a0},
-      {a0,w1,a0,a0,a0,w1,a0},
+      {a0,w1,b1,b2,a0,w1,a0},
       {a0,w1,a0,a0,a0,w1,a0},
       {a0,w3,w1,d1,w1,w3,a0},
       {a0,a0,a0,a0,a0,a0,a0},
