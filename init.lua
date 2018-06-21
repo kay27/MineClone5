@@ -9,11 +9,7 @@ dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")
 dofile(settlements.modpath.."/doors.lua")
-dofile(settlements.modpath.."/walls.lua")
 dofile(settlements.modpath.."/buildings.lua")
---dofile(settlements.modpath.."/bp_garden.lua")
---dofile(settlements.modpath.."/bp_hut_pr.lua")
-dofile(settlements.modpath.."/bp_hut_sr.lua")
 
 local last_time = os.time()
 
@@ -27,12 +23,7 @@ local function place_settlement(minp, maxp)
     -- for each location, build something
     for i, mpos in ipairs(location_list) do
       minetest.after(0.5, function()
-          -- get building node material for better integration to surrounding
-          local balcony_material =  minetest.get_node_or_nil(mpos).name
-          -- rebuild blueprint (random stuff)
-          local blueprint = settlements.bp_hut_sr(balcony_material)
-
-          settlements.build_blueprint(mpos,blueprint)
+          settlements.build_schematic(mpos)
         end)
     end
   end
@@ -59,11 +50,7 @@ minetest.register_craftitem("settlements:tool", {
     on_use = function(itemstack, placer, pointed_thing)
       local p = pointed_thing.under
       if p then
-        -- get building node material for better integration to surrounding
-        local balcony_material =  minetest.get_node_or_nil(p).name
-          -- rebuild blueprint (random stuff)
-        local blueprint = settlements.bp_hut_sr(balcony_material)
-        settlements.build_blueprint(p,blueprint)
+        settlements.build_schematic(p)
       end
     end
   })

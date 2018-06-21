@@ -1,4 +1,4 @@
-baumaterial = {"default:junglewood", "default:pine_wood", "default:wood", "default:aspen_wood", 
+wallmaterial = {"default:junglewood", "default:pine_wood", "default:wood", "default:aspen_wood", 
   "default:acacia_wood",   "default:stonebrick", "default:cobble", "default:desert_stonebrick", 
   "default:desert_cobble", "default:sandstone"}
 
