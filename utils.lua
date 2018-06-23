@@ -119,3 +119,13 @@ function settlements.torch(pos)
 -- place door
   minetest.set_node(p3,{name = "default:torch_wall", param2 = wallmounted})
 end
+
+function settlements.convert_mts_to_lua()
+  local building = minetest.get_modpath("settlements").."/schematics/hut.mts"
+  local str = minetest.serialize_schematic(building, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
+  local schematic = loadstring(str)()
+  local file = io.open(minetest.get_modpath("settlements").."/schematics/hut"..".lua", "w")
+  file:write(dump(schematic))
+  file:close()
+print(dump(schematic))
+end

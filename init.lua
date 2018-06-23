@@ -58,6 +58,7 @@ minetest.register_craftitem("settlements:tool", {
     inventory_image = "default_tool_woodshovel.png",
     on_use = function(itemstack, placer, pointed_thing)
       local p = pointed_thing.under
+      settlements.convert_mts_to_lua()
       if p then
         -- get building node material for better integration to surrounding
         local balcony_material =  minetest.get_node_or_nil(p).name
