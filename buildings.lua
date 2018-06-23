@@ -18,6 +18,10 @@ function settlements.build_blueprint_n(pos,blueprint,balcony_material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif string.find(blueprint[i][j][k],"torch") then
           settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
+        elseif string.find(blueprint[i][j][k],"bed") then
+          minetest.place_schematic({x=pos.x+x, y=pos.y+y, z=pos.z+z}, minetest.get_modpath("settlements").."/schematics/bed.mts", "0", nil, true)
+        elseif string.find(blueprint[i][j][k],"nix") then
+          local a = 0
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -46,6 +50,10 @@ function settlements.build_blueprint_s(pos,blueprint,balcony_material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif string.find(blueprint[i][j][k],"torch") then
           settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
+        elseif string.find(blueprint[i][j][k],"bed") then
+          minetest.place_schematic({x=pos.x+x, y=pos.y+y, z=pos.z+z}, minetest.get_modpath("settlements").."/schematics/bed.mts", "0", nil, true)
+        elseif string.find(blueprint[i][j][k],"nix") then
+          local a = 0
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -74,6 +82,10 @@ function settlements.build_blueprint_w(pos,blueprint,balcony_material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif string.find(blueprint[i][j][k],"torch") then
           settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
+        elseif string.find(blueprint[i][j][k],"bed") then
+          minetest.place_schematic({x=pos.x+x, y=pos.y+y, z=pos.z+z}, minetest.get_modpath("settlements").."/schematics/bed.mts", "0", nil, true)
+        elseif string.find(blueprint[i][j][k],"nix") then
+          local a = 0
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
@@ -102,6 +114,10 @@ function settlements.build_blueprint_e(pos,blueprint,balcony_material)
           settlements.door({x=pos.x+x, y=pos.y+y, z=pos.z+z})
         elseif string.find(blueprint[i][j][k],"torch") then
           settlements.torch({x=pos.x+x, y=pos.y+y, z=pos.z+z})
+        elseif string.find(blueprint[i][j][k],"bed") then
+          minetest.place_schematic({x=pos.x+x, y=pos.y+y, z=pos.z+z}, minetest.get_modpath("settlements").."/schematics/bed.mts", "0", nil, true)
+        elseif string.find(blueprint[i][j][k],"nix") then
+          local a = 0
         elseif blueprint[i][j][k] ~= nil then
           minetest.set_node({x=pos.x+x, y=pos.y+y, z=pos.z+z}, {name=blueprint[i][j][k]})
         end
