@@ -10,16 +10,9 @@ function settlements.build_schematic(pos)
   -- schematic conversion to lua
   local schem_lua = minetest.serialize_schematic(building, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
   -- replace material
-  schem_lua = schem_lua:gsub("default_cobble", material)
+  schem_lua = schem_lua:gsub("default:cobble", material):gsub("default:dirt_with_grass", balcony_material)
   -- format schematic string
   local schematic = loadstring(schem_lua)()
-  -- convert to mts
-  local schem_mts = minetest.serialize_schematic(schematic, "mts", {})
-  -- write file
-  local file, err = io.open(schem_path.."temp.mts", "wb")
-	file:write(schem_mts)
-	file:flush()
-	file:close()
   -- place schematic
-  minetest.place_schematic(pos, schem_path.."temp.mts", "random", nil, true)
+  minetest.place_schematic(pos, schematic, "random", nil, true)
 end
