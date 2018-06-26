@@ -50,7 +50,9 @@ minetest.register_craftitem("settlements:tool", {
     on_use = function(itemstack, placer, pointed_thing)
       local p = pointed_thing.under
       if p then
-        settlements.build_schematic(p)
+--        settlements.build_schematic(p)
+        settlements.convert_mts_to_lua()
+--        settlements.mts_save()
       end
     end
   })

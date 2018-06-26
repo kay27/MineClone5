@@ -7,3 +7,4 @@ c_floor_material = "default:wood" -- not local because doors need it
 surface_mat = {"default:dirt_with_grass","default:dirt_with_snow","default:dirt_with_dray_grass"}
 above_surface_mat = {"default:air","default:dirt_with_snow"}
 under_surface_mat = {"default:stone","default:dirt"}
+schem_path = settlements.modpath.."/schematics/"
