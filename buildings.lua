@@ -13,6 +13,11 @@ function settlements.build_schematic(pos)
   schem_lua = schem_lua:gsub("default:cobble", material):gsub("default:dirt_with_grass", balcony_material)
   -- format schematic string
   local schematic = loadstring(schem_lua)()
+  -- build foundation for the building an make room above
+  local width = schematic["size"]["x"]
+  local depth = schematic["size"]["z"]
+  local height = schematic["size"]["y"]
+  settlements.foundation(pos, width, depth, height)
   -- place schematic
   minetest.place_schematic(pos, schematic, "random", nil, true)
 end

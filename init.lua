@@ -7,8 +7,8 @@ settlements.modpath = minetest.get_modpath("settlements");
 
 dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
---dofile(settlements.modpath.."/foundation.lua")
-dofile(settlements.modpath.."/doors.lua")
+dofile(settlements.modpath.."/foundation.lua")
+--dofile(settlements.modpath.."/doors.lua")
 dofile(settlements.modpath.."/buildings.lua")
 
 local last_time = os.time()
