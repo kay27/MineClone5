@@ -1,14 +1,3 @@
-local c_floor_material = "default:wood"
-local function can_replace(pos)
-  local n = minetest.get_node_or_nil(pos)
-  if n and n.name and minetest.registered_nodes[n.name] and not minetest.registered_nodes[n.name].walkable then
-    return true
-  elseif not n then
-    return true
-  else
-    return false
-  end
-end
 --
 -- Function to fill empty space below baseplate when building on a hill
 --
@@ -17,7 +6,7 @@ function settlements.ground(pos) -- Wendelsteinkircherl, Brannenburg
   local cnt = 0
   local mat = "dirt"
   p2.y = p2.y-1
-  while can_replace(p2)==true do--minetest.get_node(p2).name == "air" do
+  while true do
     cnt = cnt+1
     if cnt > 200 then break end
     if cnt>math.random(2,4) then mat = "stone"end
@@ -29,17 +18,13 @@ end
 --
 --
 function settlements.foundation(pos, width, depth, height)
-  local c_balcony_material = "default:dirt_with_grass"
   local p5 = settlements.shallowCopy(pos)
-  p5.x = pos.x
-  p5.z = pos.z
   local height = height * 3 -- remove trees and leaves above
   for yi = 0,height do
-    for xi = 0,width do
-      for zi = 0,depth do
+    for xi = 0,width-1 do
+      for zi = 0,depth-1 do
         if yi == 0 then
           local p = {x=p5.x+xi, y=p5.y, z=p5.z+zi}
---            minetest.set_node(p, {name=c_balcony_material})
           minetest.after(1,settlements.ground,p)--(p)
         else
           minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
