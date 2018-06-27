@@ -1,6 +1,10 @@
 function settlements.build_schematic(pos)
   -- list of schematics
-  local schematic_table = {schem_path.."hut.mts"}
+  local schematic_table = { schem_path.."hut.mts",
+                            schem_path.."garden.mts",
+                            schem_path.."lamp.mts",
+                            schem_path.."tower.mts",
+                            schem_path.."well.mts",}
   -- pick one of those schematics
   local building = schematic_table[math.random(1, #schematic_table)]
   -- get building node material for better integration to surrounding
