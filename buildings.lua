@@ -1,13 +1,14 @@
 -- list of schematics
-local schematic_table = { hut     = schem_path.."hut.mts",
-                          garden  = schem_path.."garden.mts",
-                          lamp    = schem_path.."lamp.mts",
-                          tower   = schem_path.."tower.mts",
-                          well    = schem_path.."well.mts"}
+local schematic_table = { hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 7},
+  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 7},
+  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 5},
+  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 7},
+  well    = {name = "well", mts = schem_path.."well.mts", hsize = 7}
+}
 -- iterate over whole table to get all keys
 local keyset = {}
 for k in pairs(schematic_table) do
-    table.insert(keyset, k)
+  table.insert(keyset, k)
 end
 
 function settlements.build_schematic(pos, building)
@@ -33,26 +34,59 @@ end
 -- placing buildings in circles around center
 --
 function settlements.place_settlement_circle(minp, maxp)
-  local half_map_chunk_size = 40
   -- find center of chunk
+  local half_map_chunk_size = 40
   local center = {x=maxp.x-half_map_chunk_size, y=maxp.y-half_map_chunk_size, z=maxp.z-half_map_chunk_size} 
   -- find center_surcafe of chunk
   local center_surface = settlements.find_surface(center)
   -- go build settlement around center
   if center_surface then
     minetest.chat_send_all("Dorf")
-    -- pick one of those schematics
-    local building = schematic_table["tower"]
-    settlements.build_schematic(center_surface, building)
+    -- settlement_info table reset
+    for k,v in pairs(settlement_info) do
+      settlement_info[k] = nil
+    end
+    -- randomize number of buildings
+    local number_of_buildings = 15
+    -- build well in the center
+    local building_all_info = schematic_table["well"]
+    settlements.build_schematic(center_surface, building_all_info["mts"])
+    -- add to settlement info table
+    local index = 1
+    settlement_info[index] = {pos = center_surface, name = building_all_info["name"], hsize = building_all_info["hsize"]}
+    --increase index for following buildings
+    index = index + 1
     -- now some buildings around in a circle
-    local x, z, r = center_surface.x, center_surface.z, 15
-    for i = 0, 360, 45 do
-      local angle = i * math.pi / 180
-      local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
-      local pos1 = { x=ptx, y=center_surface.y, z=ptz}
-      local pos_surcafe = settlements.find_surface(pos1)
-      settlements.build_schematic(pos1, schematic_table[keyset[math.random(#keyset)]])
---      minetest.set_node(pos1, {name="default:cobble"})
+    local x, z, r = center_surface.x, center_surface.z, 5
+    -- draw 5 circles around center and increase radius by 5
+    for j = 1,10 do
+      if number_of_buildings > 0 then 
+        -- set position on imaginary circle
+        for j = 0, 360, 15 do
+          local angle = j * math.pi / 180
+          local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
+          local pos1 = { x=ptx, y=center_surface.y, z=ptz}
+          --
+          local pos_surface = settlements.find_surface(pos1)
+          if pos_surface then
+            local building_all_info = schematic_table[keyset[math.random(#keyset)]]
+            -- before placing, check_distance to other buildings
+            local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, building_all_info["hsize"])
+            if distance_to_other_buildings_ok then
+              settlements.build_schematic(pos_surface, building_all_info["mts"])
+              number_of_buildings = number_of_buildings -1
+              settlement_info[index] = {pos = pos_surface, name = building_all_info["name"], hsize = building_all_info["hsize"]}
+              index = index + 1
+              if number_of_buildings == 0 then
+                break
+              end
+            end
+          end
+        end
+      else
+        break
+      end
+      r = r + 10
     end
   end
 end

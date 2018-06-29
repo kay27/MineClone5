@@ -8,3 +8,4 @@ surface_mat = {"default:dirt_with_grass","default:dirt_with_snow","default:dirt_
 above_surface_mat = {"default:air","default:dirt_with_snow"}
 under_surface_mat = {"default:stone","default:dirt"}
 schem_path = settlements.modpath.."/schematics/"
+settlement_info = {}

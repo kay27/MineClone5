@@ -40,6 +40,18 @@ function settlements.find_surface(pos)
   return nil
 end
 --
+-- check distance for new building
+--
+function settlements.check_distance(building_pos, building_size)
+  for i, built_house in ipairs(settlement_info) do
+    local distance = vector.distance(building_pos, built_house["pos"])
+    if distance < building_size and distance < built_house["hsize"] then
+      return false
+    end
+  end
+  return true
+end
+--
 -- Function to find random positions
 -- returns array with coords where houses are built
 --
