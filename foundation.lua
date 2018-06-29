@@ -8,14 +8,14 @@ function settlements.ground(pos) -- Wendelsteinkircherl, Brannenburg
   p2.y = p2.y-1
   while true do
     cnt = cnt+1
-    if cnt > 200 then break end
+    if cnt > 100 then break end
     if cnt>math.random(2,4) then mat = "stone"end
     minetest.set_node(p2, {name="default:"..mat})
     p2.y = p2.y-1
   end
 end
 --
---
+-- Function to fill empty space below baseplate when building on a hill
 --
 function settlements.foundation(pos, width, depth, height)
   local p5 = settlements.shallowCopy(pos)

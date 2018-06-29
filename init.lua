@@ -38,7 +38,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
     if math.random(0,10)<9 or os.time() < last_time then 
       return 
     end
-    place_settlement(minp, maxp)
+--    place_settlement(minp, maxp)
+    settlements.place_settlement_circle(minp, maxp)
   end)
 
 --
