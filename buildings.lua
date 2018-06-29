@@ -1,15 +1,18 @@
 -- list of schematics
-local schematic_table = { hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 7},
-  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 7},
-  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 5},
-  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 7},
-  well    = {name = "well", mts = schem_path.."well.mts", hsize = 7}
+local schematic_table = { 
+  hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, chance = 70},
+  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 10, chance = 10},
+  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 7, chance = 10},
+  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 10, chance = 10},
+  well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, chance = 00}
 }
 -- iterate over whole table to get all keys
 local keyset = {}
 for k in pairs(schematic_table) do
   table.insert(keyset, k)
 end
+
+local building_all_info
 
 function settlements.build_schematic(pos, building)
   -- get building node material for better integration to surrounding
@@ -49,7 +52,7 @@ function settlements.place_settlement_circle(minp, maxp)
     -- randomize number of buildings
     local number_of_buildings = 15
     -- build well in the center
-    local building_all_info = schematic_table["well"]
+    building_all_info = schematic_table["well"]
     settlements.build_schematic(center_surface, building_all_info["mts"])
     -- add to settlement info table
     local index = 1
@@ -69,7 +72,13 @@ function settlements.place_settlement_circle(minp, maxp)
           --
           local pos_surface = settlements.find_surface(pos1)
           if pos_surface then
-            local building_all_info = schematic_table[keyset[math.random(#keyset)]]
+            -- pick schematic based on chance
+            local random_number = math.random(1,100)
+            if random_number > 20 then
+              building_all_info = schematic_table["hut"]   
+            else
+              building_all_info = schematic_table[keyset[math.random(#keyset)]]
+            end
             -- before placing, check_distance to other buildings
             local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, building_all_info["hsize"])
             if distance_to_other_buildings_ok then
