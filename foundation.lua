@@ -8,7 +8,7 @@ function settlements.ground(pos) -- Wendelsteinkircherl, Brannenburg
   p2.y = p2.y-1
   while true do
     cnt = cnt+1
-    if cnt > 100 then break end
+    if cnt > 50 then break end
     if cnt>math.random(2,4) then mat = "stone"end
     minetest.set_node(p2, {name="default:"..mat})
     p2.y = p2.y-1
@@ -27,7 +27,8 @@ function settlements.foundation(pos, width, depth, height)
           local p = {x=p5.x+xi, y=p5.y, z=p5.z+zi}
           minetest.after(1,settlements.ground,p)--(p)
         else
-          minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
+--          minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
+          minetest.set_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi}, {name="air"}) 
         end
       end
     end

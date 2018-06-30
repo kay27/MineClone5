@@ -44,7 +44,7 @@ end
 --
 function settlements.check_distance(building_pos, building_size)
   for i, built_house in ipairs(settlement_info) do
-    local distance = vector.distance(building_pos, built_house["pos"])
+    local distance = math.sqrt(((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
     if distance < building_size and distance < built_house["hsize"] then
       return false
     end
@@ -72,7 +72,7 @@ function settlements.load()
 end
 
 function settlements.check_distance_other_settlements(center_new_chunk)
-  local min_dist_settlements = 1000
+  local min_dist_settlements = 300
   for i, pos in ipairs(settlements_in_world) do 
     local distance = vector.distance(center_new_chunk, pos)
     if distance < min_dist_settlements then

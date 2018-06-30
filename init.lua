@@ -26,7 +26,6 @@ minetest.register_on_generated(function(minp, maxp)
       if dist_ok == false then
         return
       end
---    place_settlement(minp, maxp)
       settlements.place_settlement_circle(minp, maxp)
     end
   end)
@@ -38,9 +37,11 @@ minetest.register_craftitem("settlements:tool", {
     description = "settlements build tool",
     inventory_image = "default_tool_woodshovel.png",
     on_use = function(itemstack, placer, pointed_thing)
-      local p = pointed_thing.under
-      if p then
-        settlements.build_schematic(p)
+      local center_surface = pointed_thing.under
+      if center_surface then
+        building_all_info = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, max_num = 0.9, rplc = "y"}
+        settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"])
+
 --        settlements.convert_mts_to_lua()
 --        settlements.mts_save()
       end

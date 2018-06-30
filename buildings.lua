@@ -1,10 +1,10 @@
 -- list of schematics
 local schematic_table = { 
-  hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 11, max_num = 0.9, rplc = "y"},
-  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 11, max_num = 0.2, rplc = "n"},
-  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 10, max_num = 0.2, rplc = "n"},
-  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 11, max_num = 0.2, rplc = "n"},
-  well    = {name = "well", mts = schem_path.."well.mts", hsize = 11, max_num = 0, rplc = "n"}
+  hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, max_num = 0.9, rplc = "y"},
+  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 10, max_num = 0.2, rplc = "n"},
+  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 7, max_num = 0.2, rplc = "n"},
+  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 10, max_num = 0.2, rplc = "n"},
+  well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, max_num = 0, rplc = "n"}
 }
 local count_buildings ={}
 -- iterate over whole table to get all keys
@@ -37,7 +37,8 @@ function settlements.build_schematic(pos, building, replace_wall)
   local height = schematic["size"]["y"]
   settlements.foundation(pos, width, depth, height)
   -- place schematic
-  minetest.place_schematic(pos, schematic, "random", nil, true)
+  minetest.after(2,minetest.place_schematic,pos, schematic, "random", nil, true)
+--  minetest.place_schematic(pos, schematic, "random", nil, true)
 end
 --
 -- placing buildings in circles around center
@@ -58,7 +59,7 @@ function settlements.place_settlement_circle(minp, maxp)
     settlements.initialize_settlement()
     -- build well in the center
     building_all_info = schematic_table["well"]
-    settlements.build_schematic(center_surface, building_all_info["mts"])
+    settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"])
     -- add to settlement info table
     local index = 1
     settlement_info[index] = {pos = center_surface, name = building_all_info["name"], hsize = building_all_info["hsize"]}
@@ -107,7 +108,7 @@ function settlements.initialize_settlement()
   end
 
   -- randomize number of buildings
-  number_of_buildings = 15--math.random(7,20)
+  number_of_buildings = math.random(7,20)
   number_built = 1
   minetest.chat_send_all("Dorf".. number_of_buildings)
 end
