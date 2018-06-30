@@ -11,7 +11,6 @@ dofile(settlements.modpath.."/foundation.lua")
 --dofile(settlements.modpath.."/doors.lua")
 dofile(settlements.modpath.."/buildings.lua")
 
-local last_time = os.time()
 
 local function place_settlement(minp, maxp)
   -- wait xx seconds until building a new settlement 
