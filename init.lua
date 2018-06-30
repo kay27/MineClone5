@@ -8,37 +8,27 @@ settlements.modpath = minetest.get_modpath("settlements");
 dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")
---dofile(settlements.modpath.."/doors.lua")
 dofile(settlements.modpath.."/buildings.lua")
+-- load settlements on server
+settlements_in_world = settlements.load()
 
-
-local function place_settlement(minp, maxp)
-  -- wait xx seconds until building a new settlement 
-  last_time = os.time() + 30
-  -- find locations for buildings
-  local location_list = settlements.find_locations(minp, maxp)
-  if location_list then
-    minetest.chat_send_all("Dorf")
-    -- for each location, build something
-    for i, mpos in ipairs(location_list) do
-      minetest.after(0.5, function()
-          settlements.build_schematic(mpos)
-        end)
-    end
-  end
-end
 --
 -- on map generation, try to build a settlement
 --
-minetest.register_on_generated(function(minp, maxp, seed)
-  if maxp.y < 0 then 
+minetest.register_on_generated(function(minp, maxp)
+    if maxp.y < 0 then 
       return 
     end
-    if math.random(0,10)<9 or os.time() < last_time then 
-      return 
-    end
+    if math.random(0,10)<9 then 
+      -- check if too close to other settlements
+      local center_of_chunk = {x=maxp.x-40, y=maxp.y-40, z=maxp.z-40} 
+      local dist_ok = settlements.check_distance_other_settlements(center_of_chunk)
+      if dist_ok == false then
+        return
+      end
 --    place_settlement(minp, maxp)
-    settlements.place_settlement_circle(minp, maxp)
+      settlements.place_settlement_circle(minp, maxp)
+    end
   end)
 
 --

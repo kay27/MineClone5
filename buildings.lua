@@ -50,7 +50,10 @@ function settlements.place_settlement_circle(minp, maxp)
   local center_surface = settlements.find_surface(center)
   -- go build settlement around center
   if center_surface then
-    last_time = os.time() + 30
+    -- add settlement to list
+    table.insert(settlements_in_world, center_surface)
+    -- save list to file
+    settlements.save()
     -- initialize all settlement information
     settlements.initialize_settlement()
     -- build well in the center

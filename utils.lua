@@ -52,50 +52,32 @@ function settlements.check_distance(building_pos, building_size)
   return true
 end
 --
--- Function to find random positions
--- returns array with coords where houses are built
---
-function settlements.find_locations(minp, maxp)
--- Anzahl Gebäude
-  local amount_of_buildings = 10 --math.random(5,10) 
-  local location_list = {}
--- Mindest und maxi Abstand
-  local radius = 1000
-  local housemindist = 7
-  local housemaxdist = 1000
-  local centeroftown -- Erste location ist Mittelpunkt des Dorfes
-  local tries = 500 -- 500 Versuche, ne geeignete Location zu finden
-  local count = 0
---
-  for i = 1,amount_of_buildings do
--- Zufallslocation finden
-    ::neuerversuch:: -- Sprungpunkt, falls Abstand nicht passt
-    count = count + 1
-    -- nicht unendlich oft probieren, sonst endlos schleife
-    if count > tries then return nil end
-    local tpos = {x=math.random(minp.x,maxp.x), y=math.random(minp.y,maxp.y), z=math.random(minp.z,maxp.z)} 
-    if tpos.y < 0 then goto neuerversuch end
-    local mpos = settlements.find_surface(tpos)
-    if not mpos or mpos == nil or mpos.y < 0 then goto neuerversuch end
+function settlements.save()
+  local file = io.open(minetest.get_worldpath().."/settlements.txt", "w")
+  if file then
+    file:write(minetest.serialize(settlements_in_world))
+    file:close()
+  end
+end
 
--- vor dem Ablegen in die Liste, Abstand zu bisherigen locations finden, sobald mehr als eine location gefunden wurde
-    if i > 1 then
--- bisherige Liste durchgehen und mit aktueller mpos vergleichen
-      for j, saved_location in ipairs(location_list) do
-        local distanceToCenter = math.sqrt(((centeroftown.x - mpos.x)*(centeroftown.x - mpos.x))+((centeroftown.y - mpos.y)*(centeroftown.y - mpos.y)))
-        local distanceTohouses = math.sqrt(((saved_location.x - mpos.x)*(saved_location.x - mpos.x))+((saved_location.y - mpos.y)*(saved_location.y - mpos.y)))
-
--- nicht weiter als 
-        --               if distanceToCenter > radius or distanceTohouses < housemindist or distanceTohouses > housemaxdist then
-        if distanceTohouses < housemindist then
-          goto neuerversuch
-        end
-      end
-      location_list[i] = mpos
-    else
-      location_list[i] = mpos
-      centeroftown = mpos
+function settlements.load()
+  local file = io.open(minetest.get_worldpath().."/settlements.txt", "r")
+  if file then
+    local table = minetest.deserialize(file:read("*all"))
+    if type(table) == "table" then
+      return table
     end
   end
-  return location_list
+  return {}
+end
+
+function settlements.check_distance_other_settlements(center_new_chunk)
+  local min_dist_settlements = 1000
+  for i, pos in ipairs(settlements_in_world) do 
+    local distance = vector.distance(center_new_chunk, pos)
+    if distance < min_dist_settlements then
+      return false
+    end
+  end  
+  return true
 end
