@@ -38,7 +38,7 @@ function settlements.build_schematic(pos, building, replace_wall)
   settlements.foundation(pos, width, depth, height)
   -- place schematic
   minetest.after(2,minetest.place_schematic,pos, schematic, "random", nil, true)
---  minetest.place_schematic(pos, schematic, "random", nil, true)
+  --minetest.place_schematic(pos, schematic, "random", nil, true)
 end
 --
 -- placing buildings in circles around center
