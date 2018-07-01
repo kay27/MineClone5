@@ -81,3 +81,14 @@ function settlements.check_distance_other_settlements(center_new_chunk)
   end  
   return true
 end
+
+function settlements.fill_chest(pos)
+  local chestpos = minetest.find_node_near(pos, 10, {"default:chest"})
+  -- initialize chest
+  local meta = minetest.get_meta(pos)
+  if meta:get_string("infotext") ~= "Chest" then
+    minetest.registered_nodes["default:chest"].on_construct(chestpos)
+  end
+  local inv = minetest.get_inventory( {type="node", pos=chestpos} )
+  local item = inv:add_item("main", "default:apple")
+end
