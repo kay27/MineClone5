@@ -83,12 +83,22 @@ function settlements.check_distance_other_settlements(center_new_chunk)
 end
 
 function settlements.fill_chest(pos)
+  -- find chest in currently placed building
   local chestpos = minetest.find_node_near(pos, 10, {"default:chest"})
-  -- initialize chest
+  -- initialize chest (mts chests don't have meta)
   local meta = minetest.get_meta(pos)
   if meta:get_string("infotext") ~= "Chest" then
     minetest.registered_nodes["default:chest"].on_construct(chestpos)
   end
+  -- fill chest
   local inv = minetest.get_inventory( {type="node", pos=chestpos} )
-  local item = inv:add_item("main", "default:apple")
+  inv:add_item("main", "default:apple 3")
+  inv:add_item("main", "farming:bread")
+  inv:add_item("main", "default:steel_ingot")
+  inv:add_item("main", "default:pick_steel")
+  inv:add_item("main", "default:pick_bronze")
+  inv:add_item("main", "fire:flint_and_steel")
+  inv:add_item("main", "bucket:bucket_empty")
+  inv:add_item("main", "default:sword_steel")
+  
 end
