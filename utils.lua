@@ -83,8 +83,8 @@ function settlements.check_distance_other_settlements(center_new_chunk)
 end
 
 function settlements.fill_chest(pos)
-  -- find chest in currently placed building
-  local chestpos = minetest.find_node_near(pos, 10, {"default:chest"})
+  -- find chests within radius
+  local chestpos = minetest.find_node_near(pos, 6, {"default:chest"})
   -- initialize chest (mts chests don't have meta)
   local meta = minetest.get_meta(pos)
   if meta:get_string("infotext") ~= "Chest" then
@@ -92,13 +92,26 @@ function settlements.fill_chest(pos)
   end
   -- fill chest
   local inv = minetest.get_inventory( {type="node", pos=chestpos} )
-  inv:add_item("main", "default:apple 3")
-  inv:add_item("main", "farming:bread")
-  inv:add_item("main", "default:steel_ingot")
-  inv:add_item("main", "default:pick_steel")
-  inv:add_item("main", "default:pick_bronze")
-  inv:add_item("main", "fire:flint_and_steel")
-  inv:add_item("main", "bucket:bucket_empty")
-  inv:add_item("main", "default:sword_steel")
-  
+  -- low value items
+  if math.random(0,1) < 1 then
+    inv:add_item("main", "default:apple "..math.random(0,3))
+    inv:add_item("main", "farming:bread "..math.random(0,3))
+    inv:add_item("main", "default:steel_ingot "..math.random(0,3))
+    -- additional fillings when farmin mod enabled
+    if minetest.get_modpath("farming") ~= nil then
+      if math.random(0,1) < 1 then
+        inv:add_item("main", "farming:melon_slice "..math.random(0,3))
+        inv:add_item("main", "farming:carrot "..math.random(0,3))
+        inv:add_item("main", "farming:corn "..math.random(0,3))
+      end
+    end
+  end
+  -- medium value items
+  if math.random(0,3) < 1 then
+    inv:add_item("main", "default:pick_steel "..math.random(0,1))
+    inv:add_item("main", "default:pick_bronze "..math.random(0,1))
+    inv:add_item("main", "fire:flint_and_steel "..math.random(0,1))
+    inv:add_item("main", "bucket:bucket_empty "..math.random(0,1))
+    inv:add_item("main", "default:sword_steel "..math.random(0,1))
+  end
 end
