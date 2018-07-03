@@ -40,7 +40,7 @@ minetest.register_craftitem("settlements:tool", {
       local center_surface = pointed_thing.under
       if center_surface then
         local building_all_info = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, max_num = 0.9, rplc = "y"}
-        settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"])
+        settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
 
 --        settlements.convert_mts_to_lua()
 --        settlements.mts_save()

@@ -30,7 +30,7 @@ function settlements.find_surface(pos)
     s = minetest.get_node_or_nil(p6)
     if s == nil or s.name == "ignore" then return nil end
     for i, mats in ipairs(surface_mat) do
-      if s and s.name == mats then 
+      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
         return p6 
       end
     end
@@ -86,7 +86,7 @@ function settlements.fill_chest(pos)
   -- find chests within radius
   local chestpos = minetest.find_node_near(pos, 6, {"default:chest"})
   -- initialize chest (mts chests don't have meta)
-  local meta = minetest.get_meta(pos)
+  local meta = minetest.get_meta(chestpos)
   if meta:get_string("infotext") ~= "Chest" then
     minetest.registered_nodes["default:chest"].on_construct(chestpos)
   end

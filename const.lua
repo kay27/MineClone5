@@ -20,7 +20,7 @@ surface_mat = {
   "default:dirt_with_dry_grass",
   "default:dirt_with_coniferous_litter",
   "default:sand",
-  "default:snow"
+--  "default:snow"
   }
 above_surface_mat = {"default:air","default:dirt_with_snow"}
 under_surface_mat = {"default:stone","default:dirt"}

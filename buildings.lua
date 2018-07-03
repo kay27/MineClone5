@@ -17,7 +17,7 @@ local building_all_info
 local number_of_buildings 
 local number_built
 
-function settlements.build_schematic(pos, building, replace_wall)
+function settlements.build_schematic(pos, building, replace_wall, name)
   -- get building node material for better integration to surrounding
   local balcony_material =  minetest.get_node_or_nil(pos).name
   -- pick random material
@@ -37,9 +37,13 @@ function settlements.build_schematic(pos, building, replace_wall)
   local height = schematic["size"]["y"]
   settlements.foundation(pos, width, depth, height)
   -- place schematic
-  minetest.after(2,minetest.place_schematic,pos, schematic, "random", nil, true)
-  --minetest.place_schematic(pos, schematic, "random", nil, true)
-  minetest.after(4,settlements.fill_chest,pos)
+  minetest.after(2, function()
+      minetest.place_schematic(pos, schematic, "random", nil, true)
+      -- fill chest
+      if name == "hut" then
+        minetest.after(2,settlements.fill_chest,pos)
+      end
+    end)
 end
 --
 -- placing buildings in circles around center
@@ -60,7 +64,7 @@ function settlements.place_settlement_circle(minp, maxp)
     settlements.initialize_settlement()
     -- build well in the center
     building_all_info = schematic_table["well"]
-    settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"])
+    settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
     -- add to settlement info table
     local index = 1
     settlement_info[index] = {pos = center_surface, name = building_all_info["name"], hsize = building_all_info["hsize"]}
@@ -80,7 +84,7 @@ function settlements.place_settlement_circle(minp, maxp)
           local pos_surface = settlements.find_surface(pos1)
           if pos_surface then
             if settlements.pick_next_building(pos_surface) then
-              settlements.build_schematic(pos_surface, building_all_info["mts"],building_all_info["rplc"])
+              settlements.build_schematic(pos_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
               number_built = number_built + 1
               settlement_info[index] = {pos = pos_surface, name = building_all_info["name"], hsize = building_all_info["hsize"]}
               index = index + 1
@@ -117,8 +121,8 @@ end
 -- everything necessary to pick a fitting next building
 --
 function settlements.pick_next_building(pos_surface)
- -- building_all_info = schematic_table[keyset[math.random(#keyset)]]
- -- pick schematic based on chance
+  -- building_all_info = schematic_table[keyset[math.random(#keyset)]]
+  -- pick schematic based on chance
   local random_number = math.random(1,100)
   if random_number > 85 and count_buildings["garden"] < schematic_table["garden"]["max_num"]*number_of_buildings then
     building_all_info = schematic_table["garden"]   
