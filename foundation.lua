@@ -17,12 +17,21 @@ end
 --
 -- Function to fill empty space below baseplate when building on a hill
 --
-function settlements.foundation(pos, width, depth, height)
+function settlements.foundation(pos, width, depth, height, rotation)
   local p5 = settlements.shallowCopy(pos)
-  local height = height * 3 -- remove trees and leaves above
-  for yi = 0,height do
-    for xi = 0,width-1 do
-      for zi = 0,depth-1 do
+  local fheight = height * 3 -- remove trees and leaves above
+  local fwidth
+  local fdepth
+  if rotation == "0" or rotation == "180" then
+    fwidth = width
+    fdepth = depth
+  else
+    fwidth = depth
+    fdepth = width
+  end
+  for yi = 0,fheight do
+    for xi = 0,fwidth-1 do
+      for zi = 0,fdepth-1 do
         if yi == 0 then
           local p = {x=p5.x+xi, y=p5.y, z=p5.z+zi}
           minetest.after(1,settlements.ground,p)--(p)

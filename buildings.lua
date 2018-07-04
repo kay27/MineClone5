@@ -5,7 +5,7 @@ local schematic_table = {
   lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 7, max_num = 0.2, rplc = "n"},
   tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 10, max_num = 0.2, rplc = "n"},
   well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, max_num = 0, rplc = "n"},
-  church  = {name = "church", mts = schem_path.."church.mts", hsize = 13, max_num = 0.1, rplc = "n"}
+  church  = {name = "church", mts = schem_path.."church.mts", hsize = 14, max_num = 0.1, rplc = "n"}
 }
 local count_buildings ={}
 -- iterate over whole table to get all keys
@@ -36,10 +36,12 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local width = schematic["size"]["x"]
   local depth = schematic["size"]["z"]
   local height = schematic["size"]["y"]
-  settlements.foundation(pos, width, depth, height)
+  local possible_rotations = {"0", "90", "180", "270"}
+  local rotation = possible_rotations[ math.random( #possible_rotations ) ]
+  settlements.foundation(pos, width, depth, height, rotation)
   -- place schematic
   minetest.after(2, function()
-      minetest.place_schematic(pos, schematic, "random", nil, true)
+      minetest.place_schematic(pos, schematic, rotation, nil, true)
       -- fill chest
       if name == "hut" then
         minetest.after(2,settlements.fill_chest,pos)
