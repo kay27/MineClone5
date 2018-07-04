@@ -39,7 +39,7 @@ minetest.register_craftitem("settlements:tool", {
     on_use = function(itemstack, placer, pointed_thing)
       local center_surface = pointed_thing.under
       if center_surface then
-        local building_all_info = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, max_num = 0.9, rplc = "y"}
+        local building_all_info = {name = "church", mts = schem_path.."church.mts", hsize = 13, max_num = 0.9, rplc = "n"}
         settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
 
 --        settlements.convert_mts_to_lua()

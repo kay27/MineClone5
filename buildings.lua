@@ -4,7 +4,8 @@ local schematic_table = {
   garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 10, max_num = 0.2, rplc = "n"},
   lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 7, max_num = 0.2, rplc = "n"},
   tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 10, max_num = 0.2, rplc = "n"},
-  well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, max_num = 0, rplc = "n"}
+  well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, max_num = 0, rplc = "n"},
+  church  = {name = "church", mts = schem_path.."church.mts", hsize = 13, max_num = 0.1, rplc = "n"}
 }
 local count_buildings ={}
 -- iterate over whole table to get all keys
@@ -130,6 +131,8 @@ function settlements.pick_next_building(pos_surface)
     building_all_info = schematic_table["tower"]   
   elseif random_number > 65 and count_buildings["lamp"] < schematic_table["lamp"]["max_num"]*number_of_buildings then
     building_all_info = schematic_table["lamp"]   
+  elseif random_number > 55 and count_buildings["church"] < schematic_table["church"]["max_num"]*number_of_buildings then
+    building_all_info = schematic_table["church"]   
   else
     building_all_info = schematic_table["hut"]   
   end
