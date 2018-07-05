@@ -92,9 +92,10 @@ function settlements.fill_chest(pos)
   end
   -- fill chest
   local inv = minetest.get_inventory( {type="node", pos=chestpos} )
+  -- always
+  inv:add_item("main", "default:apple "..math.random(1,3))
   -- low value items
   if math.random(0,1) < 1 then
-    inv:add_item("main", "default:apple "..math.random(0,3))
     inv:add_item("main", "farming:bread "..math.random(0,3))
     inv:add_item("main", "default:steel_ingot "..math.random(0,3))
     -- additional fillings when farmin mod enabled

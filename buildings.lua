@@ -1,11 +1,12 @@
 -- list of schematics
 local schematic_table = { 
-  hut     = {name = "hut", mts = schem_path.."hut.mts", hsize = 10, max_num = 0.9, rplc = "y"},
-  garden  = {name = "garden", mts = schem_path.."garden.mts", hsize = 10, max_num = 0.2, rplc = "n"},
-  lamp    = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 7, max_num = 0.2, rplc = "n"},
-  tower   = {name = "tower", mts = schem_path.."tower.mts", hsize = 10, max_num = 0.2, rplc = "n"},
-  well    = {name = "well", mts = schem_path.."well.mts", hsize = 10, max_num = 0, rplc = "n"},
-  church  = {name = "church", mts = schem_path.."church.mts", hsize = 14, max_num = 0.1, rplc = "n"}
+  hut         = {name = "hut", mts = schem_path.."hut.mts", hsize = 11, max_num = 0.9, rplc = "y"},
+  garden      = {name = "garden", mts = schem_path.."garden.mts", hsize = 11, max_num = 0.2, rplc = "n"},
+  lamp        = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 8, max_num = 0.1, rplc = "n"},
+  tower       = {name = "tower", mts = schem_path.."tower.mts", hsize = 11, max_num = 0.15, rplc = "n"},
+  well        = {name = "well", mts = schem_path.."well.mts", hsize = 11, max_num = 0, rplc = "n"},
+  church      = {name = "church", mts = schem_path.."church.mts", hsize = 15, max_num = 0.075, rplc = "n"},
+  blacksmith  = {name = "blacksmith", mts = schem_path.."blacksmith.mts", hsize = 11, max_num = 0.1, rplc = "n"},
 }
 local count_buildings ={}
 -- iterate over whole table to get all keys
@@ -40,7 +41,7 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local rotation = possible_rotations[ math.random( #possible_rotations ) ]
   settlements.foundation(pos, width, depth, height, rotation)
   -- place schematic
-  minetest.after(2, function()
+  minetest.after(3, function()
       minetest.place_schematic(pos, schematic, rotation, nil, true)
       -- fill chest
       if name == "hut" then
@@ -135,6 +136,8 @@ function settlements.pick_next_building(pos_surface)
     building_all_info = schematic_table["lamp"]   
   elseif random_number > 55 and count_buildings["church"] < schematic_table["church"]["max_num"]*number_of_buildings then
     building_all_info = schematic_table["church"]   
+  elseif random_number > 45 and count_buildings["blacksmith"] < schematic_table["blacksmith"]["max_num"]*number_of_buildings then
+    building_all_info = schematic_table["blacksmith"]   
   else
     building_all_info = schematic_table["hut"]   
   end
