@@ -1,6 +1,6 @@
-package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
-package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
-require('mobdebug').start()
+--package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
+--package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
+--require('mobdebug').start()
 
 settlements = {}
 settlements.modpath = minetest.get_modpath("settlements");
