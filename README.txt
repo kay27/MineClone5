@@ -1,6 +1,6 @@
 Minetest mod "Settlements"
 =========================
-version: 0.1 Beta
+version: 0.1 alpha
 
 License of source code: WTFPL
 -----------------------------
@@ -16,8 +16,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 Using the mod:
 --------------
 
-This mod adds randomly generated buildings in grass lands and forrests
+This mod adds settlements on world generation
 
 Credits:
 --------------
-This mod is heavily based on "ruins" by BlockMen
+This mod is based on "ruins" by BlockMen

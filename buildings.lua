@@ -8,7 +8,9 @@ end
 local building_all_info
 local number_of_buildings 
 local number_built
-
+--
+-- build schematic, replace material, rotation
+--
 function settlements.build_schematic(pos, building, replace_wall, name)
   -- get building node material for better integration to surrounding
   local balcony_material =  minetest.get_node_or_nil(pos).name
@@ -132,35 +134,4 @@ function settlements.pick_next_building(pos_surface)
     end
   end
   return nil
-end--
--- everything necessary to pick a fitting next building
---
-function settlements.pick_next_building_old(pos_surface)
-  -- building_all_info = schematic_table[keyset[math.random(#keyset)]]
-  -- pick schematic based on chance
-  local random_number = math.random(1,100)
-  if random_number > 85 and count_buildings["garden"] < schematic_table["garden"]["max_num"]*number_of_buildings then
-    building_all_info = schematic_table["garden"]   
-  elseif random_number > 75 and count_buildings["tower"] < schematic_table["tower"]["max_num"]*number_of_buildings then
-    building_all_info = schematic_table["tower"]   
-  elseif random_number > 65 and count_buildings["lamp"] < schematic_table["lamp"]["max_num"]*number_of_buildings then
-    building_all_info = schematic_table["lamp"]   
-  elseif random_number > 55 and count_buildings["church"] < schematic_table["church"]["max_num"]*number_of_buildings then
-    building_all_info = schematic_table["church"]   
-  elseif random_number > 45 and count_buildings["blacksmith"] < schematic_table["blacksmith"]["max_num"]*number_of_buildings then
-    building_all_info = schematic_table["blacksmith"]   
-  else
-    building_all_info = schematic_table["hut"]   
-  end
-  -- before placing, check_distance to other buildings
-  local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, building_all_info["hsize"])
-  if distance_to_other_buildings_ok then
-    -- count built houses
-    count_buildings[building_all_info["name"]] = count_buildings[building_all_info["name"]] +1
-
-    return building_all_info["mts"]
-    --todo hier den count_up einfügen
-  else
-    return nil
-  end
 end

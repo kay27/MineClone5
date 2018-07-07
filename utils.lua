@@ -1,5 +1,5 @@
 --
--- Function to copy tables
+-- function to copy tables
 --
 function settlements.shallowCopy(original)
   local copy = {}
@@ -9,7 +9,7 @@ function settlements.shallowCopy(original)
   return copy
 end
 --
--- Function to find surface block y coordinate
+-- function to find surface block y coordinate
 -- returns surface postion
 --
 function settlements.find_surface(pos)
@@ -52,6 +52,8 @@ function settlements.check_distance(building_pos, building_size)
   return true
 end
 --
+-- save list of generated settlements
+--
 function settlements.save()
   local file = io.open(minetest.get_worldpath().."/settlements.txt", "w")
   if file then
@@ -59,7 +61,9 @@ function settlements.save()
     file:close()
   end
 end
-
+--
+-- load list of generated settlements
+--
 function settlements.load()
   local file = io.open(minetest.get_worldpath().."/settlements.txt", "r")
   if file then
@@ -70,7 +74,9 @@ function settlements.load()
   end
   return {}
 end
-
+--
+-- check distance to other settlements
+--
 function settlements.check_distance_other_settlements(center_new_chunk)
   local min_dist_settlements = 300
   for i, pos in ipairs(settlements_in_world) do 
@@ -81,7 +87,9 @@ function settlements.check_distance_other_settlements(center_new_chunk)
   end  
   return true
 end
-
+--
+-- fill chests
+--
 function settlements.fill_chest(pos)
   -- find chests within radius
   local chestpos = minetest.find_node_near(pos, 6, {"default:chest"})

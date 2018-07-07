@@ -1,7 +1,7 @@
 --
--- Function to fill empty space below baseplate when building on a hill
+-- function to fill empty space below baseplate when building on a hill
 --
-function settlements.ground(pos) -- Wendelsteinkircherl, Brannenburg
+function settlements.ground(pos) -- role model: Wendelsteinkircherl, Brannenburg
   local p2 = pos
   local cnt = 0
   local mat = "dirt"
@@ -15,7 +15,7 @@ function settlements.ground(pos) -- Wendelsteinkircherl, Brannenburg
   end
 end
 --
--- Function to fill empty space below baseplate when building on a hill
+-- function to fill empty space below baseplate when building on a hill
 --
 function settlements.foundation(pos, width, depth, height, rotation)
   local p5 = settlements.shallowCopy(pos)
