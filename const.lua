@@ -51,4 +51,4 @@ settlements_in_world = {}
 --
 -- min_distance between settlements
 --
-min_dist_settlements = 150
+min_dist_settlements = 1000

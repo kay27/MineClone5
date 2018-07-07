@@ -111,7 +111,7 @@ function settlements.initialize_settlement()
   -- randomize number of buildings
   number_of_buildings = math.random(7,20)
   number_built = 1
-  minetest.chat_send_all("Dorf".. number_of_buildings)
+--  minetest.chat_send_all("Dorf".. number_of_buildings)
 end
 --
 -- everything necessary to pick a fitting next building
