@@ -116,3 +116,14 @@ function settlements.fill_chest(pos)
     inv:add_item("main", "default:sword_steel "..math.random(0,1))
   end
 end
+--
+-- randomize table
+--
+function shuffle(tbl)
+  local size = #tbl
+  for i = size, 1, -1 do
+    local rand = math.random(size)
+    tbl[i], tbl[rand] = tbl[rand], tbl[i]
+  end
+  return tbl
+end

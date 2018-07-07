@@ -1,13 +1,3 @@
--- list of schematics
-local schematic_table = { 
-  hut         = {name = "hut", mts = schem_path.."hut.mts", hsize = 11, max_num = 0.9, rplc = "y"},
-  garden      = {name = "garden", mts = schem_path.."garden.mts", hsize = 11, max_num = 0.2, rplc = "n"},
-  lamp        = {name = "lamp", mts = schem_path.."lamp.mts", hsize = 8, max_num = 0.1, rplc = "n"},
-  tower       = {name = "tower", mts = schem_path.."tower.mts", hsize = 11, max_num = 0.15, rplc = "n"},
-  well        = {name = "well", mts = schem_path.."well.mts", hsize = 11, max_num = 0, rplc = "n"},
-  church      = {name = "church", mts = schem_path.."church.mts", hsize = 15, max_num = 0.075, rplc = "n"},
-  blacksmith  = {name = "blacksmith", mts = schem_path.."blacksmith.mts", hsize = 11, max_num = 0.1, rplc = "n"},
-}
 local count_buildings ={}
 -- iterate over whole table to get all keys
 local keyset = {}
@@ -67,7 +57,7 @@ function settlements.place_settlement_circle(minp, maxp)
     -- initialize all settlement information
     settlements.initialize_settlement()
     -- build well in the center
-    building_all_info = schematic_table["well"]
+    building_all_info = schematic_table[1]
     settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
     -- add to settlement info table
     local index = 1
@@ -113,7 +103,7 @@ function settlements.initialize_settlement()
   -- count_buildings table reset
   for k,v in pairs(schematic_table) do
 --    local name = schematic_table[v]["name"]
-    count_buildings[k] = 0
+    count_buildings[v["name"]] = 0
   end
 
   -- randomize number of buildings
@@ -125,6 +115,27 @@ end
 -- everything necessary to pick a fitting next building
 --
 function settlements.pick_next_building(pos_surface)
+  local randomized_schematic_table = shuffle(schematic_table)
+  -- pick schematic
+  local size = #randomized_schematic_table
+  for i = size, 1, -1 do
+    -- already enough buildings of that type?
+    if count_buildings[randomized_schematic_table[i]["name"]] < randomized_schematic_table[i]["max_num"]*number_of_buildings      then
+      building_all_info = randomized_schematic_table[i]
+      -- check distance to other buildings
+      local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, building_all_info["hsize"])
+      if distance_to_other_buildings_ok then
+      -- count built houses
+        count_buildings[building_all_info["name"]] = count_buildings[building_all_info["name"]] +1
+        return building_all_info["mts"]
+      end
+    end
+  end
+  return nil
+end--
+-- everything necessary to pick a fitting next building
+--
+function settlements.pick_next_building_old(pos_surface)
   -- building_all_info = schematic_table[keyset[math.random(#keyset)]]
   -- pick schematic based on chance
   local random_number = math.random(1,100)

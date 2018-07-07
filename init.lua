@@ -14,7 +14,7 @@ settlements_in_world = settlements.load()
 if minetest.get_modpath("mobs_npc") ~= nil then
   --mobs:register_spawn(name, nodes, max_light, min_light, chance, active_object_count, max_height, day_toggle)
   mobs:register_spawn("mobs_npc:npc", {"default:junglewood"}, 20, 0, 1, 7, 31000, nil)
-  mobs:register_spawn("mobs_npc:trader", {"default:junglewood"}, 20, 0, 1, 7, 31000, nil)
+--  mobs:register_spawn("mobs_npc:trader", {"default:junglewood"}, 20, 0, 1, 7, 31000, nil)
 end 
 --
 -- on map generation, try to build a settlement
