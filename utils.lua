@@ -125,6 +125,20 @@ function settlements.fill_chest(pos)
   end
 end
 --
+-- initialize furnace
+--
+function settlements.initialize_furnace(pos)
+  -- find chests within radius
+  local furnacepos = minetest.find_node_near(pos, 7, {"default:furnace"})
+  -- initialize furnacepos (mts furnacepos don't have meta)
+  if furnacepos then
+    local meta = minetest.get_meta(furnacepos)
+    if meta:get_string("infotext") ~= "furnace" then
+      minetest.registered_nodes["default:furnace"].on_construct(furnacepos)
+    end
+  end
+end
+--
 -- randomize table
 --
 function shuffle(tbl)

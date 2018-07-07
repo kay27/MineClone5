@@ -38,6 +38,8 @@ function settlements.build_schematic(pos, building, replace_wall, name)
       -- fill chest
       if name == "hut" then
         minetest.after(2,settlements.fill_chest,pos)
+      elseif name == "blacksmith" then
+        minetest.after(2,settlements.initialize_furnace,pos)
       end
     end)
 end
