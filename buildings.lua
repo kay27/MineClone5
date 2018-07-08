@@ -35,14 +35,10 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local rotation = possible_rotations[ math.random( #possible_rotations ) ]
   settlements.foundation(pos, width, depth, height, rotation)
   -- place schematic
-  minetest.after(3, function()
+  minetest.after(4, function()
       minetest.place_schematic(pos, schematic, rotation, nil, true)
-      -- fill chest
-      if name == "hut" then
-        minetest.after(2,settlements.fill_chest,pos)
-      elseif name == "blacksmith" then
-        minetest.after(2,settlements.initialize_furnace,pos)
-      end
+      -- initialize special nodes (chests, furnace)
+      minetest.after(2,settlements.initialize_nodes, pos, width, depth, height)
     end)
 end
 --

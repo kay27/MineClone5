@@ -141,6 +141,30 @@ function settlements.initialize_furnace(pos)
   end
 end
 --
+-- initialize furnace, chests, bookshelves
+--
+function settlements.initialize_nodes(pos, width, depth, height)
+  local p = settlements.shallowCopy(pos)
+  for yi = 1,height do
+    for xi = 0,width do
+      for zi = 0,depth do
+        local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
+        local node = minetest.get_node(ptemp) 
+        if node.name == "default:furnace" or
+          node.name == "default:chest" or
+          node.name == "default:bookshelf"
+        then
+          minetest.registered_nodes[node.name].on_construct(ptemp)
+        end
+        -- when chest is found -> fill with stuff
+        if node.name == "default:chest" then
+          minetest.after(3,settlements.fill_chest,pos)
+        end
+      end
+    end
+  end
+end
+--
 -- randomize table
 --
 function shuffle(tbl)
