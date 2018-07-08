@@ -15,9 +15,9 @@ end
 function settlements.find_surface(pos)
   local p6 = settlements.shallowCopy(pos)
   local cnt = 0
-  local itter -- nach oben oder nach unten zählen
+  local itter -- count up or down
   local cnt_max = 200
--- check, ob zu weit unten mit der Suche begonnen wird
+-- check, in which direction to look for surface
   local s = minetest.get_node_or_nil(p6)
   if s and string.find(s.name,"air") then 
     --p6.y = p6.y+50
@@ -30,7 +30,9 @@ function settlements.find_surface(pos)
     s = minetest.get_node_or_nil(p6)
     if s == nil or s.name == "ignore" then return nil end
     for i, mats in ipairs(surface_mat) do
-      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
+--      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
+      if s and s.name == mats and (string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"air") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"snow")) then 
         return p6 
       end
     end
@@ -142,10 +144,11 @@ end
 -- randomize table
 --
 function shuffle(tbl)
-  local size = #tbl
+  local table = settlements.shallowCopy(tbl)
+  local size = #table
   for i = size, 1, -1 do
     local rand = math.random(size)
-    tbl[i], tbl[rand] = tbl[rand], tbl[i]
+    table[i], table[rand] = table[rand], table[i]
   end
-  return tbl
+  return table
 end
