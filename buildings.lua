@@ -23,6 +23,8 @@ function settlements.build_schematic(pos, building, replace_wall, name)
     schem_lua = schem_lua:gsub("default:cobble", material)
   end
   schem_lua = schem_lua:gsub("default:dirt_with_grass", balcony_material)
+  -- special material for spawning npcs
+  schem_lua = schem_lua:gsub("default:junglewood", "settlements:junglewood")
   -- format schematic string
   local schematic = loadstring(schem_lua)()
   -- build foundation for the building an make room above
