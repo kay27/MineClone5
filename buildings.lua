@@ -67,7 +67,7 @@ function settlements.place_settlement_circle(minp, maxp)
     --increase index for following buildings
     index = index + 1
     -- now some buildings around in a circle
-    local x, z, r = center_surface.x, center_surface.z, 5
+    local x, z, r = center_surface.x, center_surface.z, 10
     -- draw 5 circles around center and increase radius by 5
     for j = 1,10 do
       if number_built < number_of_buildings  then 
