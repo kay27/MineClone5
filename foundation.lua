@@ -9,7 +9,7 @@ function settlements.ground(pos) -- role model: Wendelsteinkircherl, Brannenburg
   while true do
     cnt = cnt+1
     if cnt > 50 then break end
-    if cnt>math.random(2,4) then mat = "stone"end
+    if cnt>math.random(2,4) then mat = "stone" end
     minetest.swap_node(p2, {name="default:"..mat})
     p2.y = p2.y-1
   end
@@ -37,7 +37,8 @@ function settlements.foundation(pos, width, depth, height, rotation)
           minetest.after(1,settlements.ground,p)--(p)
         else
 --          minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
-          minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi}, {name="air"}) 
+          minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi}, 
+                             {name="air"}) 
         end
       end
     end

@@ -31,8 +31,10 @@ function settlements.find_surface(pos)
     if s == nil or s.name == "ignore" then return nil end
     for i, mats in ipairs(surface_mat) do
 --      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
-      if s and s.name == mats and (string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"air") or
-        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"snow")) then 
+      if s and s.name == mats and 
+      (string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"air") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"snow")) 
+      then 
         return p6 
       end
     end
@@ -45,9 +47,12 @@ end
 -- check distance for new building
 --
 function settlements.check_distance(building_pos, building_size)
+  local distance
   for i, built_house in ipairs(settlement_info) do
-    local distance = math.sqrt(((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
-    if distance < building_size and distance < built_house["hsize"] then
+    distance = math.sqrt(((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
+    if distance < building_size or 
+       distance < built_house["hsize"] 
+    then
       return false
     end
   end
@@ -131,11 +136,15 @@ end
 --
 function settlements.initialize_furnace(pos)
   -- find chests within radius
-  local furnacepos = minetest.find_node_near(pos, 7, {"default:furnace"})
+  local furnacepos = minetest.find_node_near(pos, 
+                                              7, --radius
+                                              {"default:furnace"})
   -- initialize furnacepos (mts furnacepos don't have meta)
-  if furnacepos then
+  if furnacepos 
+  then
     local meta = minetest.get_meta(furnacepos)
-    if meta:get_string("infotext") ~= "furnace" then
+    if meta:get_string("infotext") ~= "furnace" 
+    then
       minetest.registered_nodes["default:furnace"].on_construct(furnacepos)
     end
   end

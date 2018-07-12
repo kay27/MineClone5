@@ -22,16 +22,26 @@ minetest.register_node("settlements:junglewood", {
 	groups = {choppy=3, wood=2},
   sounds = default.node_sound_wood_defaults(),
   })
-
-
-
 --
 -- register inhabitants
 --
 if minetest.get_modpath("mobs_npc") ~= nil then
-  --mobs:register_spawn(name, nodes, max_light, min_light, chance, active_object_count, max_height, day_toggle)
-  mobs:register_spawn("mobs_npc:npc", {"settlements:junglewood"}, 20, 0, 1, 7, 31000, nil)
-  mobs:register_spawn("mobs_npc:trader", {"settlements:junglewood"}, 20, 0, 1, 7, 31000, nil)
+  mobs:register_spawn("mobs_npc:npc", --name
+    {"settlements:junglewood"}, --nodes
+    20, --max_light
+    0, --min_light
+    20, --chance
+    7, --active_object_count
+    31000, --max_height
+    nil) --day_toggle
+  mobs:register_spawn("mobs_npc:trader", --name
+    {"settlements:junglewood"}, --nodes
+    20, --max_light
+    0, --min_light
+    20, --chance
+    7, --active_object_count
+    31000, --max_height
+    nil)--day_toggle
 end 
 --
 -- on map generation, try to build a settlement
@@ -42,9 +52,13 @@ minetest.register_on_generated(function(minp, maxp)
     end
     if math.random(0,10)<9 then 
       -- check if too close to other settlements
-      local center_of_chunk = {x=maxp.x-40, y=maxp.y-40, z=maxp.z-40} 
+      local center_of_chunk = { x=maxp.x-40, 
+                                y=maxp.y-40, 
+                                z=maxp.z-40
+                                } 
       local dist_ok = settlements.check_distance_other_settlements(center_of_chunk)
-      if dist_ok == false then
+      if dist_ok == false 
+      then
         return
       end
       settlements.place_settlement_circle(minp, maxp)
@@ -63,7 +77,10 @@ minetest.register_craftitem("settlements:tool", {
       local center_surface = pointed_thing.under
       if center_surface then
         local building_all_info = {name = "blacksmith", mts = schem_path.."blacksmith.mts", hsize = 13, max_num = 0.9, rplc = "n"}
-        settlements.build_schematic(center_surface, building_all_info["mts"],building_all_info["rplc"], building_all_info["name"])
+        settlements.build_schematic(center_surface, 
+                                    building_all_info["mts"],
+                                    building_all_info["rplc"], 
+                                    building_all_info["name"])
 
 --        settlements.convert_mts_to_lua()
 --        settlements.mts_save()
