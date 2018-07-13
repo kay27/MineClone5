@@ -1,4 +1,8 @@
 --
+-- switch for debugging
+--
+settlements.debug = false
+--
 -- material to replace cobblestone with
 --
 wallmaterial = {
@@ -39,6 +43,7 @@ surface_mat = {
   "default:dirt_with_dry_grass",
   "default:dirt_with_coniferous_litter",
   "default:sand",
+  "default:desert_sand",
 --  "default:snow"
 }
 --
@@ -53,3 +58,16 @@ settlements_in_world = {}
 -- min_distance between settlements
 --
 min_dist_settlements = 1000
+if settlements.debug == true 
+then
+  min_dist_settlements = 200
+end
+--
+-- maximum allowed difference in height for building a sttlement
+--
+max_height_difference = 10
+--
+--
+--
+half_map_chunk_size = 40
+quarter_map_chunk_size = 20

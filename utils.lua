@@ -51,7 +51,7 @@ function settlements.check_distance(building_pos, building_size)
   for i, built_house in ipairs(settlement_info) do
     distance = math.sqrt(((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
     if distance < building_size or 
-       distance < built_house["hsize"] 
+    distance < built_house["hsize"] 
     then
       return false
     end
@@ -137,8 +137,8 @@ end
 function settlements.initialize_furnace(pos)
   -- find chests within radius
   local furnacepos = minetest.find_node_near(pos, 
-                                              7, --radius
-                                              {"default:furnace"})
+    7, --radius
+    {"default:furnace"})
   -- initialize furnacepos (mts furnacepos don't have meta)
   if furnacepos 
   then
@@ -160,8 +160,8 @@ function settlements.initialize_nodes(pos, width, depth, height)
         local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
         local node = minetest.get_node(ptemp) 
         if node.name == "default:furnace" or
-          node.name == "default:chest" or
-          node.name == "default:bookshelf"
+        node.name == "default:chest" or
+        node.name == "default:bookshelf"
         then
           minetest.registered_nodes[node.name].on_construct(ptemp)
         end
@@ -184,4 +184,45 @@ function shuffle(tbl)
     table[i], table[rand] = table[rand], table[i]
   end
   return table
+end
+--
+-- get heightmap
+--
+function settlements.determine_heightmap(minp, maxp)
+  -- max height and min height, initialize with impossible values for easier first time setting
+  local max_y = -100
+  local min_y = 100
+  --
+  -- only analyze the center 40x40 of a chunk
+  --
+  local cmaxp = {
+    x=maxp.x-quarter_map_chunk_size, 
+    y=maxp.y, -- -quarter_map_chunk_size, 
+    z=maxp.z-quarter_map_chunk_size
+  }
+  local cminp = {
+    x=minp.x+quarter_map_chunk_size, 
+    y=minp.y, -- +quarter_map_chunk_size, 
+    z=minp.z+quarter_map_chunk_size
+  }
+  --
+  -- walk through chunk and find surfaces
+  --
+  for xi = cminp.x,cmaxp.x do
+    for zi = cminp.z,cmaxp.z do
+      pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi})
+      if pos_surface
+      then
+        if pos_surface.y < min_y
+        then
+          min_y = pos_surface.y
+        end
+        if pos_surface.y > max_y
+        then
+          max_y = pos_surface.y
+        end
+      end
+    end
+  end
+  return max_y - min_y
 end

@@ -58,10 +58,11 @@ end
 --
 function settlements.place_settlement_circle(minp, maxp)
   -- find center of chunk
-  local half_map_chunk_size = 40
-  local center = {x=maxp.x-half_map_chunk_size, 
+  local center = {
+                  x=maxp.x-half_map_chunk_size, 
                   y=maxp.y-half_map_chunk_size, 
-                  z=maxp.z-half_map_chunk_size} 
+                  z=maxp.z-half_map_chunk_size
+                  } 
   -- find center_surcafe of chunk
   local center_surface = settlements.find_surface(center)
   -- go build settlement around center
@@ -138,7 +139,10 @@ function settlements.initialize_settlement()
   -- randomize number of buildings
   number_of_buildings = math.random(7,20)
   number_built = 1
---  minetest.chat_send_all("Dorf".. number_of_buildings)
+  if settlements.debug == true
+  then
+    minetest.chat_send_all("settlement ".. number_of_buildings)
+  end
 end
 --
 -- everything necessary to pick a fitting next building

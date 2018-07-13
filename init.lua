@@ -17,10 +17,10 @@ settlements_in_world = settlements.load()
 -- register block for npc spawn
 --
 minetest.register_node("settlements:junglewood", {
-	description = "special junglewood floor",
-	tiles = {"default_junglewood.png"},
-	groups = {choppy=3, wood=2},
-  sounds = default.node_sound_wood_defaults(),
+    description = "special junglewood floor",
+    tiles = {"default_junglewood.png"},
+    groups = {choppy=3, wood=2},
+    sounds = default.node_sound_wood_defaults(),
   })
 --
 -- register inhabitants
@@ -47,21 +47,42 @@ end
 -- on map generation, try to build a settlement
 --
 minetest.register_on_generated(function(minp, maxp)
-    if maxp.y < 0 then 
-      return 
-    end
-    if math.random(0,10)<9 then 
-      -- check if too close to other settlements
-      local center_of_chunk = { x=maxp.x-40, 
-                                y=maxp.y-40, 
-                                z=maxp.z-40
-                                } 
+    --
+    -- randomly try to build settlements
+    -- 
+    if math.random(1,10)<9 then 
+      --
+      -- don't build settlement underground
+      --
+      if maxp.y < 0 then 
+        return 
+      end
+      --
+      -- don't build settlements too close to each other
+      --
+      local center_of_chunk = { 
+        x=maxp.x-half_map_chunk_size, 
+        y=maxp.y-half_map_chunk_size, 
+        z=maxp.z-half_map_chunk_size
+      } 
       local dist_ok = settlements.check_distance_other_settlements(center_of_chunk)
       if dist_ok == false 
       then
         return
       end
+      --
+      -- don't build settlements on (too) uneven terrain
+      --
+      local height_difference = settlements.determine_heightmap(minp, maxp)
+      if height_difference > max_height_difference 
+      then
+        return
+      end
+      -- 
+      -- if nothing prevents the settlement -> do it
+      --
       settlements.place_settlement_circle(minp, maxp)
+
     end
   end)
 --
@@ -76,7 +97,11 @@ minetest.register_craftitem("settlements:tool", {
     on_use = function(itemstack, placer, pointed_thing)
       local center_surface = pointed_thing.under
       if center_surface then
-        local building_all_info = {name = "blacksmith", mts = schem_path.."blacksmith.mts", hsize = 13, max_num = 0.9, rplc = "n"}
+        local building_all_info = {name = "blacksmith", 
+                                   mts = schem_path.."blacksmith.mts", 
+                                   hsize = 13, 
+                                   max_num = 0.9, 
+                                   rplc = "n"}
         settlements.build_schematic(center_surface, 
                                     building_all_info["mts"],
                                     building_all_info["rplc"], 
@@ -92,8 +117,16 @@ minetest.register_craftitem("settlements:tool", {
     on_place = function(itemstack, placer, pointed_thing)
       local center_surface = pointed_thing.under
       if center_surface then
-        local minp = {x=center_surface.x-40, y=center_surface.y-40, z=center_surface.z-40}
-        local maxp = {x=center_surface.x+40, y=center_surface.y+40, z=center_surface.z+40}
+        local minp = {
+          x=center_surface.x-half_map_chunk_size, 
+          y=center_surface.y-half_map_chunk_size, 
+          z=center_surface.z-half_map_chunk_size
+          }
+        local maxp = {
+          x=center_surface.x+half_map_chunk_size, 
+          y=center_surface.y+half_map_chunk_size, 
+          z=center_surface.z+half_map_chunk_size
+          }
         settlements.place_settlement_circle(minp, maxp)
       end
     end
