@@ -18,17 +18,17 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local material = wallmaterial[math.random(1,#wallmaterial)]
   -- schematic conversion to lua
   local schem_lua = minetest.serialize_schematic(building, 
-                                                 "lua", 
-                                                 {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
+    "lua", 
+    {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
   -- replace material
   if replace_wall == "y" then
     schem_lua = schem_lua:gsub("default:cobble", material)
   end
   schem_lua = schem_lua:gsub("default:dirt_with_grass", 
-                              balcony_material)
+    balcony_material)
   -- special material for spawning npcs
   schem_lua = schem_lua:gsub("default:junglewood", 
-                             "settlements:junglewood")
+    "settlements:junglewood")
   -- format schematic string
   local schematic = loadstring(schem_lua)()
   -- build foundation for the building an make room above
@@ -38,17 +38,17 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local possible_rotations = {"0", "90", "180", "270"}
   local rotation = possible_rotations[ math.random( #possible_rotations ) ]
   settlements.foundation(pos, 
-                         width, 
-                         depth, 
-                         height, 
-                         rotation)
+    width, 
+    depth, 
+    height, 
+    rotation)
   -- place schematic
   minetest.after(4, function()
       minetest.place_schematic(pos, 
-                               schematic, 
-                               rotation, 
-                               nil, 
-                               true)
+        schematic, 
+        rotation, 
+        nil, 
+        true)
       -- initialize special nodes (chests, furnace)
       minetest.after(2, settlements.initialize_nodes, pos, width, depth, height)
     end)
@@ -59,17 +59,17 @@ end
 function settlements.place_settlement_circle(minp, maxp)
   -- find center of chunk
   local center = {
-                  x=maxp.x-half_map_chunk_size, 
-                  y=maxp.y-half_map_chunk_size, 
-                  z=maxp.z-half_map_chunk_size
-                  } 
+    x=maxp.x-half_map_chunk_size, 
+    y=maxp.y-half_map_chunk_size, 
+    z=maxp.z-half_map_chunk_size
+  } 
   -- find center_surcafe of chunk
   local center_surface = settlements.find_surface(center)
   -- go build settlement around center
   if center_surface then
     -- add settlement to list
     table.insert(settlements_in_world, 
-                 center_surface)
+      center_surface)
     -- save list to file
     settlements.save()
     -- initialize all settlement information
@@ -77,20 +77,20 @@ function settlements.place_settlement_circle(minp, maxp)
     -- build well in the center
     building_all_info = schematic_table[1]
     settlements.build_schematic(center_surface, 
-                                building_all_info["mts"],
-                                building_all_info["rplc"], 
-                                building_all_info["name"])
+      building_all_info["mts"],
+      building_all_info["rplc"], 
+      building_all_info["name"])
     -- add to settlement info table
     local index = 1
     settlement_info[index] = {pos = center_surface, 
-                              name = building_all_info["name"], 
-                              hsize = building_all_info["hsize"]}
+      name = building_all_info["name"], 
+      hsize = building_all_info["hsize"]}
     --increase index for following buildings
     index = index + 1
-    -- now some buildings around in a circle
-    local x, z, r = center_surface.x, center_surface.z, 10
-    -- draw j circles around center and increase radius by 5
-    for j = 1,10 do
+    -- now some buildings around in a circle, radius = size of town center
+    local x, z, r = center_surface.x, center_surface.z, building_all_info["hsize"]
+    -- draw j circles around center and increase radius by math.random(2,5)
+    for j = 1,20 do
       if number_built < number_of_buildings  then 
         -- set position on imaginary circle
         for j = 0, 360, 15 do
@@ -104,12 +104,13 @@ function settlements.place_settlement_circle(minp, maxp)
             if settlements.pick_next_building(pos_surface) 
             then
               settlements.build_schematic(pos_surface, 
-                                          building_all_info["mts"],building_all_info["rplc"], 
-                                          building_all_info["name"])
+                building_all_info["mts"],
+                building_all_info["rplc"], 
+                building_all_info["name"])
               number_built = number_built + 1
               settlement_info[index] = {pos = pos_surface, 
-                                        name = building_all_info["name"], 
-                                        hsize = building_all_info["hsize"]}
+                name = building_all_info["name"], 
+                hsize = building_all_info["hsize"]}
               index = index + 1
               if number_of_buildings == number_built 
               then
@@ -120,8 +121,12 @@ function settlements.place_settlement_circle(minp, maxp)
             break
           end
         end
-        r = r + 5
+        r = r + math.random(2,5)
       end
+    end
+    if settlements.debug == true
+    then
+      minetest.chat_send_all("really ".. number_built)
     end
   end
 end
@@ -137,7 +142,7 @@ function settlements.initialize_settlement()
   end
 
   -- randomize number of buildings
-  number_of_buildings = math.random(7,20)
+  number_of_buildings = math.random(10,25)
   number_built = 1
   if settlements.debug == true
   then
@@ -157,10 +162,10 @@ function settlements.pick_next_building(pos_surface)
       building_all_info = randomized_schematic_table[i]
       -- check distance to other buildings
       local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, 
-                                                                        building_all_info["hsize"])
+        building_all_info["hsize"])
       if distance_to_other_buildings_ok 
       then
-      -- count built houses
+        -- count built houses
         count_buildings[building_all_info["name"]] = count_buildings[building_all_info["name"]] +1
         return building_all_info["mts"]
       end

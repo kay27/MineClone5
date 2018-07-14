@@ -33,7 +33,12 @@ function settlements.find_surface(pos)
 --      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
       if s and s.name == mats and 
       (string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"air") or
-        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"snow")) 
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"snow") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"fern") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"flower") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"bush") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"tree") or
+        string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"grass")) 
       then 
         return p6 
       end
