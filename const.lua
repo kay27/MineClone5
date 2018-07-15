@@ -1,7 +1,7 @@
 --
 -- switch for debugging
 --
-settlements.debug = true
+settlements.debug = false
 --
 -- material to replace cobblestone with
 --
