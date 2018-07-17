@@ -121,7 +121,7 @@ function settlements.fill_chest(pos)
     inv:add_item("main", "farming:bread "..math.random(0,3))
     inv:add_item("main", "default:steel_ingot "..math.random(0,3))
     -- additional fillings when farmin mod enabled
-    if minetest.get_modpath("farming") ~= nil then
+    if minetest.get_modpath("farming") ~= nil and farming.mod == "redo" then
       if math.random(0,1) < 1 then
         inv:add_item("main", "farming:melon_slice "..math.random(0,3))
         inv:add_item("main", "farming:carrot "..math.random(0,3))
