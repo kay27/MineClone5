@@ -54,7 +54,9 @@ end
 function settlements.check_distance(building_pos, building_size)
   local distance
   for i, built_house in ipairs(settlement_info) do
-    distance = math.sqrt(((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
+    distance = math.sqrt(
+      ((building_pos.x - built_house["pos"].x)*(building_pos.x - built_house["pos"].x))+
+      ((building_pos.z - built_house["pos"].z)*(building_pos.z - built_house["pos"].z)))
     if distance < building_size or 
     distance < built_house["hsize"] 
     then
@@ -215,7 +217,8 @@ function settlements.determine_heightmap(minp, maxp)
   --
   for xi = cminp.x,cmaxp.x do
     for zi = cminp.z,cmaxp.z do
-      pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi})
+      local pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi})
+      -- check, if new found surface is higher or lower stored min_y or max_y
       if pos_surface
       then
         if pos_surface.y < min_y
@@ -229,5 +232,6 @@ function settlements.determine_heightmap(minp, maxp)
       end
     end
   end
+  -- return the difference between highest and lowest pos in chunk
   return max_y - min_y
 end

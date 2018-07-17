@@ -9,6 +9,7 @@ dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")
 dofile(settlements.modpath.."/buildings.lua")
+dofile(settlements.modpath.."/paths.lua")
 --
 -- load settlements on server
 --

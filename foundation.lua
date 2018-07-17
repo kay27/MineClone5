@@ -37,10 +37,13 @@ function settlements.foundation(pos, width, depth, height, rotation)
           minetest.after(1,settlements.ground,p)--(p)
         else
 --          minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
-          if minetest.get_node_or_nil({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi}).name ~= "air"
-          then
-            minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi},{name="air"}) 
-          end                  
+          local node = minetest.get_node_or_nil({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
+          if node then
+            if node.name ~= "air"
+            then
+              minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi},{name="air"}) 
+            end
+          end
         end
       end
     end

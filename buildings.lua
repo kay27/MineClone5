@@ -43,7 +43,7 @@ function settlements.build_schematic(pos, building, replace_wall, name)
     height, 
     rotation)
   -- place schematic
-  minetest.after(4, function()
+  minetest.after(3, function() --increase waiting time, if "block not found" in debug.txt
       minetest.place_schematic(pos, 
         schematic, 
         rotation, 
@@ -128,6 +128,8 @@ function settlements.place_settlement_circle(minp, maxp)
     then
       minetest.chat_send_all("really ".. number_built)
     end
+      minetest.after(2, settlements.paths)
+--    settlements.paths()
   end
 end
 function settlements.initialize_settlement()
