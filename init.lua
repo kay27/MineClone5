@@ -74,7 +74,7 @@ minetest.register_on_generated(function(minp, maxp)
       --
       -- don't build settlements on (too) uneven terrain
       --
-      local height_difference = settlements.determine_heightmap(minp, maxp)
+      local height_difference = settlements.evaluate_heightmap(minp, maxp)
       if height_difference > max_height_difference 
       then
         return
@@ -116,6 +116,8 @@ minetest.register_craftitem("settlements:tool", {
     -- build ssettlement
     --
     on_place = function(itemstack, placer, pointed_thing)
+      -- enable debug routines
+      settlements.debug = true
       local center_surface = pointed_thing.under
       if center_surface then
         local minp = {

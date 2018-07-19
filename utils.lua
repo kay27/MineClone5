@@ -33,7 +33,7 @@ function settlements.find_surface(pos)
 --      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
       local node_check = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
       if node_check and s and s.name == mats and 
-       (string.find(node_check.name,"air") or
+      (string.find(node_check.name,"air") or
         string.find(node_check.name,"snow") or
         string.find(node_check.name,"fern") or
         string.find(node_check.name,"flower") or
@@ -235,4 +235,50 @@ function settlements.determine_heightmap(minp, maxp)
   end
   -- return the difference between highest and lowest pos in chunk
   return max_y - min_y
+end
+--
+-- evaluate heightmap
+--
+function settlements.evaluate_heightmap(minp, maxp)
+  -- max height and min height, initialize with impossible values for easier first time setting
+  local max_y = -50000
+  local min_y = 50000
+  -- only evaluate the center square of heightmap 40 x 40
+  local square_start = 1621
+  local square_end = 1661
+  local heightmap = minetest.get_mapgen_object("heightmap")
+  for j = 1 , 40, 1 do
+    for i = square_start, square_end, 1 do
+      -- skip buggy heightmaps, return high value
+      if heightmap[i] == -31000 or
+         heightmap[i] == 31000
+      then
+        return max_height_difference + 1
+      end
+      if heightmap[i] < min_y
+      then
+        min_y = heightmap[i]
+      end
+      if heightmap[i] > max_y
+      then
+        max_y = heightmap[i]
+      end
+    end
+    -- set next line
+    square_start = square_start + 80
+    square_end = square_end + 80
+  end
+  -- return the difference between highest and lowest pos in chunk
+  local height_diff = max_y - min_y
+  -- filter buggy heightmaps
+  if height_diff <= 1 
+  then
+    return max_height_difference + 1
+  end
+  -- debug info
+  if settlements.debug == true
+  then
+    minetest.chat_send_all("heightdiff ".. height_diff)
+  end
+  return height_diff
 end

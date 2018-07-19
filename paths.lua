@@ -5,7 +5,7 @@ function settlements.paths()
   local starting_point
   local end_point
   local distance
- -- for k,v in pairs(settlement_info) do
+  --for k,v in pairs(settlement_info) do
     starting_point = settlement_info[1]["pos"] 
     for o,p in pairs(settlement_info) do
 
@@ -84,5 +84,5 @@ function settlements.paths()
         end
       end
     end
- -- end
+  --end
 end

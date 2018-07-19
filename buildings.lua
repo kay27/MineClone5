@@ -128,7 +128,7 @@ function settlements.place_settlement_circle(minp, maxp)
     then
       minetest.chat_send_all("really ".. number_built)
     end
-      minetest.after(2, settlements.paths)
+    minetest.after(2, settlements.paths)
 --    settlements.paths()
   end
 end
