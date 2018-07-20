@@ -72,9 +72,14 @@ minetest.register_on_generated(function(minp, maxp)
         return
       end
       --
+      -- get LVM of current chunk
+      --
+      local vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
+      --
       -- don't build settlements on (too) uneven terrain
       --
       local height_difference = settlements.evaluate_heightmap(minp, maxp)
+--      local height_difference = settlements.determine_heightmap(data, va, minp, maxp)
       if height_difference > max_height_difference 
       then
         return
@@ -82,7 +87,8 @@ minetest.register_on_generated(function(minp, maxp)
       -- 
       -- if nothing prevents the settlement -> do it
       --
-      settlements.place_settlement_circle(minp, maxp)
+      --settlements.place_settlement_circle(minp, maxp)
+      settlements.place_settlement_lvm(data, va, minp, maxp)
 
     end
   end)
@@ -130,7 +136,11 @@ minetest.register_craftitem("settlements:tool", {
           y=center_surface.y+half_map_chunk_size, 
           z=center_surface.z+half_map_chunk_size
           }
-        settlements.place_settlement_circle(minp, maxp)
+      --
+      -- get LVM of current chunk
+      --
+      local vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
+      settlements.place_settlement_lvm(data, va, minp, maxp)
       end
     end
   })

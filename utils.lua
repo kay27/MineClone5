@@ -1,3 +1,26 @@
+local c_dirt_with_grass             = minetest.get_content_id("default:dirt_with_grass")
+local c_dirt_with_snow              = minetest.get_content_id("default:dirt_with_snow")
+local c_dirt_with_dry_grass         = minetest.get_content_id("default:dirt_with_dry_grass")
+local c_dirt_with_coniferous_litter = minetest.get_content_id("default:dirt_with_coniferous_litter")
+local c_sand                        = minetest.get_content_id("default:sand")
+local c_desert_sand                 = minetest.get_content_id("default:desert_sand")
+--
+local c_air                         = minetest.get_content_id("air")
+local c_snow                        = minetest.get_content_id("default:snow")
+local c_fern_1                      = minetest.get_content_id("default:fern_1")
+local c_fern_2                      = minetest.get_content_id("default:fern_2")
+local c_fern_3                      = minetest.get_content_id("default:fern_3")
+local c_rose                        = minetest.get_content_id("flowers:rose")
+local c_viola                       = minetest.get_content_id("flowers:viola")
+local c_geranium                    = minetest.get_content_id("flowers:geranium")
+local c_tulip                       = minetest.get_content_id("flowers:tulip")
+local c_dandelion_y                 = minetest.get_content_id("flowers:dandelion_yellow")
+local c_dandelion_w                 = minetest.get_content_id("flowers:dandelion_white")
+local c_bush_leaves                 = minetest.get_content_id("default:bush_leaves")
+local c_bush_stem                   = minetest.get_content_id("default:bush_stem")
+local c_a_bush_leaves               = minetest.get_content_id("default:acacia_bush_leaves")
+local c_a_bush_stem                 = minetest.get_content_id("default:acacia_bush_stem")
+local c_water_source                = minetest.get_content_id("default:water_source")
 --
 -- function to copy tables
 --
@@ -10,10 +33,67 @@ function settlements.shallowCopy(original)
 end
 --
 -- function to find surface block y coordinate
+--
+function settlements.find_surface_lvm(pos, data, va)
+  local p6 = settlements.shallowCopy(pos)
+  local surface_mat = {
+    c_dirt_with_grass,            
+    c_dirt_with_snow ,            
+    c_dirt_with_dry_grass,        
+    c_dirt_with_coniferous_litter,
+    c_sand,                       
+    c_desert_sand
+    }
+  local cnt = 0
+  local itter -- count up or down
+  local cnt_max = 200
+  -- starting point for looking for surface
+  local vi = va:index(p6.x, p6.y, p6.z)
+  if data[vi] == c_air then
+    itter = -1
+  else
+    itter = 1
+  end
+  while cnt < cnt_max do
+    cnt = cnt+1
+    vi = va:index(p6.x, p6.y, p6.z)
+    if vi == nil 
+    then 
+      return nil 
+    end
+    for i, mats in ipairs(surface_mat) do
+      local node_check = va:index(p6.x, p6.y+1, p6.z)
+      if node_check and vi and data[vi] == mats and 
+       (data[node_check] ~= c_water_source
+        ) 
+      then 
+--        local tmp = minetest.get_name_from_content_id(data[node_check])
+        return p6 
+      end
+    end
+    p6.y = p6.y + itter
+    if p6.y < 0 then return nil end
+  end
+  return nil
+end
+--
+-- function to find surface block y coordinate
 -- returns surface postion
 --
 function settlements.find_surface(pos)
   local p6 = settlements.shallowCopy(pos)
+--
+-- baseplate material, to replace dirt with grass and where buildings can be built
+--
+  local surface_mat = {
+    "default:dirt_with_grass",
+    "default:dirt_with_snow",
+    "default:dirt_with_dry_grass",
+    "default:dirt_with_coniferous_litter",
+    "default:sand",
+    "default:desert_sand",
+--  "default:snow"
+  }
   local cnt = 0
   local itter -- count up or down
   local cnt_max = 200
@@ -30,7 +110,6 @@ function settlements.find_surface(pos)
     s = minetest.get_node_or_nil(p6)
     if s == nil or s.name == "ignore" then return nil end
     for i, mats in ipairs(surface_mat) do
---      if s and s.name == mats and not string.find(minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z}).name,"water") then 
       local node_check = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
       if node_check and s and s.name == mats and 
       (string.find(node_check.name,"air") or
@@ -196,7 +275,7 @@ end
 --
 -- get heightmap
 --
-function settlements.determine_heightmap(minp, maxp)
+function settlements.determine_heightmap(data, va, minp, maxp)
   -- max height and min height, initialize with impossible values for easier first time setting
   local max_y = -100
   local min_y = 100
@@ -218,7 +297,7 @@ function settlements.determine_heightmap(minp, maxp)
   --
   for xi = cminp.x,cmaxp.x do
     for zi = cminp.z,cmaxp.z do
-      local pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi})
+      local pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi}, data, va)
       -- check, if new found surface is higher or lower stored min_y or max_y
       if pos_surface
       then
@@ -251,7 +330,7 @@ function settlements.evaluate_heightmap(minp, maxp)
     for i = square_start, square_end, 1 do
       -- skip buggy heightmaps, return high value
       if heightmap[i] == -31000 or
-         heightmap[i] == 31000
+      heightmap[i] == 31000
       then
         return max_height_difference + 1
       end
@@ -281,4 +360,24 @@ function settlements.evaluate_heightmap(minp, maxp)
     minetest.chat_send_all("heightdiff ".. height_diff)
   end
   return height_diff
+end
+--
+-- get LVM of current chunk
+--
+function settlements.getlvm(minp, maxp)
+  local vm = minetest.get_voxel_manip()
+  local emin, emax = vm:read_from_map(minp, maxp)
+  local va = VoxelArea:new{
+    MinEdge = emin,
+    MaxEdge = emax
+  }    
+  local data = vm:get_data()
+  return vm, data, va, emin, emax
+end--
+-- get LVM of current chunk
+--
+function settlements.setlvm(vm, data)
+    -- Write data
+    vm:set_data(data)
+    vm:write_to_map(true)
 end

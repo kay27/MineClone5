@@ -54,6 +54,85 @@ function settlements.build_schematic(pos, building, replace_wall, name)
     end)
 end
 --
+-- placing buildings within lvm
+--
+function settlements.place_settlement_lvm(data, va, minp, maxp)
+  -- find center of chunk
+  local center = {
+    x=maxp.x-half_map_chunk_size, 
+    y=maxp.y-half_map_chunk_size, 
+    z=maxp.z-half_map_chunk_size
+  } 
+  -- find center_surcafe of chunk
+  local center_surface = settlements.find_surface_lvm(center, data, va)
+  -- go build settlement around center
+  if center_surface then
+    -- add settlement to list
+    table.insert(settlements_in_world, 
+      center_surface)
+    -- save list to file
+    settlements.save()
+    -- initialize all settlement information
+    settlements.initialize_settlement()
+    -- build well in the center
+    building_all_info = schematic_table[1]
+    settlements.build_schematic(center_surface, 
+      building_all_info["mts"],
+      building_all_info["rplc"], 
+      building_all_info["name"])
+    -- add to settlement info table
+    local index = 1
+    settlement_info[index] = {pos = center_surface, 
+      name = building_all_info["name"], 
+      hsize = building_all_info["hsize"]}
+    --increase index for following buildings
+    index = index + 1
+    -- now some buildings around in a circle, radius = size of town center
+    local x, z, r = center_surface.x, center_surface.z, building_all_info["hsize"]
+    -- draw j circles around center and increase radius by math.random(2,5)
+    for j = 1,20 do
+      if number_built < number_of_buildings  then 
+        -- set position on imaginary circle
+        for j = 0, 360, 15 do
+          local angle = j * math.pi / 180
+          local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
+          local pos1 = { x=ptx, y=center_surface.y, z=ptz}
+          --
+          local pos_surface = settlements.find_surface(pos1)
+          if pos_surface 
+          then
+            if settlements.pick_next_building(pos_surface) 
+            then
+              settlements.build_schematic(pos_surface, 
+                building_all_info["mts"],
+                building_all_info["rplc"], 
+                building_all_info["name"])
+              number_built = number_built + 1
+              settlement_info[index] = {pos = pos_surface, 
+                name = building_all_info["name"], 
+                hsize = building_all_info["hsize"]}
+              index = index + 1
+              if number_of_buildings == number_built 
+              then
+                break
+              end
+            end
+          else
+            break
+          end
+        end
+        r = r + math.random(2,5)
+      end
+    end
+    if settlements.debug == true
+    then
+      minetest.chat_send_all("really ".. number_built)
+    end
+    minetest.after(2, settlements.paths)
+--    settlements.paths()
+  end
+end
+--
 -- placing buildings in circles around center
 --
 function settlements.place_settlement_circle(minp, maxp)

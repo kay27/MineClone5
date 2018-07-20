@@ -35,18 +35,6 @@ schematic_table = {
   {name = "blacksmith", mts = schem_path.."blacksmith.mts", hsize = 11, max_num = 0.050, rplc = "n"},
 }
 --
--- baseplate material, to replace dirt with grass and where buildings can be built
---
-surface_mat = {
-  "default:dirt_with_grass",
-  "default:dirt_with_snow",
-  "default:dirt_with_dry_grass",
-  "default:dirt_with_coniferous_litter",
-  "default:sand",
-  "default:desert_sand",
---  "default:snow"
-}
---
 -- temporary info for currentliy built settlement (position of each building) 
 --
 settlement_info = {}
