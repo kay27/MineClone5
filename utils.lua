@@ -32,6 +32,13 @@ function settlements.shallowCopy(original)
   return copy
 end
 --
+--
+--
+function settlements.round(num, numDecimalPlaces)
+  local mult = 10^(numDecimalPlaces or 0)
+  return math.floor(num * mult + 0.5) / mult
+end
+--
 -- function to find surface block y coordinate
 --
 function settlements.find_surface_lvm(pos, data, va)
@@ -49,6 +56,8 @@ function settlements.find_surface_lvm(pos, data, va)
   local cnt_max = 200
   -- starting point for looking for surface
   local vi = va:index(p6.x, p6.y, p6.z)
+  if data[vi] == nil then return nil end
+--  local tmp = minetest.get_name_from_content_id(data[vi])
   if data[vi] == c_air then
     itter = -1
   else
@@ -56,11 +65,12 @@ function settlements.find_surface_lvm(pos, data, va)
   end
   while cnt < cnt_max do
     cnt = cnt+1
-    vi = va:index(p6.x, p6.y, p6.z)
-    if vi == nil 
-    then 
-      return nil 
-    end
+    local vi = va:index(p6.x, p6.y, p6.z)
+--    local tmp = minetest.get_name_from_content_id(data[vi])
+--    if vi == nil 
+--    then 
+--      return nil 
+--    end
     for i, mats in ipairs(surface_mat) do
       local node_check = va:index(p6.x, p6.y+1, p6.z)
       if node_check and vi and data[vi] == mats and 

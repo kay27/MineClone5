@@ -8,7 +8,7 @@ function settlements.ground(pos) -- role model: Wendelsteinkircherl, Brannenburg
   p2.y = p2.y-1
   while true do
     cnt = cnt+1
-    if cnt > 50 then break end
+    if cnt > 20 then break end
     if cnt>math.random(2,4) then mat = "stone" end
     minetest.swap_node(p2, {name="default:"..mat})
     p2.y = p2.y-1

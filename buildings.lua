@@ -13,7 +13,11 @@ local number_built
 --
 function settlements.build_schematic(pos, building, replace_wall, name)
   -- get building node material for better integration to surrounding
-  local balcony_material =  minetest.get_node_or_nil(pos).name
+  local platform_material =  minetest.get_node_or_nil(pos)
+  if not platform_material then
+    return
+  end
+  platform_material = platform_material.name
   -- pick random material
   local material = wallmaterial[math.random(1,#wallmaterial)]
   -- schematic conversion to lua
@@ -25,7 +29,7 @@ function settlements.build_schematic(pos, building, replace_wall, name)
     schem_lua = schem_lua:gsub("default:cobble", material)
   end
   schem_lua = schem_lua:gsub("default:dirt_with_grass", 
-    balcony_material)
+    platform_material)
   -- special material for spawning npcs
   schem_lua = schem_lua:gsub("default:junglewood", 
     "settlements:junglewood")
@@ -60,7 +64,7 @@ function settlements.place_settlement_lvm(data, va, minp, maxp)
   -- find center of chunk
   local center = {
     x=maxp.x-half_map_chunk_size, 
-    y=maxp.y-half_map_chunk_size, 
+    y=maxp.y, 
     z=maxp.z-half_map_chunk_size
   } 
   -- find center_surcafe of chunk
@@ -96,9 +100,12 @@ function settlements.place_settlement_lvm(data, va, minp, maxp)
         for j = 0, 360, 15 do
           local angle = j * math.pi / 180
           local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
+          ptx = settlements.round(ptx, 0)
+          ptz = settlements.round(ptz, 0)
           local pos1 = { x=ptx, y=center_surface.y, z=ptz}
           --
-          local pos_surface = settlements.find_surface(pos1)
+          local pos_surface = settlements.find_surface_lvm(pos1, data, va)
+          --local pos_surface = settlements.find_surface(pos1)
           if pos_surface 
           then
             if settlements.pick_next_building(pos_surface) 
