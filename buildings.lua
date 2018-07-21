@@ -11,7 +11,7 @@ local number_built
 --
 -- build schematic, replace material, rotation
 --
-function settlements.build_schematic(pos, building, replace_wall, name)
+function settlements.build_schematic(vm, data, va, pos, building, replace_wall, name)
   -- get building node material for better integration to surrounding
   local platform_material =  minetest.get_node_or_nil(pos)
   if not platform_material then
@@ -41,7 +41,11 @@ function settlements.build_schematic(pos, building, replace_wall, name)
   local height = schematic["size"]["y"]
   local possible_rotations = {"0", "90", "180", "270"}
   local rotation = possible_rotations[ math.random( #possible_rotations ) ]
-  settlements.foundation(pos, 
+  settlements.foundation(
+    vm,
+    data, 
+    va, 
+    pos, 
     width, 
     depth, 
     height, 
@@ -60,7 +64,7 @@ end
 --
 -- placing buildings within lvm
 --
-function settlements.place_settlement_lvm(data, va, minp, maxp)
+function settlements.place_settlement_lvm(vm, data, va, minp, maxp)
   -- find center of chunk
   local center = {
     x=maxp.x-half_map_chunk_size, 
@@ -80,7 +84,11 @@ function settlements.place_settlement_lvm(data, va, minp, maxp)
     settlements.initialize_settlement()
     -- build well in the center
     building_all_info = schematic_table[1]
-    settlements.build_schematic(center_surface, 
+    settlements.build_schematic(
+      vm,
+      data, 
+      va, 
+      center_surface, 
       building_all_info["mts"],
       building_all_info["rplc"], 
       building_all_info["name"])
@@ -110,14 +118,21 @@ function settlements.place_settlement_lvm(data, va, minp, maxp)
           then
             if settlements.pick_next_building(pos_surface) 
             then
-              settlements.build_schematic(pos_surface, 
+              settlements.build_schematic(
+                vm,
+                data, 
+                va, 
+                pos_surface, 
                 building_all_info["mts"],
                 building_all_info["rplc"], 
-                building_all_info["name"])
+                building_all_info["name"]
+                )
               number_built = number_built + 1
-              settlement_info[index] = {pos = pos_surface, 
+              settlement_info[index] = {
+                pos = pos_surface, 
                 name = building_all_info["name"], 
-                hsize = building_all_info["hsize"]}
+                hsize = building_all_info["hsize"]
+                }
               index = index + 1
               if number_of_buildings == number_built 
               then
@@ -162,7 +177,8 @@ function settlements.place_settlement_circle(minp, maxp)
     settlements.initialize_settlement()
     -- build well in the center
     building_all_info = schematic_table[1]
-    settlements.build_schematic(center_surface, 
+    settlements.build_schematic(
+      center_surface, 
       building_all_info["mts"],
       building_all_info["rplc"], 
       building_all_info["name"])

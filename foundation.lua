@@ -1,23 +1,30 @@
 --
 -- function to fill empty space below baseplate when building on a hill
 --
-function settlements.ground(pos) -- role model: Wendelsteinkircherl, Brannenburg
+function settlements.ground(vm, data, va, pos) -- role model: Wendelsteinkircherl, Brannenburg
+  local c_dirt  = minetest.get_content_id("default:dirt")
+  local c_stone = minetest.get_content_id("default:stone")
+  --
   local p2 = pos
   local cnt = 0
-  local mat = "dirt"
+  local mat = c_dirt
   p2.y = p2.y-1
   while true do
     cnt = cnt+1
     if cnt > 20 then break end
-    if cnt>math.random(2,4) then mat = "stone" end
-    minetest.swap_node(p2, {name="default:"..mat})
+    if cnt>math.random(2,4) then mat = c_stone end
+    --minetest.swap_node(p2, {name="default:"..mat})
+    local vi = va:index(p2.x, p2.y, p2.z)
+    data[vi] = mat
     p2.y = p2.y-1
   end
+  return data
 end
 --
 -- function to fill empty space below baseplate when building on a hill
 --
-function settlements.foundation(pos, width, depth, height, rotation)
+function settlements.foundation(vm, data, va, pos, width, depth, height, rotation)
+  local c_air = minetest.get_content_id("air")
   local p5 = settlements.shallowCopy(pos)
   local fheight = height * 3 -- remove trees and leaves above
   local fwidth
@@ -34,19 +41,21 @@ function settlements.foundation(pos, width, depth, height, rotation)
       for zi = 0,fdepth-1 do
         if yi == 0 then
           local p = {x=p5.x+xi, y=p5.y, z=p5.z+zi}
-          minetest.after(1,settlements.ground,p)--(p)
+          data = settlements.ground(vm, data, va, p)
         else
---          minetest.remove_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
-          local node = minetest.get_node_or_nil({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
-          if node then
-            if node.name ~= "air"
-            then
-              minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi},{name="air"}) 
-            end
+          -- write ground
+          local vi = va:index(p5.x+xi, p5.y+yi, p5.z+zi)
+          if data[vi] ~= c_air
+          --local node = minetest.get_node_or_nil({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi})
+          --if node then
+            --if node.name ~= "air"
+          then
+              --minetest.swap_node({x=p5.x+xi, y=p5.y+yi, z=p5.z+zi},{name="air"}) 
+           data[vi] = c_air
           end
         end
       end
     end
   end
+  settlements.setlvm(vm, data)
 end
-

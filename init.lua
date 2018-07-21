@@ -88,7 +88,7 @@ minetest.register_on_generated(function(minp, maxp)
       -- if nothing prevents the settlement -> do it
       --
       --settlements.place_settlement_circle(minp, maxp)
-      settlements.place_settlement_lvm(data, va, minp, maxp)
+      settlements.place_settlement_lvm(vm, data, va, minp, maxp)
 
     end
   end)
@@ -140,7 +140,7 @@ minetest.register_craftitem("settlements:tool", {
       -- get LVM of current chunk
       --
       local vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
-      settlements.place_settlement_lvm(data, va, minp, maxp)
+      settlements.place_settlement_lvm(vm, data, va, minp, maxp)
       end
     end
   })
