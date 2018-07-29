@@ -21,9 +21,10 @@ local c_bush_stem                   = minetest.get_content_id("default:bush_stem
 local c_a_bush_leaves               = minetest.get_content_id("default:acacia_bush_leaves")
 local c_a_bush_stem                 = minetest.get_content_id("default:acacia_bush_stem")
 local c_water_source                = minetest.get_content_id("default:water_source")
---
+local c_water_flowing                = minetest.get_content_id("default:water_flowing")
+-------------------------------------------------------------------------------
 -- function to copy tables
---
+-------------------------------------------------------------------------------
 function settlements.shallowCopy(original)
   local copy = {}
   for key, value in pairs(original) do
@@ -38,10 +39,42 @@ function settlements.round(num, numDecimalPlaces)
   local mult = 10^(numDecimalPlaces or 0)
   return math.floor(num * mult + 0.5) / mult
 end
+-------------------------------------------------------------------------------
 --
+-------------------------------------------------------------------------------
+function settlements.find_surface_heightmap(pos, minp)
+  local surface_mat = {
+    c_dirt_with_grass,            
+    c_dirt_with_snow ,            
+    c_dirt_with_dry_grass,        
+    c_dirt_with_coniferous_litter,
+    c_sand,                       
+    c_desert_sand
+  }
+  local p6 = settlements.shallowCopy(pos)
+  local heightmap = minetest.get_mapgen_object("heightmap")
+  -- get height of current pos p6
+  local hm_i = (p6.x - minp.x + 1) + (((p6.z - minp.z)) * 80)
+  p6.y = heightmap[hm_i]
+  local vi = va:index(p6.x, p6.y, p6.z)
+  local viname = minetest.get_name_from_content_id(data[vi])
+
+  for i, mats in ipairs(surface_mat) do
+    local node_check = va:index(p6.x, p6.y+1, p6.z)
+    if node_check and vi and data[vi] == mats and 
+    (data[node_check] ~= c_water_source
+    ) 
+    then 
+--      local tmp = minetest.get_name_from_content_id(data[node_check])
+      return p6, mats
+    end
+  end
+end
+-------------------------------------------------------------------------------
 -- function to find surface block y coordinate
---
-function settlements.find_surface_lvm(pos, data, va)
+-------------------------------------------------------------------------------
+function settlements.find_surface_lvm(pos, minp)
+  --ab hier altes verfahren
   local p6 = settlements.shallowCopy(pos)
   local surface_mat = {
     c_dirt_with_grass,            
@@ -50,14 +83,14 @@ function settlements.find_surface_lvm(pos, data, va)
     c_dirt_with_coniferous_litter,
     c_sand,                       
     c_desert_sand
-    }
+  }
   local cnt = 0
   local itter -- count up or down
   local cnt_max = 200
   -- starting point for looking for surface
   local vi = va:index(p6.x, p6.y, p6.z)
   if data[vi] == nil then return nil end
---  local tmp = minetest.get_name_from_content_id(data[vi])
+  local tmp = minetest.get_name_from_content_id(data[vi])
   if data[vi] == c_air then
     itter = -1
   else
@@ -74,22 +107,23 @@ function settlements.find_surface_lvm(pos, data, va)
     for i, mats in ipairs(surface_mat) do
       local node_check = va:index(p6.x, p6.y+1, p6.z)
       if node_check and vi and data[vi] == mats and 
-       (data[node_check] ~= c_water_source
-        ) 
+      (data[node_check] ~= c_water_source and
+        data[node_check] ~= c_water_flowing
+      ) 
       then 
---        local tmp = minetest.get_name_from_content_id(data[node_check])
-        return p6 
+        local tmp = minetest.get_name_from_content_id(data[node_check])
+        return p6, mats
       end
     end
     p6.y = p6.y + itter
     if p6.y < 0 then return nil end
   end
-  return nil
+  return nil  --]]
 end
---
+-------------------------------------------------------------------------------
 -- function to find surface block y coordinate
 -- returns surface postion
---
+-------------------------------------------------------------------------------
 function settlements.find_surface(pos)
   local p6 = settlements.shallowCopy(pos)
 --
@@ -110,7 +144,6 @@ function settlements.find_surface(pos)
 -- check, in which direction to look for surface
   local s = minetest.get_node_or_nil(p6)
   if s and string.find(s.name,"air") then 
-    --p6.y = p6.y+50
     itter = -1
   else
     itter = 1
@@ -130,7 +163,7 @@ function settlements.find_surface(pos)
         string.find(node_check.name,"tree") or
         string.find(node_check.name,"grass")) 
       then 
-        return p6 
+        return p6, mats 
       end
     end
     p6.y = p6.y + itter
@@ -138,9 +171,9 @@ function settlements.find_surface(pos)
   end
   return nil
 end
---
+-------------------------------------------------------------------------------
 -- check distance for new building
---
+-------------------------------------------------------------------------------
 function settlements.check_distance(building_pos, building_size)
   local distance
   for i, built_house in ipairs(settlement_info) do
@@ -155,9 +188,9 @@ function settlements.check_distance(building_pos, building_size)
   end
   return true
 end
---
+-------------------------------------------------------------------------------
 -- save list of generated settlements
---
+-------------------------------------------------------------------------------
 function settlements.save()
   local file = io.open(minetest.get_worldpath().."/settlements.txt", "w")
   if file then
@@ -165,9 +198,9 @@ function settlements.save()
     file:close()
   end
 end
---
+-------------------------------------------------------------------------------
 -- load list of generated settlements
---
+-------------------------------------------------------------------------------
 function settlements.load()
   local file = io.open(minetest.get_worldpath().."/settlements.txt", "r")
   if file then
@@ -178,9 +211,9 @@ function settlements.load()
   end
   return {}
 end
---
+-------------------------------------------------------------------------------
 -- check distance to other settlements
---
+-------------------------------------------------------------------------------
 function settlements.check_distance_other_settlements(center_new_chunk)
   local min_dist_settlements = 300
   for i, pos in ipairs(settlements_in_world) do 
@@ -191,12 +224,13 @@ function settlements.check_distance_other_settlements(center_new_chunk)
   end  
   return true
 end
---
+-------------------------------------------------------------------------------
 -- fill chests
---
+-------------------------------------------------------------------------------
 function settlements.fill_chest(pos)
   -- find chests within radius
-  local chestpos = minetest.find_node_near(pos, 6, {"default:chest"})
+  --local chestpos = minetest.find_node_near(pos, 6, {"default:chest"})
+  local chestpos = pos
   -- initialize chest (mts chests don't have meta)
   local meta = minetest.get_meta(chestpos)
   if meta:get_string("infotext") ~= "Chest" then
@@ -228,9 +262,9 @@ function settlements.fill_chest(pos)
     inv:add_item("main", "default:sword_steel "..math.random(0,1))
   end
 end
---
+-------------------------------------------------------------------------------
 -- initialize furnace
---
+-------------------------------------------------------------------------------
 function settlements.initialize_furnace(pos)
   -- find chests within radius
   local furnacepos = minetest.find_node_near(pos, 
@@ -246,33 +280,47 @@ function settlements.initialize_furnace(pos)
     end
   end
 end
---
+-------------------------------------------------------------------------------
 -- initialize furnace, chests, bookshelves
---
-function settlements.initialize_nodes(pos, width, depth, height)
-  local p = settlements.shallowCopy(pos)
-  for yi = 1,height do
-    for xi = 0,width do
-      for zi = 0,depth do
-        local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
-        local node = minetest.get_node(ptemp) 
-        if node.name == "default:furnace" or
-        node.name == "default:chest" or
-        node.name == "default:bookshelf"
-        then
-          minetest.registered_nodes[node.name].on_construct(ptemp)
-        end
-        -- when chest is found -> fill with stuff
-        if node.name == "default:chest" then
-          minetest.after(3,settlements.fill_chest,pos)
+-------------------------------------------------------------------------------
+function settlements.initialize_nodes()
+  for i, built_house in ipairs(settlement_info) do
+    for j, schem in ipairs(schematic_table) do
+      if settlement_info[i]["name"] == schem["name"]
+      then
+        building_all_info = schem
+        break
+      end
+    end
+
+    local width = building_all_info["hwidth"] 
+    local depth = building_all_info["hdepth"] 
+    local height = building_all_info["hheight"] 
+
+    local p = settlement_info[i]["pos"]
+    for yi = 1,height do
+      for xi = 0,width do
+        for zi = 0,depth do
+          local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
+          local node = minetest.get_node(ptemp) 
+          if node.name == "default:furnace" or
+          node.name == "default:chest" or
+          node.name == "default:bookshelf"
+          then
+            minetest.registered_nodes[node.name].on_construct(ptemp)
+          end
+          -- when chest is found -> fill with stuff
+          if node.name == "default:chest" then
+            minetest.after(3,settlements.fill_chest,ptemp)
+          end
         end
       end
     end
   end
 end
---
+-------------------------------------------------------------------------------
 -- randomize table
---
+-------------------------------------------------------------------------------
 function shuffle(tbl)
   local table = settlements.shallowCopy(tbl)
   local size = #table
@@ -282,9 +330,9 @@ function shuffle(tbl)
   end
   return table
 end
---
+-------------------------------------------------------------------------------
 -- get heightmap
---
+-------------------------------------------------------------------------------
 function settlements.determine_heightmap(data, va, minp, maxp)
   -- max height and min height, initialize with impossible values for easier first time setting
   local max_y = -100
@@ -325,17 +373,16 @@ function settlements.determine_heightmap(data, va, minp, maxp)
   -- return the difference between highest and lowest pos in chunk
   return max_y - min_y
 end
---
+-------------------------------------------------------------------------------
 -- evaluate heightmap
---
-function settlements.evaluate_heightmap(minp, maxp)
+-------------------------------------------------------------------------------
+function settlements.evaluate_heightmap()
   -- max height and min height, initialize with impossible values for easier first time setting
   local max_y = -50000
   local min_y = 50000
   -- only evaluate the center square of heightmap 40 x 40
   local square_start = 1621
   local square_end = 1661
-  local heightmap = minetest.get_mapgen_object("heightmap")
   for j = 1 , 40, 1 do
     for i = square_start, square_end, 1 do
       -- skip buggy heightmaps, return high value
@@ -371,9 +418,9 @@ function settlements.evaluate_heightmap(minp, maxp)
   end
   return height_diff
 end
---
+-------------------------------------------------------------------------------
 -- get LVM of current chunk
---
+-------------------------------------------------------------------------------
 function settlements.getlvm(minp, maxp)
   local vm = minetest.get_voxel_manip()
   local emin, emax = vm:read_from_map(minp, maxp)
@@ -383,11 +430,12 @@ function settlements.getlvm(minp, maxp)
   }    
   local data = vm:get_data()
   return vm, data, va, emin, emax
-end--
+end
+-------------------------------------------------------------------------------
 -- get LVM of current chunk
---
+-------------------------------------------------------------------------------
 function settlements.setlvm(vm, data)
-    -- Write data
-    vm:set_data(data)
-    vm:write_to_map(true)
+  -- Write data
+  vm:set_data(data)
+  vm:write_to_map(true)
 end
