@@ -122,23 +122,26 @@ function settlements.terraform()
       fwidth = schematic_data["hdepth"]
       fdepth = schematic_data["hwidth"]
     end
-    fheight = schematic_data["hheight"] * 3 -- remove trees and leaves above
+    --fheight = schematic_data["hheight"] * 3  -- remove trees and leaves above
+    fheight = schematic_data["hheight"]  -- remove trees and leaves above
     --
     -- now that every info is available -> create platform and clear space above
     --
     for xi = 0,fwidth-1 do
       for zi = 0,fdepth-1 do
-        for yi = 0,fheight do
+        for yi = 0,fheight *3 do
           if yi == 0 then
             local p = {x=pos.x+xi, y=pos.y, z=pos.z+zi}
             settlements.ground(p)
           else
             -- write ground
-            local node = minetest.get_node_or_nil({x=pos.x+xi, y=pos.y+yi, z=pos.z+zi})
+            local p = {x=pos.x+xi, y=pos.y+yi, z=pos.z+zi}
+            minetest.forceload_block(p)
+            local node = minetest.get_node_or_nil(p)
             if node then
               if node.name ~= "air"
               then
-                minetest.swap_node({x=pos.x+xi, y=pos.y+yi, z=pos.z+zi},{name="air"}) 
+                minetest.swap_node(p,{name="air"}) 
               end
             end
           end

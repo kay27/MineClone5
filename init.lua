@@ -58,7 +58,7 @@ minetest.register_on_generated(function(minp, maxp)
     --
     -- randomly try to build settlements
     -- 
-    if math.random(1,10)<7 then 
+    if math.random(1,10)<6 then 
       --
       -- don't build settlement underground
       --
