@@ -358,6 +358,12 @@ function settlements.place_schematics()
     -- special material for spawning npcs
     schem_lua = schem_lua:gsub("default:junglewood", 
       "settlements:junglewood")
+    -- compatibility with 0.4.17, can be removed when 5 is released
+    schem_lua = schem_lua:gsub("stairs:stair_outer_wood", 
+      "stairs:slab_wood")
+    schem_lua = schem_lua:gsub("stairs:stair_outer_stone_block", 
+      "air")
+
     -- format schematic string
     local schematic = loadstring(schem_lua)()
     -- build foundation for the building an make room above
