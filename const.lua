@@ -6,6 +6,11 @@ settlements.debug = false
 -- switch for lvm
 settlements.lvm = false
 --
+-- timer between creation of two settlements
+--
+settlements.last_settlement = 0;
+settlements.min_timer = 5
+--
 --
 -- material to replace cobblestone with
 --

@@ -1,6 +1,6 @@
---package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
---package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
---require('mobdebug').start()
+package.cpath = package.cpath .. ";/usr/share/lua/5.2/?.so"
+package.path = package.path .. ";/usr/share/zbstudio/lualibs/mobdebug/?.lua"
+require('mobdebug').start()
 
 settlements = {}
 settlements.modpath = minetest.get_modpath("settlements");
@@ -60,6 +60,13 @@ minetest.register_on_generated(function(minp, maxp)
     -- 
     if math.random(1,10)<6 then 
       --
+      -- time between cration of two settlements
+      --
+      if os.difftime(os.time(), settlements.last_settlement) < settlements.min_timer 
+      then
+        return
+      end
+      --
       -- don't build settlement underground
       --
       if maxp.y < 0 then 
@@ -111,6 +118,10 @@ minetest.register_on_generated(function(minp, maxp)
           then
             return
           end
+          --
+          -- set timestamp of actual settlement
+          --
+          settlements.last_settlement = os.time()
           --
           -- evaluate settlement_info and prepair terrain
           --
