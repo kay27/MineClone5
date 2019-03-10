@@ -2,7 +2,6 @@ local S = minetest.get_translator("mcl_beds")
 local F = minetest.formspec_escape
 
 local pi = math.pi
-local player_in_bed = 0
 local is_sp = minetest.is_singleplayer()
 local weather_mod = minetest.get_modpath("mcl_weather") ~= nil
 local explosions_mod = minetest.get_modpath("mcl_explosions") ~= nil
@@ -111,10 +110,7 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	-- stand up
 	if state ~= nil and not state then
 		local p = mcl_beds.pos[name] or nil
-		if mcl_beds.player[name] ~= nil then
-			mcl_beds.player[name] = nil
-			player_in_bed = player_in_bed - 1
-		end
+		mcl_beds.player[name] = nil
 		-- skip here to prevent sending player specific changes (used for leaving players)
 		if skip then
 			return false
@@ -176,10 +172,9 @@ local function lay_down(player, pos, bed_pos, state, skip)
 			minetest.chat_send_player(name, S("New respawn position set!"))
 		end
 
-		mcl_beds.player[name] = 1
 		mcl_beds.pos[name] = pos
 		mcl_beds.bed_pos[name] = bed_pos
-		player_in_bed = player_in_bed + 1
+		mcl_beds.player[name] = 1
 		-- physics, eye_offset, etc
 		player:set_eye_offset({x = 0, y = -13, z = 0}, {x = 0, y = 0, z = 0})
 		player:set_look_horizontal(yaw)
@@ -198,9 +193,18 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	return true
 end
 
+local function get_player_in_bed_count()
+	local c = 0
+	for _, _ in pairs(mcl_beds.player) do
+		c = c + 1
+	end
+	return c
+end
+
 local function update_formspecs(finished)
 	local ges = #minetest.get_connected_players()
 	local form_n = "size[6,5;true]"
+	local player_in_bed = get_player_in_bed_count()
 	local all_in_bed = ges == player_in_bed
 	local night_skip = is_night_skip_enabled()
 	local button_leave = "button_exit[1,3;4,0.75;leave;"..F(S("Leave bed")).."]"
