@@ -8,8 +8,8 @@ settlements.lvm = false
 --
 -- timer between creation of two settlements
 --
-settlements.last_settlement = 0;
-settlements.min_timer = 5
+settlements.last_settlement = os.time()
+settlements.min_timer = 60
 --
 --
 -- material to replace cobblestone with
@@ -54,7 +54,7 @@ settlements_in_world = {}
 --
 -- min_distance between settlements
 --
-min_dist_settlements = 1000
+settlements.min_dist_settlements = 500
 if settlements.debug == true 
 then
   min_dist_settlements = 200

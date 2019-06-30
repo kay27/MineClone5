@@ -4,6 +4,7 @@ local c_dirt_with_dry_grass         = minetest.get_content_id("default:dirt_with
 local c_dirt_with_coniferous_litter = minetest.get_content_id("default:dirt_with_coniferous_litter")
 local c_sand                        = minetest.get_content_id("default:sand")
 local c_desert_sand                 = minetest.get_content_id("default:desert_sand")
+local c_silver_sand                 = minetest.get_content_id("default:silver_sand")
 --
 local c_air                         = minetest.get_content_id("air")
 local c_snow                        = minetest.get_content_id("default:snow")
@@ -49,7 +50,8 @@ function settlements.find_surface_heightmap(pos, minp)
     c_dirt_with_dry_grass,        
     c_dirt_with_coniferous_litter,
     c_sand,                       
-    c_desert_sand
+    c_desert_sand,
+    c_silver_sand
   }
   local p6 = settlements.shallowCopy(pos)
   local heightmap = minetest.get_mapgen_object("heightmap")
@@ -215,10 +217,11 @@ end
 -- check distance to other settlements
 -------------------------------------------------------------------------------
 function settlements.check_distance_other_settlements(center_new_chunk)
-  local min_dist_settlements = 300
+--  local min_dist_settlements = 300
   for i, pos in ipairs(settlements_in_world) do 
     local distance = vector.distance(center_new_chunk, pos)
-    if distance < min_dist_settlements then
+    minetest.chat_send_all("dist ".. distance)
+    if distance < settlements.min_dist_settlements then
       return false
     end
   end  
