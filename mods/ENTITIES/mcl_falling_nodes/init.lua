@@ -151,7 +151,8 @@ minetest.register_entity(":__builtin:falling_node", {
 
 		-- Portal check
 		local np = {x = pos.x, y = pos.y + 0.3, z = pos.z}
-		local n2 = minetest.get_node(np)
+		local n2 = minetest.get_node_or_nil(np)
+		local n2d = n2 and minetest.registered_nodes[n2.name]
 		if n2.name == "mcl_portals:portal_end" then
 			-- TODO: Teleport falling node. 
 			self.object:remove()
@@ -167,9 +168,13 @@ minetest.register_entity(":__builtin:falling_node", {
 		-- TODO: At this point, we did 2 get_nodes in 1 tick.
 		-- Figure out how to improve that (if it is a problem).
 
-		if bcn and (not bcd or bcd.walkable or
+		if (bcn and (not bcd or bcd.walkable or
 				(minetest.get_item_group(self.node.name, "float") ~= 0 and
-				bcd.liquidtype ~= "none")) then
+				bcd.liquidtype ~= "none"))) or
+
+		(n2 and (not n2d or n2d.walkable or
+				(minetest.get_item_group(self.node.name, "concrete_powder") ~= 0 and
+				minetest.get_item_group(n2.name, "water") ~= 0))) then
 			if bcd and bcd.leveled and
 					bcn.name == self.node.name then
 				local addlevel = self.node.level
@@ -184,6 +189,12 @@ minetest.register_entity(":__builtin:falling_node", {
 					self.object:remove()
 					return
 				end
+			elseif n2d and n2d.buildable_to and
+					(minetest.get_item_group(self.node.name, "concrete_powder") ~= 0 and
+					minetest.get_item_group(n2.name, "water") ~= 0) then
+				minetest.set_node(np, {name=minetest.registered_nodes[self.node.name]._mcl_colorblocks_harden_to})
+                                self.object:remove()
+				return
 			elseif bcd and bcd.buildable_to and
 					(minetest.get_item_group(self.node.name, "float") == 0 or
 					bcd.liquidtype == "none") then
