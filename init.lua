@@ -21,6 +21,7 @@ dofile(settlements.modpath.."/convert_lua_mts.lua")
 -- load settlements on server
 --
 settlements_in_world = settlements.load()
+settlements.grundstellungen()
 --
 -- register block for npc spawn
 --
@@ -96,7 +97,6 @@ minetest.register_on_generated(function(minp, maxp)
       -- don't build settlements on (too) uneven terrain
       --
       local height_difference = settlements.evaluate_heightmap(minp, maxp)
---      local height_difference = settlements.determine_heightmap(data, va, minp, maxp)
       if height_difference > max_height_difference 
       then
         return

@@ -40,38 +40,7 @@ function settlements.round(num, numDecimalPlaces)
   local mult = 10^(numDecimalPlaces or 0)
   return math.floor(num * mult + 0.5) / mult
 end
--------------------------------------------------------------------------------
---
--------------------------------------------------------------------------------
-function settlements.find_surface_heightmap(pos, minp)
-  local surface_mat = {
-    c_dirt_with_grass,            
-    c_dirt_with_snow ,            
-    c_dirt_with_dry_grass,        
-    c_dirt_with_coniferous_litter,
-    c_sand,                       
-    c_desert_sand,
-    c_silver_sand
-  }
-  local p6 = settlements.shallowCopy(pos)
-  local heightmap = minetest.get_mapgen_object("heightmap")
-  -- get height of current pos p6
-  local hm_i = (p6.x - minp.x + 1) + (((p6.z - minp.z)) * 80)
-  p6.y = heightmap[hm_i]
-  local vi = va:index(p6.x, p6.y, p6.z)
-  local viname = minetest.get_name_from_content_id(data[vi])
 
-  for i, mats in ipairs(surface_mat) do
-    local node_check = va:index(p6.x, p6.y+1, p6.z)
-    if node_check and vi and data[vi] == mats and 
-    (data[node_check] ~= c_water_source
-    ) 
-    then 
---      local tmp = minetest.get_name_from_content_id(data[node_check])
-      return p6, mats
-    end
-  end
-end
 -------------------------------------------------------------------------------
 -- function to find surface block y coordinate
 -------------------------------------------------------------------------------
@@ -128,20 +97,6 @@ end
 -------------------------------------------------------------------------------
 function settlements.find_surface(pos)
   local p6 = settlements.shallowCopy(pos)
---
--- possible surfaces where buildings can be built
---
-  local surface_mat = settlements.Set {
-    "default:dirt_with_grass",
-    "default:dry_dirt_with_grass",
-    "default:dirt_with_snow",
-    "default:dirt_with_dry_grass",
-    "default:dirt_with_coniferous_litter",
-    "default:sand",
-    "default:silver_sand",
-    "default:desert_sand",
-    "default:snow_block"
-  }
   local cnt = 0
   local itter -- count up or down
   local cnt_max = 200
@@ -156,19 +111,32 @@ function settlements.find_surface(pos)
   while cnt < cnt_max do
     cnt = cnt+1
     surface_node = minetest.get_node_or_nil(p6)
-    if surface_node == nil or surface_node.name == "ignore" then 
-      if settlements.debug == true then
-         minetest.chat_send_all("find_surface1: nil or ignore")
+    
+    if not surface_node then
+    -- Load the map at pos and try again
+      minetest.get_voxel_manip():read_from_map(p6, p6)
+      surface_node = minetest.get_node(p6)
+      if surface_node.name == "ignore" then
+         if settlements.debug == true then
+           minetest.chat_send_all("find_surface1: nil or ignore")
+         end
+         return nil
       end
-      return nil 
     end
+    
+--    if surface_node == nil or surface_node.name == "ignore" then 
+--      --return nil 
+--      local fl = minetest.forceload_block(p6)
+--      if not fl then
+--      
+--        return nil
+--      end
+--    end
     --
     -- Check Surface_node and Node above
     --
-    local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
-   -- for i, mats in ipairs(surface_mat) do
-   --minetest.chat_send_all(surface_mat[surface_node.name])
-      if surface_mat[surface_node.name] then
+      if settlements.surface_mat[surface_node.name] then
+         local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
          if surface_node_plus_1 and surface_node and 
          (string.find(surface_node_plus_1.name,"air") or
            string.find(surface_node_plus_1.name,"snow") or
@@ -178,6 +146,9 @@ function settlements.find_surface(pos)
            string.find(surface_node_plus_1.name,"tree") or
            string.find(surface_node_plus_1.name,"grass")) 
          then 
+           if settlements.debug == true then
+             minetest.chat_send_all("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
+           end
            return p6, surface_node.name 
          else
            if settlements.debug == true then
@@ -366,49 +337,6 @@ function shuffle(tbl)
     table[i], table[rand] = table[rand], table[i]
   end
   return table
-end
--------------------------------------------------------------------------------
--- get heightmap
--------------------------------------------------------------------------------
-function settlements.determine_heightmap(data, va, minp, maxp)
-  -- max height and min height, initialize with impossible values for easier first time setting
-  local max_y = -100
-  local min_y = 100
-  --
-  -- only analyze the center 40x40 of a chunk
-  --
-  local cmaxp = {
-    x=maxp.x-quarter_map_chunk_size, 
-    y=maxp.y, -- -quarter_map_chunk_size, 
-    z=maxp.z-quarter_map_chunk_size
-  }
-  local cminp = {
-    x=minp.x+quarter_map_chunk_size, 
-    y=minp.y, -- +quarter_map_chunk_size, 
-    z=minp.z+quarter_map_chunk_size
-  }
-  --
-  -- walk through chunk and find surfaces
-  --
-  for xi = cminp.x,cmaxp.x do
-    for zi = cminp.z,cmaxp.z do
-      local pos_surface = settlements.find_surface({x=xi, y=cmaxp.y, z=zi}, data, va)
-      -- check, if new found surface is higher or lower stored min_y or max_y
-      if pos_surface
-      then
-        if pos_surface.y < min_y
-        then
-          min_y = pos_surface.y
-        end
-        if pos_surface.y > max_y
-        then
-          max_y = pos_surface.y
-        end
-      end
-    end
-  end
-  -- return the difference between highest and lowest pos in chunk
-  return max_y - min_y
 end
 -------------------------------------------------------------------------------
 -- evaluate heightmap

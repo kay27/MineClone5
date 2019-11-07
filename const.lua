@@ -1,7 +1,7 @@
 --
 -- switch for debugging
 --
-settlements.debug = true
+settlements.debug = false
 --
 -- switch for lvm
 settlements.lvm = false
@@ -26,6 +26,28 @@ wallmaterial = {
   "default:desert_cobble", 
   "default:sandstone"
 }
+settlements.surface_mat = {}
+-------------------------------------------------------------------------------
+-- Set array to list
+-- https://stackoverflow.com/questions/656199/search-for-an-item-in-a-lua-list
+-------------------------------------------------------------------------------
+function settlements.grundstellungen ()
+  settlements.surface_mat = settlements.Set {
+    "default:dirt_with_grass",
+    "default:dry_dirt_with_grass",
+    "default:dirt_with_snow",
+    "default:dirt_with_dry_grass",
+    "default:dirt_with_coniferous_litter",
+    "default:sand",
+    "default:silver_sand",
+    "default:desert_sand",
+    "default:snow_block"
+  }
+end
+--
+-- possible surfaces where buildings can be built
+--
+
 --
 -- path to schematics
 --
