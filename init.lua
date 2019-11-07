@@ -64,11 +64,14 @@ minetest.register_on_generated(function(minp, maxp)
     -- 
     if math.random(1,10)<6 then 
       --
-      -- time between cration of two settlements
+      -- time between creation of two settlements
       --
       if os.difftime(os.time(), settlements.last_settlement) < settlements.min_timer 
       then
         return
+      end
+      if settlements.debug == true then
+         minetest.chat_send_all("Last opportunity ".. os.difftime(os.time(), settlements.last_settlement))
       end
       --
       -- don't build settlement underground
@@ -98,13 +101,15 @@ minetest.register_on_generated(function(minp, maxp)
       then
         return
       end
+      -- 
+      -- if no hard showstoppers prevent the settlement -> try to do it (check for suitable terrain)
+      --
+      -- set timestamp of actual settlement
+      --
+      settlements.last_settlement = os.time()
+      
       -- waiting necessary for chunk to load, otherwise, townhall is not in the middle, no map found behind townhall
-      minetest.after(2, function()
-
-
-          -- 
-          -- if nothing prevents the settlement -> do it
-          --
+      minetest.after(3, function()
           --
           -- fill settlement_info with buildings and their data
           --
@@ -122,10 +127,6 @@ minetest.register_on_generated(function(minp, maxp)
           then
             return
           end
-          --
-          -- set timestamp of actual settlement
-          --
-          settlements.last_settlement = os.time()
           --
           -- evaluate settlement_info and prepair terrain
           --
@@ -160,6 +161,7 @@ minetest.register_on_generated(function(minp, maxp)
           -- evaluate settlement_info and initialize furnaces and chests
           --
           settlements.initialize_nodes()
+          
         end)
 
 

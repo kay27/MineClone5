@@ -9,7 +9,7 @@ settlements.lvm = false
 -- timer between creation of two settlements
 --
 settlements.last_settlement = os.time()
-settlements.min_timer = 60
+settlements.min_timer = 20
 --
 --
 -- material to replace cobblestone with

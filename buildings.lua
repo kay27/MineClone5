@@ -112,7 +112,7 @@ function settlements.create_site_plan_lvm(maxp, minp)
     y=maxp.y, 
     z=maxp.z-half_map_chunk_size
   } 
-  -- find center_surcafe of chunk
+  -- find center_surface of chunk
   local center_surface , surface_material = settlements.find_surface_lvm(center, minp)
   -- go build settlement around center
   if center_surface then
@@ -197,7 +197,7 @@ function settlements.create_site_plan(maxp, minp)
     y=maxp.y, 
     z=maxp.z-half_map_chunk_size
   } 
-  -- find center_surcafe of chunk
+  -- find center_surface of chunk
   local center_surface , surface_material = settlements.find_surface(center)
   -- go build settlement around center
   if center_surface then

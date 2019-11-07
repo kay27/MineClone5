@@ -129,47 +129,80 @@ end
 function settlements.find_surface(pos)
   local p6 = settlements.shallowCopy(pos)
 --
--- baseplate material, to replace dirt with grass and where buildings can be built
+-- possible surfaces where buildings can be built
 --
   local surface_mat = {
     "default:dirt_with_grass",
+    "default:dry_dirt_with_grass",
     "default:dirt_with_snow",
     "default:dirt_with_dry_grass",
     "default:dirt_with_coniferous_litter",
     "default:sand",
+    "default:silver_sand",
     "default:desert_sand",
---  "default:snow"
+    "default:snow_block"
   }
   local cnt = 0
   local itter -- count up or down
   local cnt_max = 200
 -- check, in which direction to look for surface
-  local s = minetest.get_node_or_nil(p6)
-  if s and string.find(s.name,"air") then 
+  local surface_node = minetest.get_node_or_nil(p6)
+  if surface_node and string.find(surface_node.name,"air") then 
     itter = -1
   else
     itter = 1
   end
+  -- go through nodes an find surface
   while cnt < cnt_max do
     cnt = cnt+1
-    s = minetest.get_node_or_nil(p6)
-    if s == nil or s.name == "ignore" then return nil end
+    surface_node = minetest.get_node_or_nil(p6)
+    if surface_node == nil or surface_node.name == "ignore" then 
+      if settlements.debug == true then
+         minetest.chat_send_all("find_surface1: nil or ignore")
+      end
+      return nil 
+    end
+    --
+    -- Check Surface_node and Node above
+    --
+    local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
     for i, mats in ipairs(surface_mat) do
-      local node_check = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
-      if node_check and s and s.name == mats and 
-      (string.find(node_check.name,"air") or
-        string.find(node_check.name,"snow") or
-        string.find(node_check.name,"fern") or
-        string.find(node_check.name,"flower") or
-        string.find(node_check.name,"bush") or
-        string.find(node_check.name,"tree") or
-        string.find(node_check.name,"grass")) 
-      then 
-        return p6, mats 
+      if surface_node.name == mats then
+         if surface_node_plus_1 and surface_node and 
+         (string.find(surface_node_plus_1.name,"air") or
+           string.find(surface_node_plus_1.name,"snow") or
+           string.find(surface_node_plus_1.name,"fern") or
+           string.find(surface_node_plus_1.name,"flower") or
+           string.find(surface_node_plus_1.name,"bush") or
+           string.find(surface_node_plus_1.name,"tree") or
+           string.find(surface_node_plus_1.name,"grass")) 
+         then 
+           return p6, mats 
+         else
+           if settlements.debug == true then
+             minetest.chat_send_all("find_surface2: wrong surface+1")
+           end
+         end
+      else
+        if settlements.debug == true then
+          if string.find(surface_node.name,"air") then
+            local a=1
+          else
+             minetest.chat_send_all("find_surface3: wrong surface"..surface_node.name)
+          end
+        end
       end
     end
     p6.y = p6.y + itter
-    if p6.y < 0 then return nil end
+    if p6.y < 0 then 
+      if settlements.debug == true then
+        minetest.chat_send_all("find_surface4: y<0")
+      end
+      return nil 
+    end
+  end
+  if settlements.debug == true then
+     minetest.chat_send_all("find_surface5: cnt_max overflow")
   end
   return nil
 end
