@@ -131,7 +131,7 @@ function settlements.find_surface(pos)
 --
 -- possible surfaces where buildings can be built
 --
-  local surface_mat = {
+  local surface_mat = settlements.Set {
     "default:dirt_with_grass",
     "default:dry_dirt_with_grass",
     "default:dirt_with_snow",
@@ -166,8 +166,9 @@ function settlements.find_surface(pos)
     -- Check Surface_node and Node above
     --
     local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
-    for i, mats in ipairs(surface_mat) do
-      if surface_node.name == mats then
+   -- for i, mats in ipairs(surface_mat) do
+   --minetest.chat_send_all(surface_mat[surface_node.name])
+      if surface_mat[surface_node.name] then
          if surface_node_plus_1 and surface_node and 
          (string.find(surface_node_plus_1.name,"air") or
            string.find(surface_node_plus_1.name,"snow") or
@@ -177,7 +178,7 @@ function settlements.find_surface(pos)
            string.find(surface_node_plus_1.name,"tree") or
            string.find(surface_node_plus_1.name,"grass")) 
          then 
-           return p6, mats 
+           return p6, surface_node.name 
          else
            if settlements.debug == true then
              minetest.chat_send_all("find_surface2: wrong surface+1")
@@ -188,11 +189,11 @@ function settlements.find_surface(pos)
           if string.find(surface_node.name,"air") then
             local a=1
           else
-             minetest.chat_send_all("find_surface3: wrong surface"..surface_node.name)
+             minetest.chat_send_all("find_surface3: wrong surface "..surface_node.name)
           end
         end
       end
-    end
+   -- end
     p6.y = p6.y + itter
     if p6.y < 0 then 
       if settlements.debug == true then
@@ -474,4 +475,13 @@ function settlements.setlvm(vm, data)
   -- Write data
   vm:set_data(data)
   vm:write_to_map(true)
+end
+-------------------------------------------------------------------------------
+-- Set array to list
+-- https://stackoverflow.com/questions/656199/search-for-an-item-in-a-lua-list
+-------------------------------------------------------------------------------
+function settlements.Set (list)
+  local set = {}
+  for _, l in ipairs(list) do set[l] = true end
+  return set
 end

@@ -70,9 +70,9 @@ minetest.register_on_generated(function(minp, maxp)
       then
         return
       end
-      if settlements.debug == true then
-         minetest.chat_send_all("Last opportunity ".. os.difftime(os.time(), settlements.last_settlement))
-      end
+--      if settlements.debug == true then
+--         minetest.chat_send_all("Last opportunity ".. os.difftime(os.time(), settlements.last_settlement))
+--      end
       --
       -- don't build settlement underground
       --

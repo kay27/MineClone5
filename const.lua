@@ -1,7 +1,7 @@
 --
 -- switch for debugging
 --
-settlements.debug = false
+settlements.debug = true
 --
 -- switch for lvm
 settlements.lvm = false
