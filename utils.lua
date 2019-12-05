@@ -110,6 +110,7 @@ function settlements.find_surface(pos)
   -- go through nodes an find surface
   while cnt < cnt_max do
     cnt = cnt+1
+    minetest.forceload_block(p6)
     surface_node = minetest.get_node_or_nil(p6)
     
     if not surface_node then
