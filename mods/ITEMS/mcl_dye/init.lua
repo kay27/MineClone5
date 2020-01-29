@@ -126,7 +126,7 @@ end
 
 -- Bone Meal
 
-mcl_dye.apply_bone_meal = function(pointed_thing)
+mcl_dye.apply_bone_meal = function(pointed_thing, super)
 	-- Bone meal currently spawns all flowers found in the plains.
 	local flowers_table_plains = {
 		"mcl_flowers:dandelion",
@@ -159,12 +159,49 @@ mcl_dye.apply_bone_meal = function(pointed_thing)
 		"mcl_flowers:allium",
 	}
 
+	local spread_plants = function(pointed_thing, plants, plants2)
+		if pointed_thing.above.y <= pointed_thing.under.y then
+			return false
+		end
+		local center = pointed_thing.above
+		local cn = minetest.get_node(center)
+		local centerd = { x=center.x, y=center.y-1, z=center.z }
+		local cnd = minetest.get_node(centerd)
+		for i=-2, 2 do
+		for j=-2, 2 do
+		if math.random(1,100) >= 90 then
+			local plant, pool
+			if plants2 and math.random(1,100) >= 90 then
+				pool = plants2
+			else
+				pool = plants
+			end
+			plant = pool[math.random(1, #pool)]
+			local pos = vector.add({x=i, y=0, z=j}, center)
+			local pos2 = vector.add({x=i, y=0, z=j}, centerd)
+			local np = minetest.get_node(pos)
+			local np2 = minetest.get_node(pos2)
+			if np.name == "air" and np2.name == cnd.name then
+				local param2
+				if plant == "mcl_flowers:fern" or plant == "mcl_flowers:tallgrass" then
+					param2 = np2.param2
+				elseif plant == "mcl_nether:nether_wart_0" then
+					param2 = 3
+				end
+				minetest.set_node(pos, {name=plant, param2=param2})
+			end
+		end
+		end
+		end
+		return true
+	end
+
 	local pos = pointed_thing.under
 	local n = minetest.get_node(pos)
 	if n.name == "" then return false end
 	if minetest.get_item_group(n.name, "sapling") >= 1 then
 		-- Saplings: 45% chance to advance growth stage
-		if math.random(1,100) <= 45 then
+		if super or math.random(1,100) <= 45 then
 			return mcl_core.grow_sapling(pos, n)
 		end
 	elseif minetest.get_item_group(n.name, "mushroom") == 1 then
@@ -190,7 +227,7 @@ mcl_dye.apply_bone_meal = function(pointed_thing)
 			return false
 		end
 		-- 40% chance
-		if math.random(1,100) <= 40 then
+		if super or math.random(1,100) <= 40 then
 			-- Check space requirements
 			for i=1,3 do
 				local cpos = vector.add(pos, {x=0, y=i, z=0})
@@ -234,52 +271,32 @@ mcl_dye.apply_bone_meal = function(pointed_thing)
 
 	elseif string.find(n.name, "mcl_farming:beetroot_") ~= nil then
 		-- Beetroot: 75% chance to advance to next stage
-		if math.random(1,100) <= 75 then
+		if super or math.random(1,100) <= 75 then
 			return mcl_farming:grow_plant("plant_beetroot", pos, n, 1, true)
 		end
 	elseif n.name == "mcl_cocoas:cocoa_1" or n.name == "mcl_cocoas:cocoa_2" then
 		-- Cocoa: Advance by 1 stage
 		mcl_cocoas.grow(pos)
 		return true
-	elseif minetest.get_item_group(n.name, "grass_block") == 1 then
+	elseif minetest.get_item_group(n.name, "grass_block_no_snow") == 1 then
 		-- Grass Block: Generate tall grass and random flowers all over the place
-		for i = -2, 2 do
-			for j = -2, 2 do
-				pos = pointed_thing.above
-				pos = {x=pos.x+i, y=pos.y, z=pos.z+j}
-				n = minetest.get_node(pos)
-				local n2 = minetest.get_node({x=pos.x, y=pos.y-1, z=pos.z})
-
-				if n.name ~= "" and n.name == "air" and (minetest.get_item_group(n2.name, "grass_block_no_snow") == 1) then
-					-- Randomly generate flowers, tall grass or nothing
-					if math.random(1,100) <= 90 then
-						-- 90% tall grass, 10% flower
-						if math.random(1,100) <= 90 then
-							local col = n2.param2
-							minetest.add_node(pos, {name="mcl_flowers:tallgrass", param2=col})
-						else
-							local flowers_table
-							if mg_name == "v6" then
-								flowers_table = flowers_table_plains
-							else
-								local biome = minetest.get_biome_name(minetest.get_biome_data(pos).biome)
-								if biome == "Swampland" or biome == "Swampland_shore" or biome == "Swampland_ocean" or biome == "Swampland_deep_ocean" or biome == "Swampland_underground" then
-									flowers_table = flowers_table_swampland
-								elseif biome == "FlowerForest" or biome == "FlowerForest_beach" or biome == "FlowerForest_ocean" or biome == "FlowerForest_deep_ocean" or biome == "FlowerForest_underground" then
-									flowers_table = flowers_table_flower_forest
-								elseif biome == "Plains" or biome == "Plains_beach" or biome == "Plains_ocean" or biome == "Plains_deep_ocean" or biome == "Plains_underground" or biome == "SunflowerPlains" or biome == "SunflowerPlains_ocean" or biome == "SunflowerPlains_deep_ocean" or biome == "SunflowerPlains_underground" then
-									flowers_table = flowers_table_plains
-								else
-									flowers_table = flowers_table_simple
-								end
-							end
-							minetest.add_node(pos, {name=flowers_table[math.random(1, #flowers_table)]})
-						end
-					end
-				end
+		pos = pointed_thing.above
+		local flowers_table
+		if mg_name == "v6" then
+			flowers_table = flowers_table_plains
+		else
+			local biome = minetest.get_biome_name(minetest.get_biome_data(pos).biome)
+			if biome == "Swampland" or biome == "Swampland_shore" or biome == "Swampland_ocean" or biome == "Swampland_deep_ocean" or biome == "Swampland_underground" then
+				flowers_table = flowers_table_swampland
+			elseif biome == "FlowerForest" or biome == "FlowerForest_beach" or biome == "FlowerForest_ocean" or biome == "FlowerForest_deep_ocean" or biome == "FlowerForest_underground" then
+				flowers_table = flowers_table_flower_forest
+			elseif biome == "Plains" or biome == "Plains_beach" or biome == "Plains_ocean" or biome == "Plains_deep_ocean" or biome == "Plains_underground" or biome == "SunflowerPlains" or biome == "SunflowerPlains_ocean" or biome == "SunflowerPlains_deep_ocean" or biome == "SunflowerPlains_underground" then
+				flowers_table = flowers_table_plains
+			else
+				flowers_table = flowers_table_simple
 			end
 		end
-		return true
+		return spread_plants(pointed_thing, {"mcl_flowers:tallgrass"}, flowers_table)
 
 	-- Double flowers: Drop corresponding item
 	elseif n.name == "mcl_flowers:rose_bush" or n.name == "mcl_flowers:rose_bush_top" then
@@ -314,6 +331,115 @@ mcl_dye.apply_bone_meal = function(pointed_thing)
 			minetest.set_node(toppos, { name = "mcl_flowers:double_fern_top", param2 = n.param2 })
 			return true
 		end
+
+	end
+
+	if not super then
+		return false
+	end
+
+	if n.name == "mcl_core:vine" then
+		-- Grow vines downwards
+		local param2 = minetest.get_node(pos).param2
+		if param2 >= 2 then
+			local below
+			for i=1,15 do
+				below = {x=pos.x,y=pos.y-i,z=pos.z}
+				local node = minetest.get_node(below)
+				if node.name == "air" then
+					minetest.set_node(below, {name=n.name, param2=param2})
+					return true
+				elseif node.name ~= n.name then
+					break
+				end
+			end
+		end
+
+	elseif minetest.get_item_group(n.name, "leaves") == 1 then
+		-- Grow leaves in all directions
+		local posses = {
+			{ x=0, y=0, z=1 },
+			{ x=0, y=0, z=-1 },
+			{ x=0, y=1, z=0 },
+			{ x=0, y=-1, z=0 },
+			{ x=1, y=0, z=0 },
+			{ x=-1, y=0, z=0 },
+		}
+		for p=1, #posses do
+			local ppos = vector.add(pos, posses[p])
+			if minetest.get_node(ppos).name == "air" then
+				minetest.set_node(ppos, {name=n.name, param2=n.param2})
+			end
+		end
+		return true
+
+	elseif n.name == "mcl_core:reeds" or n.name == "mcl_core:cactus" or minetest.get_item_group(n.name, "tree") == 1 then
+		-- Grow reeds, cacti and tree trunks upwards
+		local above
+		for i=1,15 do
+			above = {x=pos.x,y=pos.y+i,z=pos.z}
+			local node = minetest.get_node(above)
+			if node.name == "air" then
+				minetest.set_node(above, {name=n.name})
+				return true
+			elseif node.name ~= n.name then
+				break
+			end
+		end
+
+	elseif n.name == "mcl_flowers:waterlily" then
+		-- Spread waterlilies on water
+		for x = pos.x - 3, pos.x + 3 do
+		for z = pos.z - 3, pos.z + 3 do
+			local ppos = {x = x, y = pos.y, z = z}
+			if vector.distance(pos, ppos) <= 3.0 then
+				local node = minetest.get_node(ppos)
+				local below_node = minetest.get_node({x = x, y = pos.y - 1, z = z})
+				if node.name == "air" and
+						math.random() < 0.1 and
+						minetest.get_item_group(below_node.name, "water") >= 1 and
+						minetest.registered_nodes[below_node.name].liquidtype == "source" then
+					node.name = "mcl_flowers:waterlily"
+					node.param2 = math.random(0,3)
+					minetest.set_node(ppos, node)
+				end
+			end
+		end
+		end
+		return true
+
+	-- Grow nether wart
+	elseif n.name == "mcl_nether:nether_wart_0" then
+		minetest.set_node(pos, {name="mcl_nether:nether_wart_1", param2=n.param2})
+		return true
+	elseif n.name == "mcl_nether:nether_wart_1" then
+		minetest.set_node(pos, {name="mcl_nether:nether_wart_2", param2=n.param2})
+		return true
+	elseif n.name == "mcl_nether:nether_wart_2" then
+		minetest.set_node(pos, {name="mcl_nether:nether_wart", param2=n.param2})
+		return true
+
+	elseif n.name == "mcl_core:podzol" then
+		-- Podzol: Mushrooms
+		-- TODO: Also fern
+		return spread_plants(pointed_thing, {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"})
+
+	elseif n.name == "mcl_core:mycelium" then
+		-- Mycelium: Generate mushrooms
+		return spread_plants(pointed_thing, {}, {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"})
+	elseif n.name == "mcl_core:coarse_dirt" or minetest.get_item_group(n.name, "sand") == 1 or minetest.get_item_group(n.name, "hardened_clay") == 1 then
+		-- Coarse dirt, hardened clay or sand: dead bush
+		return spread_plants(pointed_thing, {"mcl_core:deadbush"})
+	elseif n.name == "mcl_nether:soul_sand" then
+		-- Soul sand: Nether wart
+		return spread_plants(pointed_thing, {"mcl_nether:nether_wart_0"})
+	elseif n.name == "mcl_farming:soil" or n.name == "mcl_farming:soil_wet" then
+		-- Farmland: Farming plants
+		return spread_plants(pointed_thing,
+			-- TODO: Set param2 of those
+			{--[["mcl_farming:beetroot_0", "mcl_farming:wheat_1", "mcl_farming:carrot_1", "mcl_farming:potato_1"]]},
+			{"mcl_farming:pumpkin_1", "mcl_farming:melontige_1"}
+		)
 	end
 
 	return false
@@ -335,8 +461,9 @@ minetest.register_craftitem("mcl_dye:white", {
 			end
 		end
 
+		local creative = minetest.settings:get_bool("creative_mode")
 		-- Use the bone meal on the ground
-		if(mcl_dye.apply_bone_meal(pointed_thing) and not minetest.settings:get_bool("creative_mode")) then
+		if(mcl_dye.apply_bone_meal(pointed_thing, creative) and (not creative)) then
 			itemstack:take_item()
 		end
 		return itemstack
@@ -349,7 +476,7 @@ minetest.register_craftitem("mcl_dye:white", {
 		else
 			pointed_thing = { above = pos, under = droppos }
 		end
-		local success = mcl_dye.apply_bone_meal(pointed_thing)
+		local success = mcl_dye.apply_bone_meal(pointed_thing, false)
 		if success then
 			stack:take_item()
 		end
