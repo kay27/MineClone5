@@ -124,23 +124,6 @@ minetest.register_globalstep(function(dtime)
 			end
 		end
 
-		-- Am I near a cactus?
-		local near = minetest.find_node_near(pos, 1, "mcl_core:cactus")
-		if not near then
-			near = minetest.find_node_near({x=pos.x, y=pos.y-1, z=pos.z}, 1, "mcl_core:cactus")
-		end
-		if near then
-			-- Am I touching the cactus? If so, it hurts
-			local dist = vector.distance(pos, near)
-			local dist_feet = vector.distance({x=pos.x, y=pos.y-1, z=pos.z}, near)
-			if dist < 1.1 or dist_feet < 1.1 then
-				if player:get_hp() > 0 then
-					mcl_death_messages.player_damage(player, S("@1 was prickled to death by a cactus.", name))
-					player:set_hp(player:get_hp() - 1, { type = "punch", from = "mod" })
-				end
-			end
-		end
-
 		--[[ Swimming: Cause exhaustion.
 		NOTE: As of 0.4.15, it only counts as swimming when you are with the feet inside the liquid!
 		Head alone does not count. We respect that for now. ]]
