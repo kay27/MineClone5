@@ -20,6 +20,8 @@ armor = {
 	default_skin = "character",
 }
 
+local hud_overlays = {}
+
 if minetest.get_modpath("mcl_skins") then
 	skin_mod = "mcl_skins"
 elseif minetest.get_modpath("skins") then
@@ -123,6 +125,7 @@ armor.set_player_armor = function(self, player)
 	for _,v in ipairs(self.elements) do
 		elements[v] = false
 	end
+	local hud_overlay_added = false
 	for i=1, 6 do
 		local stack = player_inv:get_stack("armor", i)
 		local item = stack:get_name()
@@ -138,6 +141,18 @@ armor.set_player_armor = function(self, player)
 						local texture = def.texture or item:gsub("%:", "_")
 						table.insert(textures, texture..".png")
 						preview = preview.."^"..texture.."_preview.png"
+						if def and def._mcl_armor_hud_overlay and not hud_overlays[name] then
+							local head_hud = player:hud_add({
+								hud_elem_type = "image",
+								text = def._mcl_armor_hud_overlay,
+								scale = { x = -100, y = -100 },
+								pos = { x = 0, y = 0 },
+								alignment = { x = 1, y = 1 },
+								z_index = -20,
+							})
+							hud_overlays[name] = head_hud
+							hud_overlay_added = true
+						end
 						armor_level = armor_level + level
 						items = items + 1
 						mcl_armor_points = mcl_armor_points + (def.groups["mcl_armor_points"] or 0)
@@ -160,6 +175,10 @@ armor.set_player_armor = function(self, player)
 				end
 			end
 		end
+	end
+	if (not hud_overlay_added) and (hud_overlays[name]) then
+		player:hud_remove(hud_overlays[name])
+		hud_overlays[name] = nil
 	end
 	if minetest.get_modpath("shields") then
 		armor_level = armor_level * 0.9
@@ -487,6 +506,10 @@ minetest.register_on_joinplayer(function(player)
 			armor:set_player_armor(player)
 		end, player:get_player_name())
 	end
+end)
+
+minetest.register_on_leaveplayer(function(player)
+	hud_overlays[player:get_player_name()] = nil
 end)
 
 minetest.register_on_player_hpchange(function(player, hp_change, reason)

@@ -114,6 +114,7 @@ pumpkin_face_base_def.tiles = {"farming_pumpkin_top.png", "farming_pumpkin_top.p
 pumpkin_face_base_def.groups.armor_head=1
 pumpkin_face_base_def._mcl_armor_mob_range_factor = 0
 pumpkin_face_base_def._mcl_armor_mob_range_mob = "mobs_mc:enderman"
+pumpkin_face_base_def._mcl_armor_hud_overlay = "mcl_farming_pumpkinblur.png"
 pumpkin_face_base_def.groups.non_combat_armor=1
 if minetest.get_modpath("mcl_armor") then
 	pumpkin_face_base_def.on_secondary_use = armor.on_armor_use
