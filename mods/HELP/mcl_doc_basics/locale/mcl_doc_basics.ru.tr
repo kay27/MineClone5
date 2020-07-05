@@ -122,7 +122,7 @@ An item stack is a collection of items of the same type which fits into a single
 Dropped item stacks will be collected automatically when you stand close to them.=Стопки брошенных предметов подбираются автоматически, если вы стоите рядом с ними.
 Items have several properties, including the following:=Предметы имеют несколько свойств, в том числе следующие:
 • Maximum stack size: Number of items which fit on 1 item stack=• Максимальный размер стопки: количество, которое помещается в 1 стопку предметов
-• Pointing range: How close things must be to be pointed while wielding this item=• Дальность наведения: насколько близко должен находиться предмет, чтобы можно было направить его для использования
+• Pointing range: How close things must be to be pointed while wielding this item=• Дальность прицела: насколько близко должна находиться цель, чтобы можно было навести на неё этот предмет и использовать
 • Group memberships: See “Basics > Groups”=• Членство в группах: См. “Основы > Группы”
 • May be used for crafting or cooking=• Может быть использовано для крафтинга или приготовления пищи
 Tools=Инструменты
@@ -140,10 +140,10 @@ Melee weapons deal damage by punching players and other animate objects. There a
 There are two core attributes of melee weapons:=Есть два основных атрибута оружия ближнего боя:
 • Maximum damage: Damage which is dealt after a hit when the weapon was fully recovered=• Максимальный урон: урон, который наносится после удара, когда оружие полностью восстановлено
 • Full punch interval: Time it takes for fully recovering from a punch=• Интервал полного удара: время, необходимое для полного восстановления после удара
-A weapon only deals full damage when it has fully recovered from a previous punch. Otherwise, the weapon will deal only reduced damage. This means, quick punching is very fast, but also deals rather low damage. Note the full punch interval does not limit how fast you can attack.=
-There is a rule which sometimes makes attacks impossible: Players, animate objects and weapons belong to damage groups. A weapon only deals damage to those who share at least one damage group with it. So if you're using the wrong weapon, you might not deal any damage at all.=
-Pointing=
-“Pointing” means looking at something in range with the crosshair. Pointing is needed for interaction, like mining, punching, using, etc. Pointable things include blocks, players, computer enemies and objects.=
+A weapon only deals full damage when it has fully recovered from a previous punch. Otherwise, the weapon will deal only reduced damage. This means, quick punching is very fast, but also deals rather low damage. Note the full punch interval does not limit how fast you can attack.=Оружие наносит полный урон только тогда, когда оно полностью восстановилось после предыдущего удара. В противном случае оружие будет наносить меньший урон. Это означает, что быстрый удар очень быстр, но наносит довольно низкий урон. Обратите внимание, что интервал полного удара не ограничивает скорость атаки.
+There is a rule which sometimes makes attacks impossible: Players, animate objects and weapons belong to damage groups. A weapon only deals damage to those who share at least one damage group with it. So if you're using the wrong weapon, you might not deal any damage at all.=Есть правило, иногда делающее атаки невозможными: игроки, живые объекты и оружие принадлежат к некоторым к группам повреждений. Оружие наносит урон только тем, кто имеет хотя бы одну общую группу с ним. Так что, если вы используете «неправильное» оружие, то можете не нанести совсем никакого урона.
+Pointing=Прицел
+“Pointing” means looking at something in range with the crosshair. Pointing is needed for interaction, like mining, punching, using, etc. Pointable things include blocks, players, computer enemies and objects.=“Прицел” означает, что вы смотрите на цель через область с крестиком. Прицелиться нужно для таких вещей, как добыча, удар, использование и так далее. Нацеливаемыми вещами являются блоки, игроки, компьютерные враги и объекты.
 To point something, it must be in the pointing range (also just called “range”) of your wielded item. There's a default range when you are not wielding anything. A pointed thing will be outlined or highlighted (depending on your settings). Pointing is not possible with the 3rd person front camera.=
 A few things can not be pointed. Most blocks are pointable. A few blocks, like air, can never be pointed. Other blocks, like liquids can only be pointed by special items.=
 Camera=
