@@ -85,7 +85,7 @@ minetest.register_node("mcl_nether:nether_wart", {
 	tiles = {"mcl_nether_nether_wart_stage_2.png"},
 	wield_image = "mcl_nether_nether_wart_stage_2.png",
 	inventory_image = "mcl_nether_nether_wart_stage_2.png",
-	selection_box = { 
+	selection_box = {
 		type = "fixed",
 		fixed = {
 			{-0.5, -0.5, -0.5, 0.5, 0.45, 0.5}
@@ -128,14 +128,14 @@ minetest.register_craftitem("mcl_nether:nether_wart_item", {
 				minetest.sound_play({name="default_place_node", gain=1.0}, {pos=placepos}, true)
 				minetest.set_node(placepos, {name="mcl_nether:nether_wart_0", param2 = 3})
 
-				if not minetest.settings:get_bool("creative_mode") then
+				if not minetest.is_creative_enabled(placer:get_player_name()) then
 					itemstack:take_item()
 				end
 				return itemstack
 			end
 		end
 	end,
-	groups = { craftitem = 1 },
+	groups = { craftitem = 1, brewitem=1 },
 })
 
 local names = {"mcl_nether:nether_wart_0", "mcl_nether:nether_wart_1", "mcl_nether:nether_wart_2"}

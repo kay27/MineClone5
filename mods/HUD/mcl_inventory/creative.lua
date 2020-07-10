@@ -10,10 +10,8 @@ local inventory_lists = {}
 local show_armor = minetest.get_modpath("mcl_armor") ~= nil
 local mod_player = minetest.get_modpath("mcl_player") ~= nil
 
--- TODO: Brewing is disabled. Add brewing (uncommented code) when it is implemented properly
-
 -- Create tables
-local builtin_filter_ids = {"blocks","deco","redstone","rail","food","tools","combat","mobs",--[["brew",]]"matr","misc","all"}
+local builtin_filter_ids = {"blocks","deco","redstone","rail","food","tools","combat","mobs","brew","matr","misc","all"}
 for _, f in pairs(builtin_filter_ids) do
 	inventory_lists[f] = {}
 end
@@ -67,11 +65,10 @@ do
 				table.insert(inventory_lists["mobs"], name)
 				nonmisc = true
 			end
-			-- TODO: add brew
-			--if def.groups.brewitem then
-				--table.insert(inventory_lists["brew"], name)
-				--nonmisc = true
-			--end
+			if def.groups.brewitem then
+				table.insert(inventory_lists["brew"], name)
+				nonmisc = true
+			end
 			if def.groups.craftitem then
 				table.insert(inventory_lists["matr"], name)
 				nonmisc = true
@@ -94,9 +91,17 @@ local function set_inv_search(filter, player)
 	local playername = player:get_player_name()
 	local inv = minetest.get_inventory({type="detached", name="creative_"..playername})
 	local creative_list = {}
+	local lang = minetest.get_player_information(playername).lang_code
 	for name,def in pairs(minetest.registered_items) do
 		if (not def.groups.not_in_creative_inventory or def.groups.not_in_creative_inventory == 0) and def.description and def.description ~= "" then
-			if string.find(string.lower(def.name), filter) or string.find(string.lower(def.description), filter) then
+			local name = string.lower(def.name)
+			local desc
+			if not lang then
+				desc = string.lower(def.description)
+			else
+				desc = string.lower(minetest.get_translated_string(lang, def.description))
+			end
+			if string.find(name, filter) or string.find(desc, filter) then
 				table.insert(creative_list, name)
 			end
 		end
@@ -123,7 +128,7 @@ local function init(player)
 	local playername = player:get_player_name()
 	local inv = minetest.create_detached_inventory("creative_"..playername, {
 		allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
-			if minetest.settings:get_bool("creative_mode") then
+			if minetest.is_creative_enabled(playername) then
 				return count
 			else
 				return 0
@@ -133,7 +138,7 @@ local function init(player)
 			return 0
 		end,
 		allow_take = function(inv, listname, index, stack, player)
-			if minetest.settings:get_bool("creative_mode") then
+			if minetest.is_creative_enabled(player:get_player_name()) then
 				return -1
 			else
 				return 0
@@ -146,7 +151,7 @@ end
 -- Create the trash field
 local trash = minetest.create_detached_inventory("trash", {
 	allow_put = function(inv, listname, index, stack, player)
-		if minetest.settings:get_bool("creative_mode") then
+		if minetest.is_creative_enabled(player:get_player_name()) then
 			return stack:get_count()
 		else
 			return 0
@@ -160,7 +165,7 @@ trash:set_size("main", 1)
 
 local noffset = {} -- numeric tab offset
 local offset = {} -- string offset:
-local boffset = {} -- 
+local boffset = {} --
 local hoch = {}
 local filtername = {}
 local bg = {}
@@ -182,6 +187,7 @@ next_noffset("blocks")
 next_noffset("deco")
 next_noffset("redstone")
 next_noffset("rail")
+next_noffset("brew")
 next_noffset("misc")
 next_noffset("nix", true)
 
@@ -193,7 +199,6 @@ next_noffset("food")
 next_noffset("tools")
 next_noffset("combat")
 next_noffset("mobs")
---next_noffset("brew") -- TODO: add brew
 next_noffset("matr")
 next_noffset("inv", true)
 
@@ -206,6 +211,7 @@ hoch["blocks"] = ""
 hoch["deco"] = ""
 hoch["redstone"] = ""
 hoch["rail"] = ""
+hoch["brew"] = ""
 hoch["misc"] = ""
 hoch["nix"] = ""
 hoch["default"] = ""
@@ -213,7 +219,6 @@ hoch["food"] = "_down"
 hoch["tools"] = "_down"
 hoch["combat"] = "_down"
 hoch["mobs"] = "_down"
---hoch["brew"] = "_down" -- TODO: add brew
 hoch["matr"] = "_down"
 hoch["inv"] = "_down"
 
@@ -228,26 +233,26 @@ filtername["food"] = S("Foodstuffs")
 filtername["tools"] = S("Tools")
 filtername["combat"] = S("Combat")
 filtername["mobs"] = S("Mobs")
---filtername["brew"] = S("Brewing") -- TODO: add brew
+filtername["brew"] = S("Brewing")
 filtername["matr"] = S("Materials")
 filtername["inv"] = S("Survival Inventory")
 
 local dark_bg = "crafting_creative_bg_dark.png"
 
 local function reset_menu_item_bg()
-	bg["blocks"] = dark_bg 
-	bg["deco"] = dark_bg 
-	bg["redstone"] = dark_bg 
-	bg["rail"] = dark_bg 
-	bg["misc"] = dark_bg 
-	bg["nix"] = dark_bg 
-	bg["food"] = dark_bg 
-	bg["tools"] = dark_bg 
-	bg["combat"] = dark_bg 
+	bg["blocks"] = dark_bg
+	bg["deco"] = dark_bg
+	bg["redstone"] = dark_bg
+	bg["rail"] = dark_bg
+	bg["misc"] = dark_bg
+	bg["nix"] = dark_bg
+	bg["food"] = dark_bg
+	bg["tools"] = dark_bg
+	bg["combat"] = dark_bg
 	bg["mobs"] = dark_bg
-	--bg["brew"] = dark_bg -- TODO: add brew
-	bg["matr"] = dark_bg 
-	bg["inv"] = dark_bg 
+	bg["brew"] = dark_bg
+	bg["matr"] = dark_bg
+	bg["inv"] = dark_bg
 	bg["default"] = dark_bg
 end
 
@@ -377,7 +382,7 @@ mcl_inventory.set_creative_formspec = function(player, start_i, pagenum, inv_siz
 			tools = "mcl_core:axe_iron",
 			combat = "mcl_core:sword_gold",
 			mobs = "mobs_mc:cow",
-			brew = "mcl_potions:potion_water",
+			brew = "mcl_potions:dragon_breath",
 			matr = "mcl_core:stick",
 			inv = "mcl_chests:chest",
 		}
@@ -388,7 +393,7 @@ mcl_inventory.set_creative_formspec = function(player, start_i, pagenum, inv_siz
 			else
 				bg_img = "crafting_creative_inactive"..hoch[this_tab]..".png"
 			end
-			return 
+			return
 				"style["..this_tab..";border=false;bgimg=;bgimg_pressed=]"..
 				"item_image_button[" .. boffset[this_tab] ..";1,1;"..tab_icon[this_tab]..";"..this_tab..";]"..
 				"image[" .. offset[this_tab] .. ";1.5,1.44;" .. bg_img .. "]" ..
@@ -428,9 +433,8 @@ mcl_inventory.set_creative_formspec = function(player, start_i, pagenum, inv_siz
 			"tooltip[combat;"..F(filtername["combat"]).."]"..
 			tab(name, "mobs") ..
 			"tooltip[mobs;"..F(filtername["mobs"]).."]"..
-			-- TODO: Add brew
-			--tab(name, "brew") ..
-			--"tooltip[brew;"..F(filtername["brew"]).."]"..
+			tab(name, "brew") ..
+			"tooltip[brew;"..F(filtername["brew"]).."]"..
 			tab(name, "matr") ..
 			"tooltip[matr;"..F(filtername["matr"]).."]"..
 			tab(name, "inv") ..
@@ -455,7 +459,8 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local page = nil
-	if not minetest.settings:get_bool("creative_mode") then
+
+	if not minetest.is_creative_enabled(player:get_player_name()) then
 		return
 	end
 	if formname ~= "" or fields.quit == "true" then
@@ -504,12 +509,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if players[name].page == "mobs" then return end
 		set_inv_page("mobs",player)
 		page = "mobs"
-	--[[ TODO: add brew
 	elseif fields.brew then
 		if players[name].page == "brew" then return end
 		set_inv_page("brew",player)
 		page = "brew"
-	]]
 	elseif fields.matr then
 		if players[name].page == "matr" then return end
 		set_inv_page("matr",player)
@@ -577,7 +580,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 end)
 
 
-if minetest.settings:get_bool("creative_mode") then
+if minetest.is_creative_enabled("") then
 	minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack)
 		-- Place infinite nodes, except for shulker boxes
 		local group = minetest.get_item_group(itemstack:get_name(), "shulker_box")

@@ -28,9 +28,8 @@ end
 
 
 -- creative check
-local creative_mode_cache = minetest.settings:get_bool("creative_mode")
 function mobs.is_creative(name)
-	return creative_mode_cache or minetest.check_player_privs(name, {creative = true})
+	return minetest.is_creative_enabled(name)
 end
 
 
@@ -60,7 +59,6 @@ local mobs_spawn = minetest.settings:get_bool("mobs_spawn", true) ~= false
 local disable_blood = minetest.settings:get_bool("mobs_disable_blood")
 local mobs_drop_items = minetest.settings:get_bool("mobs_drop_items") ~= false
 local mobs_griefing = minetest.settings:get_bool("mobs_griefing") ~= false
-local creative = minetest.settings:get_bool("creative_mode")
 local spawn_protected = minetest.settings:get_bool("mobs_spawn_protected") ~= false
 local remove_far = false
 local difficulty = tonumber(minetest.settings:get("mob_difficulty")) or 1.0
@@ -1600,8 +1598,8 @@ local monster_attack = function(self)
 
 	if self.type ~= "monster"
 	or not damage_enabled
-	or creative
 	or self.passive
+	or minetest.is_creative_enabled("")
 	or self.state == "attack"
 	or day_docile(self) then
 		return
@@ -2683,7 +2681,7 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 
 	-- add weapon wear manually
 	-- Required because we have custom health handling ("health" property)
-	if minetest.settings:get_bool("creative_mode") ~= true
+	if minetest.is_creative_enabled("") ~= true
 	and tool_capabilities then
 		if tool_capabilities.punch_attack_uses then
 			-- Without this delay, the wear does not work. Quite hacky ...
@@ -3896,7 +3894,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 	local grp = {spawn_egg = 1}
 
 	-- do NOT add this egg to creative inventory (e.g. dungeon master)
-	if creative and no_creative == true then
+	if no_creative == true then
 		grp.not_in_creative_inventory = 1
 	end
 
@@ -3944,7 +3942,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 						return itemstack
 					end
 					mcl_mobspawners.setup_spawner(pointed_thing.under, itemstack:get_name())
-					if not minetest.settings:get_bool("creative_mode") then
+					if not mobs.is_creative(name) then
 						itemstack:take_item()
 					end
 					return itemstack
