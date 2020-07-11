@@ -1600,6 +1600,7 @@ local monster_attack = function(self)
 	or not damage_enabled
 	or self.passive
 	or minetest.is_creative_enabled("")
+	or self.passive
 	or self.state == "attack"
 	or day_docile(self) then
 		return
