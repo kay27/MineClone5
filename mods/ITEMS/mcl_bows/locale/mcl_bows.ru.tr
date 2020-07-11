@@ -7,7 +7,7 @@ To use arrows as ammunition for a bow, just put them anywhere in your inventory,
 Bow=Лук
 Bows are ranged weapons to shoot arrows at your foes.=Лук - это оружие дальнего боя, чтобы стрелять стрелами по вашим врагам.
 The speed and damage of the arrow increases the longer you charge. The regular damage of the arrow is between 1 and 9. At full charge, there's also a 20% of a critical hit, dealing 10 damage instead.=Скорость и урон стрелы увеличиваются, пока вы её натягиваете. Обычный урон стрелы находится между 1 и 9. При полном нятяжении есть 20-процентный шанс критического удара с уроном 10.
-To use the bow, you first need to have at least one arrow anywhere in your inventory (unless in Creative Mode). Hold down the right mouse button to charge, release to shoot.=Чтобы использовать лук, нужно иметь хотя бы одну стрелу в вашем инвентаре (за исключением Креативного режима). Удерживайте правую клавишу мули, чтобы натягивать тетиву, затем отпустите, чтобы выстрелить.
+To use the bow, you first need to have at least one arrow anywhere in your inventory (unless in Creative Mode). Hold down the right mouse button to charge, release to shoot.=Чтобы использовать лук, нужно иметь хотя бы одну стрелу в вашем инвентаре (за исключением творческого режима). Удерживайте правую клавишу мули, чтобы натягивать тетиву, затем отпустите, чтобы выстрелить.
 Bow=Лук
 Ammunition=Боеприпасы
 Damage from bow: 1-10=Урон от лука: 1-10
