@@ -5,12 +5,16 @@ mcl_potions = {}
 -- duration effects of glowstone are a time factor of 1/2
 -- splash potion duration effects are reduced by a factor of 3/4
 
+mcl_potions.II_FACTOR = 2
+mcl_potions.PLUS_FACTOR = 8/3
+
 mcl_potions.DURATION = 180
-mcl_potions.DURATION_PLUS = mcl_potions.DURATION * (8/3)
-mcl_potions.DURATION_2 = mcl_potions.DURATION * (1/2)
+mcl_potions.DURATION_PLUS = mcl_potions.DURATION * mcl_potions.PLUS_FACTOR
+mcl_potions.DURATION_2 = mcl_potions.DURATION / mcl_potions.II_FACTOR
 
 mcl_potions.INV_FACTOR = 0.50
 mcl_potions.SPLASH_FACTOR = 0.75
+mcl_potions.LINGERING_FACTOR = 0.25
 
 
 local modpath = minetest.get_modpath("mcl_potions")
@@ -275,7 +279,7 @@ minetest.register_craftitem("mcl_potions:speckled_melon", {
 	description = S("Glistering Melon"),
 	_doc_items_longdesc = S("This shiny melon is full of tiny gold nuggets and would be nice in an item frame. It isn't edible and not useful for anything else."),
 	stack_max = 64,
-	groups = { brewitem = 1, not_in_creative_inventory = 0, not_in_craft_guide = 1 },
+	groups = { brewitem = 1, not_in_creative_inventory = 0, not_in_craft_guide = 0 },
 	inventory_image = "mcl_potions_melon_speckled.png",
 })
 
@@ -375,12 +379,12 @@ local lingering_table = {}
 
 for i, potion in ipairs(potions) do
     splash_table["mcl_potions:"..potion] = "mcl_potions:"..potion.."_splash"
-		lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
+	lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
 end
 
 for i, potion in ipairs({"awkward", "mundane", "thick", "water", "river_water"}) do
     splash_table["mcl_potions:"..potion] = "mcl_potions:"..potion.."_splash"
-		lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
+	lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
 end
 
 
