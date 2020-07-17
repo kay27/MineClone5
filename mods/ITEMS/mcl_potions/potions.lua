@@ -14,6 +14,17 @@ local function time_string(dur)
 	if not dur then return nil end
 	return math.floor(dur/60)..string.format(":%02d",math.floor(dur % 60))
 end
+local function perc_string(num)
+
+	local rem = math.floor((num-1.0)*100 + 0.1) % 5
+	local out = math.floor((num-1.0)*100 + 0.1) - rem
+
+	if (num - 1.0) < 0 then
+		return out.."%"
+	else
+		return "+"..out.."%"
+	end
+end
 
 local function register_potion(def)
 
@@ -36,7 +47,7 @@ local function register_potion(def)
 	local function get_tt(tt, effect, dur)
 		local _tt
 		if effect and def.is_dur then
-			_tt = (effect*100).."% | "..time_string(dur)
+			_tt = perc_string(effect).." | "..time_string(dur)
 			if def.name == "poison" or def.name == "regeneration" then
 				_tt = "1/2 Heart/"..effect.."sec | "..time_string(dur)
 			end
@@ -237,7 +248,6 @@ local function register_potion(def)
 end
 
 
-
 local awkward_def = {
 	name = "awkward",
 	description = "Awkward Potion",
@@ -252,7 +262,7 @@ local mundane_def = {
 	name = "mundane",
 	description = "Mundane Potion",
 	_tt = S("No effect"),
-	longdesc = S("Has a clean taste and is used for brewing potions."),
+	longdesc = S("Has a terrible taste and is not useful for brewing potions."),
 	color = "#0000FF",
 	on_use = minetest.item_eat(0, "mcl_potions:glass_bottle"),
 }
@@ -261,7 +271,7 @@ local thick_def = {
 	name = "thick",
 	description = "Thick Potion",
 	_tt = S("No effect"),
-	_longdesc = S("Has a bitter taste and is used for brewing potions."),
+	_longdesc = S("Has a bitter taste and is not useful for brewing potions."),
 	color = "#0000FF",
 	on_use = minetest.item_eat(0, "mcl_potions:glass_bottle"),
 }
@@ -348,7 +358,7 @@ local leaping_def = {
 	_tt = nil,
 	_longdesc = S("Drink to leap tall buildings in a single bound!"),
 	color = "#00CC33",
-	effect = 1.5,
+	effect = 1.15,
 	is_dur = true,
 	on_use = mcl_potions.leaping_func,
 	is_II = true,

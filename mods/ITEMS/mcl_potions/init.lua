@@ -189,8 +189,8 @@ minetest.register_craftitem("mcl_potions:water", {
 	_doc_items_longdesc = S("Water bottles can be used to fill cauldrons. Drinking water has no effect."),
 	_doc_items_usagehelp = S("Use the “Place” key to drink. Place this item on a cauldron to pour the water into the cauldron."),
 	stack_max = 1,
-	inventory_image = potion_image("#0000FF"),
-	wield_image = potion_image("#0000FF"),
+	inventory_image = potion_image("#0022FF"),
+	wield_image = potion_image("#0022FF"),
 	groups = {brewitem=1, food=3, can_eat_when_full=1, water_bottle=1},
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type == "node" then
@@ -227,6 +227,7 @@ minetest.register_craftitem("mcl_potions:water", {
 	end,
 	on_secondary_use = minetest.item_eat(0, "mcl_potions:glass_bottle"),
 })
+
 
 minetest.register_craftitem("mcl_potions:river_water", {
 	description = S("River Water Bottle"),
@@ -272,8 +273,11 @@ minetest.register_craftitem("mcl_potions:river_water", {
 		return minetest.do_item_eat(0, "mcl_potions:glass_bottle", itemstack, placer, pointed_thing)
 	end,
 	on_secondary_use = minetest.item_eat(0, "mcl_potions:glass_bottle"),
+
 })
 
+mcl_potions.register_splash("water", S("Splash Potion"), "#0022FF", {tt="No effect", potion_fun=function() end})
+mcl_potions.register_lingering("water", S("Lingering Potion"), "#0022FF", {tt="No effect", potion_fun=function() end})
 
 minetest.register_craftitem("mcl_potions:speckled_melon", {
 	description = S("Glistering Melon"),
@@ -303,7 +307,9 @@ local water_table = {
 	["mesecons:wire_00000000_off"] = "mcl_potions:mundane",
 	["mcl_mobitems:ghast_tear"] = "mcl_potions:mundane",
 	["mcl_mobitems:spider_eye"] = "mcl_potions:mundane",
-	["mcl_mobitems:rabbit_foot"] = "mcl_potions:mundane"
+	["mcl_mobitems:rabbit_foot"] = "mcl_potions:mundane",
+	["mcl_nether:glowstone_dust"] = "mcl_potions:thick",
+	["mcl_mobitems:gunpowder"] = "mcl_potions:water_splash"
 }
 
 local awkward_table = {
@@ -327,7 +333,8 @@ local output_table = {
 
 local enhancement_table = {}
 local extension_table = {}
-local potions = {"awkward", "mundane", "thick"}
+local potions = {}
+
 for i, potion in ipairs({"healing","harming","swiftness","slowness",
 						 "leaping","poison","regeneration","invisibility","fire_resistance",
 						 -- "weakness","strength",
@@ -347,6 +354,10 @@ for i, potion in ipairs({"healing","harming","swiftness","slowness",
 			table.insert(potions, potion.."_plus")
 		end
 
+end
+
+for i, potion in ipairs({"awkward", "mundane", "thick", "water"}) do
+	table.insert(potions, potion)
 end
 
 
@@ -378,11 +389,6 @@ local splash_table = {}
 local lingering_table = {}
 
 for i, potion in ipairs(potions) do
-    splash_table["mcl_potions:"..potion] = "mcl_potions:"..potion.."_splash"
-	lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
-end
-
-for i, potion in ipairs({"awkward", "mundane", "thick", "water", "river_water"}) do
     splash_table["mcl_potions:"..potion] = "mcl_potions:"..potion.."_splash"
 	lingering_table["mcl_potions:"..potion.."_splash"] = "mcl_potions:"..potion.."_lingering"
 end
