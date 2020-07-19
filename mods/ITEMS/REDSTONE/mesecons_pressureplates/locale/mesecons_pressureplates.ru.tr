@@ -10,7 +10,7 @@ A wooden pressure plate is a redstone component which supplies its surrounding b
 Stone Pressure Plate=Каменная нажимная панель
 A stone pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else.=Каменная нажимная панель это компонент редстоуна, который начинает снабжать энергией редстоуна окружающие его блоки, когда игрок или моб находится прямо на нём. От чего-то другого он не сработает.
 Provides redstone power when pushed=Производит энергию редстоуна при нажимании
-Pushable by players, mobs and objects=Нажиматся игроками, мобами и объектами
+Pushable by players, mobs and objects=Нажимается игроками, мобами и объектами
 Pushable by players and mobs=Нажимается игроками и мобами
 Pushable by players=Нажимается игроками
 Pushable by mobs=Нажимается мобами

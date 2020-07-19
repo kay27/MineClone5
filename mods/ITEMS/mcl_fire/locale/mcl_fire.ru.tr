@@ -1,7 +1,7 @@
 # textdomain: mcl_fire
 Fire Charge=Огненный шар
 Fire charges are primarily projectiles which can be launched from dispensers, they will fly in a straight line and burst into a fire on impact. Alternatively, they can be used to ignite fires directly.=Огненные шары это прежде всего снаряды, которые могут быть выпущены из диспенсеров, они полетят по прямой линии и превратятся в огонь при ударе. Они также могут быть использованы для непосредственного поджигания блоков.
-Put the fire charge into a dispenser and supply it with redstone power to launch it. To ignite a fire directly, simply place the fire charge on the ground, which uses it up.=Положите огненный шар в диспенсер и подайте на него энергию редстоуна для запуска. Чтобы непосредственно поджигатьблоки, просто поместите его на поверхность.
+Put the fire charge into a dispenser and supply it with redstone power to launch it. To ignite a fire directly, simply place the fire charge on the ground, which uses it up.=Положите огненный шар в диспенсер и подайте на него энергию редстоуна для запуска. Чтобы непосредственно поджигать блоки, просто поместите его на поверхность.
 Flint and Steel=Огниво
 Flint and steel is a tool to start fires and ignite blocks.=Огниво это инструмент для добывания огня.
 Rightclick the surface of a block to attempt to light a fire in front of it or ignite the block. A few blocks have an unique reaction when ignited.=Кликните правой по поверхности блока, чтобы попытаться зажечь огонь перед ней либо поджечь блок. Некоторые блоки реагируют на поджигание индивидуально.

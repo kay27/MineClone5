@@ -30,7 +30,7 @@ Bones can be used to tame wolves so they will protect you. They are also useful 
 String=Нити
 Strings are used in crafting.=Нити используются для крафтинга
 Blaze Rod=Огненный стержень
-This is a crafting component dropped from dead blazes.=Это крафтинговый ингридиент, отбрасываемый ифритом
+This is a crafting component dropped from dead blazes.=Это крафтинговый ингредиент, отбрасываемый ифритом
 Blaze Powder=Огненный порошок
 This item is mainly used for crafting.=Этот предмет в основном используется для крафтинга.
 Magma Cream=Лавовый крем
@@ -42,7 +42,7 @@ A nether star is dropped when the Wither dies. Place it in an item frame to show
 Leather=Кожа
 Leather is a versatile crafting component.=Кожа это универсальный крафт-компонент.
 Feather=Перо
-Feathers are used in crafting and are dropped from chickens.=Перо используется для крафтинга и выпадает из куриц.
+Feathers are used in crafting and are dropped from chickens.=Перо используется для крафтинга и выпадает из кур.
 Rabbit Hide=Кроличья шкурка
 Rabbit hide is used to create leather.=Кроличья шкурка используется для создания кожи.
 Rabbit's Foot=Кроличья лапка
@@ -59,7 +59,7 @@ Gunpowder=Порох
 Carrot on a Stick=Удочка с морковью
 A carrot on a stick can be used on saddled pigs to ride them.=Удочку с морковью можно использовать, чтобы оседлать свинью и поехать на ней.
 Place it on a saddled pig to mount it. You can now ride the pig like a horse. Pigs will also walk towards you when you just wield the carrot on a stick.=Поместите это на осёдланную свинью, чтобы закрепиться на ней. Теперь вы можете ехать на ней, как на лошади. Свиньи также идут вперёд, когда вы просто держите удочку с морковью.
-Wield the bone near wolves to attract them. Use the “Place” key on the wolf to give it a bone and tame it. You can then give commands to the tamed wolf by using the “Place” key on it.=Положите кость рядом с волками, чтобы привлечь их. Используйте клавишу “Разместить” на волке, чтобы дать ему кость и приручить его. Вы можете командовать приручёнными волками с помошью клавиши “Разместить”.
+Wield the bone near wolves to attract them. Use the “Place” key on the wolf to give it a bone and tame it. You can then give commands to the tamed wolf by using the “Place” key on it.=Положите кость рядом с волками, чтобы привлечь их. Используйте клавишу “Разместить” на волке, чтобы дать ему кость и приручить его. Вы можете командовать приручёнными волками с помощью клавиши “Разместить”.
 Lets you ride a saddled pig=Позволяет вам ездить на осёдланной свинье
 30% chance of food poisoning=Вероятность отравления 30%
 80% chance of food poisoning=Вероятность отравления 80%

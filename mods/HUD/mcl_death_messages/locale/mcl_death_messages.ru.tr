@@ -1,5 +1,5 @@
 # textdomain: mcl_death_messages
-@1 was fatally hit by an arrow.=@1 застретил лучник.
+@1 was fatally hit by an arrow.=@1 застрелил лучник.
 @1 has been killed with an arrow.=@1 убило стрелой из лука.
 @1 was shot by an arrow from @2.=@1 убило стрелой @2.
 @1 was shot by an arrow from a skeleton.=@1 был(а) убит(а) стрелой скелета.
@@ -18,7 +18,7 @@
 A ghast scared @1 to death.=Гаст напугал @1 до смерти.
 @1 has been fireballed by a ghast.=@1 настиг файербол Гаста.
 @1 fell from a high cliff.=@1 свалился(ась) с высокого утёса.
-@1 took fatal fall damage.=@1 получил(а) смертельый урон от падения.
+@1 took fatal fall damage.=@1 получил(а) смертельный урон от падения.
 @1 fell victim to gravity.=@1 стал(а) жертвой гравитации.
 @1 died.=@1 умер(ла).
 @1 was killed by a zombie.=@1 был(а) убит(а) зомби.
@@ -49,7 +49,7 @@ A ghast scared @1 to death.=Гаст напугал @1 до смерти.
 @1 was killed by a cave spider.=@1 был(а) убит(а) пещерным пауком.
 @1 was killed by a vex.=@1 был(а) убит(а) досаждателем.
 @1 was killed by an evoker.=@1 был(а) убит(а) магом.
-@1 was killed by an illusioner.=@1 был(а) убит(а) иллозором.
+@1 was killed by an illusioner.=@1 был(а) убит(а) иллюзором.
 @1 was killed by a vindicator.=@1 был(а) убит(а) поборником.
 @1 was killed by a zombie villager.=@1 был(а) убит(а) зомби-жителем.
 @1 was killed by a husk.=@1 был(а) убит(а) кадавром.

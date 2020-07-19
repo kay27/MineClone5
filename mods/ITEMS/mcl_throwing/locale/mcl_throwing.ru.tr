@@ -8,5 +8,5 @@ Eggs can be thrown or launched from a dispenser and breaks on impact. There is a
 Ender Pearl=Жемчужина Предела
 An ender pearl is an item which can be used for teleportation at the cost of health. It can be thrown and teleport the thrower to its impact location when it hits a solid block or a plant. Each teleportation hurts the user by 5 hit points.=Жемчужина Предела это предмет, который можно использовать для телепортации за счёт единиц вашего здоровья. Его можно бросить, и это телепортирует бросившего в место удара, когда он попадает в сплошной блок или растение. Каждая телепортация ранит пользователя на 5 очков здоровья (HP).
 Throwable=Можно бросать
-Chance to hatch chicks when broken=Шанс вылупления цыплят при разламывании
+Chance to hatch chicks when broken=Шанс вылупления цыплят при разбитии
 Teleports you on impact for cost of 5 HP=Телепортирует вас при ударе за счёт 5 HP
