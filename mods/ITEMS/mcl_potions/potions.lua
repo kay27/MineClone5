@@ -69,11 +69,21 @@ local function register_potion(def)
 		return function() end
 	end
 
-	local function get_lingering_fun(effect, sp_dur)
+	local function get_lingering_fun(effect, ling_dur)
 		if def.is_dur then
-			return function(player) def.on_use(player, effect, sp_dur) end
+			return function(player) def.on_use(player, effect, ling_dur) end
 		elseif def.effect then
-			return function(player) def.on_use(player, effect*0.5, sp_dur) end
+			return function(player) def.on_use(player, effect*0.5, ling_dur) end
+		end
+		-- covers case of no effect (water, awkward, mundane)
+		return function() end
+	end
+
+	local function get_arrow_fun(effect, dur)
+		if def.is_dur then
+			return function(player) def.on_use(player, effect, dur) end
+		elseif def.effect then
+			return function(player) def.on_use(player, effect, dur) end
 		end
 		-- covers case of no effect (water, awkward, mundane)
 		return function() end
@@ -114,9 +124,15 @@ local function register_potion(def)
 		}
 	end
 
+	local arrow_def = {
+		tt = get_tt(def._tt, def.effect, dur/8.),
+		potion_fun = get_arrow_fun(def.effect, dur/8.),
+	}
+
 	if def.color then
 		mcl_potions.register_splash(def.name, S("Splash "..def.description), def.color, splash_def)
 		mcl_potions.register_lingering(def.name, S("Lingering "..def.description), def.color, ling_def)
+		mcl_potions.register_arrow(def.name, S(def.description.." Arrow"), def.color, arrow_def)
 	end
 
 	if def.is_II then
@@ -192,9 +208,15 @@ local function register_potion(def)
 			}
 		end
 
+		local arrow_def_2 = {
+			tt = get_tt(def._tt_2, effect_II, dur_2/8.),
+			potion_fun = get_arrow_fun(effect_II, dur_2/8.),
+		}
+
 		if def.color then
 			mcl_potions.register_splash(def.name.."_2", S("Splash "..def.description..desc_mod), def.color, splash_def_2)
 			mcl_potions.register_lingering(def.name.."_2", S("Lingering "..def.description..desc_mod), def.color, ling_def_2)
+			mcl_potions.register_arrow(def.name.."_2", S(def.description.." Arrow "..desc_mod), def.color, arrow_def_2)
 		end
 
 	end
@@ -238,9 +260,14 @@ local function register_potion(def)
 			tt = get_tt(def._tt_plus, def.effect, ling_dur_pl),
 			potion_fun = get_lingering_fun(def.effect, ling_dur_pl),
 		}
+		local arrow_def_pl = {
+			tt = get_tt(def._tt_pl, def.effect, dur_pl/8.),
+			potion_fun = get_arrow_fun(def.effect, dur_pl/8.),
+		}
 		if def.color then
 			mcl_potions.register_splash(def.name.."_plus", S("Splash "..def.description.." +"), def.color, splash_def_pl)
 			mcl_potions.register_lingering(def.name.."_plus", S("Lingering "..def.description.." +"), def.color, ling_def_pl)
+			mcl_potions.register_arrow(def.name.."_plus", S(def.description.." Arrow ".." +"), def.color, arrow_def_pl)
 		end
 
 	end
