@@ -1598,7 +1598,6 @@ local monster_attack = function(self)
 
 	if self.type ~= "monster"
 	or not damage_enabled
-	or self.passive
 	or minetest.is_creative_enabled("")
 	or self.passive
 	or self.state == "attack"
