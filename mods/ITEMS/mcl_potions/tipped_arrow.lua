@@ -176,7 +176,7 @@ function mcl_potions.register_arrow(name, desc, color, def)
 			-- The radius of 3 is fairly liberal, but anything lower than than will cause
 			-- arrow to hilariously go through mobs often.
 			-- TODO: Implement an ACTUAL collision detection (engine support needed).
-			local objs = minetest.get_objects_inside_radius(pos, 3)
+			local objs = minetest.get_objects_inside_radius(pos, 1.5)
 			local closest_object
 			local closest_distance
 
@@ -427,14 +427,6 @@ function mcl_potions.register_arrow(name, desc, color, def)
 	minetest.register_entity("mcl_potions:"..name.."_arrow_entity", ARROW_ENTITY)
 
 	if minetest.get_modpath("mcl_bows") then
-		minetest.register_craft({
-			output = 'mcl_potions:'..name..'_arrow 8',
-			recipe = {
-				{'mcl_bows:arrow','mcl_bows:arrow','mcl_bows:arrow'},
-				{'mcl_bows:arrow','mcl_potions:'..name..'_splash','mcl_bows:arrow'},
-				{'mcl_bows:arrow','mcl_bows:arrow','mcl_bows:arrow'}
-			}
-		})
 
 		minetest.register_craft({
 			output = 'mcl_potions:'..name..'_arrow 8',

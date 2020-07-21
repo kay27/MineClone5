@@ -365,8 +365,17 @@ function mcl_potions.make_invisible(player, toggle)
 
 	if not player then return false end
 
+	local is_player = player:is_player()
+	local entity = player:get_luaentity()
+
 	if toggle then -- hide player
-		is_invisible[player].old_size = player:get_properties().visual_size
+		if player:is_player() then
+			is_invisible[player].old_size = player:get_properties().visual_size
+		elseif entity then
+			is_invisible[player].old_size = entity.visual_size
+		else -- if not a player or entity, do nothing
+			return
+		end
 		player:set_properties({visual_size = {x = 0, y = 0}})
 		player:set_nametag_attributes({color = {a = 0}})
 	else -- show player
@@ -448,16 +457,20 @@ function mcl_potions.healing_func(player, hp)
 
 		if obj and obj._cmi_is_mob then
 			obj.health = math.max(obj.health + hp, obj.hp_max)
-		else
+		elseif player:is_player() then
 			player:set_hp(math.min(player:get_hp() + hp, player:get_properties().hp_max), { type = "set_hp", other = "healing" })
+		else
+			return
 		end
 
 	else
 
 		if obj and obj._cmi_is_mob then
 			obj.health = obj.health + hp
-		else
+		elseif player:is_player() then
 			player:set_hp(player:get_hp() + hp, { type = "punch", other = "harming" })
+		else
+			return
 		end
 
 	end
