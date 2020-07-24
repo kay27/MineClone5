@@ -163,6 +163,14 @@ local function furnace_node_timer(pos, elapsed)
 	local src_item = meta:get_string("src_item") or ""
 	local fuel_totaltime = meta:get_float("fuel_totaltime") or 0
 
+	local current_game_time = minetest.get_day_count() + minetest.get_timeofday()
+	local last_game_time = meta:get_float("last_game_time") or (current_game_time - (elapsed / 180))
+	local elapsed_game_time = (current_game_time - last_game_time) * 180
+	if elapsed_game_time <= 0 then
+		meta:set_float("last_game_time", current_game_time)
+		return true
+	end
+
 	local inv = meta:get_inventory()
 	local srclist, fuellist
 
@@ -170,7 +178,7 @@ local function furnace_node_timer(pos, elapsed)
 	local fuel
 
 	local update = true
-	while elapsed > 0 and update do
+	while elapsed_game_time > 0 and update do
 		update = false
 
 		srclist = inv:get_list("src")
@@ -185,7 +193,7 @@ local function furnace_node_timer(pos, elapsed)
 		cooked, aftercooked = minetest.get_craft_result({method = "cooking", width = 1, items = srclist})
 		cookable = cooked.time ~= 0
 
-		local el = math.min(elapsed, fuel_totaltime - fuel_time)
+		local el = math.min(elapsed_game_time, fuel_totaltime - fuel_time)
 		if cookable then -- fuel lasts long enough, adjust el to cooking duration
 			el = math.min(el, cooked.time - src_time)
 		end
@@ -261,13 +269,13 @@ local function furnace_node_timer(pos, elapsed)
 			fuel_time = 0
 		end
 
-		elapsed = elapsed - el
+		elapsed_game_time = elapsed_game_time - el
 	end
 
 	if fuel and fuel_totaltime > fuel.time then
 		fuel_totaltime = fuel.time
 	end
-	if srclist[1]:is_empty() then
+	if srclist and srclist[1]:is_empty() then
 		src_time = 0
 	end
 
@@ -301,8 +309,13 @@ local function furnace_node_timer(pos, elapsed)
 	meta:set_float("fuel_totaltime", fuel_totaltime)
 	meta:set_float("fuel_time", fuel_time)
 	meta:set_float("src_time", src_time)
-	meta:set_string("src_item", srclist[1]:get_name())
+	if srclist then
+		 meta:set_string("src_item", srclist[1]:get_name())
+	else
+		 meta:set_string("src_item", nil)
+	end
 	meta:set_string("formspec", formspec)
+	meta:set_float("last_game_time", current_game_time)
 
 	return result
 end
