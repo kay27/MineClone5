@@ -164,12 +164,8 @@ local function furnace_node_timer(pos, elapsed)
 	local fuel_totaltime = meta:get_float("fuel_totaltime") or 0
 
 	local current_game_time = minetest.get_day_count() + minetest.get_timeofday()
-	local last_game_time = meta:get_float("last_game_time") or (current_game_time - (elapsed / 180))
-	local elapsed_game_time = (current_game_time - last_game_time) * 180
-	if elapsed_game_time <= 0 then
-		meta:set_float("last_game_time", current_game_time)
-		return true
-	end
+	local last_game_time = meta:get_float("last_game_time") or (current_game_time - (elapsed / 72))
+	local elapsed_game_time = math.max(elapsed, (current_game_time - last_game_time) * 72)
 
 	local inv = meta:get_inventory()
 	local srclist, fuellist
