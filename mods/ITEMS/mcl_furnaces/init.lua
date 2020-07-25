@@ -1,5 +1,6 @@
 
 local S = minetest.get_translator("mcl_furnaces")
+local time_multiplier = 24*60*60 / (minetest.settings:get('time_speed') or 72)
 
 --
 -- Formspecs
@@ -163,10 +164,12 @@ local function furnace_node_timer(pos, elapsed)
 	local src_item = meta:get_string("src_item") or ""
 	local fuel_totaltime = meta:get_float("fuel_totaltime") or 0
 
-	local current_game_time = minetest.get_day_count() + minetest.get_timeofday()
-	local approx_last_game_time = current_game_time - (elapsed / 72)
-	local last_game_time = meta:get_float("last_game_time") or approx_last_game_time
-	local elapsed_game_time = math.max(elapsed, (current_game_time - last_game_time) * 72)
+	local current_game_time = (minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier
+	local last_game_time = meta:get_float("last_game_time") or current_game_time
+	if last_game_time == 0 then
+		last_game_time = current_game_time
+	end
+	local elapsed_game_time = current_game_time - last_game_time
 
 	local inv = meta:get_inventory()
 	local srclist, fuellist
@@ -175,7 +178,7 @@ local function furnace_node_timer(pos, elapsed)
 	local fuel
 
 	local update = true
-	while elapsed_game_time > 0 and update do
+	while elapsed_game_time > 0.00001 and update do
 		update = false
 
 		srclist = inv:get_list("src")
@@ -200,7 +203,7 @@ local function furnace_node_timer(pos, elapsed)
 			-- Reset cooking progress in this case
 			src_time = 0
 			src_item = srclist[1]:get_name()
-			elapsed_game_time = math.min(elapsed_game_time, (current_game_time - approx_last_game_time) * 72)
+			-- elapsed_game_time = math.min(elapsed_game_time, (current_game_time - approx_last_game_time) * time_multiplier)
 			update = true
 
 		-- Check if we have enough fuel to burn
@@ -212,7 +215,6 @@ local function furnace_node_timer(pos, elapsed)
 				-- Successful cooking requires space in dst slot and time
 				if inv:room_for_item("dst", cooked.item) then
 					src_time = src_time + el
-
 					-- Place result in dst list if done
 					if src_time >= cooked.time then
 						inv:add_item("dst", cooked.item)
@@ -228,12 +230,10 @@ local function furnace_node_timer(pos, elapsed)
 							end
 						end
 
-						-- MCL2 has src_time reset here:
-						-- src_time = 0
-						src_time = src_time - cooked.time
+						src_time = 0
 						update = true
 					else
-						-- Item could not be cooked: probably missing fuel
+						-- Item not cooked yet
 						update = true
 					end
 				elseif src_time ~= 0 then
