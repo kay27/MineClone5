@@ -289,15 +289,7 @@ function mcl_beds.kick_player(player)
 end
 
 function mcl_beds.skip_night()
-	-- minetest.set_timeofday(0.25) -- tod = 6000
-	if minetest.get_timeofday() < 0.25 then
-		minetest.set_timeofday(0.25)
-	else
-		minetest.set_timeofday(0.99999999999)
-		minetest.after(1.2, function()
-			minetest.set_timeofday(0.25)
-		end)
-	end
+	minetest.set_timeofday(0.25) -- tod = 6000
 end
 
 function mcl_beds.skip_thunderstorm()

@@ -164,7 +164,8 @@ local function furnace_node_timer(pos, elapsed)
 	local fuel_totaltime = meta:get_float("fuel_totaltime") or 0
 
 	local current_game_time = minetest.get_day_count() + minetest.get_timeofday()
-	local last_game_time = meta:get_float("last_game_time") or (current_game_time - (elapsed / 72))
+	local approx_last_game_time = current_game_time - (elapsed / 72)
+	local last_game_time = meta:get_float("last_game_time") or approx_last_game_time
 	local elapsed_game_time = math.max(elapsed, (current_game_time - last_game_time) * 72)
 
 	local inv = meta:get_inventory()
@@ -199,6 +200,7 @@ local function furnace_node_timer(pos, elapsed)
 			-- Reset cooking progress in this case
 			src_time = 0
 			src_item = srclist[1]:get_name()
+			elapsed_game_time = math.min(elapsed_game_time, (current_game_time - approx_last_game_time) * 72)
 			update = true
 
 		-- Check if we have enough fuel to burn
@@ -308,7 +310,7 @@ local function furnace_node_timer(pos, elapsed)
 	if srclist then
 		 meta:set_string("src_item", srclist[1]:get_name())
 	else
-		 meta:set_string("src_item", nil)
+		 meta:set_string("src_item", "")
 	end
 	meta:set_string("formspec", formspec)
 	meta:set_float("last_game_time", current_game_time)
