@@ -17,20 +17,12 @@ minetest.register_globalstep(function(dtime)
 	-- Check for invisible players
 	for player, vals in pairs(is_invisible) do
 
-		if is_invisible[player] and player:get_properties() then
+		is_invisible[player].timer = is_invisible[player].timer + dtime
 
-			player = player or player:get_luaentity()
+		if player:get_pos() then mcl_potions._add_spawner(player, "#B0B0B0") end
 
-			is_invisible[player].timer = is_invisible[player].timer + dtime
-
-			if player:get_pos() then mcl_potions._add_spawner(player, "#B0B0B0") end
-
-			if is_invisible[player].timer >= is_invisible[player].dur then
-				mcl_potions.make_invisible(player, false)
-				is_invisible[player] = nil
-			end
-
-		elseif not player:get_properties() then
+		if is_invisible[player].timer >= is_invisible[player].dur then
+			mcl_potions.make_invisible(player, false)
 			is_invisible[player] = nil
 		end
 
@@ -39,36 +31,29 @@ minetest.register_globalstep(function(dtime)
 	-- Check for poisoned players
 	for player, vals in pairs(is_poisoned) do
 
-		if is_poisoned[player] and player:get_properties() then
+		is_player = player:is_player()
+		entity = player:get_luaentity()
 
-			is_player = player:is_player()
-			entity = player:get_luaentity()
+		is_poisoned[player].timer = is_poisoned[player].timer + dtime
+		is_poisoned[player].hit_timer = (is_poisoned[player].hit_timer or 0) + dtime
 
-			is_poisoned[player].timer = is_poisoned[player].timer + dtime
-			is_poisoned[player].hit_timer = (is_poisoned[player].hit_timer or 0) + dtime
+		if player:get_pos() then mcl_potions._add_spawner(player, "#225533") end
 
-			if player:get_pos() then mcl_potions._add_spawner(player, "#225533") end
+		if is_poisoned[player].hit_timer >= is_poisoned[player].step then
 
-			if is_poisoned[player].hit_timer >= is_poisoned[player].step then
-
-				if entity and entity._cmi_is_mob then
-					entity.health = math.max(entity.health - 1, 1)
-				elseif is_player then
-					player:set_hp( math.max(player:get_hp() - 1, 1), { type = "punch", other = "poison"})
-
-				else -- if not player or mob then remove
-					is_poisoned[player] = nil
-				end
-
+			if entity and entity._cmi_is_mob then
+				entity.health = math.max(entity.health - 1, 1)
 				is_poisoned[player].hit_timer = 0
-
-			end
-
-			if is_poisoned[player].timer >= is_poisoned[player].dur then
+			elseif is_player then
+				player:set_hp( math.max(player:get_hp() - 1, 1), { type = "punch", other = "poison"})
+				is_poisoned[player].hit_timer = 0
+			else -- if not player or mob then remove
 				is_poisoned[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		end
+
+		if is_poisoned[player].timer >= is_poisoned[player].dur then
 			is_poisoned[player] = nil
 		end
 
@@ -77,36 +62,29 @@ minetest.register_globalstep(function(dtime)
 	-- Check for regnerating players
 	for player, vals in pairs(is_regenerating) do
 
-		if is_regenerating[player] and player:get_properties() then
+		is_player = player:is_player()
+		entity = player:get_luaentity()
 
-			player = player or player:get_luaentity()
-			is_player = player:is_player()
-			entity = player:get_luaentity()
+		is_regenerating[player].timer = is_regenerating[player].timer + dtime
+		is_regenerating[player].heal_timer = (is_regenerating[player].heal_timer or 0) + dtime
 
-			is_regenerating[player].timer = is_regenerating[player].timer + dtime
-			is_regenerating[player].heal_timer = (is_regenerating[player].heal_timer or 0) + dtime
+		if player:get_pos() then mcl_potions._add_spawner(player, "#A52BB2") end
 
-			if player:get_pos() then mcl_potions._add_spawner(player, "#A52BB2") end
+		if is_regenerating[player].heal_timer >= is_regenerating[player].step then
 
-			if is_regenerating[player].heal_timer >= is_regenerating[player].step then
-
-				if is_player then
-					player:set_hp(math.min(player:get_properties().hp_max or 20, player:get_hp() + 1), { type = "set_hp", other = "regeneration" })
-				elseif entity and entity._cmi_is_mob then
-					entity.health = math.min(entity.hp_max, entity.health + 1)
-				else -- stop regenerating if not a player or mob
-					is_regenerating[player] = nil
-				end
-
+			if is_player then
+				player:set_hp(math.min(player:get_properties().hp_max or 20, player:get_hp() + 1), { type = "set_hp", other = "regeneration" })
 				is_regenerating[player].heal_timer = 0
-
-			end
-
-			if is_regenerating[player].timer >= is_regenerating[player].dur then
+			elseif entity and entity._cmi_is_mob then
+				entity.health = math.min(entity.hp_max, entity.health + 1)
+				is_regenerating[player].heal_timer = 0
+			else -- stop regenerating if not a player or mob
 				is_regenerating[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		end
+
+		if is_regenerating[player].timer >= is_regenerating[player].dur then
 			is_regenerating[player] = nil
 		end
 
@@ -115,9 +93,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for water breathing players
 	for player, vals in pairs(is_water_breathing) do
 
-		if is_water_breathing[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_water_breathing[player].timer = is_water_breathing[player].timer + dtime
 
@@ -131,7 +107,7 @@ minetest.register_globalstep(function(dtime)
 				is_water_breathing[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_water_breathing[player] = nil
 		end
 
@@ -140,9 +116,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for leaping players
 	for player, vals in pairs(is_leaping) do
 
-		if is_leaping[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_leaping[player].timer = is_leaping[player].timer + dtime
 
@@ -153,7 +127,7 @@ minetest.register_globalstep(function(dtime)
 				is_leaping[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_leaping[player] = nil
 		end
 
@@ -162,9 +136,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for swift players
 	for player, vals in pairs(is_swift) do
 
-		if is_swift[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_swift[player].timer = is_swift[player].timer + dtime
 
@@ -175,7 +147,7 @@ minetest.register_globalstep(function(dtime)
 				is_swift[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_swift[player] = nil
 		end
 
@@ -184,9 +156,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for Night Vision equipped players
 	for player, vals in pairs(is_cat) do
 
-		if is_cat[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_cat[player].timer = is_cat[player].timer + dtime
 
@@ -200,7 +170,7 @@ minetest.register_globalstep(function(dtime)
 				is_cat[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_cat[player] = nil
 		end
 
@@ -209,7 +179,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for Fire Proof players
 	for player, vals in pairs(is_fire_proof) do
 
-		if is_fire_proof[player] and player:get_properties() then
+		if player:is_player() then
 
 			player = player or player:get_luaentity()
 
@@ -221,7 +191,7 @@ minetest.register_globalstep(function(dtime)
 				is_fire_proof[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_fire_proof[player] = nil
 		end
 
@@ -230,9 +200,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for Weak players
 	for player, vals in pairs(is_weak) do
 
-		if is_weak[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_weak[player].timer = is_weak[player].timer + dtime
 
@@ -242,7 +210,7 @@ minetest.register_globalstep(function(dtime)
 				is_weak[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_weak[player] = nil
 		end
 
@@ -251,9 +219,7 @@ minetest.register_globalstep(function(dtime)
 	-- Check for Strong players
 	for player, vals in pairs(is_strong) do
 
-		if is_strong[player] and player:get_properties() then
-
-			player = player or player:get_luaentity()
+		if player:is_player() then
 
 			is_strong[player].timer = is_strong[player].timer + dtime
 
@@ -263,7 +229,7 @@ minetest.register_globalstep(function(dtime)
 				is_strong[player] = nil
 			end
 
-		elseif not player:get_properties() then
+		else
 			is_strong[player] = nil
 		end
 
@@ -306,8 +272,6 @@ end, true)
 
 
 function mcl_potions._reset_player_effects(player)
-
-	player = player or player:get_luaentity()
 
 	if is_invisible[player] then
 		mcl_potions.make_invisible(player, false)
@@ -476,8 +440,6 @@ function mcl_potions.healing_func(player, hp)
 			obj.health = math.max(obj.health + hp, obj.hp_max)
 		elseif player:is_player() then
 			player:set_hp(math.min(player:get_hp() + hp, player:get_properties().hp_max), { type = "set_hp", other = "healing" })
-		else
-			return
 		end
 
 	else
@@ -486,8 +448,6 @@ function mcl_potions.healing_func(player, hp)
 			obj.health = obj.health + hp
 		elseif player:is_player() then
 			player:set_hp(player:get_hp() + hp, { type = "punch", other = "harming" })
-		else
-			return
 		end
 
 	end
