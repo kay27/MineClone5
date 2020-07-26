@@ -2,6 +2,7 @@ local S = minetest.get_translator("mcl_beds")
 local F = minetest.formspec_escape
 
 local pi = math.pi
+local player_in_bed = 0
 local is_sp = minetest.is_singleplayer()
 local weather_mod = minetest.get_modpath("mcl_weather") ~= nil
 local explosions_mod = minetest.get_modpath("mcl_explosions") ~= nil
@@ -82,7 +83,7 @@ local function lay_down(player, pos, bed_pos, state, skip)
 		end
 
 		-- No sleeping while moving. Slightly different behaviour than in MC.
-		if vector.length(player:get_player_velocity()) > 0.13 then
+		if vector.length(player:get_player_velocity()) > 0.125 then
 			minetest.chat_send_player(name, S("You have to stop moving before going to bed!"))
 			return false
 		end
@@ -110,13 +111,19 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	-- stand up
 	if state ~= nil and not state then
 		local p = mcl_beds.pos[name] or nil
-		mcl_beds.player[name] = nil
+		if mcl_beds.player[name] ~= nil then
+			mcl_beds.player[name] = nil
+			player_in_bed = player_in_bed - 1
+		end
+		mcl_beds.pos[name] = nil
+		mcl_beds.bed_pos[name] = nil
+		if p then
+			player:set_pos(p)
+		end
+
 		-- skip here to prevent sending player specific changes (used for leaving players)
 		if skip then
 			return false
-		end
-		if p then
-			player:set_pos(p)
 		end
 
 		-- physics, eye_offset, etc
@@ -130,8 +137,6 @@ local function lay_down(player, pos, bed_pos, state, skip)
 		player:get_meta():set_string("mcl_beds:sleeping", "false")
 		hud_flags.wielditem = true
 		mcl_player.player_set_animation(player, "stand" , 30)
-		mcl_beds.pos[name] = nil
-		mcl_beds.bed_pos[name] = nil
 
 	-- lay down
 	else
@@ -172,9 +177,10 @@ local function lay_down(player, pos, bed_pos, state, skip)
 			minetest.chat_send_player(name, S("New respawn position set!"))
 		end
 
+		mcl_beds.player[name] = 1
 		mcl_beds.pos[name] = pos
 		mcl_beds.bed_pos[name] = bed_pos
-		mcl_beds.player[name] = 1
+		player_in_bed = player_in_bed + 1
 		-- physics, eye_offset, etc
 		player:set_eye_offset({x = 0, y = -13, z = 0}, {x = 0, y = 0, z = 0})
 		player:set_look_horizontal(yaw)
@@ -193,18 +199,9 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	return true
 end
 
-local function get_player_in_bed_count()
-	local c = 0
-	for _, _ in pairs(mcl_beds.player) do
-		c = c + 1
-	end
-	return c
-end
-
 local function update_formspecs(finished)
 	local ges = #minetest.get_connected_players()
 	local form_n = "size[6,5;true]"
-	local player_in_bed = get_player_in_bed_count()
 	local all_in_bed = ges == player_in_bed
 	local night_skip = is_night_skip_enabled()
 	local button_leave = "button_exit[1,3;4,0.75;leave;"..F(S("Leave bed")).."]"
@@ -364,7 +361,6 @@ end)
 minetest.register_on_leaveplayer(function(player)
 	local name = player:get_player_name()
 	lay_down(player, nil, nil, false, true)
-	mcl_beds.player[name] = nil
 	if check_in_beds() then
 		minetest.after(5, function()
 			if check_in_beds() then
