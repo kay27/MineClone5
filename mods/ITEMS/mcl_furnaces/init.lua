@@ -1,6 +1,5 @@
 
 local S = minetest.get_translator("mcl_furnaces")
-local time_multiplier = 24*60*60 / (minetest.settings:get('time_speed') or 72)
 
 --
 -- Formspecs
@@ -164,120 +163,102 @@ local function furnace_node_timer(pos, elapsed)
 	local src_item = meta:get_string("src_item") or ""
 	local fuel_totaltime = meta:get_float("fuel_totaltime") or 0
 
-	local current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
-
-	local last_game_time = meta:get_string("last_gametime") -- FIXME: In Windows s(g)et_float() works OK but under Linux it returns rounded 2-byte values like 449540.000000000 which are unusable
-	if last_game_time then
-		last_game_time = tonumber(last_game_time)
-	end
-	if not last_game_time or last_game_time < 1 then
-		last_game_time = current_game_time
-	elseif last_game_time == current_game_time then
-		current_game_time = current_game_time + 1.0
-	end
-	local elapsed_game_time = .0 + current_game_time - last_game_time
-
 	local inv = meta:get_inventory()
 	local srclist, fuellist
 
 	local cookable, cooked
-	local active
 	local fuel
 
-	srclist = inv:get_list("src")
-	fuellist = inv:get_list("fuel")
-
-	-- Check if src item has been changed
-	if srclist[1]:get_name() ~= src_item then
-		-- Reset cooking progress in this case
-		src_time = 0
-		src_item = srclist[1]:get_name()
-		elapsed_game_time = 1	-- ?FIXME? Can break mechanics if it loads furnaces during 'skip the night'
-					-- added to prevent instant cooking when we didn't touch the furnace for a long time and then load it
-	end
-
 	local update = true
-	while elapsed_game_time > 0.00001 and update do
+	while update do
+		update = false
+
+		srclist = inv:get_list("src")
+		fuellist = inv:get_list("fuel")
+
 		--
 		-- Cooking
 		--
 
-		local el = elapsed_game_time
-
-		-- Check if we have cookable content: cookable
+		-- Check if we have cookable content
 		local aftercooked
 		cooked, aftercooked = minetest.get_craft_result({method = "cooking", width = 1, items = srclist})
 		cookable = cooked.time ~= 0
-		if cookable then
-			-- Successful cooking requires space in dst slot and time
-			if not inv:room_for_item("dst", cooked.item) then
-				cookable = false
-			end
-		end
 
-		if cookable then -- fuel lasts long enough, adjust el to cooking duration
-			el = math.min(el, cooked.time - src_time)
-		end
+		-- Check if src item has been changed
+		if srclist[1]:get_name() ~= src_item then
+			-- Reset cooking progress in this case
+			src_time = 0
+			src_item = srclist[1]:get_name()
+			update = true
 
 		-- Check if we have enough fuel to burn
-		active = fuel_time < fuel_totaltime
-		if cookable and not active then
-			-- We need to get new fuel
-			local afterfuel
-			fuel, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist})
+		elseif fuel_time < fuel_totaltime then
+			-- The furnace is currently active and has enough fuel
+			fuel_time = fuel_time + elapsed
+			-- If there is a cookable item then check if it is ready yet
+			if cookable then
+				-- Successful cooking requires space in dst slot and time
+				if inv:room_for_item("dst", cooked.item) then
+					src_time = src_time + elapsed
 
-			if fuel.time == 0 then
-				-- No valid fuel in fuel list -- stop
+					-- Place result in dst list if done
+					if src_time >= cooked.time then
+						inv:add_item("dst", cooked.item)
+						inv:set_stack("src", 1, aftercooked.items[1])
+
+						-- Unique recipe: Pour water into empty bucket after cooking wet sponge successfully
+						if inv:get_stack("fuel", 1):get_name() == "mcl_buckets:bucket_empty" then
+							if srclist[1]:get_name() == "mcl_sponges:sponge_wet" then
+								inv:set_stack("fuel", 1, "mcl_buckets:bucket_water")
+							-- Also for river water
+							elseif srclist[1]:get_name() == "mcl_sponges:sponge_wet_river_water" then
+								inv:set_stack("fuel", 1, "mcl_buckets:bucket_river_water")
+							end
+						end
+
+						src_time = 0
+						update = true
+					end
+				elseif src_time ~= 0 then
+					-- If output slot is occupied, stop cooking
+					src_time = 0
+					update = true
+				end
+			end
+		else
+			-- Furnace ran out of fuel
+			if cookable then
+				-- We need to get new fuel
+				local afterfuel
+				fuel, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist})
+
+				if fuel.time == 0 then
+					-- No valid fuel in fuel list
+					fuel_totaltime = 0
+					src_time = 0
+				else
+					-- Take fuel from fuel list
+					inv:set_stack("fuel", 1, afterfuel.items[1])
+					update = true
+					fuel_totaltime = fuel.time + (fuel_time - fuel_totaltime)
+					src_time = src_time + elapsed
+				end
+			else
+				-- We don't need to get new fuel since there is no cookable item
 				fuel_totaltime = 0
 				src_time = 0
-				update = false
-			else
-				-- Take fuel from fuel list
-				inv:set_stack("fuel", 1, afterfuel.items[1])
-				fuel_time = 0
-				fuel_totaltime = fuel.time
-				el = math.min(el, fuel_totaltime)
-				active = true
-				fuellist = inv:get_list("fuel")
 			end
-		elseif active then
-			el = math.min(el, fuel_totaltime - fuel_time)
-			-- The furnace is currently active and has enough fuel
-			fuel_time = fuel_time + el
+			fuel_time = 0
 		end
 
-		-- If there is a cookable item then check if it is ready yet
-		if cookable and active then
-			src_time = src_time + el
-			-- Place result in dst list if done
-			if src_time >= cooked.time then
-				inv:add_item("dst", cooked.item)
-				inv:set_stack("src", 1, aftercooked.items[1])
-
-				-- Unique recipe: Pour water into empty bucket after cooking wet sponge successfully
-				if inv:get_stack("fuel", 1):get_name() == "mcl_buckets:bucket_empty" then
-					if srclist[1]:get_name() == "mcl_sponges:sponge_wet" then
-						inv:set_stack("fuel", 1, "mcl_buckets:bucket_water")
-						fuellist = inv:get_list("fuel")
-					-- Also for river water
-					elseif srclist[1]:get_name() == "mcl_sponges:sponge_wet_river_water" then
-						inv:set_stack("fuel", 1, "mcl_buckets:bucket_river_water")
-						fuellist = inv:get_list("fuel")
-					end
-				end
-
-				srclist = inv:get_list("src")
-				src_time = 0
-			end
-		end
-
-		elapsed_game_time = elapsed_game_time - el
+		elapsed = 0
 	end
 
 	if fuel and fuel_totaltime > fuel.time then
 		fuel_totaltime = fuel.time
 	end
-	if srclist and srclist[1]:is_empty() then
+	if srclist[1]:is_empty() then
 		src_time = 0
 	end
 
@@ -293,7 +274,7 @@ local function furnace_node_timer(pos, elapsed)
 
 	local result = false
 
-	if active then
+	if fuel_totaltime ~= 0 then
 		local fuel_percent = math.floor(fuel_time / fuel_totaltime * 100)
 		formspec = active_formspec(fuel_percent, item_percent)
 		swap_node(pos, "mcl_furnaces:furnace_active")
@@ -311,13 +292,8 @@ local function furnace_node_timer(pos, elapsed)
 	meta:set_float("fuel_totaltime", fuel_totaltime)
 	meta:set_float("fuel_time", fuel_time)
 	meta:set_float("src_time", src_time)
-	if srclist then
-		 meta:set_string("src_item", srclist[1]:get_name())
-	else
-		 meta:set_string("src_item", "")
-	end
+	meta:set_string("src_item", srclist[1]:get_name())
 	meta:set_string("formspec", formspec)
-	meta:set_string("last_gametime", tostring(current_game_time)) -- FIXME: In Windows s(g)et_float() works OK but under Linux it returns rounded 2-byte values like 449540.000000000 which are unusable
 
 	return result
 end
