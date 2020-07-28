@@ -17,6 +17,19 @@ local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds
 local mg_name = minetest.get_mapgen_setting("mg_name")
 local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
 
+-- Could be taken from some configuration files:
+local world_bottom = -30912.5
+local world_top = 30927.5
+local nether_scale_factor_from = 1
+local nether_scale_factor_to = 8
+
+-- Pre-calculated configuration-based constants:
+local world_halfsize = (world_top - world_bottom) / 2
+local world_offset = world_top - world_halfsize
+local L1 = world_halfsize / (nether_scale_factor_to + nether_scale_factor_from)
+local L2 = world_halfsize - L1
+local M1 = nether_scale_factor_to / nether_scale_factor_from
+
 -- 3D noise
 local np_cave = {
 	offset = 0,
@@ -76,6 +89,26 @@ local destroy_portal = function(pos)
 	end
 	end
 	end
+end
+
+local function nether_to_over(x)
+    x = x - world_offset
+    if x < -L1 then
+        return -L2 + (x + L1) / M1 + world_offset
+    elseif x > L1 then
+        return L2 + (x - L1) / M1 + world_offset
+    end
+    return x * M1 + world_offset
+end
+
+local function over_to_nether(x)
+    x = x - world_offset
+    if x <= -L2 then
+        return (x + L2) * M1 - L1 + world_offset
+    elseif x >= L2 then
+        return (x - L2) * M1 + L1 + world_offset
+    end
+    return x / M1 + world_offset
 end
 
 minetest.register_node("mcl_portals:portal", {
@@ -337,6 +370,15 @@ function mcl_portals.light_nether_portal(pos)
 
 	local target = {x = p1.x, y = p1.y, z = p1.z}
 	target.x = target.x + 1
+
+	if pos.y >= mcl_vars.mg_overworld_min and pos.y <= mcl_vars.mg_overworld_max then
+		target.x = over_to_nether(target.x)
+		target.z = over_to_nether(target.z)
+	elseif pos.y >= mcl_vars.mg_nether_min and pos.y <= mcl_vars.mg_nether_max then
+		target.x = nether_to_over(target.x)
+		target.z = nether_to_over(target.z)
+	end
+
 	if target.y < mcl_vars.mg_nether_max and target.y > mcl_vars.mg_nether_min then
 		if superflat then
 			target.y = mcl_vars.mg_bedrock_overworld_max + 5
