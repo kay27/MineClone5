@@ -359,9 +359,16 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_on_leaveplayer(function(player)
-	local name = player:get_player_name()
 	lay_down(player, nil, nil, false, true)
-	if check_in_beds() then
+
+	local players = minetest.get_connected_players()
+	for n, p in ipairs(players) do
+		if p == player then
+			players[n] = nil
+			break
+		end
+	end
+	if check_in_beds(players) then
 		minetest.after(5, function()
 			if check_in_beds() then
 				update_formspecs(is_night_skip_enabled())
