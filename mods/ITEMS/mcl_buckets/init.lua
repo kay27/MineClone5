@@ -141,24 +141,34 @@ function mcl_buckets.register_liquid(source_place, source_take, itemname, invent
 				end
 
 				-- Handle bucket item and inventory stuff
-				if not minetest.is_creative_enabled(user:get_player_name()) then
+				if minetest.is_creative_enabled(user:get_player_name()) then
+					return
+				else
 					-- Add empty bucket and put it into inventory, if possible.
 					-- Drop empty bucket otherwise.
 					local new_bucket = ItemStack("mcl_buckets:bucket_empty")
-					if itemstack:get_count() == 1 then
-						return new_bucket
-					else
+					local has_stack = itemstack:get_count() > 1
+					itemstack:take_item()
+					if has_stack then
 						local inv = user:get_inventory()
 						if inv:room_for_item("main", new_bucket) then
 							inv:add_item("main", new_bucket)
 						else
 							minetest.add_item(user:get_pos(), new_bucket)
 						end
-						itemstack:take_item()
-						return itemstack
+					else
+						minetest.after(0.2, function()
+							if user then
+								local inv = user:get_inventory()
+								if inv:room_for_item("main", new_bucket) then
+									inv:add_item("main", new_bucket)
+								else
+									minetest.add_item(user:get_pos(), new_bucket)
+								end
+							end
+						end)
 					end
-				else
-					return
+					return itemstack
 				end
 			end,
 			_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
@@ -221,7 +231,10 @@ minetest.register_craftitem("mcl_buckets:bucket_empty", {
 
 			-- Fill bucket, but not in Creative Mode
 			if not minetest.is_creative_enabled(user:get_player_name()) then
-				new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(node.param2)})
+				-- new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(node.param2)})
+				new_bucket = ItemStack({name = liquiddef.itemname})
+				minetest.chat_send_player(user:get_player_name(), S("new bucket from filled: " .. tostring(new_bucket)))
+				minetest.chat_send_player(user:get_player_name(), S("liquiddef.itemname=" .. liquiddef.itemname .. "; metadata=" .. tostring(node.param2)))
 			end
 
 			minetest.add_node(pointed_thing.under, {name="air"})
@@ -250,20 +263,31 @@ minetest.register_craftitem("mcl_buckets:bucket_empty", {
 		-- Add liquid bucket and put it into inventory, if possible.
 		-- Drop new bucket otherwise.
 		if new_bucket then
-			if itemstack:get_count() == 1 then
-				return new_bucket
-			else
+			-- Remove 1 empty bucket from stack if not Creative:
+			local has_stack = itemstack:get_count() > 1
+			if not minetest.is_creative_enabled(user:get_player_name()) then
+				itemstack:take_item()
+			end
+			if has_stack then
 				local inv = user:get_inventory()
 				if inv:room_for_item("main", new_bucket) then
 					inv:add_item("main", new_bucket)
 				else
 					minetest.add_item(user:get_pos(), new_bucket)
 				end
-				if not minetest.is_creative_enabled(user:get_player_name()) then
-					itemstack:take_item()
-				end
-				return itemstack
+			else
+				minetest.after(0.2, function()
+					if user then
+						local inv = user:get_inventory()
+						if inv:room_for_item("main", new_bucket) then
+							inv:add_item("main", new_bucket)
+						else
+							minetest.add_item(user:get_pos(), new_bucket)
+						end
+					end
+				end)
 			end
+			return itemstack
 		end
 	end,
 	_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
@@ -274,7 +298,9 @@ minetest.register_craftitem("mcl_buckets:bucket_empty", {
 		local new_bucket
 		if liquiddef ~= nil and liquiddef.itemname ~= nil and (dropnode.name  == liquiddef.source_take) then
 			-- Fill bucket
-			new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(dropnode.param2)})
+			-- new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(dropnode.param2)})
+			new_bucket = ItemStack({name = liquiddef.itemname})
+			minetest.chat_send_player(user, "new bucket from empty: " .. new_bucket.to_string())
 			sound_take(dropnode.name, droppos)
 			collect_liquid = true
 		end
