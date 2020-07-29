@@ -83,6 +83,9 @@ local function lay_down(player, pos, bed_pos, state, skip)
 		end
 
 		-- No sleeping while moving. Slightly different behaviour than in MC.
+		-- FIXME: Velocity threshold should be 0.01 but Minetest 5.3.0
+		-- sometimes reports incorrect Y speed. A velocity threshold
+		-- of 0.125 still seems good enough.
 		if vector.length(player:get_player_velocity()) > 0.125 then
 			minetest.chat_send_player(name, S("You have to stop moving before going to bed!"))
 			return false
@@ -199,8 +202,13 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	return true
 end
 
-local function update_formspecs(finished)
-	local ges = #minetest.get_connected_players()
+local function update_formspecs(finished, players)
+	local ges
+	if players then
+		ges = #players
+	else
+		ges = #minetest.get_connected_players()
+	end
 	local form_n = "size[6,5;true]"
 	local all_in_bed = ges == player_in_bed
 	local night_skip = is_night_skip_enabled()
@@ -359,19 +367,23 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_on_leaveplayer(function(player)
+	local name = player:get_player_name()
 	lay_down(player, nil, nil, false, true)
-
-	minetest.after(3, function()
-		if check_in_beds() then
-			minetest.after(5, function()
-				if check_in_beds() then
-					update_formspecs(is_night_skip_enabled())
-					mcl_beds.sleep()
-				end
-			end)
+	for n, player in ipairs(players) do
+		if player:get_player_name() == name then
+			players[n] = nil
+			break
 		end
-		update_formspecs(false)
-	end)
+	end
+	if check_in_beds(players) then
+		minetest.after(5, function()
+			if check_in_beds() then
+				update_formspecs(is_night_skip_enabled())
+				mcl_beds.sleep()
+			end
+		end)
+	end
+	update_formspecs(false, players)
 end)
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
