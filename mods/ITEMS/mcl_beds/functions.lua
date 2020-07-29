@@ -202,13 +202,8 @@ local function lay_down(player, pos, bed_pos, state, skip)
 	return true
 end
 
-local function update_formspecs(finished, players)
-	local ges
-	if players then
-		ges = #players
-	else
-		ges = #minetest.get_connected_players()
-	end
+local function update_formspecs(finished)
+	local ges = #minetest.get_connected_players()
 	local form_n = "size[6,5;true]"
 	local all_in_bed = ges == player_in_bed
 	local night_skip = is_night_skip_enabled()
@@ -369,14 +364,7 @@ end)
 minetest.register_on_leaveplayer(function(player)
 	local name = player:get_player_name()
 	lay_down(player, nil, nil, false, true)
-	players = minetest.get_connected_players()
-	for n, player in ipairs(players) do
-		if player:get_player_name() == name then
-			players[n] = nil
-			break
-		end
-	end
-	if check_in_beds(players) then
+	if check_in_beds() then
 		minetest.after(5, function()
 			if check_in_beds() then
 				update_formspecs(is_night_skip_enabled())
@@ -384,7 +372,7 @@ minetest.register_on_leaveplayer(function(player)
 			end
 		end)
 	end
-	update_formspecs(false, players)
+	update_formspecs(false)
 end)
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
