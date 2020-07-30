@@ -402,18 +402,18 @@ minetest.register_node("mcl_furnaces:furnace", {
 
 	on_metadata_inventory_move = function(pos)
 		-- Reset accumulated game time when player work with furnace:
-		local meta, elapsed_game_time = furnace_reset_delta_time(pos)
+		furnace_reset_delta_time(pos)
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 	on_metadata_inventory_put = function(pos)
 		-- Reset accumulated game time when player work with furnace:
-		local meta, elapsed_game_time = furnace_reset_delta_time(pos)
+		furnace_reset_delta_time(pos)
 		-- start timer function, it will sort out whether furnace can burn or not.
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 	on_metadata_inventory_take = function(pos)
 		-- Reset accumulated game time when player work with furnace:
-		local meta, elapsed_game_time = furnace_reset_delta_time(pos)
+		furnace_reset_delta_time(pos)
 		-- start timer function, it will helpful if player clear dst slot
 		minetest.get_node_timer(pos):start(1.0)
 	end,
