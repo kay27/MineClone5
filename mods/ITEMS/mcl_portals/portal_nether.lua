@@ -17,6 +17,19 @@ local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds
 local mg_name = minetest.get_mapgen_setting("mg_name")
 local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
 
+-- Could be taken from some configuration files:
+local world_limit_neg = -30912.5
+local world_limit_pos = 30927.5
+local nether_scale_from = 1
+local nether_scale_to = 8
+
+-- Pre-calculated configuration-based constants:
+local nether_scale = nether_scale_to / nether_scale_from
+local world_fringe1_neg = world_limit_neg / (nether_scale_to + nether_scale_from)
+local world_fringe1_pos = world_limit_pos / (nether_scale_to + nether_scale_from)
+local world_fringe2_neg = world_limit_neg - world_fringe1_neg
+local world_fringe2_pos = world_limit_pos - world_fringe1_pos
+
 -- 3D noise
 local np_cave = {
 	offset = 0,
@@ -76,6 +89,24 @@ local destroy_portal = function(pos)
 	end
 	end
 	end
+end
+
+local function nether_to_over(x)
+	if x < world_fringe1_neg then
+		return world_fringe2_neg + (x - world_fringe1_neg) / nether_scale
+	elseif x > world_fringe1_pos then
+		return world_fringe2_pos + (x - world_fringe1_pos) / nether_scale
+	end
+	return x * nether_scale
+end
+
+local function over_to_nether(x)
+	if x <= world_fringe2_neg then
+		return (x - world_fringe2_neg) * nether_scale + world_fringe1_neg
+	elseif x >= world_fringe2_pos then
+		return (x - world_fringe2_pos) * nether_scale + world_fringe1_pos
+	end
+	return x / nether_scale
 end
 
 minetest.register_node("mcl_portals:portal", {
@@ -337,6 +368,15 @@ function mcl_portals.light_nether_portal(pos)
 
 	local target = {x = p1.x, y = p1.y, z = p1.z}
 	target.x = target.x + 1
+
+	if pos.y >= mcl_vars.mg_overworld_min and pos.y <= mcl_vars.mg_overworld_max then
+		target.x = over_to_nether(target.x)
+		target.z = over_to_nether(target.z)
+	elseif pos.y >= mcl_vars.mg_nether_min and pos.y <= mcl_vars.mg_nether_max then
+		target.x = nether_to_over(target.x)
+		target.z = nether_to_over(target.z)
+	end
+
 	if target.y < mcl_vars.mg_nether_max and target.y > mcl_vars.mg_nether_min then
 		if superflat then
 			target.y = mcl_vars.mg_bedrock_overworld_max + 5
