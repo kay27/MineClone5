@@ -23,3 +23,37 @@ Use the “Place” key to drink. Place this item on a cauldron to pour the wate
 Use the “Place” key to drink. Place this item on a cauldron to pour the river water into the cauldron.=Используйте клавишу “Разместить”, чтобы выпить это. Поместите этот предмет на котёл, чтобы вылить речную воду в котёл.
 Liquid container=Контейнер для жидкостей
 No effect=Не оказывает эффекта
+Try different combinations to create potions.=Пробуйте разные сочетания для приготовления зелий.
+Splash Potion=Взрывающееся зелье
+Lingering Potion=Оседающее зелье
+Splash =Взрыв 
+Lingering =Осадок 
+Arrow of =Стрела 
+Has an awkward taste and is used for brewing potions.=Имеет неприятный вкус и используется для приготовления других зелий.
+Has a terrible taste and is not useful for brewing potions.=Имеет отвратительный вкус и используется для приготовления других зелий.
+Has a bitter taste and is not useful for brewing potions.=Имеет горький вкус и используется для приготовления других зелий.
+Combine with Splash potions to create a Lingering effect=Объедините со взрывающимся зельем, чтобы создать эффект оседания
++2 Hearts=+ 2 сердца
++4 Hearts=+ 4 сердца
+Drink to heal yourself=Выпейте для исцеления
+-3 Hearts=- 3 сердца
+-6 Hearts=- 6 сердец
+Drink to see in the dark.=Выпейте, чтобы видеть в темноте
+Drink to increase your speed.=Выпейте для увеличения вашей скорости
+Drink to become sluggish=Выпейте, чтобы замедлиться
+Drink to leap tall buildings in a single bound!=Выпейте, чтобы преодолевать высокие строения в один прыжок!
+Poison mobs or players with this dangerous potion.=Травите мобов и игроков опасным ядом.
+Regenerate mobs or players with this healing potion over time.=Восстанавливайте мобов и игроков лекарственным эффектом со временем.
+#
+# Misprint! FIXME: invisib()le:
+#
+Drink and become invisibile to mobs and players.=Выпейте и станьте невидимым для мобов и игроков.
+Drink and breath underwater.=Выпейте, чтобы дышать под водой.
+Drink and resist fire damage.=Выпейте, чтобы быть устойчивым к воздействию огня.
+Ammunition=Боеприпасы
+Damage from bow: 1-10=Повреждение из лука: 1-10
+Damage from dispenser: 3=Повреждение из диспенсера: 3
+Arrows are ammunition for bows and dispensers.=Стрелы это боеприпасы для луков и диспенсеров.
+An arrow fired from a bow has a regular damage of 1-9. At full charge, there's a 20% chance of a critical hit dealing 10 damage instead. An arrow fired from a dispenser always deals 3 damage.=Стрела, выпущенная из лука, обычно наносит урон 1-9. При полном натяжении есть 20-процентный шанс критического удара с уроном 10. Стрела из диспенсера всегда наносит урон уровня 3.
+Arrows might get stuck on solid blocks and can be retrieved again. They are also capable of pushing wooden buttons.=Стрелы могут застревать в твёрдых блоках, их можно подбирать для повторного использования. Они также способны нажимать деревянные кнопки.
+To use arrows as ammunition for a bow, just put them anywhere in your inventory, they will be used up automatically. To use arrows as ammunition for a dispenser, place them in the dispenser's inventory. To retrieve an arrow that sticks in a block, simply walk close to it.=Чтобы использовать стрелы в качестве боеприпасов для лука, просто положите их в любую ячейку вашего инвентаря, и они будут использоваться автоматически. Чтобы использовать стрелы в качестве боеприпасов для диспенсера, поместите их в инвентарь диспенсера. Чтобы взять стрелу, застрявшую в блоке, просто пройдите рядом с ней.
