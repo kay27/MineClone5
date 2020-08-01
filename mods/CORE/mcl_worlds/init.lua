@@ -1,5 +1,18 @@
 mcl_worlds = {}
 
+-- Could be taken from some configuration files:
+local world_limit_neg = -30912.5
+local world_limit_pos = 30927.5
+local nether_scale_from = 1
+local nether_scale_to = 8
+
+-- Pre-calculated configuration-based constants for travelling between Nether and Overworld:
+local nether_scale = nether_scale_to / nether_scale_from
+local world_fringe1_neg = world_limit_neg / (nether_scale_to + nether_scale_from)
+local world_fringe1_pos = world_limit_pos / (nether_scale_to + nether_scale_from)
+local world_fringe2_neg = world_limit_neg - world_fringe1_neg
+local world_fringe2_pos = world_limit_pos - world_fringe1_pos
+
 -- For a given position, returns a 2-tuple:
 -- 1st return value: true if pos is in void
 -- 2nd return value: true if it is in the deadly part of the void
@@ -85,6 +98,24 @@ end
 
 -- Takes a position (pos) and returns true if clocks are working here
 mcl_worlds.clock_works = mcl_worlds.compass_works
+
+function mcl_worlds.nether_to_over(x)
+	if x < world_fringe1_neg then
+		return world_fringe2_neg + (x - world_fringe1_neg) / nether_scale
+	elseif x > world_fringe1_pos then
+		return world_fringe2_pos + (x - world_fringe1_pos) / nether_scale
+	end
+	return x * nether_scale
+end
+
+function mcl_worlds.over_to_nether(x)
+	if x <= world_fringe2_neg then
+		return (x - world_fringe2_neg) * nether_scale + world_fringe1_neg
+	elseif x >= world_fringe2_pos then
+		return (x - world_fringe2_pos) * nether_scale + world_fringe1_pos
+	end
+	return x / nether_scale
+end
 
 --------------- CALLBACKS ------------------
 mcl_worlds.registered_on_dimension_change = {}
