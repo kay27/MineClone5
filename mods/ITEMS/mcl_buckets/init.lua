@@ -221,8 +221,6 @@ minetest.register_craftitem("mcl_buckets:bucket_empty", {
 
 			-- Fill bucket, but not in Creative Mode
 			if not minetest.is_creative_enabled(user:get_player_name()) then
-				-- new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(node.param2)})
-				-- It's just lame kay277 wonder to know would be there any issue without unclear things, sorry
 				new_bucket = ItemStack({name = liquiddef.itemname})
 			end
 
@@ -276,8 +274,6 @@ minetest.register_craftitem("mcl_buckets:bucket_empty", {
 		local new_bucket
 		if liquiddef ~= nil and liquiddef.itemname ~= nil and (dropnode.name  == liquiddef.source_take) then
 			-- Fill bucket
-			-- new_bucket = ItemStack({name = liquiddef.itemname, metadata = tostring(dropnode.param2)})
-			-- It's just lame kay277 wonder to know would be there any issue without unclear things, sorry
 			new_bucket = ItemStack({name = liquiddef.itemname})
 			sound_take(dropnode.name, droppos)
 			collect_liquid = true
