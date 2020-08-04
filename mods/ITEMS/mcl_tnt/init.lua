@@ -75,6 +75,10 @@ minetest.register_node("mcl_tnt:tnt", {
 		e:get_luaentity().timer = tnt.BOOMTIMER - (0.5 + math.random())
 	end,
 	_on_ignite = function(player, pointed_thing)
+		local pname = player:get_player_name()
+		if minetest.is_protected(pointed_thing.under, pname) then
+			return minetest.record_protection_violation(pointed_thing.under, pname)
+		end
 		tnt.ignite(pointed_thing.under)
 		return true
 	end,
@@ -180,7 +184,7 @@ function TNT:on_step(dtime)
 		self.blinkstatus = not self.blinkstatus
 	end
 	if self.timer > tnt.BOOMTIMER then
-		mcl_explosions.explode(self.object:get_pos(), 4, { drop_chance = 1.0 }, self.object)
+		mcl_explosions.explode(self.object:get_pos(), 4, { drop_chance = 1.0 }, self.object, TNT_RANGE)
 		self.object:remove()
 	end
 end
