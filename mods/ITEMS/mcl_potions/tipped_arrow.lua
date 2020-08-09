@@ -19,12 +19,11 @@ local function arrow_image(colorstring, opacity)
 		opacity = 127
 	end
 	return {"mcl_bows_arrow.png^[transformFX^(mcl_bows_arrow_overlay.png^[transformFX^[colorize:"..colorstring..":"..tostring(opacity)..")",
-			"mcl_bows_arrow.png^[transformFX^(mcl_bows_arrow_overlay.png^[transformFX^[colorize:"..colorstring..":"..tostring(opacity)..")",
-			"mcl_bows_arrow_back.png^[colorize:"..colorstring..":"..tostring(opacity),
-			"mcl_bows_arrow_front.png^[colorize:"..colorstring..":"..tostring(opacity),
-			"mcl_bows_arrow.png^(mcl_bows_arrow_overlay.png^[colorize:"..colorstring..":"..tostring(opacity)..")",
-			"mcl_bows_arrow.png^[transformFX^(mcl_bows_arrow_overlay.png^[transformFX^[colorize:"..colorstring..":"..tostring(opacity)..")"}
-
+		"mcl_bows_arrow.png^[transformFX^(mcl_bows_arrow_overlay.png^[transformFX^[colorize:"..colorstring..":"..tostring(opacity)..")",
+		"mcl_bows_arrow_back.png^[colorize:"..colorstring..":"..tostring(opacity),
+		"mcl_bows_arrow_front.png^[colorize:"..colorstring..":"..tostring(opacity),
+		"mcl_bows_arrow.png^(mcl_bows_arrow_overlay.png^[colorize:"..colorstring..":"..tostring(opacity)..")",
+		"mcl_bows_arrow.png^[transformFX^(mcl_bows_arrow_overlay.png^[transformFX^[colorize:"..colorstring..":"..tostring(opacity)..")"}
 end
 
 local how_to_shoot = minetest.registered_items["mcl_bows:arrow"]._doc_items_usagehelp
@@ -259,7 +258,6 @@ function mcl_potions.register_arrow(name, desc, color, def)
 							if self._shooter and self._shooter:is_player() then
 								-- “Ding” sound for hitting another player
 								minetest.sound_play({name="mcl_bows_hit_player", gain=0.1}, {to_player=self._shooter}, true)
-								def.potion_fun(obj)
 							end
 						end
 
