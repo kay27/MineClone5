@@ -183,7 +183,6 @@ end
 
 local function find_overworld_target_y(x, z)
 	local y = overworld_ground_level or math.random(mcl_vars.mg_overworld_min + 40, mcl_vars.mg_overworld_min + 96)
-	local x, z = x or 0, z or 0
 	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
 	while node == nil and y > mcl_vars.mg_overworld_min do
 		if node == nil then
@@ -221,12 +220,12 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame, existant_target,
 	if not existant_target then
 		target = {x = (x1 + x2) / 2, y = math.min(y1, y2), z = (z1 + z2) / 2}
 		if dim == "overworld" then
-			target.x = mcl_worlds.over_to_nether(target.x)
-			target.z = mcl_worlds.over_to_nether(target.z)
+			target.x = target.x / 8
+			target.z = target.z / 8
 			target.y = find_nether_target_y(target.x, target.z)
 		else -- from Nether:
-			target.x = mcl_worlds.nether_to_over(target.x)
-			target.z = mcl_worlds.nether_to_over(target.z)
+			target.x = mcl_worlds.nether_to_overworld(target.x)
+			target.z = mcl_worlds.nether_to_overworld(target.z)
 			target.y = find_overworld_target_y(target.x, target.z)
 		end
 	else
@@ -306,9 +305,7 @@ local function build_portal(pos, target, width, height, orientation)
 		minetest.load_area({x = pos.x - width * 2, y = pos.y - 1, z = pos.z - 3}, {x = pos.x + width * 2, y = pos.y + height + 2, z = pos.z + width + 2})
 	end
 
-	-- Rather lame but fun variables to make decision about obsidian platform
-	local nn_front = minetest.get_node({x = pos.x + orientation, y = pos.y - 2, z = pos.z + 1 - orientation}).name
-	local nn_back  = minetest.get_node({x = pos.x - orientation, y = pos.y - 2, z = pos.z - 1 + orientation}).name
+	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true, target)
 
 	if orientation == 0 then
 		for z = pos.z - width * 2, pos.z + width * 2 do
@@ -316,7 +313,7 @@ local function build_portal(pos, target, width, height, orientation)
 				for x = pos.x - 3, pos.x + width + 2 do
 					for y = pos.y - 1, pos.y + height + 2 do
 						if minetest.is_protected({x = x, y = y, z = z}, "") then
-							if minetest.registered_nodes[minetest.get_node({x = x, y = y, z = z}).name].is_ground_content then
+							if minetest.registered_nodes[minetest.get_node({x = x, y = y, z = z}).name].is_ground_content and not minetest.is_protected({x = x, y = y, z = z}, "") then
 								minetest.remove_node({x = x, y = y, z = z})
 							end
 						end
@@ -338,33 +335,9 @@ local function build_portal(pos, target, width, height, orientation)
 		end
 	end
 
-	-- Obsidian platform
-	if   (nn_front == "air" or minetest.get_item_group(nn_front, "water") or minetest.get_item_group(nn_front, "lava"))
-	 and (nn_back  == "air" or minetest.get_item_group(nn_back , "water") or minetest.get_item_group(nn_back , "lava"))
-	then
-		for x = pos.x - width * 2, pos.x + width * 2 do
-			for z = pos.z - width * 2, pos.z + width * 2 do
-				nn_y_minus_2 =  minetest.get_node({x = x, y = pos.y - 2, z = z}).name
-				nn_y_minus_3 =  minetest.get_node({x = x, y = pos.y - 3, z = z}).name
-				if minetest.get_item_group(nn_y_minus_2, "water") or minetest.get_item_group(nn_y_minus_2, "lava")
-				 or nn_y_minus_3 == "air" or minetest.get_item_group(nn_y_minus_3, "water") or minetest.get_item_group(nn_y_minus_3, "lava")
-				then
-					if not minetest.is_protected({x = x, y = pos.y - 2, z = z}, "") then
-						minetest.set_node({x = x, y = pos.y - 2, z = z}, {name = "mcl_core:obsidian"})
-					end
-					if not minetest.is_protected({x = x, y = pos.y - 3, z = z}, "") then
-						minetest.set_node({x = x, y = pos.y - 3, z = z}, {name = "mcl_core:obsidian"})
-					end
-				end
-			end
-		end
-	end
-
-	local portal_pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true, target)
-
 	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
 
-	return portal_pos
+	return pos
 end
 
 -- Attempts to light a Nether portal at pos and
