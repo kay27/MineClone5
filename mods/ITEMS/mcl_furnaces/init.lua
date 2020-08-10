@@ -158,8 +158,8 @@ local function furnace_reset_delta_time(pos)
 	local time_multiplier = 86400 / (minetest.settings:get('time_speed') or 72)
 	local current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
 
-	-- TODO: Change meta:get_string() back to to meta:get_float().
-	-- In Windows get_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
+	-- TODO: Change meta:get/set_string() to get/set_float() for 'last_gametime'.
+	-- In Windows *_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
 	local last_game_time = meta:get_string("last_gametime")
 	if last_game_time then
 		last_game_time = tonumber(last_game_time)
@@ -168,8 +168,6 @@ local function furnace_reset_delta_time(pos)
 		return
 	end
 
-	-- TODO: Change meta:set_string() back to to meta:set_float().
-	-- In Windows set_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
 	meta:set_string("last_gametime", tostring(current_game_time))
 end
 
@@ -178,8 +176,6 @@ local function furnace_get_delta_time(pos)
 	local time_multiplier = 86400 / (minetest.settings:get('time_speed') or 72)
 	local current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
 
-	-- TODO: Change meta:get_string() back to to meta:get_float().
-	-- In Windows get_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
 	local last_game_time = meta:get_string("last_gametime")
 	if last_game_time then
 		last_game_time = tonumber(last_game_time)
@@ -192,8 +188,6 @@ local function furnace_get_delta_time(pos)
 
 	local elapsed_game_time = .0 + current_game_time - last_game_time
 
-	-- TODO: Change meta:set_string() back to to meta:set_float().
-	-- In Windows set_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
 	meta:set_string("last_gametime", tostring(current_game_time))
 
 	return meta, elapsed_game_time
@@ -401,20 +395,20 @@ minetest.register_node("mcl_furnaces:furnace", {
 	end,
 
 	on_metadata_inventory_move = function(pos)
-		-- Reset accumulated game time when player work with furnace:
+		-- Reset accumulated game time when player works with furnace:
 		furnace_reset_delta_time(pos)
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 	on_metadata_inventory_put = function(pos)
-		-- Reset accumulated game time when player work with furnace:
+		-- Reset accumulated game time when player works with furnace:
 		furnace_reset_delta_time(pos)
 		-- start timer function, it will sort out whether furnace can burn or not.
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 	on_metadata_inventory_take = function(pos)
-		-- Reset accumulated game time when player work with furnace:
+		-- Reset accumulated game time when player works with furnace:
 		furnace_reset_delta_time(pos)
-		-- start timer function, it will helpful if player clear dst slot
+		-- start timer function, it will helpful if player clears dst slot
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 
