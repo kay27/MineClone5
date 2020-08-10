@@ -178,7 +178,6 @@ local function trace_explode(pos, strength, raydirs, radius, drop_chance, fire, 
 			local npos_x = math.floor(rpos_x + 0.5)
 			local npos_y = math.floor(rpos_y + 0.5)
 			local npos_z = math.floor(rpos_z + 0.5)
-
 			local idx = (npos_z - emin_z) * zstride + (npos_y - emin_y) * ystride +
 					npos_x - emin_x + 1
 
@@ -375,9 +374,9 @@ end
 -- no_sound - If true then the explosion will not play a sound
 -- no_particle - If true then the explosion will not create particles
 -- fire - If true, 1/3 nodes become fire (default: false)
-function mcl_explosions.explode(pos, strength, info, puncher, radius)
+function mcl_explosions.explode(pos, strength, info, puncher)
 	-- The maximum blast radius (in the air)
-	local radius = radius or math.ceil(1.3 * strength / (0.3 * 0.75) * 0.3)
+	local radius = math.ceil(1.3 * strength / (0.3 * 0.75) * 0.3)
 
 	if not sphere_shapes[radius] then
 		sphere_shapes[radius] = compute_sphere_rays(radius)
