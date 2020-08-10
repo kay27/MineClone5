@@ -1,12 +1,12 @@
 # textdomain: mcl_potions
-<effect> <duration> [<factor>]=
+<effect> <duration> [<factor>]=<эффект> <длительность> [<фактор>]
 
-Add a status effect to yourself. Arguments: <effect>: name of status effect, e.g. poison. <duration>: duration in seconds. <factor>: effect strength multiplier (1 @= 100%)=
+Add a status effect to yourself. Arguments: <effect>: name of status effect, e.g. poison. <duration>: duration in seconds. <factor>: effect strength multiplier (1 @= 100%)=Добавляет вам эффект состояния. Параметры: <эффект> - название эффекта состояния, например, Отрава. <Длительность> - длительность в секундах. <Фактор> - коэффициент силы эффекта (1 @= 100%)
 
-Missing effect parameter!=
-Missing or invalid duration parameter!=
-Invalid factor parameter!=
-@1 is not an available status effect.=
+Missing effect parameter!=Отсутствует параметр эффекта!
+Missing or invalid duration parameter!=Отсутствует либо неправильно задан параметр длительности!
+Invalid factor parameter!=Отсутствует параметр фактора!
+@1 is not an available status effect.=@1 не является допустимым эффектом состояния.
 Fermented Spider Eye=Прокисший паучий глаз
 Glass Bottle=Стеклянная бутылка
 Liquid container=Контейнер для жидкостей
@@ -48,7 +48,7 @@ Drinking a potion gives you a particular effect.=Выпивание зелья �
 @1 Potion=Зелье @1
 Splash @1 Potion=Взрывающее зелье @1
 Lingering @1 Potion=Оседающее зелье @1
-Arrow of @1=Стрельба @1
+Arrow of @1=Стрела @1
  II= II
  IV= IV
 @1 Potion@2=@1 Зелье@2
@@ -109,7 +109,7 @@ Strength +=Сила +
 Try different combinations to create potions.=Пробуйте разные сочетания для приготовления зелий.
 No effect=Не оказывает эффекта
 
-A throwable potion that will shatter on impact, where it gives all nearby players and mobs a status effect.=Зелье, которое можно метать. Оно разбивается при ударе и он дает всем ближайшим игрокам и мобам эффект статуса.
+A throwable potion that will shatter on impact, where it gives all nearby players and mobs a status effect.=Зелье, которое можно метать. Оно разбивается при ударе и он дает всем ближайшим игрокам и мобам эффект состояния.
 
 This particular arrow is tipped and will give an effect when it hits a player or mob.=Эта необычная стрела с обработанным наконечником даёт эффект при попадании в игрока или моба.
 
