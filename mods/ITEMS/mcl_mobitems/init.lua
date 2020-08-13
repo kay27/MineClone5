@@ -1,5 +1,3 @@
--- TODO: Add special status effects for raw flesh
-
 local S = minetest.get_translator("mcl_mobitems")
 
 minetest.register_craftitem("mcl_mobitems:rotten_flesh", {
@@ -136,6 +134,7 @@ minetest.register_craftitem("mcl_mobitems:cooked_rabbit", {
 	stack_max = 64,
 })
 
+-- Reset food poisoning and status effects
 local drink_milk = function(itemstack, player, pointed_thing)
 	local bucket = minetest.do_item_eat(0, "mcl_buckets:bucket_empty", itemstack, player, pointed_thing)
 	-- Check if we were allowed to drink this (eat delay check)
@@ -146,15 +145,13 @@ local drink_milk = function(itemstack, player, pointed_thing)
 	return bucket
 end
 
--- TODO: Clear *all* status effects
 minetest.register_craftitem("mcl_mobitems:milk_bucket", {
 	description = S("Milk"),
-	_tt_help = minetest.colorize("#00FF00", S("Cures poison and removes all potion effects")),
-	_doc_items_longdesc = S("Milk is very refreshing and can be obtained by using a bucket on a cow. Drinking it will cure all forms of poisoning and removes potion effects, but restores no hunger points."),
-	_doc_items_usagehelp = "Rightclick to drink the milk.",
+	_tt_help = minetest.colorize("#00FF00", S("Removes all status effects")),
+	_doc_items_longdesc = S("Milk is very refreshing and can be obtained by using a bucket on a cow. Drinking it will remove all status effects, but restores no hunger points."),
+	_doc_items_usagehelp = S("Use the placement key to drink the milk."),
 	inventory_image = "mcl_mobitems_bucket_milk.png",
 	wield_image = "mcl_mobitems_bucket_milk.png",
-	-- Clear poisoning when used
 	on_place = drink_milk,
 	on_secondary_use = drink_milk,
 	stack_max = 1,
@@ -223,8 +220,7 @@ minetest.register_craftitem("mcl_mobitems:ghast_tear", {
 	_doc_items_longdesc = S("Place this item in an item frame as decoration."),
 	wield_image = "mcl_mobitems_ghast_tear.png",
 	inventory_image = "mcl_mobitems_ghast_tear.png",
-	-- TODO: Reveal item when it's useful
-	groups = { brewitem = 1, not_in_creative_inventory = 0 },
+	groups = { brewitem = 1 },
 	stack_max = 64,
 })
 
@@ -270,8 +266,7 @@ minetest.register_craftitem("mcl_mobitems:rabbit_foot", {
 	_doc_items_longdesc = S("Must be your lucky day! Place this item in an item frame for decoration."),
 	wield_image = "mcl_mobitems_rabbit_foot.png",
 	inventory_image = "mcl_mobitems_rabbit_foot.png",
-	-- TODO: Reveal item when it's useful
-	groups = { brewitem = 1, not_in_creative_inventory = 0 },
+	groups = { brewitem = 1 },
 	stack_max = 64,
 })
 
@@ -279,7 +274,7 @@ minetest.register_craftitem("mcl_mobitems:saddle", {
 	description = S("Saddle"),
 	_tt_help = S("Can be placed on animals to ride them"),
 	_doc_items_longdesc = S("Saddles can be put on some animals in order to mount them."),
-	_doc_items_usagehelp = "Rightclick an animal (with the saddle in your hand) to try put on the saddle. Saddles fit on horses, mules, donkeys and pigs. Horses, mules and donkeys need to be tamed first, otherwise they'll reject the saddle. Saddled animals can be mounted by rightclicking them again.",
+	_doc_items_usagehelp = S("Use the placement key with the saddle in your hand to try to put on the saddle. Saddles fit on horses, mules, donkeys and pigs. Horses, mules and donkeys need to be tamed first, otherwise they'll reject the saddle. Saddled animals can be mounted by using the placement key on them again."),
 	wield_image = "mcl_mobitems_saddle.png",
 	inventory_image = "mcl_mobitems_saddle.png",
 	groups = { transport = 1 },
@@ -440,3 +435,12 @@ minetest.register_craft({
 		{"mcl_mobitems:slimeball","mcl_mobitems:slimeball","mcl_mobitems:slimeball",},
 		{"mcl_mobitems:slimeball","mcl_mobitems:slimeball","mcl_mobitems:slimeball",}},
 })
+
+minetest.register_on_item_eat(function (hp_change, replace_with_item, itemstack, user, pointed_thing)
+
+	-- poisoning with spider eye
+	if itemstack:get_name() == "mcl_mobitems:spider_eye" then
+		mcl_potions.poison_func(user, 1, 4)
+	end
+
+end )
