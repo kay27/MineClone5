@@ -10,6 +10,7 @@ local FRAME_SIZE_Y_MAX = 23
 
 local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
+local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local mg_name = minetest.get_mapgen_setting("mg_name")
 local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
@@ -28,61 +29,65 @@ end
 local portal_cooloff = {}
 local teleporting_objects={}
 
+-- Functions
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
-local destroy_portal = function(pos)
+function mcl_portals.destroy_nether_portal(pos)
 	-- Deactivate Nether portal
-	minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos))
 	local meta = minetest.get_meta(pos)
-	local p1 = minetest.string_to_pos(meta:get_string("portal_frame1"))
-	local p2 = minetest.string_to_pos(meta:get_string("portal_frame2"))
-	if not p1 or not p2 then
+	local node = minetest.get_node(pos)
+	local nn, orientation = node.name, node.param2
+	minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos) .. "(" .. nn .. ")")
+	local obsidian = nn == "mcl_core:obsidian" 
+	local has_meta = minetest.string_to_pos(meta:get_string("portal_frame1"))
+	meta:set_string("portal_frame1", "")
+	meta:set_string("portal_frame2", "")
+	meta:set_string("portal_target", "")
+	meta:set_string("portal_time", "")
+	if obsidian then
+		if minetest.get_node({x = pos.x - 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x - 1, y = pos.y, z = pos.z})
+		end
+		if minetest.get_node({x = pos.x + 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x + 1, y = pos.y, z = pos.z})
+		end
+		if minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y - 1, z = pos.z})
+		end
+		if minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y + 1, z = pos.z})
+		end
+		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z - 1}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z - 1})
+		end
+		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z + 1}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z + 1})
+		end
 		return
 	end
-	if(p1.x==p2.x) then
-		p1.z = p1.z - 1
-		p2.z = p2.z + 1
+	if not has_meta then
+		return
+	end
+	if orientation == 1 then
+		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z - 1}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z - 1})
+		end
+		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z + 1}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z + 1})
+		end
 	else
-		p1.x=p1.x-1
-		p2.x=p2.x+1
-	end
-	p1.y=p1.y-1
-	p2.y=p2.y+1
-
-	local counter = 1
-
-	local mp1
-	for x = p1.x, p2.x do
-	for y = p1.y, p2.y do
-	for z = p1.z, p2.z do
-		local p = vector.new(x, y, z)
-		local m = minetest.get_meta(p)
-		if counter == 2 then
-			--[[ Only proceed if the second node still has metadata.
-			(first node is a corner and not needed for the portal)
-			If it doesn't have metadata, another node propably triggred the delection
-			routine earlier, so we bail out earlier to avoid an infinite cascade
-			of on_destroy events. ]]
-			mp1 = minetest.string_to_pos(m:get_string("portal_frame1"))
-			if not mp1 then
-				return
-			end
+		if minetest.get_node({x = pos.x - 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x - 1, y = pos.y, z = pos.z})
 		end
-		local nn = minetest.get_node(p).name
-		if nn == "mcl_core:obsidian" or nn == "mcl_portals:portal" then
-			-- Remove portal nodes, but not myself
-			if nn == "mcl_portals:portal" and not vector.equals(p, pos) then
-				minetest.remove_node(p)
-			end
-			-- Clear metadata of portal nodes and the frame
-			m:set_string("portal_frame1", "")
-			m:set_string("portal_frame2", "")
-			m:set_string("portal_target", "")
-			m:set_string("portal_time", "")
+		if minetest.get_node({x = pos.x + 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
+			minetest.remove_node({x = pos.x + 1, y = pos.y, z = pos.z})
 		end
-		counter = counter + 1
 	end
+	if minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name == "mcl_portals:portal" then
+		minetest.remove_node({x = pos.x, y = pos.y - 1, z = pos.z})
 	end
+	if minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name == "mcl_portals:portal" then
+		minetest.remove_node({x = pos.x, y = pos.y + 1, z = pos.z})
 	end
 end
 
@@ -136,13 +141,12 @@ minetest.register_node("mcl_portals:portal", {
 		},
 	},
 	groups = {portal=1, not_in_creative_inventory = 1},
-	on_destruct = destroy_portal,
+	on_destruct = mcl_portals.destroy_nether_portal,
 
 	_mcl_hardness = -1,
 	_mcl_blast_resistance = 0,
 })
 
--- Functions
 local function find_target_y(x, y, z, y_min, y_max)
 	local y_org = y
 	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
@@ -660,7 +664,8 @@ local function teleport(obj, pos)
 	local meta = minetest.get_meta(pos)
 	local delta_time = minetest.get_us_time() - tonumber(meta:get_string("portal_time"))
 	local target = minetest.string_to_pos(meta:get_string("portal_target"))
-	if delta_time > 99999999 or target == nil then -- still not emerged :(
+	if delta_time > DESTINATION_EXPIRES or target == nil then
+		-- ares still not emerged - retry after a second
 		return minetest.after(1, teleport, obj, pos)
 	end
 
@@ -686,7 +691,7 @@ local function prepare_target(pos)
 	local portal_time = tonumber(meta:get_string("portal_time")) or 0
 	local delta_time_us = us_time - portal_time
 	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
-	if delta_time_us <= 60*1000000 then
+	if delta_time_us <= DESTINATION_EXPIRES then
 		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
 		for x = pos1.x, pos2.x do
 			for y = pos1.y, pos2.y do
@@ -753,7 +758,7 @@ local usagehelp = S("To open a Nether portal, place an upright frame of obsidian
 minetest.override_item("mcl_core:obsidian", {
 	_doc_items_longdesc = longdesc,
 	_doc_items_usagehelp = usagehelp,
-	on_destruct = destroy_portal,
+	on_destruct = mcl_portals.destroy_nether_portal,
 	_on_ignite = function(user, pointed_thing)
 		local pos = {x = pointed_thing.under.x, y = pointed_thing.under.y, z = pointed_thing.under.z}
 		local portals_counter = 0
