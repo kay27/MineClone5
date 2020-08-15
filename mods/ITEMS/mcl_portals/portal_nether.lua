@@ -143,12 +143,71 @@ minetest.register_node("mcl_portals:portal", {
 })
 
 -- Functions
+local function find_target_y(x, y, z, y_min, y_max)
+	local y_org = y
+	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
+	-- minetest.chat_send_all("fty x="..tostring(x).." y=" .. tostring(y).." z=" .. tostring(z) .. "node.name="..node.name )
+	
+	if node == nil then
+		-- minetest.chat_send_all("node=nil, y ret")
+		return y
+	end
+	-- minetest.chat_send_all("1) y=" .. tostring(y).. "node.name="..node.name )
+	while node.name ~= "air" and y < y_max do
+		-- minetest.chat_send_all(" y=" .. tostring(y).. "node.name="..node.name )
+		y = y + 1
+		node = minetest.get_node_or_nil({x = x, y = y, z = z})
+		if node == nil then
+			-- minetest.chat_send_all("node=nil, y ret")
+			return y_org
+		end
+	end
+	if y == y_max then -- try reverse direction who knows what they built there...
+		while node.name ~= "air" and y > y_min do
+			-- minetest.chat_send_all(" y=" .. tostring(y).. "node.name="..node.name )
+			y = y - 1
+			node = minetest.get_node_or_nil({x = x, y = y, z = z})
+			if node == nil then
+				-- minetest.chat_send_all("node=nil, y ret")
+				return y_org
+			end
+		end
+	end
+	-- minetest.chat_send_all("2) y=" .. tostring(y).. "node.name="..node.name )
+	while node.name == "air" and y > y_min do
+		-- minetest.chat_send_all(" y=" .. tostring(y).. "node.name="..node.name )
+		y = y - 1
+		node = minetest.get_node_or_nil({x = x, y = y, z = z})
+		if node == nil then
+			-- minetest.chat_send_all("node=nil, y ret")
+			return y_org
+		end
+	end
+	if y == y_min then
+		return y_org
+	end
+	return y
+end
+
+local function find_nether_target_y(x, z)
+	local y = math.random(mcl_vars.mg_lava_nether_max + 1, mcl_vars.mg_bedrock_nether_top_min - 26) -- Search start
+	if mg_name == "flat" then
+		y = mcl_vars.mg_flat_nether_floor + 1
+	end
+	return find_target_y(x, y, z, mcl_vars.mg_nether_min+25, mcl_vars.mg_nether_max-25) + 2
+end
+
+local function find_overworld_target_y(x, z)
+	local y = overworld_ground_level or math.random(mcl_vars.mg_overworld_min + 40, mcl_vars.mg_overworld_min + 96)
+	return find_target_y(x, y, z, mcl_vars.mg_overworld_min+25, mcl_vars.mg_overworld_max_official-25) + 2
+end
+
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 -- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
-	minetest.chat_send_all("ecb bp="..minetest.pos_to_string(blockpos).."; action="..tostring(action).."; calls_rem="..tostring(calls_remaining))
+	-- minetest.chat_send_all("ecb bp="..minetest.pos_to_string(blockpos).."; action="..tostring(action).."; calls_rem="..tostring(calls_remaining))
 	if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
 		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
-		minetest.chat_send_all(tostring(param.ax1) .. "," .. tostring(param.ay1) .. "," .. tostring(param.az1) .. ") - (" .. tostring(param.ax2) .. "," .. tostring(param.ay2) .. "," .. tostring(param.az2) .. ")")
+		-- minetest.chat_send_all(tostring(param.ax1) .. "," .. tostring(param.ay1) .. "," .. tostring(param.az1) .. ") - (" .. tostring(param.ax2) .. "," .. tostring(param.ay2) .. "," .. tostring(param.az2) .. ")")
 		-- return
 		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
 		-- local portal_nodes = {}
@@ -179,6 +238,11 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			local height = math.abs(p2.y - p1.y) + 1
 			if p1.x == p2.x then
 				orinetation = 1
+			end
+			if param.srcdim == "overworld" then
+				dst_pos.y = find_nether_target_y(dst_pos.x, dst_pos.z)
+			else
+				dst_pos.y = find_overworld_target_y(dst_pos.x, dst_pos.z)
 			end
 			portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height, orientation)
 		end
@@ -217,42 +281,6 @@ local function find_or_create_portal(src_pos)
 	local pos1 = {x = x - 32, y = y_min + 2, z = z - 32}
 	local pos2 = {x = x + 32, y = y_max - 2, z = z + 32}
 	minetest.emerge_area(pos1, pos2, ecb_setup_target_portal, {srcx=src_pos.x, srcy=src_pos.y, srcz=src_pos.z, dstx=x, dsty=y, dstz=z, srcdim=current_dimension, ax1=pos1.x, ay1=pos1.y, az1=pos1.z, ax2=pos2.x, ay2=pos2.y, az2=pos2.z})
-end
-
-
-local function find_target_y(x, y, z, y_min, y_max)
-	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
-	if node == nil then
-		return y
-	end
-	while node.name ~= "air" and y < y_max do
-		y = y + 1
-		node = minetest.get_node_or_nil({x = x, y = y, z = z})
-		if node == nil then
-			return y
-		end
-	end
-	while node.name == "air" and y > y_min do
-		y = y - 1
-		node = minetest.get_node_or_nil({x = x, y = y, z = z})
-		if node == nil then
-			return y
-		end
-	end
-	return y
-end
-
-local function find_nether_target_y(x, z)
-	local y = math.random(mcl_vars.mg_lava_nether_max + 1, mcl_vars.mg_bedrock_nether_top_min - 26) -- Search start
-	if mg_name == "flat" then
-		y = mcl_vars.mg_flat_nether_floor + 1
-	end
-	return find_target_y(x, y, z, mcl_vars.mg_nether_min+25, mcl_vars.mg_nether_max-25) + 2
-end
-
-local function find_overworld_target_y(x, z)
-	local y = overworld_ground_level or math.random(mcl_vars.mg_overworld_min + 40, mcl_vars.mg_overworld_min + 96)
-	return find_target_y(x, y, z, mcl_vars.mg_overworld_min+25, mcl_vars.mg_overworld_max_official-25) + 2
 end
 
 local function available_for_nether_portal(p)
