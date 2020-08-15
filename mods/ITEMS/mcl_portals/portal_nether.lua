@@ -2,16 +2,13 @@ local S = minetest.get_translator("mcl_portals")
 
 -- Parameters
 
-local TCAVE = 0.6
-local nobj_cave = nil
-
 -- Portal frame sizes
 local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
 local FRAME_SIZE_X_MAX = 23
 local FRAME_SIZE_Y_MAX = 23
 
-local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal
+local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
 
 local mg_name = minetest.get_mapgen_setting("mg_name")
@@ -25,20 +22,12 @@ else
 	overworld_ground_level = nil
 end
 
--- 3D noise
-local np_cave = {
-	offset = 0,
-	scale = 1,
-	spread = {x = 384, y = 128, z = 384},
-	seed = 59033,
-	octaves = 5,
-	persist = 0.7
-}
-
 -- Table of objects (including players) which recently teleported by a
 -- Nether portal. Those objects have a brief cooloff period before they
 -- can teleport again. This prevents annoying back-and-forth teleportation.
 local portal_cooloff = {}
+local teleporting_objects={}
+
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
 local destroy_portal = function(pos)
@@ -154,50 +143,116 @@ minetest.register_node("mcl_portals:portal", {
 })
 
 -- Functions
-local function find_nether_target_y(target_x, target_z)
-	if mg_name == "flat" then
-		return mcl_vars.mg_flat_nether_floor + 1
-	end
-	local start_y = math.random(mcl_vars.mg_lava_nether_max + 1, mcl_vars.mg_bedrock_nether_top_min - 5) -- Search start
-	if not nobj_cave then
-		nobj_cave = minetest.get_perlin(np_cave)
-	end
-	local air = 4
+local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
+-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
+	minetest.chat_send_all("ecb bp="..minetest.pos_to_string(blockpos).."; action="..tostring(action).."; calls_rem="..tostring(calls_remaining))
+	if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
+		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
+		minetest.chat_send_all(tostring(param.ax1) .. "," .. tostring(param.ay1) .. "," .. tostring(param.az1) .. ") - (" .. tostring(param.ax2) .. "," .. tostring(param.ay2) .. "," .. tostring(param.az2) .. ")")
+		-- return
+		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
+		-- local portal_nodes = {}
+		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
+		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
+		local meta = minetest.get_meta(src_pos)
+		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1"))
+		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2"))
+		local portal_pos = {}
+		if portal_nodes and #portal_nodes > 0 then
+			-- Found some portal(s), use nearest:
+			portal_pos = {x = portal_nodes[1].x, y = portal_nodes[1].y, z = portal_nodes[1].z}
+			local nearest_distance = vector.distance(dst_pos, portal_pos)
+			if #portal_nodes > 1 then
+				for n = 2, #portal_nodes do
+					local distance = vector.distance(dst_pos, portal_nodes[n])
+					if distance < nearest_distance then
+						portal_pos = {x = portal_nodes[n].x, y = portal_nodes[n].y, z = portal_nodes[n].z}
+						nearest_distance = distance
+					end
+				end
+			end
+			-- now we have portal_pos
+		else
+			-- Need to build arrival portal:
+			local orientation = 0
+			local width = math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1
+			local height = math.abs(p2.y - p1.y) + 1
+			if p1.x == p2.x then
+				orinetation = 1
+			end
+			portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height, orientation)
+		end
 
-	for y = start_y, math.max(mcl_vars.mg_lava_nether_max + 1), -1 do
-		local nval_cave = nobj_cave:get_3d({x = target_x, y = y, z = target_z})
+		local time_str = tostring(minetest.get_us_time())
+		local target = minetest.pos_to_string(portal_pos)
 
-		if nval_cave > TCAVE then -- Cavern
-			air = air + 1
-		else -- Not cavern, check if 4 nodes of space above
-			if air >= 4 then
-				return y + 2
-			else -- Not enough space, reset air to zero
-				air = 0
+		for x = p1.x, p2.x do
+			for y = p1.y, p2.y do
+				for z = p1.z, p2.z do
+					meta = minetest.get_meta({x = x, y = y, z = z})
+					meta:set_string("portal_target", target)
+					meta:set_string("portal_time", time_str)
+				end
 			end
 		end
 	end
+end
 
-	return start_y -- Fallback
+local function find_or_create_portal(src_pos)
+	local current_dimension = mcl_worlds.pos_to_dimension(src_pos)
+	local x, y, z, y_min, y_max = 0, 0, 0, 0, 0
+	if current_dimension == "nether" then
+		x = mcl_worlds.nether_to_overworld(src_pos.x)
+		z = mcl_worlds.nether_to_overworld(src_pos.z)
+		y = math.max(math.min(y - mcl_vars.mg_nether_min + mcl_vars.mg_overworld_min, mcl_vars.mg_overworld_max_official), mcl_vars.mg_overworld_min)
+		y_min = mcl_vars.mg_overworld_min
+		y_max = mcl_vars.mg_overworld_max_official
+	else -- overworld:
+		x = src_pos.x / 8
+		z = src_pos.z / 8
+		y = math.max(math.min(y - mcl_vars.mg_overworld_min + mcl_vars.mg_nether_min, mcl_vars.mg_nether_max), mcl_vars.mg_nether_min)
+		y_min = mcl_vars.mg_bedrock_nether_bottom_min
+		y_max = mcl_vars.mg_bedrock_nether_top_max
+	end
+	local pos1 = {x = x - 32, y = y_min + 2, z = z - 32}
+	local pos2 = {x = x + 32, y = y_max - 2, z = z + 32}
+	minetest.emerge_area(pos1, pos2, ecb_setup_target_portal, {srcx=src_pos.x, srcy=src_pos.y, srcz=src_pos.z, dstx=x, dsty=y, dstz=z, srcdim=current_dimension, ax1=pos1.x, ay1=pos1.y, az1=pos1.z, ax2=pos2.x, ay2=pos2.y, az2=pos2.z})
+end
+
+
+local function find_target_y(x, y, z, y_min, y_max)
+	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
+	if node == nil then
+		return y
+	end
+	while node.name ~= "air" and y < y_max do
+		y = y + 1
+		node = minetest.get_node_or_nil({x = x, y = y, z = z})
+		if node == nil then
+			return y
+		end
+	end
+	while node.name == "air" and y > y_min do
+		y = y - 1
+		node = minetest.get_node_or_nil({x = x, y = y, z = z})
+		if node == nil then
+			return y
+		end
+	end
+	return y
+end
+
+local function find_nether_target_y(x, z)
+	local y = math.random(mcl_vars.mg_lava_nether_max + 1, mcl_vars.mg_bedrock_nether_top_min - 26) -- Search start
+	if mg_name == "flat" then
+		y = mcl_vars.mg_flat_nether_floor + 1
+	end
+	return find_target_y(x, y, z, mcl_vars.mg_nether_min+25, mcl_vars.mg_nether_max-25) + 2
 end
 
 local function find_overworld_target_y(x, z)
 	local y = overworld_ground_level or math.random(mcl_vars.mg_overworld_min + 40, mcl_vars.mg_overworld_min + 96)
-	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
-	while node == nil and y > mcl_vars.mg_overworld_min do
-		if node == nil then
-			minetest.load_area({x = x, y = y - 5, z = z}, {x = x, y = y + 5, z = z})
-			node = minetest.get_node_or_nil({x = x, y = y, z = z})
-		end
-		if node == nil then
-			return y
-		end
-		if node.name == "air" then
-			y = y - 1
-			node = nil
-		end
-	end
-	return y + 2
+	return find_target_y(x, y, z, mcl_vars.mg_overworld_min+25, mcl_vars.mg_overworld_max_official-25) + 2
 end
 
 local function available_for_nether_portal(p)
@@ -209,27 +264,11 @@ local function available_for_nether_portal(p)
 	return true, obsidian
 end
 
-local function light_frame(x1, y1, z1, x2, y2, z2, build_frame, existant_target, dim)
+local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 	local build_frame = build_frame or false
-	local dim = dim or mcl_worlds.pos_to_dimension({x = x1, y = y1, z = z1})
 	local orientation = 0
 	if x1 == x2 then
 		orientation = 1
-	end
-	local target = {}
-	if not existant_target then
-		target = {x = (x1 + x2) / 2, y = math.min(y1, y2), z = (z1 + z2) / 2}
-		if dim == "overworld" then
-			target.x = target.x / 8
-			target.z = target.z / 8
-			target.y = find_nether_target_y(target.x, target.z)
-		else -- from Nether:
-			target.x = mcl_worlds.nether_to_overworld(target.x)
-			target.z = mcl_worlds.nether_to_overworld(target.z)
-			target.y = find_overworld_target_y(target.x, target.z)
-		end
-	else
-		target = {x = existant_target.x, y = existant_target.y, z = existant_target.z}
 	end
 	local disperse = 50
 	local pass = 1
@@ -271,8 +310,9 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame, existant_target,
 						meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
 						meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
 						-- Portal target coordinates
-						meta:set_string("portal_target", minetest.pos_to_string(target))
-						meta:set_string("portal_time", tostring(minetest.get_us_time()))
+						meta:set_string("portal_target", "")
+						-- meta:set_string("portal_time", tostring(minetest.get_us_time()))
+						meta:set_string("portal_time", tostring(0))
 					end
 				end
 				if protection then
@@ -294,7 +334,7 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame, existant_target,
 end
 
 --Build arrival portal
-local function build_portal(pos, target, width, height, orientation)
+function mcl_portals.build_nether_portal(pos, width, height, orientation)
 	local height = height or FRAME_SIZE_Y_MIN - 2
 	local width = width or FRAME_SIZE_X_MIN - 2
 	local orientation = orientation or math.random(0, 1)
@@ -305,7 +345,7 @@ local function build_portal(pos, target, width, height, orientation)
 		minetest.load_area({x = pos.x - width * 2, y = pos.y - 1, z = pos.z - 3}, {x = pos.x + width * 2, y = pos.y + height + 2, z = pos.z + width + 2})
 	end
 
-	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true, target)
+	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true)
 
 	if orientation == 0 then
 		for z = pos.z - width * 2, pos.z + width * 2 do
@@ -340,12 +380,11 @@ local function build_portal(pos, target, width, height, orientation)
 	return pos
 end
 
--- Attempts to light a Nether portal at pos and
--- select target position.
+-- Attempts to light a Nether portal at pos
 -- Pos can be any of the inner part.
 -- The frame MUST be filled only with air or any fire, which will be replaced with Nether portal blocks.
 -- If no Nether portal can be lit, nothing happens.
--- Returns true on success and false on failure.
+-- Returns number of portals created (0, 1 or 2)
 function mcl_portals.light_nether_portal(pos)
 	-- Only allow to make portals in Overworld and Nether
 	local dim = mcl_worlds.pos_to_dimension(pos)
@@ -561,16 +600,97 @@ function mcl_portals.light_nether_portal(pos)
 	return lit_portals
 end
 
+-- teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+local function teleport_cooloff(obj)
+	minetest.after(TELEPORT_COOLOFF, function(o)
+		portal_cooloff[o] = false
+	end, obj)
+end
+
+-- teleport function
+local function teleport(obj, pos)
+	if (not obj:get_luaentity()) and  (not obj:is_player()) then
+		return
+	end
+
+	local objpos = obj:get_pos()
+	if objpos == nil then
+		return
+	end
+
+	if portal_cooloff[obj] then
+		return
+	end
+	-- If player stands, player is at ca. something+0.5
+	-- which might cause precision problems, so we used ceil.
+	objpos.y = math.ceil(objpos.y)
+
+	if minetest.get_node(objpos).name ~= "mcl_portals:portal" then
+		return
+	end
+
+	local meta = minetest.get_meta(pos)
+	local delta_time = minetest.get_us_time() - tonumber(meta:get_string("portal_time"))
+	local target = minetest.string_to_pos(meta:get_string("portal_target"))
+	if delta_time > 99999999 or target == nil then -- still not emerged :(
+		return minetest.after(1, teleport, obj, pos)
+	end
+
+	-- Teleport
+	obj:set_pos(target)
+	if obj:is_player() then
+		mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
+		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
+	end
+
+	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+	teleport_cooloff(obj)
+	portal_cooloff[obj] = true
+	if obj:is_player() then
+		local name = obj:get_player_name()
+		minetest.log("action", "[mcl_portal] "..name.." teleported to Nether portal at "..minetest.pos_to_string(target)..".")
+	end
+end
+
+
+local function prepare_target(pos)
+	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
+	local delta_time_us = us_time - tonumber(meta:get_string("portal_time"))
+	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
+	if delta_time_us <= 60*1000000 then
+		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
+		for x = pos1.x, pos2.x do
+			for y = pos1.y, pos2.y do
+				for z = pos1.z, pos2.z do
+					minetest.get_meta({x = x, y = y, z = z}):set_string("portal_time", tostring(us_time))
+				end
+			end
+		end
+		return
+	end
+
+	-- No cached destination point.
+	find_or_create_portal(pos)
+end
+
+function mcl_portals.teleport_through_nether_portal(obj, portal_pos)
+	-- Prevent quick back-and-forth teleportation
+	if portal_cooloff[obj] then
+		return
+	end
+	prepare_target(portal_pos)
+	minetest.after(TELEPORT_DELAY, teleport, obj, portal_pos)
+end
 
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {"mcl_portals:portal"},
-	interval = 1,
-	chance = 2,
+	interval = 2,
+	chance = 1,
 	action = function(pos, node)
 		minetest.add_particlespawner({
 			amount = 32,
-			time = 4,
+			time = 3,
 			minpos = {x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25},
 			maxpos = {x = pos.x + 0.25, y = pos.y + 0.25, z = pos.z + 0.25},
 			minvel = {x = -0.8, y = -0.8, z = -0.8},
@@ -586,88 +706,9 @@ minetest.register_abm({
 		})
 		for _,obj in ipairs(minetest.get_objects_inside_radius(pos,1)) do		--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity() --maikerumine added for objects to travel
-			if obj:is_player() or lua_entity then
-				-- Prevent quick back-and-forth teleportation
-				if portal_cooloff[obj] then
-					return
-				end
-				local meta = minetest.get_meta(pos)
-				local target = minetest.string_to_pos(meta:get_string("portal_target"))
-				local pos1 = minetest.string_to_pos(meta:get_string("portal_frame1"))
-				local pos2 = minetest.string_to_pos(meta:get_string("portal_frame2"))
-				local height = pos2.y - pos1.y + 1
-				local width = (pos2.x - pos1.x) + (pos2.z - pos1.z) + 1
-				-- minetest.log("action", "[mcl_portal] Entered portal, target=" .. minetest.pos_to_string(target))
-
-				if target then
-					-- force emerge of target area
-					minetest.get_voxel_manip():read_from_map(target, target)
-					if not minetest.get_node_or_nil(target) then
-						minetest.emerge_area(vector.subtract(target, 4), vector.add(target, 4))
-					end
-
-					-- teleport function
-					local teleport = function(obj, pos, target)
-						if (not obj:get_luaentity()) and  (not obj:is_player()) then
-							return
-						end
-						-- Prevent quick back-and-forth teleportation
-						if portal_cooloff[obj] then
-							return
-						end
-						local objpos = obj:get_pos()
-						if objpos == nil then
-							return
-						end
-						-- If player stands, player is at ca. something+0.5
-						-- which might cause precision problems, so we used ceil.
-						objpos.y = math.ceil(objpos.y)
-
-						if minetest.get_node(objpos).name ~= "mcl_portals:portal" then
-							return
-						end
-
-						-- Teleport
-						obj:set_pos(target)
-						if obj:is_player() then
-							mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
-							minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
-						end
-
-						-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
-						portal_cooloff[obj] = true
-						minetest.after(TELEPORT_COOLOFF, function(o)
-							portal_cooloff[o] = false
-						end, obj)
-						if obj:is_player() then
-							local name = obj:get_player_name()
-							minetest.log("action", "[mcl_portal] "..name.." teleported to Nether portal at "..minetest.pos_to_string(target)..".")
-						end
-					end
-
-					local n = minetest.get_node_or_nil(target)
-					if n == nil then
-						-- Emerge target area, wait for emerging to be finished, build destination portal
-						-- (if there isn't already one, teleport object after a short delay.
-						local emerge_callback = function(blockpos, action, calls_remaining, param)
-							minetest.log("action", "[mcl_portal] emerge_callack called! action="..action)
-							if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
-								minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
-								target = build_portal(param.target, param.pos, param.width, param.height)
-								minetest.after(TELEPORT_DELAY, teleport, obj, pos, target)
-							end
-						end
-						minetest.log("action", "[mcl_portal] Emerging area for destination Nether portal ...")
-						minetest.emerge_area(vector.subtract(target, 7), vector.add(target, 7), emerge_callback, { pos = pos, target = target, width = width, height = height })
-					else
-						if n.name ~= "mcl_portals:portal" then -- Target portal destroyed! TODO: Find or create another one
-							minetest.log("action", "[mcl_portal] Target portal destroyed! TODO: Find or create another one")
-							target = build_portal(target, pos, width, height)
-						end
-						minetest.after(TELEPORT_DELAY, teleport, obj, pos, target)
-					end
-
-				end
+			if (obj:is_player() or lua_entity) and (not teleporting_objects[obj] or minetest.get_us_time()-teleporting_objects[obj] > 10000000) then
+				teleporting_objects[obj]=minetest.get_us_time()
+				mcl_portals.teleport_through_nether_portal(obj, pos)
 			end
 		end
 	end,
