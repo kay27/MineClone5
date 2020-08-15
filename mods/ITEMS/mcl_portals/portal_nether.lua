@@ -683,7 +683,8 @@ end
 
 local function prepare_target(pos)
 	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
-	local delta_time_us = us_time - tonumber(meta:get_string("portal_time"))
+	local portal_time = tonumber(meta:get_string("portal_time")) or 0
+	local delta_time_us = us_time - portal_time
 	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
 	if delta_time_us <= 60*1000000 then
 		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
