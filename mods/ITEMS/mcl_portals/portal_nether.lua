@@ -351,7 +351,8 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 							set_meta = minetest.get_node({x = x, y = y, z = z}).name == "mcl_core:obsidian"
 						end
 					else
-						if not build_frame or pass == 2 then
+						local node = minetest.get_node({x = x, y = y, z = z})
+						if (not node or node.name ~= "mcl_portals:portal") and (not build_frame or pass == 2) then
 							minetest.set_node({x = x, y = y, z = z}, {name = "mcl_portals:portal", param2 = orientation})
 						end
 					end
@@ -778,33 +779,18 @@ minetest.override_item("mcl_core:obsidian", {
 	_doc_items_usagehelp = usagehelp,
 	on_destruct = mcl_portals.destroy_nether_portal,
 	_on_ignite = function(user, pointed_thing)
-		local pos = {x = pointed_thing.under.x, y = pointed_thing.under.y, z = pointed_thing.under.z}
-		local portals_counter = 0
+		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
-		for x = pos.x-1, pos.x+1 do
-			for y = pos.y-1, pos.y+1 do
-				for z = pos.z-1, pos.z+1 do
-					local portals_placed = mcl_portals.light_nether_portal({x = x, y = y, z = z})
-					if portals_placed > 0 then
-						minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string(pos)..".")
-						portals_counter = portals_counter + portals_placed
-						break
-					end
-				end
-				if portals_counter > 0 then
-					break
-				end
-			end
-			if portals_counter > 0 then
-				break
-			end
-		end
-		if portals_counter > 0 then
+		local portals_placed =	mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) +
+					mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) +
+					mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
+		if portals_placed > 0 then
+			minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
 				doc.mark_entry_as_revealed(user:get_player_name(), "nodes", "mcl_portals:portal")
 
 				-- Achievement for finishing a Nether portal TO the Nether
-				local dim = mcl_worlds.pos_to_dimension(pos)
+				local dim = mcl_worlds.pos_to_dimension({x=x, y=y, z=z})
 				if minetest.get_modpath("awards") and dim ~= "nether" and user:is_player() then
 					awards.unlock(user:get_player_name(), "mcl:buildNetherPortal")
 				end
