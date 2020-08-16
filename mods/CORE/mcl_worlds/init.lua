@@ -86,10 +86,6 @@ end
 -- Takes a position (pos) and returns true if clocks are working here
 mcl_worlds.clock_works = mcl_worlds.compass_works
 
-function mcl_worlds.nether_to_overworld(x)
-    return 30912 - math.abs((x * 8 + 30912) % 123648 - 61824)
-end
-
 --------------- CALLBACKS ------------------
 mcl_worlds.registered_on_dimension_change = {}
 
