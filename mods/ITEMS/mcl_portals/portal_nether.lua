@@ -7,6 +7,7 @@ local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
 local FRAME_SIZE_X_MAX = 23
 local FRAME_SIZE_Y_MAX = 23
+local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
 local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
@@ -43,51 +44,34 @@ function mcl_portals.destroy_nether_portal(pos)
 	meta:set_string("portal_frame2", "")
 	meta:set_string("portal_target", "")
 	meta:set_string("portal_time", "")
+	local check_remove = function(pos, orientation)
+		local node = minetest.get_node(pos)
+		if node and node.name == "mcl_portals:portal" and (orientation == nil or (node.param2 == orientation or node.param2 == 2)) then
+			return minetest.remove_node(pos)
+		end
+	end
 	if obsidian then -- check each of 6 sides of it and destroy every portal:
-		if minetest.get_node({x = pos.x - 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x - 1, y = pos.y, z = pos.z})
-		end
-		if minetest.get_node({x = pos.x + 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x + 1, y = pos.y, z = pos.z})
-		end
-		if minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y - 1, z = pos.z})
-		end
-		if minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y + 1, z = pos.z})
-		end
-		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z - 1}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z - 1})
-		end
-		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z + 1}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z + 1})
-		end
+		check_remove({x = pos.x - 1, y = pos.y, z = pos.z}, 0)
+		check_remove({x = pos.x + 1, y = pos.y, z = pos.z}, 0)
+		check_remove({x = pos.x, y = pos.y, z = pos.z - 1}, 1)
+		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
+		check_remove({x = pos.x, y = pos.y - 1, z = pos.z})
+		check_remove({x = pos.x, y = pos.y + 1, z = pos.z})
 		return
 	end
 	if not has_meta then -- no meta means repeated call: function calls on every node destruction
 		return
 	end
-	if orientation == 1 then
-		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z - 1}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z - 1})
-		end
-		if minetest.get_node({x = pos.x, y = pos.y, z = pos.z + 1}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x, y = pos.y, z = pos.z + 1})
-		end
-	else
-		if minetest.get_node({x = pos.x - 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x - 1, y = pos.y, z = pos.z})
-		end
-		if minetest.get_node({x = pos.x + 1, y = pos.y, z = pos.z}).name == "mcl_portals:portal" then
-			minetest.remove_node({x = pos.x + 1, y = pos.y, z = pos.z})
-		end
+	if orientation == 0 or orientation == 2 then
+		check_remove({x = pos.x - 1, y = pos.y, z = pos.z}, 0)
+		check_remove({x = pos.x + 1, y = pos.y, z = pos.z}, 0)
 	end
-	if minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name == "mcl_portals:portal" then
-		minetest.remove_node({x = pos.x, y = pos.y - 1, z = pos.z})
+	if orientation == 1 or orientation == 2 then
+		check_remove({x = pos.x, y = pos.y, z = pos.z - 1}, 1)
+		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
 	end
-	if minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name == "mcl_portals:portal" then
-		minetest.remove_node({x = pos.x, y = pos.y + 1, z = pos.z})
-	end
+	check_remove({x = pos.x, y = pos.y - 1, z = pos.z})
+	check_remove({x = pos.x, y = pos.y + 1, z = pos.z})
 end
 
 minetest.register_node("mcl_portals:portal", {
@@ -431,11 +415,108 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 	return pos
 end
 
+local function check_shape(pos, orientation, node_counter, node_list)
+	local meta = minetest.get_meta(pos)
+	local target = meta:get_string("portal_time")
+	if target and target == "-2" then
+		return node_counter > 0, node_counter, node_list
+	end
+	local good, obsidian = available_for_nether_portal(pos)
+	if not good and not obsidian then
+		return false, node_counter, node_list
+	end
+	if obsidian then
+		return true, node_counter, node_list
+	end
+	if node_counter >= PORTAL_NODES_MAX then
+		return false, node_counter, node_list
+	end
+	meta:set_string("portal_time", "-2")
+	node_list[#node_list + 1] = {x = pos.x, y = pos.y, z = pos.z}
+	node_counter = node_counter + 1
+	if orientation == 0 then
+		good, node_counter = check_shape({x = pos.x - 1, y = pos.y, z = pos.z}, orientation, node_counter, node_list)
+		if not good then
+			return false, node_counter, node_list
+		end
+		good, node_counter = check_shape({x = pos.x + 1, y = pos.y, z = pos.z}, orientation, node_counter, node_list)
+		if not good then
+			return false, node_counter, node_list
+		end
+	else -- orientation == 1
+		good, node_counter = check_shape({x = pos.x, y = pos.y, z = pos.z - 1}, orientation, node_counter, node_list)
+		if not good then
+			return false, node_counter, node_list
+		end
+		good, node_counter = check_shape({x = pos.x, y = pos.y, z = pos.z + 1}, orientation, node_counter, node_list)
+		if not good then
+			return false, node_counter, node_list
+		end
+	end
+	good, node_counter = check_shape({x = pos.x, y = pos.y - 1, z = pos.z}, orientation, node_counter, node_list)
+	if not good then
+		return false, node_counter, node_list
+	end
+	good, node_counter = check_shape({x = pos.x, y = pos.y + 1, z = pos.z}, orientation, node_counter, node_list)
+	return good, node_counter, node_list
+end
+
 -- Attempts to light a Nether portal at pos
 -- Pos can be any of the inner part.
 -- The frame MUST be filled only with air or any fire, which will be replaced with Nether portal blocks.
 -- If no Nether portal can be lit, nothing happens.
 -- Returns number of portals created (0, 1 or 2)
+function mcl_portals.light_nether_portal_free_shape(pos)
+	-- Only allow to make portals in Overworld and Nether
+	local dim = mcl_worlds.pos_to_dimension(pos)
+	if dim ~= "overworld" and dim ~= "nether" then
+		return 0
+	end
+
+	local lit_portals = 0
+
+	for orientation = 0, 1 do
+		local good, node_counter, node_list = check_shape(pos, orientation, 0, {})
+		if good then
+			local pos1 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
+			local pos2 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
+			if #node_list > 1 then
+				for i = 2, #node_list, 1 do
+					if (node_list[i].y < pos1.y) or (node_list[i].y == pos1.y and (node_list[i].x < pos1.x or node_list[i].z < pos1.z)) then
+						pos1 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
+
+					end
+					if (node_list[i].y < pos2.y) or (node_list[i].y == pos2.y and (node_list[i].x > pos2.x or node_list[i].z < pos2.z)) then
+						pos2 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
+					end
+				end
+			end
+			for i = #node_list, 1, -1 do
+				local node_pos = node_list[i]
+				local node = minetest.get_node(node_pos)
+				if not node or node.name ~= "mcl_portals:portal" then
+					minetest.set_node(node_pos, {name = "mcl_portals:portal", param2 = orientation})
+					local meta = minetest.get_meta(node_pos)
+					meta:set_string("portal_frame1", minetest.pos_to_string(pos1))
+					meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
+					meta:set_string("portal_time", "")
+					meta:set_string("portal_target", "")
+				end
+				node_list[i] = nil
+			end
+			lit_portals = lit_portals + 1
+		else
+			for i = #node_list, 1, -1 do
+				local node_pos = node_list[i]
+				local meta = minetest.get_meta(node_pos)
+				meta:set_string("portal_time", "")
+				node_list[i] = nil
+			end
+		end
+	end
+
+	return lit_portals
+end
 function mcl_portals.light_nether_portal(pos)
 	-- Only allow to make portals in Overworld and Nether
 	local dim = mcl_worlds.pos_to_dimension(pos)
@@ -781,9 +862,9 @@ minetest.override_item("mcl_core:obsidian", {
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
-		local portals_placed =	mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) +
-					mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) +
-					mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
+		local portals_placed =	mcl_portals.light_nether_portal_free_shape({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x + 1, y = y, z = z}) +
+					mcl_portals.light_nether_portal_free_shape({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y + 1, z = z}) +
+					mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z + 1})
 		if portals_placed > 0 then
 			minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
