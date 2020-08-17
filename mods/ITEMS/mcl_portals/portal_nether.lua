@@ -499,7 +499,7 @@ function mcl_portals.light_nether_portal_free_shape(pos)
 					local meta = minetest.get_meta(node_pos)
 					meta:set_string("portal_frame1", minetest.pos_to_string(pos1))
 					meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
-					meta:set_string("portal_time", "")
+					meta:set_string("portal_time", tostring(0))
 					meta:set_string("portal_target", "")
 				end
 				node_list[i] = nil
