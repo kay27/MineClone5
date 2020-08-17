@@ -477,7 +477,7 @@ function mcl_portals.light_nether_portal_free_shape(pos)
 
 	for orientation = 0, 1 do
 		local good, node_counter, node_list = check_shape(pos, orientation, 0, {})
-		if good then
+		if good and #node_list > 0 then
 			local pos1 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
 			local pos2 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
 			if #node_list > 1 then
