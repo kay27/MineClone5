@@ -31,8 +31,13 @@ local nether_ymax = mcl_vars.mg_bedrock_nether_top_max
 local overworld_dy = overworld_ymax - overworld_ymin + 1
 local nether_dy = nether_ymax - nether_ymin + 1
 
+-- local rng = PcgRandom(32321123312123)
 
 -- Functions
+
+local function nether_to_overworld(x)
+    return 30912 - math.abs((x * 8 + 30912) % 123648 - 61824)
+end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
 function mcl_portals.destroy_nether_portal(pos)
@@ -269,8 +274,8 @@ function mcl_portals.nether_portal_get_target_position(src_pos)
 	local _, current_dimension = mcl_worlds.y_to_layer(src_pos.y)
 	local x, y, z, y_min, y_max = 0, src_pos.y, 0, 0, 0
 	if current_dimension == "nether" then
-		x = mcl_worlds.nether_to_overworld(src_pos.x)
-		z = mcl_worlds.nether_to_overworld(src_pos.z)
+		x = nether_to_overworld(src_pos.x)
+		z = nether_to_overworld(src_pos.z)
 		y = (math.min(math.max(y, nether_ymin), nether_ymax) - nether_ymin) / nether_dy * overworld_dy + overworld_ymin
 		y_min = overworld_ymin
 		y_max = overworld_ymax
@@ -858,6 +863,7 @@ minetest.register_abm({
 			minsize = 1,
 			maxsize = 2,
 			collisiondetection = false,
+			-- texture = "mcl_portals_particle" .. rng:next(1,5) .. ".png",
 			texture = "mcl_particles_teleport.png",
 		})
 		for _,obj in ipairs(minetest.get_objects_inside_radius(pos,1)) do		--maikerumine added for objects to travel
