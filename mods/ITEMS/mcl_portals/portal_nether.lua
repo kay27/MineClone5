@@ -7,6 +7,9 @@ local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
 local FRAME_SIZE_X_MAX = 23
 local FRAME_SIZE_Y_MAX = 23
+
+local ENABLE_NETHER_PORTAL_ANY_SHAPE = 1
+local PORTAL_NODES_MIN = 5
 local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
 local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
@@ -227,6 +230,10 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		if p3 and p4 then
 			portal_pos = vector.divide(vector.add(p3, p4), 2.0)
 			portal_pos.y = math.min(p3.y, p4.y)
+			local node = minetest.get_node(portal_pos)
+			if node and node.name ~= "mcl_portals:portal" then
+				portal_pos = {x = p3.x, y = p3.y, z = p3.z}
+			end
 		end
 		local time_str = tostring(minetest.get_us_time())
 		local target = minetest.pos_to_string(portal_pos)
@@ -477,21 +484,23 @@ function mcl_portals.light_nether_portal_free_shape(pos)
 
 	for orientation = 0, 1 do
 		local good, node_counter, node_list = check_shape(pos, orientation, 0, {})
-		if good and #node_list > 0 then
+		if good and node_counter >= PORTAL_NODES_MIN then
 			local pos1 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
 			local pos2 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
-			if #node_list > 1 then
-				for i = 2, #node_list, 1 do
-					if (node_list[i].y < pos1.y) or (node_list[i].y == pos1.y and (node_list[i].x < pos1.x or node_list[i].z < pos1.z)) then
-						pos1 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
-
-					end
-					if (node_list[i].y < pos2.y) or (node_list[i].y == pos2.y and (node_list[i].x > pos2.x or node_list[i].z < pos2.z)) then
-						pos2 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
-					end
+			local max_y = node_list[1].y
+			for i = 2, node_counter do
+				if (node_list[i].y < pos1.y) or (node_list[i].y == pos1.y and (node_list[i].x < pos1.x or node_list[i].z < pos1.z)) then
+					pos1 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
+				end
+				if (node_list[i].y < pos2.y) or (node_list[i].y == pos2.y and (node_list[i].x > pos2.x or node_list[i].z < pos2.z)) then
+					pos2 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
+				end
+				if (node_list[i].y > max_y) then
+					max_y = node_list[i].y
 				end
 			end
-			for i = #node_list, 1, -1 do
+			pos2.y = max_y
+			for i = 1, node_counter do
 				local node_pos = node_list[i]
 				local node = minetest.get_node(node_pos)
 				if not node or node.name ~= "mcl_portals:portal" then
@@ -502,15 +511,13 @@ function mcl_portals.light_nether_portal_free_shape(pos)
 					meta:set_string("portal_time", tostring(0))
 					meta:set_string("portal_target", "")
 				end
-				node_list[i] = nil
 			end
 			lit_portals = lit_portals + 1
 		else
-			for i = #node_list, 1, -1 do
+			for i = 1, node_counter do
 				local node_pos = node_list[i]
 				local meta = minetest.get_meta(node_pos)
 				meta:set_string("portal_time", "")
-				node_list[i] = nil
 			end
 		end
 	end
@@ -762,7 +769,7 @@ local function teleport(obj, pos)
 	end
 
 	local meta = minetest.get_meta(pos)
-	local delta_time = minetest.get_us_time() - tonumber(meta:get_string("portal_time"))
+	local delta_time = minetest.get_us_time() - (tonumber(meta:get_string("portal_time")) or 0)
 	local target = minetest.string_to_pos(meta:get_string("portal_target"))
 	if delta_time > DESTINATION_EXPIRES or target == nil then
 		-- ares still not emerged - retry after a second
@@ -862,9 +869,18 @@ minetest.override_item("mcl_core:obsidian", {
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
-		local portals_placed =	mcl_portals.light_nether_portal_free_shape({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x + 1, y = y, z = z}) +
-					mcl_portals.light_nether_portal_free_shape({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y + 1, z = z}) +
-					mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z + 1})
+		local portals_placed =0
+		if ENABLE_NETHER_PORTAL_ANY_SHAPE then
+			portals_placed = portals_placed +
+				mcl_portals.light_nether_portal_free_shape({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x + 1, y = y, z = z}) +
+				mcl_portals.light_nether_portal_free_shape({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y + 1, z = z}) +
+				mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z + 1})
+		else
+			portals_placed = portals_placed + 
+				mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) + mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) +
+				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) + mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) +
+				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) + mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
+		end
 		if portals_placed > 0 then
 			minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
