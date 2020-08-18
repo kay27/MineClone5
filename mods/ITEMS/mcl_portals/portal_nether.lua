@@ -187,6 +187,29 @@ local function find_overworld_target_y(x, y, z)
 	return find_target_y(x, y, z, overworld_ymin + 4, overworld_ymax - 25) + 1
 end
 
+local function update_target(pos, target, time_str)
+	local node = minetest.get_node(pos)
+	if not node or node.name ~= "mcl_portals:portal" then
+		return
+	end
+	local meta = minetest.get_meta(pos)
+	if meta:get_string("portal_time") == time_str then
+		return
+	end
+	meta:set_string("portal_target", target)
+	meta:set_string("portal_time", time_str)
+	update_target({x = pos.x, y = pos.y - 1, z = pos.z}, target, time_str)
+	update_target({x = pos.x, y = pos.y + 1, z = pos.z}, target, time_str)
+	if node.param2 ~= 1 then
+		update_target({x = pos.x - 1, y = pos.y, z = pos.z}, target, time_str)
+		update_target({x = pos.x + 1, y = pos.y, z = pos.z}, target, time_str)
+	end
+	if node.param2 ~= 0 then
+		update_target({x = pos.x, y = pos.y, z = pos.z - 1}, target, time_str)
+		update_target({x = pos.x, y = pos.y, z = pos.z + 1}, target, time_str)
+	end
+end
+
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
 	-- if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
@@ -214,8 +237,8 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			end -- here we have the best portal_pos
 		else
 			-- Need to build arrival portal:
-			local width = math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1
-			local height = math.abs(p2.y - p1.y) + 1
+			local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, 2)
+			local height = math.max(math.abs(p2.y - p1.y) + 1, 3)
 			if param.srcdim == "overworld" then
 				dst_pos.y = find_nether_target_y(dst_pos.x, dst_pos.y, dst_pos.z)
 			else
@@ -238,15 +261,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		local time_str = tostring(minetest.get_us_time())
 		local target = minetest.pos_to_string(portal_pos)
 
-		for x = p1.x, p2.x do
-			for y = p1.y, p2.y do
-				for z = p1.z, p2.z do
-					meta = minetest.get_meta({x = x, y = y, z = z})
-					meta:set_string("portal_target", target)
-					meta:set_string("portal_time", time_str)
-				end
-			end
-		end
+		update_target(p1, target, time_str)
 	end
 end
 
