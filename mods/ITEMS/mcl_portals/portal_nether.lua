@@ -890,6 +890,30 @@ local function teleport(obj, pos)
 end
 
 
+function mcl_portals.pepare_target_recursive(pos, time_str)
+	local meta = minetest.get_meta(pos)
+	if meta:get_string("portal_time") == time_str then
+		return
+	end
+	local node = minetest.get_node(pos)
+	local portal = node.name == "mcl_portals:portal"
+	local cross = node.name == "mcl_portals:portal_cross"
+	if not portal and not cross then
+		return
+	end
+	meta:set_string("portal_time", time_str)
+	mcl_portals.prepare_target_recursive({x = pos.x, y = pos.y - 1, z = pos.z}, time_str)
+	mcl_portals.prepare_target_recursive({x = pos.x, y = pos.y + 1, z = pos.z}, time_str)
+	if cross or node.param2 == 0 then
+		mcl_portals.prepare_target_recursive({x = pos.x - 1, y = pos.y, z = pos.z}, time_str)
+		mcl_portals.prepare_target_recursive({x = pos.x + 1, y = pos.y, z = pos.z}, time_str)
+	end
+	if cross or node.param2 == 1 then
+		mcl_portals.prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z - 1}, time_str)
+		mcl_portals.prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z + 1}, time_str)
+	end
+end
+
 local function prepare_target(pos)
 	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
 	local portal_time = tonumber(meta:get_string("portal_time")) or 0
@@ -897,13 +921,7 @@ local function prepare_target(pos)
 	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
 	if delta_time_us <= DESTINATION_EXPIRES then
 		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
-		for x = pos1.x, pos2.x do
-			for y = pos1.y, pos2.y do
-				for z = pos1.z, pos2.z do
-					minetest.get_meta({x = x, y = y, z = z}):set_string("portal_time", tostring(us_time))
-				end
-			end
-		end
+		mcl_portals.prepare_target_recursive(pos, tostring(us_time))
 		return
 	end
 
