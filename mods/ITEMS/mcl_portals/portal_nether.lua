@@ -280,17 +280,12 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
 	if calls_remaining <= 0 then
 		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
-		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
-		local portal_nodes2 = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal_cross")
-		for i=1, #portal_nodes2 do
-			table.insert(portal_nodes, portal_nodes2[i])
-		end
-		portal_nodes2 = nil
+		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, {"mcl_portals:portal", "mcl_portals:portal_cross"})
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
 		local meta = minetest.get_meta(src_pos)
-		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1"))
-		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2"))
+		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
+		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
 		local portal_pos = {}
 		if portal_nodes and #portal_nodes > 0 then
 			-- Found some portal(s), use nearest:
@@ -331,7 +326,8 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		local time_str = tostring(minetest.get_us_time())
 		local target = minetest.pos_to_string(portal_pos)
 
-		update_target(p1, target, time_str)
+		-- update_target(p1, target, time_str)
+		update_target(src_pos, target, time_str)
 	end
 end
 
