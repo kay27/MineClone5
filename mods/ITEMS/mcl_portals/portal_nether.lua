@@ -2,13 +2,15 @@ local S = minetest.get_translator("mcl_portals")
 
 -- Parameters
 
+local ENABLE_NETHER_PORTAL_CROSS = 1
+local ENABLE_NETHER_PORTAL_ANY_SHAPE = 1
+
 -- Portal frame sizes
 local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
 local FRAME_SIZE_X_MAX = 23
 local FRAME_SIZE_Y_MAX = 23
 
-local ENABLE_NETHER_PORTAL_ANY_SHAPE = 1
 local PORTAL_NODES_MIN = 5
 local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
@@ -16,13 +18,15 @@ local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
-local PORTAL_SEARCH_HALF_CHUNK = 40 -- up to 64 but I recommend maximum 32 for Minetest 5.3.0, 40 is an experimental value
+local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
 
 -- Table of objects (including players) which recently teleported by a
 -- Nether portal. Those objects have a brief cooloff period before they
 -- can teleport again. This prevents annoying back-and-forth teleportation.
 local portal_cooloff = {}
-local teleporting_objects={}
+local teleporting_objects = {}
+
+local portal_cross = {}
 
 local overworld_ymin = math.max(mcl_vars.mg_overworld_min, -31)
 local overworld_ymax = math.min(mcl_vars.mg_overworld_max_official, 63)
@@ -42,11 +46,22 @@ end
 -- Destroy portal if pos (portal frame or portal node) got destroyed
 function mcl_portals.destroy_nether_portal(pos)
 	-- Deactivate Nether portal
+	if ENABLE_NETHER_PORTAL_CROSS and #portal_cross then
+		for i = 1, #portal_cross do
+			if portal_cross[i].x == pos.x and portal_cross[i].y == pos.y and portal_cross[i].z == pos.z then
+				portal_cross[i] = nil
+				return
+			end
+		end
+	end
+
 	local meta = minetest.get_meta(pos)
 	local node = minetest.get_node(pos)
 	local nn, orientation = node.name, node.param2
 	minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos) .. "(" .. nn .. ")")
 	local obsidian = nn == "mcl_core:obsidian" 
+	local cross = nn == "mcl_portal:portal_cross" 
+
 	local has_meta = minetest.string_to_pos(meta:get_string("portal_frame1"))
 	meta:set_string("portal_frame1", "")
 	meta:set_string("portal_frame2", "")
@@ -54,7 +69,7 @@ function mcl_portals.destroy_nether_portal(pos)
 	meta:set_string("portal_time", "")
 	local check_remove = function(pos, orientation)
 		local node = minetest.get_node(pos)
-		if node and node.name == "mcl_portals:portal" and (orientation == nil or (node.param2 == orientation or node.param2 == 2)) then
+		if node and (node.name == "mcl_portals:portal" and (orientation == nil or (node.param2 == orientation))) or (node.name == "mcl_portals:portal_cross") then
 			return minetest.remove_node(pos)
 		end
 	end
@@ -70,11 +85,11 @@ function mcl_portals.destroy_nether_portal(pos)
 	if not has_meta then -- no meta means repeated call: function calls on every node destruction
 		return
 	end
-	if orientation == 0 or orientation == 2 then
+	if orientation == 0 or cross then
 		check_remove({x = pos.x - 1, y = pos.y, z = pos.z}, 0)
 		check_remove({x = pos.x + 1, y = pos.y, z = pos.z}, 0)
 	end
-	if orientation == 1 or orientation == 2 then
+	if orientation == 1 or cross then
 		check_remove({x = pos.x, y = pos.y, z = pos.z - 1}, 1)
 		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
 	end
@@ -138,6 +153,47 @@ minetest.register_node("mcl_portals:portal", {
 	_mcl_blast_resistance = 0,
 })
 
+if ENABLE_NETHER_PORTAL_CROSS then
+	minetest.register_node("mcl_portals:portal_cross", {
+		description = S("Nether Portal Cross"),
+		tiles =
+		{
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }},
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }},
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }},
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }},
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }},
+			{ name = "mcl_portals_portal.png", animation = { type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 0.5 }}
+		},
+		drawtype = "nodebox",
+		paramtype = "light",
+		paramtype2 = "facedir",
+		sunlight_propagates = true,
+		use_texture_alpha = true,
+		walkable = false,
+		diggable = false,
+		pointable = false,
+		buildable_to = false,
+		is_ground_content = false,
+		drop = "",
+		light_source = 12,
+		post_effect_color = {a = 180, r = 51, g = 7, b = 89},
+		alpha = 192,
+		node_box = {
+			type = "fixed",
+			fixed = {
+				{-0.1, -0.5, -0.5,  0.1, 0.5, 0.5},
+				{-0.5, -0.5, -0.1,  0.5, 0.5, 0.1},
+			},
+		},
+		groups = {portal=1, not_in_creative_inventory = 1},
+		on_destruct = mcl_portals.destroy_nether_portal,
+
+		_mcl_hardness = -1,
+		_mcl_blast_resistance = 0,
+	})
+end
+
 local function find_target_y(x, y, z, y_min, y_max)
 	local y_org = y
 	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
@@ -193,23 +249,27 @@ local function find_overworld_target_y(x, y, z)
 end
 
 local function update_target(pos, target, time_str)
-	local node = minetest.get_node(pos)
-	if not node or node.name ~= "mcl_portals:portal" then
-		return
-	end
 	local meta = minetest.get_meta(pos)
 	if meta:get_string("portal_time") == time_str then
+		return
+	end
+	local node = minetest.get_node(pos)
+	if not node then
+		return
+	end
+	local portal, cross = node.name == "mcl_portals:portal", node.name == "mcl_portals:portal_cross"
+	if not portal and not cross then
 		return
 	end
 	meta:set_string("portal_target", target)
 	meta:set_string("portal_time", time_str)
 	update_target({x = pos.x, y = pos.y - 1, z = pos.z}, target, time_str)
 	update_target({x = pos.x, y = pos.y + 1, z = pos.z}, target, time_str)
-	if node.param2 ~= 1 then
+	if node.param2 == 0 or cross then
 		update_target({x = pos.x - 1, y = pos.y, z = pos.z}, target, time_str)
 		update_target({x = pos.x + 1, y = pos.y, z = pos.z}, target, time_str)
 	end
-	if node.param2 ~= 0 then
+	if node.param2 == 0 or cross then
 		update_target({x = pos.x, y = pos.y, z = pos.z - 1}, target, time_str)
 		update_target({x = pos.x, y = pos.y, z = pos.z + 1}, target, time_str)
 	end
@@ -221,6 +281,11 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	if calls_remaining <= 0 then
 		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
 		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
+		local portal_nodes2 = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal_cross")
+		for i=1, #portal_nodes2 do
+			table.insert(portal_nodes, portal_nodes2[i])
+		end
+		portal_nodes2 = nil
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
 		local meta = minetest.get_meta(src_pos)
@@ -259,7 +324,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			portal_pos = vector.divide(vector.add(p3, p4), 2.0)
 			portal_pos.y = math.min(p3.y, p4.y)
 			local node = minetest.get_node(portal_pos)
-			if node and node.name ~= "mcl_portals:portal" then
+			if node and node.name ~= "mcl_portals:portal" and node.name ~= "mcl_portals:portal_cross" then
 				portal_pos = {x = p3.x, y = p3.y, z = p3.z}
 			end
 		end
@@ -309,8 +374,14 @@ end
 local function available_for_nether_portal(p)
 	local nn = minetest.get_node(p).name
 	local obsidian = nn == "mcl_core:obsidian"
-	if nn ~= "air" and nn ~= "mcl_portals:portal" and minetest.get_item_group(nn, "fire") ~= 1 then
-		return false, obsidian
+	if ENABLE_NETHER_PORTAL_CROSS then
+		if nn ~= "air" and nn ~= "mcl_portals:portal" and minetest.get_item_group(nn, "fire") ~= 1 then
+			return false, obsidian
+		end
+	else
+		if nn ~= "air" and minetest.get_item_group(nn, "fire") ~= 1 then
+			return false, obsidian
+		end
 	end
 	return true, obsidian
 end
@@ -362,9 +433,14 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 							set_meta = minetest.get_node({x = x, y = y, z = z}).name == "mcl_core:obsidian"
 						end
 					else
-						local node = minetest.get_node({x = x, y = y, z = z})
-						if (not node or node.name ~= "mcl_portals:portal") and (not build_frame or pass == 2) then
-							minetest.set_node({x = x, y = y, z = z}, {name = "mcl_portals:portal", param2 = orientation})
+						if not build_frame or pass == 2 then
+							local node = minetest.get_node({x = x, y = y, z = z})
+							if ENABLE_NETHER_PORTAL_CROSS and node and node.name == "mcl_portals:portal" then
+								table.insert(portal_cross, {x = math.floor(x), y = math.floor(y), z = math.floor(z)})
+								minetest.set_node({x = x, y = y, z = z}, {name = "mcl_portals:portal_cross"})
+							else
+								minetest.set_node({x = x, y = y, z = z}, {name = "mcl_portals:portal", param2 = orientation})
+							end
 						end
 					end
 					if set_meta and not build_frame or pass == 2 then
@@ -530,6 +606,11 @@ function mcl_portals.light_nether_portal_free_shape(pos)
 					meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
 					meta:set_string("portal_time", tostring(0))
 					meta:set_string("portal_target", "")
+				else
+					if ENABLE_NETHER_PORTAL_CROSS then
+						table.insert(portal_cross, node_pos)
+						minetest.set_node(node_pos, {name = "mcl_portals:portal_cross"})
+					end
 				end
 			end
 			lit_portals = lit_portals + 1
@@ -845,7 +926,7 @@ end
 
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
-	nodenames = {"mcl_portals:portal"},
+	nodenames = {"mcl_portals:portal", "mcl_portals:portal_cross"},
 	interval = 2,
 	chance = 1,
 	action = function(pos, node)
