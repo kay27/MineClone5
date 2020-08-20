@@ -269,7 +269,7 @@ local function update_target(pos, target, time_str)
 		update_target({x = pos.x - 1, y = pos.y, z = pos.z}, target, time_str)
 		update_target({x = pos.x + 1, y = pos.y, z = pos.z}, target, time_str)
 	end
-	if node.param2 == 0 or cross then
+	if node.param2 == 1 or cross then
 		update_target({x = pos.x, y = pos.y, z = pos.z - 1}, target, time_str)
 		update_target({x = pos.x, y = pos.y, z = pos.z + 1}, target, time_str)
 	end
