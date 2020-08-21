@@ -602,25 +602,25 @@ end
 local function prepare_target_stack(pos, time_str)
 	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
 	while #stack > 0 do
-		local meta = minetest.get_meta({x = stack[#stack].x, y = stack[#stack].y, z = stack[#stack].z})
+		local meta = minetest.get_meta(stack[#stack])
 		if meta:get_string("portal_time") == time_str then
 			stack[#stack] = nil
 		else
-			local node = minetest.get_node({x = stack[#stack].x, y = stack[#stack].y, z = stack[#stack].z})
+			local node = minetest.get_node(stack[#stack])
 			local portal = node.name == "mcl_portals:portal"
 			if not portal then
 				stack[#stack] = nil
 			else
+				local x, y, z = stack[#stack].x, stack[#stack].y, stack[#stack].z
 				meta:set_string("portal_time", time_str)
-				stack[#stack] = nil
-				stack[#stack + 1] = {x = pos.x, y = pos.y - 1, z = pos.z}
-				stack[#stack + 1] = {x = pos.x, y = pos.y + 1, z = pos.z}
+				stack[#stack].y  = stack[#stack].y - 1
+				stack[#stack + 1] = {x = x, y = y + 1, z = z}
 				if node.param2 == 0 then
-					stack[#stack + 1] = {x = pos.x - 1, y = pos.y, z = pos.z}
-					stack[#stack + 1] = {x = pos.x + 1, y = pos.y, z = pos.z}
+					stack[#stack + 1] = {x = x - 1, y = y, z = z}
+					stack[#stack + 1] = {x = x + 1, y = y, z = z}
 				else
-					stack[#stack + 1] = {x = pos.x, y = pos.y, z = pos.z - 1}
-					stack[#stack + 1] = {x = pos.x, y = pos.y, z = pos.z + 1}
+					stack[#stack + 1] = {x = x, y = y, z = z - 1}
+					stack[#stack + 1] = {x = x, y = y, z = z + 1}
 				end
 			end
 		end
