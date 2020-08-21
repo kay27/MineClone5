@@ -33,7 +33,7 @@ local bow_load = {}
 -- Another player table, this one stores the wield index of the bow being charged
 local bow_index = {}
 
-mcl_bows.shoot_arrow = function(arrow_item, pos, dir, yaw, shooter, power, damage)
+mcl_bows.shoot_arrow = function(arrow_item, pos, dir, yaw, shooter, power, damage, is_critical)
 	local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, arrow_item.."_entity")
 	if power == nil then
 		power = BOW_MAX_SPEED --19
@@ -47,6 +47,7 @@ mcl_bows.shoot_arrow = function(arrow_item, pos, dir, yaw, shooter, power, damag
 	local le = obj:get_luaentity()
 	le._shooter = shooter
 	le._damage = damage
+	le._is_critical = is_critical
 	le._startpos = pos
 	minetest.sound_play("mcl_bows_bow_shoot", {pos=pos}, true)
 	if shooter ~= nil and shooter:is_player() then
@@ -72,27 +73,33 @@ local get_arrow = function(player)
 	return arrow_stack, arrow_stack_id
 end
 
-local player_shoot_arrow = function(itemstack, player, power, damage)
+local player_shoot_arrow = function(itemstack, player, power, damage, is_critical)
 	local arrow_stack, arrow_stack_id = get_arrow(player)
-	local arrow_itemstring = arrow_stack:get_name()
+	local arrow_itemstring
 
-	if not minetest.is_creative_enabled(player:get_player_name()) then
+	if minetest.is_creative_enabled(player:get_player_name()) then
+		if arrow_stack then
+			arrow_itemstring = arrow_stack:get_name()
+		else
+			arrow_itemstring = "mcl_bows:arrow"
+		end
+	else
 		if not arrow_stack then
 			return false
 		end
-		-- arrow_itemstring = arrow_stack:get_name()
+		arrow_itemstring = arrow_stack:get_name()
 		arrow_stack:take_item()
 		local inv = player:get_inventory()
 		inv:set_stack("main", arrow_stack_id, arrow_stack)
+	end
+	if not arrow_itemstring then
+		return false
 	end
 	local playerpos = player:get_pos()
 	local dir = player:get_look_dir()
 	local yaw = player:get_look_horizontal()
 
-	if not arrow_itemstring then
-		arrow_itemstring = "mcl_bows:arrow"
-	end
-	mcl_bows.shoot_arrow(arrow_itemstring, {x=playerpos.x,y=playerpos.y+1.5,z=playerpos.z}, dir, yaw, player, power, damage)
+	mcl_bows.shoot_arrow(arrow_itemstring, {x=playerpos.x,y=playerpos.y+1.5,z=playerpos.z}, dir, yaw, player, power, damage, is_critical)
 	return true
 end
 
@@ -191,12 +198,14 @@ controls.register_on_release(function(player, key, time)
 
 		-- Calculate damage and speed
 		-- Fully charged
+		local is_critical = false
 		if charge >= BOW_CHARGE_TIME_FULL then
 			speed = BOW_MAX_SPEED
 			local r = math.random(1,5)
 			if r == 1 then
 				-- 20% chance for critical hit
 				damage = 10
+				is_critical = true
 			else
 				damage = 9
 			end
@@ -207,7 +216,7 @@ controls.register_on_release(function(player, key, time)
 			damage = math.max(1, math.floor(9 * charge_ratio))
 		end
 
-		has_shot = player_shoot_arrow(wielditem, player, speed, damage)
+		has_shot = player_shoot_arrow(wielditem, player, speed, damage, is_critical)
 
 		wielditem:set_name("mcl_bows:bow")
 		if has_shot and not minetest.is_creative_enabled(player:get_player_name()) then
@@ -219,14 +228,14 @@ controls.register_on_release(function(player, key, time)
 end)
 
 controls.register_on_hold(function(player, key, time)
-	if key ~= "RMB" or not get_arrow(player) then
+	local name = player:get_player_name()
+	local creative = minetest.is_creative_enabled(name)
+	if key ~= "RMB" or not (creative or get_arrow(player)) then
 		return
 	end
-	local name = player:get_player_name()
 	local inv = minetest.get_inventory({type="player", name=name})
 	local wielditem = player:get_wielded_item()
-	local creative = minetest.is_creative_enabled(name)
-	if bow_load[name] == nil and wielditem:get_name()=="mcl_bows:bow" and (creative or get_arrow(player)) then --inv:contains_item("main", "mcl_bows:arrow")) then
+	if bow_load[name] == nil and wielditem:get_name()=="mcl_bows:bow" and (creative or get_arrow(player)) then
 		wielditem:set_name("mcl_bows:bow_0")
 		player:set_wielded_item(wielditem)
 		if minetest.get_modpath("playerphysics") then

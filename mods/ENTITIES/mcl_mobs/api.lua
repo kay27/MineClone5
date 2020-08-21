@@ -495,6 +495,31 @@ local damage_effect = function(self, damage)
 	end
 end
 
+mobs.death_effect = function(pos, collisionbox)
+	local min, max
+	if collisionbox then
+		min = {x=collisionbox[1], y=collisionbox[2], z=collisionbox[3]}
+		max = {x=collisionbox[4], y=collisionbox[5], z=collisionbox[6]}
+	else
+		min = { x = -0.5, y = 0, z = -0.5 }
+		max = { x = 0.5, y = 0.5, z = 0.5 }
+	end
+
+	minetest.add_particlespawner({
+		amount = 40,
+		time = 0.1,
+		minpos = vector.add(pos, min),
+		maxpos = vector.add(pos, max),
+		minvel = {x = -0.2, y = -0.1, z = -0.2},
+		maxvel = {x = 0.2, y = 0.1, z = 0.2},
+		minexptime = 0.5,
+		maxexptime = 1.5,
+		minsize = 0.5,
+		maxsize = 1.5,
+		texture = "mcl_particles_smoke.png",
+	})
+end
+
 local update_tag = function(self)
 	self.object:set_properties({
 		nametag = self.nametag,
@@ -629,6 +654,11 @@ local check_for_death = function(self, cause, cmi_cause)
 		return true
 	end
 
+	local collisionbox
+	if self.collisionbox then
+		collisionbox = table.copy(self.collisionbox)
+	end
+
 	-- default death function and die animation (if defined)
 	if self.animation
 	and self.animation.die_start
@@ -644,6 +674,9 @@ local check_for_death = function(self, cause, cmi_cause)
 		self.blinktimer = 0
 		self.passive = true
 		self.state = "die"
+		self.object:set_properties({
+			pointable = false,
+		})
 		set_velocity(self, 0)
 		set_animation(self, "die")
 
@@ -656,6 +689,7 @@ local check_for_death = function(self, cause, cmi_cause)
 			end
 
 			self.object:remove()
+			mobs.death_effect(pos)
 		end, self)
 	else
 
@@ -664,9 +698,8 @@ local check_for_death = function(self, cause, cmi_cause)
 		end
 
 		self.object:remove()
+		mobs.death_effect(pos, collisionbox)
 	end
-
-	effect(pos, 20, "tnt_smoke.png")
 
 	return true
 end
@@ -808,7 +841,7 @@ local do_env_damage = function(self)
 		if not (mod_weather and (mcl_weather.rain.raining or mcl_weather.state == "snow") and mcl_weather.is_outdoor(pos)) then
 			self.health = self.health - damage
 
-			effect(pos, 5, "tnt_smoke.png")
+			effect(pos, 5, "mcl_particles_smoke.png")
 
 			if check_for_death(self, "light", {type = "light"}) then
 				return true
@@ -874,7 +907,7 @@ local do_env_damage = function(self)
 
 			self.health = self.health - self.water_damage
 
-			effect(pos, 5, "tnt_smoke.png", nil, nil, 1, nil)
+			effect(pos, 5, "mcl_particles_smoke.png", nil, nil, 1, nil)
 
 			if check_for_death(self, "water", {type = "environment",
 					pos = pos, node = self.standing_in}) then
@@ -919,7 +952,7 @@ local do_env_damage = function(self)
 
 		self.health = self.health - nodef.damage_per_second
 
-		effect(pos, 5, "tnt_smoke.png")
+		effect(pos, 5, "mcl_particles_smoke.png")
 
 		if check_for_death(self, "dps", {type = "environment",
 				pos = pos, node = self.standing_in}) then
@@ -2294,7 +2327,7 @@ local do_states = function(self, dtime)
 						}, true)
 
 						entity_physics(pos, entity_damage_radius)
-						effect(pos, 32, "tnt_smoke.png", nil, nil, node_break_radius, 1, 0)
+						effect(pos, 32, "mcl_particles_smoke.png", nil, nil, node_break_radius, 1, 0)
 					end
 					end
 					self.object:remove()
@@ -2610,7 +2643,7 @@ local falling = function(self, pos)
 				if damage > 0 then
 					self.health = self.health - damage
 
-					effect(pos, 5, "tnt_smoke.png", 1, 2, 2, nil)
+					effect(pos, 5, "mcl_particles_smoke.png", 1, 2, 2, nil)
 
 					if check_for_death(self, "fall", {type = "fall"}) then
 						return true
@@ -3927,7 +3960,7 @@ function mobs:safe_boom(self, pos, strength)
 	}, true)
 	local radius = strength
 	entity_physics(pos, radius)
-	effect(pos, 32, "tnt_smoke.png", radius * 3, radius * 5, radius, 1, 0)
+	effect(pos, 32, "mcl_particles_smoke.png", radius * 3, radius * 5, radius, 1, 0)
 end
 
 
@@ -4148,7 +4181,7 @@ function mobs:spawn_child(pos, mob_type)
 	end
 
 	local ent = child:get_luaentity()
-	effect(pos, 15, "tnt_smoke.png", 1, 2, 2, 15, 5)
+	effect(pos, 15, "mcl_particles_smoke.png", 1, 2, 2, 15, 5)
 
 	ent.child = true
 

@@ -1,4 +1,5 @@
 local mods_loaded = false
+local NIGHT_VISION_RATIO = 0.45
 
 mcl_weather.skycolor = {
 	-- Should be activated before do any effect.
@@ -51,6 +52,27 @@ mcl_weather.skycolor = {
 		end
 	end,
 
+	-- Wrapper for updating day/night ratio that respects night vision
+	override_day_night_ratio = function(player, ratio)
+		local meta = player:get_meta()
+		local has_night_vision = meta:get_int("night_vision") == 1
+		local arg
+		-- Apply night vision only for dark sky
+		local is_dark = minetest.get_timeofday() > 0.8 or minetest.get_timeofday() < 0.2 or mcl_weather.state ~= "none"
+		local pos = player:get_pos()
+		local dim = mcl_worlds.pos_to_dimension(pos)
+		if has_night_vision and is_dark and dim ~= "nether" and dim ~= "end" then
+			if ratio == nil then
+				arg = NIGHT_VISION_RATIO
+			else
+				arg = math.max(ratio, NIGHT_VISION_RATIO)
+			end
+		else
+			arg = ratio
+		end
+		player:override_day_night_ratio(arg)
+	end,
+
 	-- Update sky color. If players not specified update sky for all players.
 	update_sky_color = function(players)
 		-- Override day/night ratio as well
@@ -76,7 +98,7 @@ mcl_weather.skycolor = {
 					player:set_sun({visible = true, sunrise_visible = true})
 					player:set_moon({visible = true})
 					player:set_stars({visible = true})
-					player:override_day_night_ratio(nil)
+					mcl_weather.skycolor.override_day_night_ratio(player, nil)
 				else
 					-- Weather skies
 					local day_color = mcl_weather.skycolor.get_sky_layer_color(0.5)
@@ -99,7 +121,7 @@ mcl_weather.skycolor = {
 
 					local lf = mcl_weather.get_current_light_factor()
 					if mcl_weather.skycolor.current_layer_name() == "lightning" then
-						player:override_day_night_ratio(1)
+						mcl_weather.skycolor.override_day_night_ratio(player, 1)
 					elseif lf then
 						local w = minetest.get_timeofday()
 						local light = (w * (lf*2))
@@ -107,9 +129,9 @@ mcl_weather.skycolor = {
 							light = 1 - (light - 1)
 						end
 						light = (light * lf) + 0.15
-						player:override_day_night_ratio(light)
+						mcl_weather.skycolor.override_day_night_ratio(player, light)
 					else
-						player:override_day_night_ratio(nil)
+						mcl_weather.skycolor.override_day_night_ratio(player, nil)
 					end
 				end
 			elseif dim == "end" then
@@ -122,7 +144,7 @@ mcl_weather.skycolor = {
 				player:set_sun({visible = false , sunrise_visible = false})
 				player:set_moon({visible = false})
 				player:set_stars({visible = false})
-				player:override_day_night_ratio(0.5)
+				mcl_weather.skycolor.override_day_night_ratio(player, 0.5)
 			elseif dim == "nether" then
 				player:set_sky({ type = "plain",
 					base_color = "#300808",
@@ -131,7 +153,7 @@ mcl_weather.skycolor = {
 				player:set_sun({visible = false , sunrise_visible = false})
 				player:set_moon({visible = false})
 				player:set_stars({visible = false})
-				player:override_day_night_ratio(nil)
+				mcl_weather.skycolor.override_day_night_ratio(player, nil)
 			elseif dim == "void" then
 				player:set_sky({ type = "plain",
 					base_color = "#000000",

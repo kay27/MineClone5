@@ -212,6 +212,46 @@ local function drop_anvil_items(pos, meta)
 	end
 end
 
+local function damage_particles(pos, node)
+	minetest.add_particlespawner({
+		amount = 30,
+		time = 0.1,
+		minpos = vector.add(pos, {x=-0.5, y=-0.5, z=-0.5}),
+		maxpos = vector.add(pos, {x=0.5, y=-0.25, z=0.5}),
+		minvel = {x=-0.5, y=0.05, z=-0.5},
+		maxvel = {x=0.5, y=0.3, z=0.5},
+		minacc = {x=0, y=-9.81, z=0},
+		maxacc = {x=0, y=-9.81, z=0},
+		minexptime = 0.1,
+		maxexptime = 0.5,
+		minsize = 0.4,
+		maxsize = 0.5,
+		collisiondetection = true,
+		vertical = false,
+		node = node,
+	})
+end
+
+local function destroy_particles(pos, node)
+	minetest.add_particlespawner({
+		amount = math.random(20, 30),
+		time = 0.1,
+		minpos = vector.add(pos, {x=-0.4, y=-0.4, z=-0.4}),
+		maxpos = vector.add(pos, {x=0.4, y=0.4, z=0.4}),
+		minvel = {x=-0.5, y=-0.1, z=-0.5},
+		maxvel = {x=0.5, y=0.2, z=0.5},
+		minacc = {x=0, y=-9.81, z=0},
+		maxacc = {x=0, y=-9.81, z=0},
+		minexptime = 0.2,
+		maxexptime = 0.65,
+		minsize = 0.8,
+		maxsize = 1.2,
+		collisiondetection = true,
+		vertical = false,
+		node = node,
+	})
+end
+
 -- Damage the anvil by 1 level.
 -- Destroy anvil when at highest damage level.
 -- Returns true if anvil was destroyed.
@@ -220,10 +260,12 @@ local function damage_anvil(pos)
 	local new
 	if node.name == "mcl_anvils:anvil" then
 		minetest.swap_node(pos, {name="mcl_anvils:anvil_damage_1", param2=node.param2})
+		damage_particles(pos, node)
 		minetest.sound_play(mcl_sounds.node_sound_metal_defaults().dig, {pos=pos, max_hear_distance=16}, true)
 		return false
 	elseif node.name == "mcl_anvils:anvil_damage_1" then
 		minetest.swap_node(pos, {name="mcl_anvils:anvil_damage_2", param2=node.param2})
+		damage_particles(pos, node)
 		minetest.sound_play(mcl_sounds.node_sound_metal_defaults().dig, {pos=pos, max_hear_distance=16}, true)
 		return false
 	elseif node.name == "mcl_anvils:anvil_damage_2" then
@@ -232,6 +274,7 @@ local function damage_anvil(pos)
 		drop_anvil_items(pos, meta)
 		minetest.sound_play(mcl_sounds.node_sound_metal_defaults().dug, {pos=pos, max_hear_distance=16}, true)
 		minetest.remove_node(pos)
+		destroy_particles(pos, node)
 		minetest.check_single_for_falling({x=pos.x, y=pos.y+1, z=pos.z})
 		return true
 	end
@@ -261,6 +304,7 @@ end
 local anvildef = {
 	groups = {pickaxey=1, falling_node=1, falling_node_damage=1, crush_after_fall=1, deco_block=1, anvil=1},
 	tiles = {"mcl_anvils_anvil_top_damaged_0.png^[transformR90", "mcl_anvils_anvil_base.png", "mcl_anvils_anvil_side.png"},
+	_tt_help = S("Repair and rename items"),
 	paramtype = "light",
 	sunlight_propagates = true,
 	is_ground_content = false,
@@ -453,7 +497,6 @@ S("• Tool + Tool: Place two tools of the same type in the input slots. The “
 S("• Tool + Material: Some tools can also be repaired by combining them with an item that it's made of. For example, iron pickaxes can be repaired with iron ingots. This repairs the tool by 25%.").."\n"..
 S("Armor counts as a tool. It is possible to repair and rename a tool in a single step.").."\n\n"..
 S("The anvil has limited durability and 3 damage levels: undamaged, slightly damaged and very damaged. Each time you repair or rename something, there is a 12% chance the anvil gets damaged. Anvils also have a chance of being damaged when they fall by more than 1 block. If a very damaged anvil is damaged again, it is destroyed.")
-anvildef0._tt_help = S("Repair and rename items")
 
 local anvildef1 = table.copy(anvildef)
 anvildef1.description = S("Slightly Damaged Anvil")
@@ -493,7 +536,7 @@ end
 
 -- Legacy
 minetest.register_lbm({
-	label = "Update anvil formspecs (0.60.0",
+	label = "Update anvil formspecs (0.60.0)",
 	name = "mcl_anvils:update_formspec_0_60_0",
 	nodenames = { "group:anvil" },
 	run_at_every_load = false,

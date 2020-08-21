@@ -68,10 +68,14 @@ function mcl_potions.register_splash(name, descr, color, def)
 				minetest.sound_play("mcl_potions_breaking_glass", {pos = pos, max_hear_distance = 16, gain = 1})
 				local texture, acc
 				if name == "water" then
-					texture = "mcl_potions_droplet.png"
+					texture = "mcl_particles_droplet_bottle.png"
 					acc = {x=0, y=-GRAVITY, z=0}
 				else
-					texture = "mcl_potions_sprite.png"
+					if def.instant then
+						texture = "mcl_particles_instant_effect.png"
+					else
+						texture = "mcl_particles_effect.png"
+					end
 					acc = {x=0, y=0, z=0}
 				end
 				minetest.add_particlespawner({
