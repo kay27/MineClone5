@@ -599,6 +599,34 @@ local function teleport(obj, pos)
 	end
 end
 
+local function prepare_target_stack(pos, time_str)
+	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
+	while #stack > 0 do
+		local meta = minetest.get_meta({x = stack[#stack].x, y = stack[#stack].y, z = stack[#stack].z})
+		if meta:get_string("portal_time") == time_str then
+			stack[#stack] = nil
+		else
+			local node = minetest.get_node({x = stack[#stack].x, y = stack[#stack].y, z = stack[#stack].z})
+			local portal = node.name == "mcl_portals:portal"
+			if not portal then
+				stack[#stack] = nil
+			else
+				meta:set_string("portal_time", time_str)
+				stack[#stack] = nil
+				stack[#stack + 1] = {x = pos.x, y = pos.y - 1, z = pos.z}
+				stack[#stack + 1] = {x = pos.x, y = pos.y + 1, z = pos.z}
+				if node.param2 == 0 then
+					stack[#stack + 1] = {x = pos.x - 1, y = pos.y, z = pos.z}
+					stack[#stack + 1] = {x = pos.x + 1, y = pos.y, z = pos.z}
+				else
+					stack[#stack + 1] = {x = pos.x, y = pos.y, z = pos.z - 1}
+					stack[#stack + 1] = {x = pos.x, y = pos.y, z = pos.z + 1}
+				end
+			end
+		end
+	end
+end
+
 local function prepare_target_recursive(pos, time_str)
 	local meta = minetest.get_meta(pos)
 	if meta:get_string("portal_time") == time_str then
@@ -606,18 +634,17 @@ local function prepare_target_recursive(pos, time_str)
 	end
 	local node = minetest.get_node(pos)
 	local portal = node.name == "mcl_portals:portal"
-	local cross = node.name == "mcl_portals:portal_cross"
-	if not portal and not cross then
+	if not portal then
 		return
 	end
 	meta:set_string("portal_time", time_str)
 	prepare_target_recursive({x = pos.x, y = pos.y - 1, z = pos.z}, time_str)
 	prepare_target_recursive({x = pos.x, y = pos.y + 1, z = pos.z}, time_str)
-	if cross or node.param2 == 0 then
+	if node.param2 == 0 then
 		prepare_target_recursive({x = pos.x - 1, y = pos.y, z = pos.z}, time_str)
 		prepare_target_recursive({x = pos.x + 1, y = pos.y, z = pos.z}, time_str)
 	end
-	if cross or node.param2 == 1 then
+	if node.param2 == 1 then
 		prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z - 1}, time_str)
 		prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z + 1}, time_str)
 	end
@@ -630,7 +657,7 @@ local function prepare_target(pos)
 	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
 	if delta_time_us <= DESTINATION_EXPIRES then
 		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
-		prepare_target_recursive(pos, tostring(us_time))
+		prepare_target_stack(pos, tostring(us_time))
 		return
 	end
 
@@ -649,7 +676,7 @@ end
 
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
-	nodenames = {"mcl_portals:portal", "mcl_portals:portal_cross"},
+	nodenames = {"mcl_portals:portal"},
 	interval = 2,
 	chance = 1,
 	action = function(pos, node)
@@ -695,9 +722,9 @@ minetest.override_item("mcl_core:obsidian", {
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
 		local portals_placed = 
-				mcl_portals.light_nether_portal_free_shape({x = x - 1, y = y, z = z}) or mcl_portals.light_nether_portal_free_shape({x = x + 1, y = y, z = z}) or
-				mcl_portals.light_nether_portal_free_shape({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal_free_shape({x = x, y = y + 1, z = z}) or
-				mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal_free_shape({x = x, y = y, z = z + 1})
+				mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) or mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) or
+				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) or
+				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
 		if portals_placed then
 			minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
