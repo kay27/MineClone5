@@ -30,8 +30,6 @@ local nether_ymax = mcl_vars.mg_bedrock_nether_top_max
 local overworld_dy = overworld_ymax - overworld_ymin + 1
 local nether_dy = nether_ymax - nether_ymin + 1
 
--- local rng = PcgRandom(32321123312123)
-
 -- Functions
 
 local function nether_to_overworld(x)
@@ -39,8 +37,7 @@ local function nether_to_overworld(x)
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
-function mcl_portals.destroy_nether_portal(pos)
-	-- Deactivate Nether portal
+local function destroy_nether_portal(pos)
 	local meta = minetest.get_meta(pos)
 	local node = minetest.get_node(pos)
 	local nn, orientation = node.name, node.param2
@@ -131,7 +128,7 @@ minetest.register_node("mcl_portals:portal", {
 		},
 	},
 	groups = {portal=1, not_in_creative_inventory = 1},
-	on_destruct = mcl_portals.destroy_nether_portal,
+	on_destruct = destroy_nether_portal,
 
 	_mcl_hardness = -1,
 	_mcl_blast_resistance = 0,
@@ -228,7 +225,6 @@ end
 
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
-	-- if calls_remaining <= 0 and action ~= minetest.EMERGE_CANCELLED and action ~= minetest.EMERGE_ERRORED then
 	if calls_remaining <= 0 then
 		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
 		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
@@ -277,8 +273,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		local time_str = tostring(minetest.get_us_time())
 		local target = minetest.pos_to_string(portal_pos)
 
-		-- update_target(p1, target, time_str)
-		update_target(src_pos, target, time_str)
+		update_target(p1, target, time_str)
 	end
 end
 
@@ -423,30 +418,15 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 
 	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true)
 
-	if orientation == 0 then
-		for z = pos.z - width * 2, pos.z + width * 2 do
-			if z ~= pos.z then
-				for x = pos.x - 3, pos.x + width + 2 do
-					for y = pos.y - 1, pos.y + height + 2 do
-						if minetest.registered_nodes[minetest.get_node({x = x, y = y, z = z}).name].is_ground_content and not minetest.is_protected({x = x, y = y, z = z}, "") then
-							minetest.remove_node({x = x, y = y, z = z})
-						end
-					end
-				end
-			end
+	for x = pos.x - math.random(2 + (width-2)*(  orientation), 5 + (2*width-5)*(  orientation)), pos.x + width*(1-orientation) + math.random(2+(width-2)*(  orientation), 4 + (2*width-4)*(  orientation)) do
+	for z = pos.z - math.random(2 + (width-2)*(1-orientation), 5 + (2*width-5)*(1-orientation)), pos.z + width*(  orientation) + math.random(2+(width-2)*(1-orientation), 4 + (2*width-4)*(1-orientation)) do
+	for y = pos.y - 1, pos.y + height + math.random(1,6) do
+		local nn = minetest.get_node({x = x, y = y, z = z}).name
+		if nn ~= "mcl_core:obsidian" and nn ~= "mcl_portals:portal" and minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected({x = x, y = y, z = z}, "") then
+			minetest.remove_node({x = x, y = y, z = z})
 		end
-	else
-		for x = pos.x - width * 2, pos.x + width * 2 do
-			if x ~= pos.x then
-				for z = pos.z - 3, pos.z + width + 2 do
-					for y = pos.y - 1, pos.y + height + 2 do
-						if minetest.registered_nodes[minetest.get_node({x = x, y = y, z = z}).name].is_ground_content and not minetest.is_protected({x = x, y = y, z = z}, "") then
-							minetest.remove_node({x = x, y = y, z = z})
-						end
-					end
-				end
-			end
-		end
+	end
+	end
 	end
 
 	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
@@ -636,29 +616,6 @@ local function prepare_target_stack(pos, time_str)
 	end
 end
 
-local function prepare_target_recursive(pos, time_str)
-	local meta = minetest.get_meta(pos)
-	if meta:get_string("portal_time") == time_str then
-		return
-	end
-	local node = minetest.get_node(pos)
-	local portal = node.name == "mcl_portals:portal"
-	if not portal then
-		return
-	end
-	meta:set_string("portal_time", time_str)
-	prepare_target_recursive({x = pos.x, y = pos.y - 1, z = pos.z}, time_str)
-	prepare_target_recursive({x = pos.x, y = pos.y + 1, z = pos.z}, time_str)
-	if node.param2 == 0 then
-		prepare_target_recursive({x = pos.x - 1, y = pos.y, z = pos.z}, time_str)
-		prepare_target_recursive({x = pos.x + 1, y = pos.y, z = pos.z}, time_str)
-	end
-	if node.param2 == 1 then
-		prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z - 1}, time_str)
-		prepare_target_recursive({x = pos.x, y = pos.y, z = pos.z + 1}, time_str)
-	end
-end
-
 local function prepare_target(pos)
 	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
 	local portal_time = tonumber(meta:get_string("portal_time")) or 0
@@ -703,7 +660,6 @@ minetest.register_abm({
 			minsize = 1,
 			maxsize = 2,
 			collisiondetection = false,
-			-- texture = "mcl_portals_particle" .. rng:next(1,5) .. ".png",
 			texture = "mcl_particles_teleport.png",
 		})
 		for _,obj in ipairs(minetest.get_objects_inside_radius(pos,1)) do		--maikerumine added for objects to travel
@@ -726,7 +682,7 @@ local usagehelp = S("To open a Nether portal, place an upright frame of obsidian
 minetest.override_item("mcl_core:obsidian", {
 	_doc_items_longdesc = longdesc,
 	_doc_items_usagehelp = usagehelp,
-	on_destruct = mcl_portals.destroy_nether_portal,
+	on_destruct = destroy_nether_portal,
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
