@@ -188,7 +188,16 @@ local function find_nether_target_y(x, y, z)
 end
 
 local function find_overworld_target_y(x, y, z)
-	return find_target_y(x, y, z, overworld_ymin + 4, overworld_ymax - 25) + 1
+	local target_y = find_target_y(x, y, z, overworld_ymin + 4, overworld_ymax - 25) + 1
+	local node = minetest.get_node({x = x, y = target_y - 1, z = z})
+	if not node then
+		return target_y
+	end
+	nn = node.name
+	if nn ~= "air" and minetest.get_item_group(nn, "water") == 0 then
+		return target_y + 1
+	end
+	return target_y
 end
 
 local function update_target(pos, target, time_str)
