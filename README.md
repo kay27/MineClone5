@@ -2,7 +2,7 @@
 An unofficial Minecraft-like game for Minetest. Forked from MineClone by davedevils.
 Developed by Wuzzy and contributors. Not developed or endorsed by Mojang AB.
 
-Version: 0.66.2
+Version: 0.67.0
 
 ### Gameplay
 You start in a randomly-generated world made entirely of cubes. You can explore
@@ -116,6 +116,8 @@ The following main features are available:
 * The Nether, a fiery underworld in another dimension
 * Redstone circuits (partially)
 * Minecarts (partial)
+* Status effects (partial)
+* Brewing, potions, tipped arrow (partial)
 * Boats
 * Fire
 * Buidling blocks: Stairs, slabs, doors, trapdoors, fences, fence gates, walls
@@ -146,8 +148,6 @@ The following features are incomplete:
 * The End
 * Enchanting
 * Experience
-* Status effects
-* Brewing, potions, tipped arrows
 * Special minecarts
 * A couple of non-trivial blocks and items
 
@@ -203,6 +203,7 @@ There are so many people to list (sorry). Check out the respective mod directori
 * [ryvnf](https://github.com/ryvnf): Explosion mechanics
 * MysticTempest: Bugfixes
 * [bzoss](https://github.com/bzoss): Status effects, potions, brewing stand
+* kay27 <kay27@bk.ru>: Bugfixes, optimizations
 * Lots of other people: TO BE WRITTEN (see mod directories for details)
 
 #### Mod credits (summary)
