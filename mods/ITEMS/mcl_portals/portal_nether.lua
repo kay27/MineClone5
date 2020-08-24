@@ -13,6 +13,7 @@ local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
 local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
+local TOUCH_CHATTER_TIME = 10 * 1000000 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of microseconds
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
@@ -21,7 +22,7 @@ local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleport
 -- Nether portal. Those objects have a brief cooloff period before they
 -- can teleport again. This prevents annoying back-and-forth teleportation.
 local portal_cooloff = {}
-local teleporting_objects = {}
+local touch_chatter_prevention = {}
 
 local overworld_ymin = math.max(mcl_vars.mg_overworld_min, -31)
 local overworld_ymax = math.min(mcl_vars.mg_overworld_max_official, 63)
@@ -32,8 +33,10 @@ local nether_dy = nether_ymax - nether_ymin + 1
 
 -- Functions
 
+-- https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
+-- A bit simplified Nether fast travel ping-pong formula and function by ryvnf:
 local function nether_to_overworld(x)
-    return 30912 - math.abs((x * 8 + 30912) % 123648 - 61824)
+	return 30912 - math.abs((x * 8 + 30912) % 123648 - 61824)
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
@@ -181,7 +184,9 @@ local function find_target_y(x, y, z, y_min, y_max)
 end
 
 local function find_nether_target_y(x, y, z)
-	return find_target_y(x, y, z, nether_ymin + 4, nether_ymax - 25) + 1
+	local target_y = find_target_y(x, y, z, nether_ymin + 4, nether_ymax - 25) + 1
+	minetest.log("action", "[mcl_portal] Found Nether target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
+	return target_y
 end
 
 local function find_overworld_target_y(x, y, z)
@@ -192,8 +197,9 @@ local function find_overworld_target_y(x, y, z)
 	end
 	nn = node.name
 	if nn ~= "air" and minetest.get_item_group(nn, "water") == 0 then
-		return target_y + 1
+		target_y = target_y + 1
 	end
+	minetest.log("action", "[mcl_portal] Found Overworld target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
 	return target_y
 end
 
@@ -226,7 +232,7 @@ end
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
 	if calls_remaining <= 0 then
-		minetest.log("verbose", "[mcl_portal] Area for destination Nether portal emerged!")
+		minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged!")
 		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
@@ -248,6 +254,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 				end
 			end -- here we have the best portal_pos
 		else
+			minetest.log("action", "[mcl_portal] No portal in area " .. minetest.pos_to_string({x = param.ax1, y = param.ay1, z = param.az1}) .. "-" .. minetest.pos_to_string({x = param.ax2, y = param.ay2, z = param.az2}))
 			-- Need to build arrival portal:
 			local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, 2)
 			local height = math.max(math.abs(p2.y - p1.y) + 1, 3)
@@ -277,7 +284,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	end
 end
 
-function mcl_portals.nether_portal_get_target_position(src_pos)
+local function nether_portal_get_target_position(src_pos)
 	local _, current_dimension = mcl_worlds.y_to_layer(src_pos.y)
 	local x, y, z, y_min, y_max = 0, src_pos.y, 0, 0, 0
 	if current_dimension == "nether" then
@@ -297,14 +304,21 @@ function mcl_portals.nether_portal_get_target_position(src_pos)
 end
 
 local function find_or_create_portal(src_pos)
-	local x, y, z, cdim, y_min, y_max = mcl_portals.nether_portal_get_target_position(src_pos)
+	local x, y, z, cdim, y_min, y_max = nether_portal_get_target_position(src_pos)
 	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min, y - PORTAL_SEARCH_HALF_CHUNK), z = z - PORTAL_SEARCH_HALF_CHUNK}
 	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max, y + PORTAL_SEARCH_HALF_CHUNK), z = z + PORTAL_SEARCH_HALF_CHUNK}
+	if pos1.y == y_min then
+		pos2.y = math.min(y_max, pos1.y + 2 * PORTAL_SEARCH_HALF_CHUNK)
+	else
+		if pos2.y == y_max then
+			pos1.y = math.max(y_min, pos2.y - 2 * PORTAL_SEARCH_HALF_CHUNK)
+		end
+	end
 	minetest.emerge_area(pos1, pos2, ecb_setup_target_portal, {srcx=src_pos.x, srcy=src_pos.y, srcz=src_pos.z, dstx=x, dsty=y, dstz=z, srcdim=cdim, ax1=pos1.x, ay1=pos1.y, az1=pos1.z, ax2=pos2.x, ay2=pos2.y, az2=pos2.z})
 end
 
 local function emerge_target_area(src_pos)
-	local x, y, z, cdim, y_min, y_max = mcl_portals.nether_portal_get_target_position(src_pos)
+	local x, y, z, cdim, y_min, y_max = nether_portal_get_target_position(src_pos)
 	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min + 2, y - PORTAL_SEARCH_HALF_CHUNK), z = z - PORTAL_SEARCH_HALF_CHUNK}
 	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max - 2, y + PORTAL_SEARCH_HALF_CHUNK), z = z + PORTAL_SEARCH_HALF_CHUNK}
 	minetest.emerge_area(pos1, pos2)
@@ -434,50 +448,74 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 	return pos
 end
 
-local function check_shape(pos, orientation, node_counter, node_list)
-	local meta = minetest.get_meta(pos)
-	local target = meta:get_string("portal_time")
-	if target and target == "-2" then
-		return node_counter > 0, node_counter, node_list
-	end
-	local good, obsidian = available_for_nether_portal(pos)
-	if not good and not obsidian then
-		return false, node_counter, node_list
-	end
-	if obsidian then
-		return true, node_counter, node_list
-	end
-	if node_counter >= PORTAL_NODES_MAX then
-		return false, node_counter, node_list
-	end
-	meta:set_string("portal_time", "-2")
-	node_list[#node_list + 1] = {x = pos.x, y = pos.y, z = pos.z}
-	node_counter = node_counter + 1
-	if orientation == 0 then
-		good, node_counter = check_shape({x = pos.x - 1, y = pos.y, z = pos.z}, orientation, node_counter, node_list)
-		if not good then
-			return false, node_counter, node_list
+local function check_and_light_shape(pos, orientation)
+	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
+	local node_list = {}
+	local node_counter = 0
+	-- Search most low node from the left (pos1) and most right node from the top (pos2)
+	local pos1 = {x = pos.x, y = pos.y, z = pos.z}
+	local pos2 = {x = pos.x, y = pos.y, z = pos.z}
+
+	local wrong_portal_nodes_clean_up = function(node_list)
+		for i = 1, #node_list do
+			local meta = minetest.get_meta(node_list[i])
+			meta:set_string("portal_time", "")
 		end
-		good, node_counter = check_shape({x = pos.x + 1, y = pos.y, z = pos.z}, orientation, node_counter, node_list)
-		if not good then
-			return false, node_counter, node_list
-		end
-	else -- orientation == 1
-		good, node_counter = check_shape({x = pos.x, y = pos.y, z = pos.z - 1}, orientation, node_counter, node_list)
-		if not good then
-			return false, node_counter, node_list
-		end
-		good, node_counter = check_shape({x = pos.x, y = pos.y, z = pos.z + 1}, orientation, node_counter, node_list)
-		if not good then
-			return false, node_counter, node_list
+		return false
+	end
+
+	while #stack > 0 do
+		local i = #stack
+		local meta = minetest.get_meta(stack[i])
+		local target = meta:get_string("portal_time")
+		if target and target == "-2" then
+			stack[i] = nil -- Already checked, skip it
+		else
+			local good, obsidian = available_for_nether_portal(stack[i])
+			if obsidian then
+				stack[i] = nil
+			else
+				if (not good) or (node_counter >= PORTAL_NODES_MAX) then
+					return wrong_portal_nodes_clean_up(node_list)
+				end
+				local x, y, z = stack[i].x, stack[i].y, stack[i].z
+				meta:set_string("portal_time", "-2")
+				node_counter = node_counter + 1
+				node_list[node_counter] = {x = x, y = y, z = z}
+				stack[i].y = y - 1
+				stack[i + 1] = {x = x, y = y + 1, z = z}
+				if orientation == 0 then
+					stack[i + 2] = {x = x - 1, y = y, z = z}
+					stack[i + 3] = {x = x + 1, y = y, z = z}
+				else
+					stack[i + 2] = {x = x, y = y, z = z - 1}
+					stack[i + 3] = {x = x, y = y, z = z + 1}
+				end
+				if (y < pos1.y) or (y == pos1.y and (x < pos1.x or z < pos1.z)) then
+					pos1 = {x = x, y = y, z = z}
+				end
+				if (x > pos2.x or z > pos2.z) or (x == pos2.x and z == pos2.z and y > pos2.y) then
+					pos2 = {x = x, y = y, z = z}
+				end
+			end
 		end
 	end
-	good, node_counter = check_shape({x = pos.x, y = pos.y - 1, z = pos.z}, orientation, node_counter, node_list)
-	if not good then
-		return false, node_counter, node_list
+
+	if node_counter < PORTAL_NODES_MIN then
+		return wrong_portal_nodes_clean_up(node_list)
 	end
-	good, node_counter = check_shape({x = pos.x, y = pos.y + 1, z = pos.z}, orientation, node_counter, node_list)
-	return good, node_counter, node_list
+
+	for i = 1, node_counter do
+		local node_pos = node_list[i]
+		local node = minetest.get_node(node_pos)
+		minetest.set_node(node_pos, {name = "mcl_portals:portal", param2 = orientation})
+		local meta = minetest.get_meta(node_pos)
+		meta:set_string("portal_frame1", minetest.pos_to_string(pos1))
+		meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
+		meta:set_string("portal_time", tostring(0))
+		meta:set_string("portal_target", "")
+	end
+	return true	
 end
 
 -- Attempts to light a Nether portal at pos
@@ -491,60 +529,69 @@ function mcl_portals.light_nether_portal(pos)
 	if dim ~= "overworld" and dim ~= "nether" then
 		return 0
 	end
-
-	for orientation = 0, 1 do
-		local good, node_counter, node_list = check_shape(pos, orientation, 0, {})
-		if good and node_counter >= PORTAL_NODES_MIN then
-			local pos1 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
-			local pos2 = {x = node_list[1].x, y = node_list[1].y, z = node_list[1].z}
-			local max_y = node_list[1].y
-			for i = 2, node_counter do
-				if (node_list[i].y < pos1.y) or (node_list[i].y == pos1.y and (node_list[i].x < pos1.x or node_list[i].z < pos1.z)) then
-					pos1 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
-				end
-				if (node_list[i].y < pos2.y) or (node_list[i].y == pos2.y and (node_list[i].x > pos2.x or node_list[i].z < pos2.z)) then
-					pos2 = {x = node_list[i].x, y = node_list[i].y, z = node_list[i].z}
-				end
-				if (node_list[i].y > max_y) then
-					max_y = node_list[i].y
-				end
-			end
-			pos2.y = max_y
-			for i = 1, node_counter do
-				local node_pos = node_list[i]
-				local node = minetest.get_node(node_pos)
-				if not node or node.name ~= "mcl_portals:portal" then
-					minetest.set_node(node_pos, {name = "mcl_portals:portal", param2 = orientation})
-					local meta = minetest.get_meta(node_pos)
-					meta:set_string("portal_frame1", minetest.pos_to_string(pos1))
-					meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
-					meta:set_string("portal_time", tostring(0))
-					meta:set_string("portal_target", "")
-				end
-			end
+	local orientation = math.random(0, 1)
+	for orientation_iteration = 1, 2 do
+		if check_and_light_shape(pos, orientation) then
 			return true
-		else
-			for i = 1, node_counter do
-				local node_pos = node_list[i]
-				local meta = minetest.get_meta(node_pos)
-				meta:set_string("portal_time", "")
-			end
 		end
+		orientation = 1 - orientation
 	end
-
 	return false
 end
 
--- teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+local function update_portal_time(pos, time_str)
+	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
+	while #stack > 0 do
+		local i = #stack
+		local meta = minetest.get_meta(stack[i])
+		if meta:get_string("portal_time") == time_str then
+			stack[i] = nil -- Already updated, skip it
+		else
+			local node = minetest.get_node(stack[i])
+			local portal = node.name == "mcl_portals:portal"
+			if not portal then
+				stack[i] = nil
+			else
+				local x, y, z = stack[i].x, stack[i].y, stack[i].z
+				meta:set_string("portal_time", time_str)
+				stack[i].y  = y - 1
+				stack[i + 1] = {x = x, y = y + 1, z = z}
+				if node.param2 == 0 then
+					stack[i + 2] = {x = x - 1, y = y, z = z}
+					stack[i + 3] = {x = x + 1, y = y, z = z}
+				else
+					stack[i + 2] = {x = x, y = y, z = z - 1}
+					stack[i + 3] = {x = x, y = y, z = z + 1}
+				end
+			end
+		end
+	end
+end
+
+local function prepare_target(pos)
+	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
+	local portal_time = tonumber(meta:get_string("portal_time")) or 0
+	local delta_time_us = us_time - portal_time
+	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
+	if delta_time_us <= DESTINATION_EXPIRES then
+		-- Destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
+		return update_portal_time(pos, tostring(us_time))
+	end
+	-- No cached destination point
+	find_or_create_portal(pos)
+end
+
+-- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 local function teleport_cooloff(obj)
 	minetest.after(TELEPORT_COOLOFF, function(o)
 		portal_cooloff[o] = false
+		touch_chatter_prevention[o] = nil
 	end, obj)
 end
 
--- teleport function
-local function teleport(obj, pos)
-	if (not obj:get_luaentity()) and  (not obj:is_player()) then
+-- Teleport function
+local function teleport_no_delay(obj, pos)
+	if (not obj:get_luaentity()) and (not obj:is_player()) then
 		return
 	end
 
@@ -568,9 +615,13 @@ local function teleport(obj, pos)
 	local delta_time = minetest.get_us_time() - (tonumber(meta:get_string("portal_time")) or 0)
 	local target = minetest.string_to_pos(meta:get_string("portal_target"))
 	if delta_time > DESTINATION_EXPIRES or target == nil then
-		-- ares still not emerged - retry after a second
-		return minetest.after(1, teleport, obj, pos)
+		-- Area not ready yet - retry after a second
+		return minetest.after(1, teleport_no_delay, obj, pos)
 	end
+
+	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+	teleport_cooloff(obj)
+	portal_cooloff[obj] = true
 
 	-- Teleport
 	obj:set_pos(target)
@@ -579,65 +630,19 @@ local function teleport(obj, pos)
 		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
 	end
 
-	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
-	teleport_cooloff(obj)
-	portal_cooloff[obj] = true
 	if obj:is_player() then
 		local name = obj:get_player_name()
 		minetest.log("action", "[mcl_portal] "..name.." teleported to Nether portal at "..minetest.pos_to_string(target)..".")
 	end
 end
 
-local function prepare_target_stack(pos, time_str)
-	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
-	while #stack > 0 do
-		local meta = minetest.get_meta(stack[#stack])
-		if meta:get_string("portal_time") == time_str then
-			stack[#stack] = nil
-		else
-			local node = minetest.get_node(stack[#stack])
-			local portal = node.name == "mcl_portals:portal"
-			if not portal then
-				stack[#stack] = nil
-			else
-				local x, y, z = stack[#stack].x, stack[#stack].y, stack[#stack].z
-				meta:set_string("portal_time", time_str)
-				stack[#stack].y  = stack[#stack].y - 1
-				stack[#stack + 1] = {x = x, y = y + 1, z = z}
-				if node.param2 == 0 then
-					stack[#stack + 1] = {x = x - 1, y = y, z = z}
-					stack[#stack + 1] = {x = x + 1, y = y, z = z}
-				else
-					stack[#stack + 1] = {x = x, y = y, z = z - 1}
-					stack[#stack + 1] = {x = x, y = y, z = z + 1}
-				end
-			end
-		end
-	end
-end
-
-local function prepare_target(pos)
-	local meta, us_time = minetest.get_meta(pos), minetest.get_us_time()
-	local portal_time = tonumber(meta:get_string("portal_time")) or 0
-	local delta_time_us = us_time - portal_time
-	local pos1, pos2 = minetest.string_to_pos(meta:get_string("portal_frame1")), minetest.string_to_pos(meta:get_string("portal_frame2"))
-	if delta_time_us <= DESTINATION_EXPIRES then
-		-- destination point must be still cached according to https://minecraft.gamepedia.com/Nether_portal
-		prepare_target_stack(pos, tostring(us_time))
-		return
-	end
-
-	-- No cached destination point.
-	find_or_create_portal(pos)
-end
-
-function mcl_portals.teleport_through_nether_portal(obj, portal_pos)
-	-- Prevent quick back-and-forth teleportation
-	if portal_cooloff[obj] then
-		return
-	end
+local function teleport(obj, portal_pos)
+	-- Ñall prepare_target() first because it might take a long
 	prepare_target(portal_pos)
-	minetest.after(TELEPORT_DELAY, teleport, obj, portal_pos)
+	-- Prevent quick back-and-forth teleportation
+	if not portal_cooloff[obj] then
+		minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
+	end
 end
 
 minetest.register_abm({
@@ -662,11 +667,11 @@ minetest.register_abm({
 			collisiondetection = false,
 			texture = "mcl_particles_teleport.png",
 		})
-		for _,obj in ipairs(minetest.get_objects_inside_radius(pos,1)) do		--maikerumine added for objects to travel
-			local lua_entity = obj:get_luaentity() --maikerumine added for objects to travel
-			if (obj:is_player() or lua_entity) and (not teleporting_objects[obj] or minetest.get_us_time()-teleporting_objects[obj] > 10000000) then
-				teleporting_objects[obj]=minetest.get_us_time()
-				mcl_portals.teleport_through_nether_portal(obj, pos)
+		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
+			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
+			if (obj:is_player() or lua_entity) and (not touch_chatter_prevention[obj] or minetest.get_us_time() - touch_chatter_prevention[obj] > TOUCH_CHATTER_TIME) then
+				touch_chatter_prevention[obj] = minetest.get_us_time()
+				teleport(obj, pos)
 			end
 		end
 	end,
