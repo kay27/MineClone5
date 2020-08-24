@@ -31,6 +31,16 @@ local nether_ymax = mcl_vars.mg_bedrock_nether_top_max
 local overworld_dy = overworld_ymax - overworld_ymin + 1
 local nether_dy = nether_ymax - nether_ymin + 1
 
+local node_particles_allowed = minetest.settings:get("mcl_node_particles") or "none"
+local node_particles_levels = {
+	high = 3,
+	medium = 2,
+	low = 1,
+	none = 0,
+}
+local node_particles_allowed_level = node_particles_levels[node_particles_allowed]
+
+
 -- Functions
 
 -- https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
@@ -651,22 +661,24 @@ minetest.register_abm({
 	interval = 2,
 	chance = 1,
 	action = function(pos, node)
-		minetest.add_particlespawner({
-			amount = 32,
-			time = 3,
-			minpos = {x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25},
-			maxpos = {x = pos.x + 0.25, y = pos.y + 0.25, z = pos.z + 0.25},
-			minvel = {x = -0.8, y = -0.8, z = -0.8},
-			maxvel = {x = 0.8, y = 0.8, z = 0.8},
-			minacc = {x = 0, y = 0, z = 0},
-			maxacc = {x = 0, y = 0, z = 0},
-			minexptime = 0.5,
-			maxexptime = 1,
-			minsize = 1,
-			maxsize = 2,
-			collisiondetection = false,
-			texture = "mcl_particles_teleport.png",
-		})
+		if node_particles_allowed_level > 0 then
+			minetest.add_particlespawner({
+				amount = 10 * node_particles_allowed_level,
+				time = node_particles_allowed_level,
+				minpos = {x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25},
+				maxpos = {x = pos.x + 0.25, y = pos.y + 0.25, z = pos.z + 0.25},
+				minvel = {x = -0.8, y = -0.8, z = -0.8},
+				maxvel = {x = 0.8, y = 0.8, z = 0.8},
+				minacc = {x = 0, y = 0, z = 0},
+				maxacc = {x = 0, y = 0, z = 0},
+				minexptime = 0.5,
+				maxexptime = 1,
+				minsize = 1,
+				maxsize = 2,
+				collisiondetection = false,
+				texture = "mcl_particles_teleport.png",
+			})
+		end
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and (not touch_chatter_prevention[obj] or minetest.get_us_time() - touch_chatter_prevention[obj] > TOUCH_CHATTER_TIME) then
