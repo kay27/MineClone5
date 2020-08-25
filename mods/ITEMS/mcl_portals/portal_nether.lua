@@ -17,6 +17,7 @@ local TOUCH_CHATTER_TIME = 10 * 1000000 -- prevent multiple teleportation attemp
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
+local PORTAL_SEARCH_ALTITUDE = 128
 
 -- Table of objects (including players) which recently teleported by a
 -- Nether portal. Those objects have a brief cooloff period before they
@@ -160,6 +161,11 @@ local function find_target_y(x, y, z, y_min, y_max)
 			break
 		end
 	end
+	if node then
+		if node.name ~= "air" then
+			y = y_org
+		end
+	end
 	while node == nil and y > y_min do
 		y = y - 1
 		node = minetest.get_node_or_nil({x = x, y = y, z = z})
@@ -241,39 +247,55 @@ end
 
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
+
+	local portal_search = function(target, p1, p2)
+		local portal_nodes = minetest.find_nodes_in_area(p1, p2, "mcl_portals:portal")
+		local portal_pos = false
+		if portal_nodes and #portal_nodes > 0 then
+			-- Found some portal(s), use nearest:
+			portal_pos = {x = portal_nodes[1].x, y = portal_nodes[1].y, z = portal_nodes[1].z}
+			local nearest_distance = vector.distance(target, portal_pos)
+			for n = 2, #portal_nodes do
+				local distance = vector.distance(target, portal_nodes[n])
+				if distance < nearest_distance then
+					portal_pos = {x = portal_nodes[n].x, y = portal_nodes[n].y, z = portal_nodes[n].z}
+					nearest_distance = distance
+				end
+			end
+		end -- here we have the best portal_pos
+		return portal_pos
+	end
+
 	if calls_remaining <= 0 then
 		minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged!")
-		local portal_nodes = minetest.find_nodes_in_area({x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2}, "mcl_portals:portal")
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
 		local meta = minetest.get_meta(src_pos)
 		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
 		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
-		local portal_pos = {}
-		if portal_nodes and #portal_nodes > 0 then
-			-- Found some portal(s), use nearest:
-			portal_pos = {x = portal_nodes[1].x, y = portal_nodes[1].y, z = portal_nodes[1].z}
-			local nearest_distance = vector.distance(dst_pos, portal_pos)
-			if #portal_nodes > 1 then
-				for n = 2, #portal_nodes do
-					local distance = vector.distance(dst_pos, portal_nodes[n])
-					if distance < nearest_distance then
-						portal_pos = {x = portal_nodes[n].x, y = portal_nodes[n].y, z = portal_nodes[n].z}
-						nearest_distance = distance
-					end
-				end
-			end -- here we have the best portal_pos
-		else
+		local portal_pos = portal_search(dst_pos, {x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2})
+
+		if portal_pos == false then
 			minetest.log("action", "[mcl_portal] No portal in area " .. minetest.pos_to_string({x = param.ax1, y = param.ay1, z = param.az1}) .. "-" .. minetest.pos_to_string({x = param.ax2, y = param.ay2, z = param.az2}))
 			-- Need to build arrival portal:
-			local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, 2)
-			local height = math.max(math.abs(p2.y - p1.y) + 1, 3)
+			local org_dst_y = dst_pos.y
 			if param.srcdim == "overworld" then
 				dst_pos.y = find_nether_target_y(dst_pos.x, dst_pos.y, dst_pos.z)
 			else
 				dst_pos.y = find_overworld_target_y(dst_pos.x, dst_pos.y, dst_pos.z)
 			end
-			portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height)
+			if math.abs(org_dst_y - dst_pos.y) >= PORTAL_SEARCH_ALTITUDE / 2 then
+				portal_pos = portal_search(dst_pos,
+					{x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK},
+					{x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}
+				)
+			end
+			if portal_pos == false then
+				minetest.log("action", "[mcl_portal] 2nd attempt: No portal in area " .. minetest.pos_to_string({x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK}) .. "-" .. minetest.pos_to_string({x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}))
+				local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, 2)
+				local height = math.max(math.abs(p2.y - p1.y) + 1, 3)
+				portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height)
+			end
 		end
 
 		local target_meta = minetest.get_meta(portal_pos)
@@ -296,17 +318,17 @@ end
 
 local function nether_portal_get_target_position(src_pos)
 	local _, current_dimension = mcl_worlds.y_to_layer(src_pos.y)
-	local x, y, z, y_min, y_max = 0, src_pos.y, 0, 0, 0
+	local x, y, z, y_min, y_max = 0, 0, 0, 0, 0
 	if current_dimension == "nether" then
 		x = nether_to_overworld(src_pos.x)
 		z = nether_to_overworld(src_pos.z)
-		y = (math.min(math.max(y, nether_ymin), nether_ymax) - nether_ymin) / nether_dy * overworld_dy + overworld_ymin
+		y = (math.min(math.max(src_pos.y, nether_ymin), nether_ymax) - nether_ymin) / nether_dy * overworld_dy + overworld_ymin
 		y_min = overworld_ymin
 		y_max = overworld_ymax
 	else -- overworld:
 		x = src_pos.x / 8
 		z = src_pos.z / 8
-		y = (math.min(math.max(y, overworld_ymin), overworld_ymax) - overworld_ymin) / overworld_dy * nether_dy + nether_ymin
+		y = (math.min(math.max(src_pos.y, overworld_ymin), overworld_ymax) - overworld_ymin) / overworld_dy * nether_dy + nether_ymin
 		y_min = nether_ymin
 		y_max = nether_ymax
 	end
@@ -315,13 +337,13 @@ end
 
 local function find_or_create_portal(src_pos)
 	local x, y, z, cdim, y_min, y_max = nether_portal_get_target_position(src_pos)
-	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min, y - PORTAL_SEARCH_HALF_CHUNK), z = z - PORTAL_SEARCH_HALF_CHUNK}
-	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max, y + PORTAL_SEARCH_HALF_CHUNK), z = z + PORTAL_SEARCH_HALF_CHUNK}
+	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min, math.floor(y - PORTAL_SEARCH_ALTITUDE / 2)), z = z - PORTAL_SEARCH_HALF_CHUNK}
+	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max, math.ceil(y + PORTAL_SEARCH_ALTITUDE / 2)), z = z + PORTAL_SEARCH_HALF_CHUNK}
 	if pos1.y == y_min then
-		pos2.y = math.min(y_max, pos1.y + 2 * PORTAL_SEARCH_HALF_CHUNK)
+		pos2.y = math.min(y_max, pos1.y + PORTAL_SEARCH_ALTITUDE)
 	else
 		if pos2.y == y_max then
-			pos1.y = math.max(y_min, pos2.y - 2 * PORTAL_SEARCH_HALF_CHUNK)
+			pos1.y = math.max(y_min, pos2.y - PORTAL_SEARCH_ALTITUDE)
 		end
 	end
 	minetest.emerge_area(pos1, pos2, ecb_setup_target_portal, {srcx=src_pos.x, srcy=src_pos.y, srcz=src_pos.z, dstx=x, dsty=y, dstz=z, srcdim=cdim, ax1=pos1.x, ay1=pos1.y, az1=pos1.z, ax2=pos2.x, ay2=pos2.y, az2=pos2.z})
@@ -329,8 +351,8 @@ end
 
 local function emerge_target_area(src_pos)
 	local x, y, z, cdim, y_min, y_max = nether_portal_get_target_position(src_pos)
-	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min + 2, y - PORTAL_SEARCH_HALF_CHUNK), z = z - PORTAL_SEARCH_HALF_CHUNK}
-	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max - 2, y + PORTAL_SEARCH_HALF_CHUNK), z = z + PORTAL_SEARCH_HALF_CHUNK}
+	local pos1 = {x = x - PORTAL_SEARCH_HALF_CHUNK, y = math.max(y_min + 2, math.floor(y - PORTAL_SEARCH_ALTITUDE / 2)), z = z - PORTAL_SEARCH_HALF_CHUNK}
+	local pos2 = {x = x + PORTAL_SEARCH_HALF_CHUNK, y = math.min(y_max - 2, math.ceil(y + PORTAL_SEARCH_ALTITUDE / 2)), z = z + PORTAL_SEARCH_HALF_CHUNK}
 	minetest.emerge_area(pos1, pos2)
 	pos1 = {x = x - 1, y = y_min, z = z - 1}
 	pos2 = {x = x + 1, y = y_max, z = z + 1}
