@@ -292,8 +292,8 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			end
 			if portal_pos == false then
 				minetest.log("action", "[mcl_portal] 2nd attempt: No portal in area " .. minetest.pos_to_string({x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK}) .. "-" .. minetest.pos_to_string({x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}))
-				local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, 2)
-				local height = math.max(math.abs(p2.y - p1.y) + 1, 3)
+				local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, FRAME_SIZE_X_MIN - 2)
+				local height = math.max(math.abs(p2.y - p1.y) + 1, FRAME_SIZE_Y_MIN - 2)
 				portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height)
 			end
 		end
