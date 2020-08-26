@@ -125,7 +125,6 @@ minetest.register_node("mcl_portals:portal", {
 	paramtype = "light",
 	paramtype2 = "facedir",
 	sunlight_propagates = true,
-	use_texture_alpha = true,
 	walkable = false,
 	diggable = false,
 	pointable = false,
@@ -134,7 +133,6 @@ minetest.register_node("mcl_portals:portal", {
 	drop = "",
 	light_source = 11,
 	post_effect_color = {a = 180, r = 51, g = 7, b = 89},
-	alpha = 192,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -683,12 +681,12 @@ minetest.register_abm({
 	interval = 2,
 	chance = 1,
 	action = function(pos, node)
-		if node_particles_allowed_level > 0 then
+		-- if node_particles_allowed_level > 0 then
 			minetest.add_particlespawner({
-				amount = 10 * node_particles_allowed_level,
-				time = node_particles_allowed_level,
-				minpos = {x = pos.x - 0.25, y = pos.y - 0.25, z = pos.z - 0.25},
-				maxpos = {x = pos.x + 0.25, y = pos.y + 0.25, z = pos.z + 0.25},
+				amount = 10 * node_particles_allowed_level + 5,
+				time = node_particles_allowed_level + 1,
+				minpos = {x = pos.x - 0.25 - 1.5 * node.param2, y = pos.y - 0.25, z = pos.z - 0.25 - 1.5 * (1 - node.param2)},
+				maxpos = {x = pos.x + 0.25 + 1.5 * node.param2, y = pos.y + 0.25, z = pos.z + 0.25 + 1.5 * (1 - node.param2)},
 				minvel = {x = -0.8, y = -0.8, z = -0.8},
 				maxvel = {x = 0.8, y = 0.8, z = 0.8},
 				minacc = {x = 0, y = 0, z = 0},
@@ -700,7 +698,7 @@ minetest.register_abm({
 				collisiondetection = false,
 				texture = "mcl_particles_teleport.png",
 			})
-		end
+		-- end
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and (not touch_chatter_prevention[obj] or minetest.get_us_time() - touch_chatter_prevention[obj] > TOUCH_CHATTER_TIME) then
