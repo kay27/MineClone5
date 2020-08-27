@@ -217,29 +217,34 @@ local function find_overworld_target_y(x, y, z)
 	return target_y
 end
 
+
 local function update_target(pos, target, time_str)
-	local meta = minetest.get_meta(pos)
-	if meta:get_string("portal_time") == time_str then
-		return
-	end
-	local node = minetest.get_node(pos)
-	if not node then
-		return
-	end
-	local portal = node.name == "mcl_portals:portal"
-	if not portal then
-		return
-	end
-	meta:set_string("portal_target", target)
-	meta:set_string("portal_time", time_str)
-	update_target({x = pos.x, y = pos.y - 1, z = pos.z}, target, time_str)
-	update_target({x = pos.x, y = pos.y + 1, z = pos.z}, target, time_str)
-	if node.param2 == 0 then
-		update_target({x = pos.x - 1, y = pos.y, z = pos.z}, target, time_str)
-		update_target({x = pos.x + 1, y = pos.y, z = pos.z}, target, time_str)
-	else
-		update_target({x = pos.x, y = pos.y, z = pos.z - 1}, target, time_str)
-		update_target({x = pos.x, y = pos.y, z = pos.z + 1}, target, time_str)
+	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
+	while #stack > 0 do
+		local i = #stack
+		local meta = minetest.get_meta(stack[i])
+		if meta:get_string("portal_time") == time_str then
+			stack[i] = nil -- Already updated, skip it
+		else
+			local node = minetest.get_node(stack[i])
+			local portal = node.name == "mcl_portals:portal"
+			if not portal then
+				stack[i] = nil
+			else
+				local x, y, z = stack[i].x, stack[i].y, stack[i].z
+				meta:set_string("portal_time", time_str)
+				meta:set_string("portal_target", target)
+				stack[i].y  = y - 1
+				stack[i + 1] = {x = x, y = y + 1, z = z}
+				if node.param2 == 0 then
+					stack[i + 2] = {x = x - 1, y = y, z = z}
+					stack[i + 3] = {x = x + 1, y = y, z = z}
+				else
+					stack[i + 2] = {x = x, y = y, z = z - 1}
+					stack[i + 3] = {x = x, y = y, z = z + 1}
+				end
+			end
+		end
 	end
 end
 
