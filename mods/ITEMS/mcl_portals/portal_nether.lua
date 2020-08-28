@@ -125,6 +125,7 @@ minetest.register_node("mcl_portals:portal", {
 	paramtype = "light",
 	paramtype2 = "facedir",
 	sunlight_propagates = true,
+	use_texture_alpha = true,
 	walkable = false,
 	diggable = false,
 	pointable = false,
@@ -133,6 +134,7 @@ minetest.register_node("mcl_portals:portal", {
 	drop = "",
 	light_source = 11,
 	post_effect_color = {a = 180, r = 51, g = 7, b = 89},
+	alpha = 192,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -689,7 +691,7 @@ minetest.register_abm({
 		-- if node_particles_allowed_level > 0 then
 			minetest.add_particlespawner({
 				amount = 10 * node_particles_allowed_level + 5,
-				time = node_particles_allowed_level + 1,
+				time = math.random(2, node_particles_allowed_level + 3),
 				minpos = {x = pos.x - 0.25 - 1.5 * node.param2, y = pos.y - 0.25, z = pos.z - 0.25 - 1.5 * (1 - node.param2)},
 				maxpos = {x = pos.x + 0.25 + 1.5 * node.param2, y = pos.y + 0.25, z = pos.z + 0.25 + 1.5 * (1 - node.param2)},
 				minvel = {x = -0.5 - 0.3 * node.param2, y = -0.5, z = -0.5 - 0.3 * (1 - node.param2)},
@@ -697,7 +699,7 @@ minetest.register_abm({
 				minacc = {x = 0, y = 0, z = 0},
 				maxacc = {x = 0, y = 0, z = 0},
 				minexptime = 0.5,
-				maxexptime = 1,
+				maxexptime = node_particles_allowed_level + 1,
 				minsize = 1,
 				maxsize = 2,
 				collisiondetection = false,
