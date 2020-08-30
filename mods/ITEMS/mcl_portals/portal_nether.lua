@@ -13,7 +13,8 @@ local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
 local TELEPORT_DELAY = 4 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again
-local TOUCH_CHATTER_TIME = 10 * 1000000 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of microseconds
+local TOUCH_CHATTER_TIME = 2 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
+local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
@@ -653,6 +654,9 @@ local function teleport_no_delay(obj, pos)
 	local target = minetest.string_to_pos(meta:get_string("portal_target"))
 	if delta_time > DESTINATION_EXPIRES or target == nil then
 		-- Area not ready yet - retry after a second
+		if obj:is_player() then
+			minetest.chat_send_player(obj:get_player_name(), S("Loading terrain..."))
+		end
 		return minetest.after(1, teleport_no_delay, obj, pos)
 	end
 
@@ -682,6 +686,21 @@ local function teleport(obj, portal_pos)
 	end
 end
 
+local function prevent_portal_chatter(obj)
+	local time_us = minetest.get_us_time()
+	local chatter = touch_chatter_prevention[obj] or 0
+	touch_chatter_prevention[obj] = time_us
+	minetest.after(TOUCH_CHATTER_TIME, function(o)
+		if not o or not touch_chatter_prevention[o] then
+			return
+		end
+		if minetest.get_us_time() - touch_chatter_prevention[o] >= TOUCH_CHATTER_TIME_US then
+			touch_chatter_prevention[o] = nil
+		end
+	end, obj)
+	return time_us - chatter > TOUCH_CHATTER_TIME_US
+end
+
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {"mcl_portals:portal"},
@@ -690,7 +709,7 @@ minetest.register_abm({
 	action = function(pos, node)
 		-- if node_particles_allowed_level > 0 then
 			minetest.add_particlespawner({
-				amount = 10 * node_particles_allowed_level + 5,
+				amount = 3* node_particles_allowed_level + 2,
 				time = math.random(2, node_particles_allowed_level + 3),
 				minpos = {x = pos.x - 0.25 - 1.5 * node.param2, y = pos.y - 0.25, z = pos.z - 0.25 - 1.5 * (1 - node.param2)},
 				maxpos = {x = pos.x + 0.25 + 1.5 * node.param2, y = pos.y + 0.25, z = pos.z + 0.25 + 1.5 * (1 - node.param2)},
@@ -700,16 +719,15 @@ minetest.register_abm({
 				maxacc = {x = 0, y = 0, z = 0},
 				minexptime = 0.5,
 				maxexptime = node_particles_allowed_level + 1,
-				minsize = 1,
-				maxsize = 2,
+				minsize = 0.8,
+				maxsize = 1.8,
 				collisiondetection = false,
 				texture = "mcl_particles_teleport.png",
 			})
 		-- end
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
-			if (obj:is_player() or lua_entity) and (not touch_chatter_prevention[obj] or minetest.get_us_time() - touch_chatter_prevention[obj] > TOUCH_CHATTER_TIME) then
-				touch_chatter_prevention[obj] = minetest.get_us_time()
+			if (obj:is_player() or lua_entity) and prevent_portal_chatter(obj) then
 				teleport(obj, pos)
 			end
 		end
