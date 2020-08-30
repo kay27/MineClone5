@@ -14,7 +14,7 @@ local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 local TELEPORT_COOLOFF = 3 -- after object was teleported, for this many seconds it won't teleported again
 local TOUCH_CHATTER_TIME = 2 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
 local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
-local TELEPORT_DELAY = 4 - TOUCH_CHATTER_TIME -- seconds before teleporting in Nether portal
+local TELEPORT_DELAY = 2 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation

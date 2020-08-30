@@ -12,6 +12,7 @@ s = [
 
 s = [[int(c) for c in row] for row in s]
 
+# R, G, B, Alpha (0xFF = opaque):
 palette=[(0x00,0x00,0x00,0x00), (0xcf,0x00,0xcf,0xe0)]
 
 w = png.Writer(len(s[0]), len(s), palette=palette, bitdepth=1)

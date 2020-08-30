@@ -19,7 +19,6 @@ def line(y1, x1, y2, x2, v):
 	if dx >= dy:
 		dir1 = 1
 	for i in range(max(dx, dy)+1):
-#		print("x1=" + str(x1) + " y1=" + str(y1))
 		if v==2:
 			s[x1][y1]=1-s[x1][y1]
 		else:
@@ -36,10 +35,8 @@ def line(y1, x1, y2, x2, v):
 			if offsx >= dy:
 				x1 += signx
 				offsx -= dy
-#		print(i)
-		
 
-#palette=[(0xff,0x00,0xff), (0x00,0x00,0xff)]
+# R, G, B, Alpha (0xFF = opaque):
 palette=[(0x00,0x00,0xaf,0xa0), (0x7f,0x0f,0xaf,0xb8)]
 
 for j in range(16):
@@ -55,16 +52,7 @@ for j in range(16):
 	i+=1
 	line(i, 192, 63-i, 255, 2)
 	line(63, 192+i, 0, 255-i, 2)
-#for i in range(63):
-#	line(63, i, 0, 63-i, (i%3)%2)
-#	line(63, 64+i, 0, 127-i, ((i+1)%3)%2)
-#	line(63, 128+i, 0, 191-i, ((i+2)%3)%2)
-#line(0, 0, 63, 63, 1)
-#line(1, 0, 62, 63, 0)
-#line(2, 0, 61, 63, 1)
-#line(3, 0, 60, 63, 0)
 
 w = png.Writer(len(s[0]), len(s), palette=palette, bitdepth=1)
 f = open('mcl_portals_portal.png', 'wb')
 w.write(f, s)
-
