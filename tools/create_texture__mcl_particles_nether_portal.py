@@ -15,6 +15,6 @@ s = [[int(c) for c in row] for row in s]
 palette=[(0x00,0x00,0x00,0x00), (0xcf,0x00,0xcf,0xe0)]
 
 w = png.Writer(len(s[0]), len(s), palette=palette, bitdepth=1)
-f = open('mcl_particles_teleport.png', 'wb')
+f = open('mcl_particles_nether_portal.png', 'wb')
 w.write(f, s)
 
