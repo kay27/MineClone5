@@ -56,17 +56,19 @@ local function destroy_nether_portal(pos)
 	local meta = minetest.get_meta(pos)
 	local node = minetest.get_node(pos)
 	local nn, orientation = node.name, node.param2
-	minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos) .. "(" .. nn .. ")")
 	local obsidian = nn == "mcl_core:obsidian" 
 
 	local has_meta = minetest.string_to_pos(meta:get_string("portal_frame1"))
-	meta:set_string("portal_frame1", "")
-	meta:set_string("portal_frame2", "")
-	meta:set_string("portal_target", "")
-	meta:set_string("portal_time", "")
+	if has_meta then
+		meta:set_string("portal_frame1", "")
+		meta:set_string("portal_frame2", "")
+		meta:set_string("portal_target", "")
+		meta:set_string("portal_time", "")
+	end
 	local check_remove = function(pos, orientation)
 		local node = minetest.get_node(pos)
 		if node and (node.name == "mcl_portals:portal" and (orientation == nil or (node.param2 == orientation))) then
+			minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos))
 			return minetest.remove_node(pos)
 		end
 	end
@@ -312,6 +314,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		if p3 and p4 then
 			portal_pos = vector.divide(vector.add(p3, p4), 2.0)
 			portal_pos.y = math.min(p3.y, p4.y)
+			portal_pos = vector.round(portal_pos)
 			local node = minetest.get_node(portal_pos)
 			if node and node.name ~= "mcl_portals:portal" then
 				portal_pos = {x = p3.x, y = p3.y, z = p3.z}
@@ -328,15 +331,15 @@ local function nether_portal_get_target_position(src_pos)
 	local _, current_dimension = mcl_worlds.y_to_layer(src_pos.y)
 	local x, y, z, y_min, y_max = 0, 0, 0, 0, 0
 	if current_dimension == "nether" then
-		x = nether_to_overworld(src_pos.x)
-		z = nether_to_overworld(src_pos.z)
-		y = (math.min(math.max(src_pos.y, nether_ymin), nether_ymax) - nether_ymin) / nether_dy * overworld_dy + overworld_ymin
+		x = math.floor(nether_to_overworld(src_pos.x) + 0.5)
+		z = math.floor(nether_to_overworld(src_pos.z) + 0.5)
+		y = math.floor((math.min(math.max(src_pos.y, nether_ymin), nether_ymax) - nether_ymin) / nether_dy * overworld_dy + overworld_ymin + 0.5)
 		y_min = overworld_ymin
 		y_max = overworld_ymax
 	else -- overworld:
-		x = src_pos.x / 8
-		z = src_pos.z / 8
-		y = (math.min(math.max(src_pos.y, overworld_ymin), overworld_ymax) - overworld_ymin) / overworld_dy * nether_dy + nether_ymin
+		x = math.floor(src_pos.x / 8 + 0.5)
+		z = math.floor(src_pos.z / 8 + 0.5)
+		y = math.floor((math.min(math.max(src_pos.y, overworld_ymin), overworld_ymax) - overworld_ymin) / overworld_dy * nether_dy + nether_ymin + 0.5)
 		y_min = nether_ymin
 		y_max = nether_ymax
 	end
@@ -631,7 +634,8 @@ end
 
 -- Teleport function
 local function teleport_no_delay(obj, pos)
-	if (not obj:get_luaentity()) and (not obj:is_player()) then
+	local is_player = obj:is_player()
+	if (not obj:get_luaentity()) and (not is_player) then
 		return
 	end
 
@@ -666,14 +670,17 @@ local function teleport_no_delay(obj, pos)
 	teleport_cooloff(obj)
 	portal_cooloff[obj] = true
 
-	-- Teleport
-	obj:set_pos(target)
-	if obj:is_player() then
-		mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
-		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
+	if not is_player and target.y < 0 then
+		-- Teleportation to Nether may be treated as fall - lift up the creature from solid block to prevent immediate death:
+		-- target.y = target.y + 1
 	end
 
-	if obj:is_player() then
+	-- Teleport
+	obj:set_pos(target)
+
+	if is_player then
+		mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
+		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
 		local name = obj:get_player_name()
 		minetest.log("action", "[mcl_portal] "..name.." teleported to Nether portal at "..minetest.pos_to_string(target)..".")
 	end
