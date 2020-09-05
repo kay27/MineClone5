@@ -5,6 +5,9 @@ local function get_intervals_counter(pos, interval, chance)
 	local meta = minetest.get_meta(pos)
 	local time_speed = tonumber(minetest.settings:get('time_speed') or 72)
 	local current_game_time
+	if time_speed == nil then
+		return 1
+	end
 	if (time_speed < 0.1) then
 		return 1
 	end
@@ -35,9 +38,9 @@ local function get_avg_light_level(pos)
 	local meta = minetest.get_meta(pos)
 	local counter = meta:get_int("avg_light_count")
 	local summary = meta:get_int("avg_light_summary")
-	if counter > 299 then
-		counter = 4
-		summary = math.ceil((summary + 0.0) / 100.0)
+	if counter > 99 then
+		counter = 51
+		summary = math.ceil((summary + 0.0) / 2.0)
 	else
 		counter = counter + 1
 	end
@@ -127,7 +130,6 @@ function mcl_farming:grow_plant(identifier, pos, node, stages, ignore_light, low
 	new_node.param = node.param
 	new_node.param2 = node.param2
 	minetest.set_node(pos, new_node)
-
 	return true
 end
 
@@ -157,7 +159,6 @@ function mcl_farming:place_seed(itemstack, placer, pointed_thing, plantname)
 		minetest.sound_play(minetest.registered_nodes[plantname].sounds.place, {pos = pos}, true)
 		minetest.add_node(pos, {name=plantname, param2 = minetest.registered_nodes[plantname].place_param2})
 		local intervals_counter = get_intervals_counter(pos, 1, 1)
-
 	else
 		return
 	end
@@ -453,8 +454,8 @@ function mcl_farming:stem_color(startcolor, endcolor, step, step_count)
 end
 
 minetest.register_lbm({
-	label = "Add growth for unloaded areas",
-	name = "mcl_farming:growth_lbm",
+	label = "Add growth for unloaded farming plants",
+	name = "mcl_farming:growth",
 	nodenames = {"group:plant"},
 	run_at_every_load = true,
 	action = function(pos, node)
