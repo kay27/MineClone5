@@ -12,9 +12,9 @@ local PORTAL_NODES_MIN = 5
 local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
 local TELEPORT_COOLOFF = 3 -- after object was teleported, for this many seconds it won't teleported again
-local TOUCH_CHATTER_TIME = 2 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
+local TOUCH_CHATTER_TIME = 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
 local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
-local TELEPORT_DELAY = 2 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
+local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
 local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
 local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
@@ -721,22 +721,31 @@ end
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {"mcl_portals:portal"},
-	interval = 2,
+	interval = 1,
 	chance = 1,
 	action = function(pos, node)
 		-- if node_particles_allowed_level > 0 then
+			local dir = math.random(0, 1)
+			local time = math.random() * 1.9 + 0.5
+			local velocity0 = math.random() * 0.7 -- todo: vectors!!! not only one coordinate
+			local acceleration = math.random() * 0.8 + 0.3
+			local distance = velocity0 * time + acceleration * time * time / 2
+			if dir==1 then
+				distance = -distance
+				velocity0 = -velocity0
+				acceleration = -acceleration -- I think it's Minetest's bug, why we should negate the acceleration???
+			end
 			minetest.add_particlespawner({
-				amount = 3* node_particles_allowed_level + 2,
-				time = math.random(2, node_particles_allowed_level + 3),
-				minpos = {x = pos.x - 0.25 - 1.5 * node.param2, y = pos.y - 0.25, z = pos.z - 0.25 - 1.5 * (1 - node.param2)},
-				maxpos = {x = pos.x + 0.25 + 1.5 * node.param2, y = pos.y + 0.25, z = pos.z + 0.25 + 1.5 * (1 - node.param2)},
-				minvel = {x = -0.5 - 0.3 * node.param2, y = -0.5, z = -0.5 - 0.3 * (1 - node.param2)},
-				maxvel = {x = 0.5 + 0.3 * node.param2, y = 0.5, z = 0.5 + 0.3 * (1 - node.param2)},
-				minacc = {x = 0, y = 0, z = 0},
-				maxacc = {x = 0, y = 0, z = 0},
-				minexptime = 0.5,
-				maxexptime = node_particles_allowed_level + 1,
-				minsize = 0.8,
+				amount = node_particles_allowed_level + 1,
+				minpos = {x = pos.x - distance * node.param2, y = pos.y - 0.25, z = pos.z - distance * (1 - node.param2)},
+				maxpos = {x = pos.x - distance * node.param2, y = pos.y + 1.25, z = pos.z - distance * (1 - node.param2)},
+				minvel = {x = velocity0 * node.param2 + 0.3, y = -0.5, z = velocity0 * (1 - node.param2) + 0.3},
+				maxvel = {x = velocity0 * node.param2 + 0.3, y =  0.5, z = velocity0 * (1 - node.param2) + 0.3},
+				minacc = {x = acceleration * node.param2, y = -1  , z = acceleration * (1 - node.param2)},
+				maxacc = {x = acceleration * node.param2, y =  0.5, z = acceleration * (1 - node.param2)},
+				minexptime = time,
+				maxexptime = time,
+				minsize = 0.3,
 				maxsize = 1.8,
 				collisiondetection = false,
 				texture = "mcl_particles_nether_portal.png",
