@@ -724,32 +724,45 @@ minetest.register_abm({
 	interval = 1,
 	chance = 1,
 	action = function(pos, node)
-		-- if node_particles_allowed_level > 0 then
-			local dir = math.random(0, 1)
-			local time = math.random() * 1.9 + 0.5
-			local velocity0 = math.random() * 0.7 -- todo: vectors!!! not only one coordinate
-			local acceleration = math.random() * 0.8 + 0.3
-			local distance = velocity0 * time + acceleration * time * time / 2
-			if dir==1 then
-				distance = -distance
-				velocity0 = -velocity0
-				acceleration = -acceleration -- I think it's Minetest's bug, why we should negate the acceleration???
+		local o = node.param2		-- orientation
+		local d = math.random(0, 1)	-- direction
+		local time = math.random() * 1.9 + 0.5
+		local velocity, acceleration
+		if o == 1 then
+			velocity	= {x = math.random() * 0.7 + 0.3,	y = math.random() - 0.5,	z = math.random() - 0.5}
+			acceleration	= {x = math.random() * 1.1 + 0.3,	y = math.random() - 0.5,	z = math.random() - 0.5}
+		else
+			velocity	= {x = math.random() - 0.5,		y = math.random() - 0.5,	z = math.random() * 0.7 + 0.3}
+			acceleration	= {x = math.random() - 0.5,		y = math.random() - 0.5,	z = math.random() * 1.1 + 0.3}
+		end
+		local distance = vector.add(vector.multiply(velocity, time), vector.multiply(acceleration, time * time / 2))
+		if d == 1 then
+			if o == 1 then
+				distance.x	= -distance.x
+				velocity.x	= -velocity.x
+				acceleration.x	= -acceleration.x
+			else
+				distance.z	= -distance.z
+				velocity.z	= -velocity.z
+				acceleration.z	= -acceleration.z
 			end
-			minetest.add_particlespawner({
-				amount = node_particles_allowed_level + 1,
-				minpos = {x = pos.x - distance * node.param2, y = pos.y - 0.25, z = pos.z - distance * (1 - node.param2)},
-				maxpos = {x = pos.x - distance * node.param2, y = pos.y + 1.25, z = pos.z - distance * (1 - node.param2)},
-				minvel = {x = velocity0 * node.param2 + 0.3, y = -0.5, z = velocity0 * (1 - node.param2) + 0.3},
-				maxvel = {x = velocity0 * node.param2 + 0.3, y =  0.5, z = velocity0 * (1 - node.param2) + 0.3},
-				minacc = {x = acceleration * node.param2, y = -1  , z = acceleration * (1 - node.param2)},
-				maxacc = {x = acceleration * node.param2, y =  0.5, z = acceleration * (1 - node.param2)},
-				minexptime = time,
-				maxexptime = time,
-				minsize = 0.3,
-				maxsize = 1.8,
-				collisiondetection = false,
-				texture = "mcl_particles_nether_portal.png",
-			})
+		end
+		distance = vector.subtract(pos, distance)
+		minetest.add_particlespawner({
+			amount = node_particles_allowed_level + 1,
+			minpos = distance,
+			maxpos = distance,
+			minvel = velocity,
+			maxvel = velocity,
+			minacc = acceleration,
+			maxacc = acceleration,
+			minexptime = time,
+			maxexptime = time,
+			minsize = 0.3,
+			maxsize = 1.8,
+			collisiondetection = false,
+			texture = "mcl_particles_nether_portal.png",
+		})
 		-- end
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
