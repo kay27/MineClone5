@@ -548,6 +548,11 @@ local function check_and_light_shape(pos, orientation)
 		return wrong_portal_nodes_clean_up(node_list)
 	end
 
+	-- Limit rectangles width and height
+	if math.abs(pos2.x - pos1.x + pos2.z - pos1.z) + 3 > FRAME_SIZE_X_MAX or math.abs(pos2.y - pos1.y) + 3 > FRAME_SIZE_Y_MAX then
+		return wrong_portal_nodes_clean_up(node_list)
+	end
+
 	for i = 1, node_counter do
 		local node_pos = node_list[i]
 		local node = minetest.get_node(node_pos)
