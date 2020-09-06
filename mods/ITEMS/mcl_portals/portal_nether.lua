@@ -23,7 +23,7 @@ local PORTAL_SEARCH_ALTITUDE = 128
 -- Table of objects (including players) which recently teleported by a
 -- Nether portal. Those objects have a brief cooloff period before they
 -- can teleport again. This prevents annoying back-and-forth teleportation.
-local portal_cooloff = {}
+mcl_portals.nether_portal_cooloff = {}
 local touch_chatter_prevention = {}
 
 local overworld_ymin = math.max(mcl_vars.mg_overworld_min, -31)
@@ -627,7 +627,7 @@ end
 -- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 local function teleport_cooloff(obj)
 	minetest.after(TELEPORT_COOLOFF, function(o)
-		portal_cooloff[o] = false
+		mcl_portals.nether_portal_cooloff[o] = false
 		touch_chatter_prevention[o] = nil
 	end, obj)
 end
@@ -644,7 +644,7 @@ local function teleport_no_delay(obj, pos)
 		return
 	end
 
-	if portal_cooloff[obj] then
+	if mcl_portals.nether_portal_cooloff[obj] then
 		return
 	end
 	-- If player stands, player is at ca. something+0.5
@@ -668,12 +668,7 @@ local function teleport_no_delay(obj, pos)
 
 	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 	teleport_cooloff(obj)
-	portal_cooloff[obj] = true
-
-	if not is_player and target.y < 0 then
-		-- Teleportation to Nether may be treated as fall - lift up the creature from solid block to prevent immediate death:
-		-- target.y = target.y + 1
-	end
+	mcl_portals.nether_portal_cooloff[obj] = true
 
 	-- Teleport
 	obj:set_pos(target)
@@ -690,7 +685,7 @@ local function teleport(obj, portal_pos)
 	-- Ñall prepare_target() first because it might take a long
 	prepare_target(portal_pos)
 	-- Prevent quick back-and-forth teleportation
-	if not portal_cooloff[obj] then
+	if not mcl_portals.nether_portal_cooloff[obj] then
 		local name = ""
 		if obj:is_player() then
 			name = obj:get_player_name()
