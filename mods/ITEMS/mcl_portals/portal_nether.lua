@@ -11,7 +11,8 @@ local FRAME_SIZE_Y_MAX = 23
 local PORTAL_NODES_MIN = 5
 local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
 
-local TELEPORT_COOLOFF = 3 -- after object was teleported, for this many seconds it won't teleported again
+local TELEPORT_COOLOFF = 3 -- after player was teleported, for this many seconds they won't teleported again
+local MOB_TELEPORT_COOLOFF = 14 -- after mob was teleported, for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME = 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
 local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
 local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
@@ -630,11 +631,17 @@ local function prepare_target(pos)
 end
 
 -- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+local function stop_teleport_cooloff(o)
+	mcl_portals.nether_portal_cooloff[o] = false
+	touch_chatter_prevention[o] = nil
+end
+
 local function teleport_cooloff(obj)
-	minetest.after(TELEPORT_COOLOFF, function(o)
-		mcl_portals.nether_portal_cooloff[o] = false
-		touch_chatter_prevention[o] = nil
-	end, obj)
+	if obj:is_player() then
+		minetest.after(TELEPORT_COOLOFF, stop_teleport_cooloff, obj)
+	else
+		minetest.after(MOB_TELEPORT_COOLOFF, stop_teleport_cooloff, obj)
+	end
 end
 
 -- Teleport function
@@ -686,23 +693,6 @@ local function teleport_no_delay(obj, pos)
 	end
 end
 
-local function teleport(obj, portal_pos)
-	-- Ñall prepare_target() first because it might take a long
-	prepare_target(portal_pos)
-	-- Prevent quick back-and-forth teleportation
-	if not mcl_portals.nether_portal_cooloff[obj] then
-		local name = ""
-		if obj:is_player() then
-			name = obj:get_player_name()
-		end
-		local creative_enabled = minetest.is_creative_enabled(name)
-		if creative_enabled then
-			return teleport_no_delay(obj, portal_pos)
-		end
-		minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
-	end
-end
-
 local function prevent_portal_chatter(obj)
 	local time_us = minetest.get_us_time()
 	local chatter = touch_chatter_prevention[obj] or 0
@@ -716,6 +706,51 @@ local function prevent_portal_chatter(obj)
 		end
 	end, obj)
 	return time_us - chatter > TOUCH_CHATTER_TIME_US
+end
+
+local function animation(obj)
+	local chatter = touch_chatter_prevention[obj] or 0
+	if mcl_portals.nether_portal_cooloff[obj] or minetest.get_us_time() - chatter < TOUCH_CHATTER_TIME_US then
+	--if mcl_portals.nether_portal_cooloff[obj] or not prevent_portal_chatter(obj) then
+	--if not prevent_portal_chatter(obj) then
+		local pos = obj:get_pos()
+		minetest.add_particlespawner({
+			amount = 1,
+			minpos = {x = pos.x - 0.1, y = pos.y + 1.4, z = pos.z - 0.1},
+			maxpos = {x = pos.x + 0.1, y = pos.y + 1.6, z = pos.z + 0.1},
+			minvel = 0,
+			maxvel = 0,
+			minacc = 0,
+			maxacc = 0,
+			minexptime = 0.1,
+			maxexptime = 0.2,
+			minsize = 5,
+			maxsize = 15,
+			collisiondetection = false,
+			texture = "mcl_particles_nether_portal_t.png",
+		})
+		minetest.after(0.3, animation, obj)
+	end
+end
+
+local function teleport(obj, portal_pos)
+	if obj:is_player() then
+		animation(obj)
+	end
+	-- Call prepare_target() first because it might take a long
+	prepare_target(portal_pos)
+	-- Prevent quick back-and-forth teleportation
+	if not mcl_portals.nether_portal_cooloff[obj] then
+		local name = ""
+		if obj:is_player() then
+			name = obj:get_player_name()
+		end
+		local creative_enabled = minetest.is_creative_enabled(name)
+		if creative_enabled then
+			return teleport_no_delay(obj, portal_pos)
+		end
+		minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
+	end
 end
 
 minetest.register_abm({
