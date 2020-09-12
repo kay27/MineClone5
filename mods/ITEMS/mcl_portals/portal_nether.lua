@@ -280,8 +280,6 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
 		local meta = minetest.get_meta(src_pos)
-		local p1 = minetest.string_to_pos(meta:get_string("portal_frame1")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
-		local p2 = minetest.string_to_pos(meta:get_string("portal_frame2")) or {x = src_pos.x, y = src_pos.y, z = src_pos.z}
 		local portal_pos = portal_search(dst_pos, {x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2})
 
 		if portal_pos == false then
@@ -301,9 +299,6 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			end
 			if portal_pos == false then
 				minetest.log("action", "[mcl_portal] 2nd attempt: No portal in area " .. minetest.pos_to_string({x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK}) .. "-" .. minetest.pos_to_string({x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}))
-				-- local width = math.max(math.abs(p2.z - p1.z) + math.abs(p2.x - p1.x) + 1, FRAME_SIZE_X_MIN - 2)
-				-- local height = math.max(math.abs(p2.y - p1.y) + 1, FRAME_SIZE_Y_MIN - 2)
-				-- In MC it always has size 4x5:
 				local width, height = 2, 3
 				portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height)
 			end
@@ -319,12 +314,20 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			local node = minetest.get_node(portal_pos)
 			if node and node.name ~= "mcl_portals:portal" then
 				portal_pos = {x = p3.x, y = p3.y, z = p3.z}
+				if minetest.get_node(portal_pos).name == "mcl_core:obsidian" then
+					-- portal has old version number:
+					if p4.z == p3.z then
+						portal_pos = {x = p3.x + 1, y = p3.y + 1, z = p3.z}
+					else
+						portal_pos = {x = p3.x, y = p3.y + 1, z = p3.z + 1}
+					end
+				end
 			end
 		end
 		local time_str = tostring(minetest.get_us_time())
 		local target = minetest.pos_to_string(portal_pos)
 
-		update_target(p1, target, time_str)
+		update_target(src_pos, target, time_str)
 	end
 end
 
