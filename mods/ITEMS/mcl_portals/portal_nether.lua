@@ -205,7 +205,7 @@ end
 
 local function find_nether_target_y(x, y, z)
 	local target_y = find_target_y(x, y, z, nether_ymin + 4, nether_ymax - 25) + 1
-	minetest.log("action", "[mcl_portal] Found Nether target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
+	minetest.log("verbose", "[mcl_portal] Found Nether target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
 	return target_y
 end
 
@@ -219,7 +219,7 @@ local function find_overworld_target_y(x, y, z)
 	if nn ~= "air" and minetest.get_item_group(nn, "water") == 0 then
 		target_y = target_y + 1
 	end
-	minetest.log("action", "[mcl_portal] Found Overworld target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
+	minetest.log("verbose", "[mcl_portal] Found Overworld target altitude: " .. tostring(target_y) .. " for pos. " .. minetest.pos_to_string({x = x, y = y, z = z}))
 	return target_y
 end
 
@@ -283,7 +283,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		local portal_pos = portal_search(dst_pos, {x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2})
 
 		if portal_pos == false then
-			minetest.log("action", "[mcl_portal] No portal in area " .. minetest.pos_to_string({x = param.ax1, y = param.ay1, z = param.az1}) .. "-" .. minetest.pos_to_string({x = param.ax2, y = param.ay2, z = param.az2}))
+			minetest.log("verbose", "[mcl_portal] No portal in area " .. minetest.pos_to_string({x = param.ax1, y = param.ay1, z = param.az1}) .. "-" .. minetest.pos_to_string({x = param.ax2, y = param.ay2, z = param.az2}))
 			-- Need to build arrival portal:
 			local org_dst_y = dst_pos.y
 			if param.srcdim == "overworld" then
@@ -298,7 +298,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 				)
 			end
 			if portal_pos == false then
-				minetest.log("action", "[mcl_portal] 2nd attempt: No portal in area " .. minetest.pos_to_string({x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK}) .. "-" .. minetest.pos_to_string({x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}))
+				minetest.log("verbose", "[mcl_portal] 2nd attempt: No portal in area " .. minetest.pos_to_string({x = dst_pos.x - PORTAL_SEARCH_HALF_CHUNK, y = math.floor(dst_pos.y - PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z - PORTAL_SEARCH_HALF_CHUNK}) .. "-" .. minetest.pos_to_string({x = dst_pos.x + PORTAL_SEARCH_HALF_CHUNK, y = math.ceil(dst_pos.y + PORTAL_SEARCH_ALTITUDE / 2), z = dst_pos.z + PORTAL_SEARCH_HALF_CHUNK}))
 				local width, height = 2, 3
 				portal_pos = mcl_portals.build_nether_portal(dst_pos, width, height)
 			end
@@ -315,7 +315,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			if node and node.name ~= "mcl_portals:portal" then
 				portal_pos = {x = p3.x, y = p3.y, z = p3.z}
 				if minetest.get_node(portal_pos).name == "mcl_core:obsidian" then
-					-- portal has old version number:
+					-- Old-version portal:
 					if p4.z == p3.z then
 						portal_pos = {x = p3.x + 1, y = p3.y + 1, z = p3.z}
 					else
@@ -397,7 +397,6 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 		for x = x1 - 1 + orientation, x2 + 1 - orientation do
 			for z = z1 - orientation, z2 + orientation do
 				for y = y1 - 1, y2 + 1 do
-					local set_meta = true
 					local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
 					if frame then
 						if build_frame then
@@ -426,8 +425,6 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 							else
 								minetest.set_node({x = x, y = y, z = z}, {name = "mcl_core:obsidian"})
 							end
-						else
-							set_meta = minetest.get_node({x = x, y = y, z = z}).name == "mcl_core:obsidian"
 						end
 					else
 						if not build_frame or pass == 2 then
@@ -435,14 +432,14 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 							minetest.set_node({x = x, y = y, z = z}, {name = "mcl_portals:portal", param2 = orientation})
 						end
 					end
-					if set_meta and not build_frame or pass == 2 then
+					if not frame and pass == 2 then
 						local meta = minetest.get_meta({x = x, y = y, z = z})
 						-- Portal frame corners
 						meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
 						meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
 						-- Portal target coordinates
 						meta:set_string("portal_target", "")
-						-- meta:set_string("portal_time", tostring(minetest.get_us_time()))
+						-- Portal last teleportation time
 						meta:set_string("portal_time", tostring(0))
 					end
 				end
@@ -479,6 +476,7 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 
 	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1), true)
 
+	-- Clear some space around:
 	for x = pos.x - math.random(2 + (width-2)*(  orientation), 5 + (2*width-5)*(  orientation)), pos.x + width*(1-orientation) + math.random(2+(width-2)*(  orientation), 4 + (2*width-4)*(  orientation)) do
 	for z = pos.z - math.random(2 + (width-2)*(1-orientation), 5 + (2*width-5)*(1-orientation)), pos.z + width*(  orientation) + math.random(2+(width-2)*(1-orientation), 4 + (2*width-4)*(1-orientation)) do
 	for y = pos.y - 1, pos.y + height + math.random(1,6) do
@@ -488,6 +486,17 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 		end
 	end
 	end
+	end
+
+	-- Build obsidian platform:
+	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
+		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
+			local pp = {x = x, y = pos.y - 1, z = z}
+			local nn = minetest.get_node(pp).name
+			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pos, "") then
+				minetest.set_node(pp, {name = "mcl_core:obsidian"})
+			end
+		end
 	end
 
 	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
@@ -714,8 +723,6 @@ end
 local function animation(obj)
 	local chatter = touch_chatter_prevention[obj] or 0
 	if mcl_portals.nether_portal_cooloff[obj] or minetest.get_us_time() - chatter < TOUCH_CHATTER_TIME_US then
-	--if mcl_portals.nether_portal_cooloff[obj] or not prevent_portal_chatter(obj) then
-	--if not prevent_portal_chatter(obj) then
 		local pos = obj:get_pos()
 		minetest.add_particlespawner({
 			amount = 1,
