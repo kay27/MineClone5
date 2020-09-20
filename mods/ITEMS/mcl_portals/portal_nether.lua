@@ -49,7 +49,7 @@ local node_particles_allowed_level = node_particles_levels[node_particles_allowe
 -- https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
 -- A bit simplified Nether fast travel ping-pong formula and function by ryvnf:
 local function nether_to_overworld(x)
-	return 30912 - math.abs((x * 8 + 30912) % 123648 - 61824)
+	return 30912 - math.abs(((x * 8 + 30912) % 123648) - 61824)
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
@@ -493,7 +493,7 @@ function mcl_portals.build_nether_portal(pos, width, height, orientation)
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
 			local nn = minetest.get_node(pp).name
-			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pos, "") then
+			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, "") then
 				minetest.set_node(pp, {name = "mcl_core:obsidian"})
 			end
 		end
