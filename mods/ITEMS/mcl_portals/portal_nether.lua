@@ -2,6 +2,9 @@ local S = minetest.get_translator("mcl_portals")
 
 -- Parameters
 
+local OVERWORLD_TO_NETHER_SCALE = 8
+local LIMIT = math.min(math.abs(mcl_vars.mapgen_edge_min), math.abs(mcl_vars.mapgen_edge_max))
+
 -- Portal frame sizes
 local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
@@ -46,10 +49,9 @@ local node_particles_allowed_level = node_particles_levels[node_particles_allowe
 
 -- Functions
 
--- https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
--- A bit simplified Nether fast travel ping-pong formula and function by ryvnf:
+-- Ping-Pong fast travel, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
 local function nether_to_overworld(x)
-	return 30912 - math.abs(((x * 8 + 30912) % 123648) - 61824)
+	return LIMIT - math.abs(((x * OVERWORLD_TO_NETHER_SCALE + LIMIT) % (LIMIT*4)) - (LIMIT*2))
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
@@ -153,10 +155,10 @@ minetest.register_node("mcl_portals:portal", {
 })
 
 local function find_target_y(x, y, z, y_min, y_max)
-	local y_org = y
+	local y_org = math.max(math.min(y, y_max), y_min)
 	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
 	if node == nil then
-		return y
+		return y_org
 	end
 	while node.name ~= "air" and y < y_max do
 		y = y + 1
@@ -200,7 +202,7 @@ local function find_target_y(x, y, z, y_min, y_max)
 	if y == y_min then
 		return y_org
 	end
-	return y
+	return math.max(math.min(y, y_max), y_min)
 end
 
 local function find_nether_target_y(x, y, z)
@@ -215,7 +217,7 @@ local function find_overworld_target_y(x, y, z)
 	if not node then
 		return target_y
 	end
-	nn = node.name
+	local nn = node.name
 	if nn ~= "air" and minetest.get_item_group(nn, "water") == 0 then
 		target_y = target_y + 1
 	end
@@ -341,8 +343,8 @@ local function nether_portal_get_target_position(src_pos)
 		y_min = overworld_ymin
 		y_max = overworld_ymax
 	else -- overworld:
-		x = math.floor(src_pos.x / 8 + 0.5)
-		z = math.floor(src_pos.z / 8 + 0.5)
+		x = math.floor(src_pos.x / OVERWORLD_TO_NETHER_SCALE + 0.5)
+		z = math.floor(src_pos.z / OVERWORLD_TO_NETHER_SCALE + 0.5)
 		y = math.floor((math.min(math.max(src_pos.y, overworld_ymin), overworld_ymax) - overworld_ymin) / overworld_dy * nether_dy + nether_ymin + 0.5)
 		y_min = nether_ymin
 		y_max = nether_ymax
@@ -684,9 +686,6 @@ local function teleport_no_delay(obj, pos)
 	local target = minetest.string_to_pos(meta:get_string("portal_target"))
 	if delta_time > DESTINATION_EXPIRES or target == nil then
 		-- Area not ready yet - retry after a second
-		if obj:is_player() then
-			minetest.chat_send_player(obj:get_player_name(), S("Loading terrain..."))
-		end
 		return minetest.after(1, teleport_no_delay, obj, pos)
 	end
 
@@ -826,7 +825,7 @@ minetest.register_abm({
 
 local longdesc = minetest.registered_nodes["mcl_core:obsidian"]._doc_items_longdesc
 longdesc = longdesc .. "\n" .. S("Obsidian is also used as the frame of Nether portals.")
-local usagehelp = S("To open a Nether portal, place an upright frame of obsidian with a width of 4 blocks and a height of 5 blocks, leaving only air in the center. After placing this frame, light a fire in the obsidian frame. Nether portals only work in the Overworld and the Nether.")
+local usagehelp = S("To open a Nether portal, place an upright frame of obsidian with a width of at least 4 blocks and a height of 5 blocks, leaving only air in the center. After placing this frame, light a fire in the obsidian frame. Nether portals only work in the Overworld and the Nether.")
 
 minetest.override_item("mcl_core:obsidian", {
 	_doc_items_longdesc = longdesc,

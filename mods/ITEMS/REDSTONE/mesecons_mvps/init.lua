@@ -120,11 +120,13 @@ function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
 	while #frontiers > 0 do
 		local np = frontiers[1]
 		local nn = minetest.get_node(np)
-
+		if nn.name == "ignore" then
+			minetest.get_voxel_manip():read_from_map(np, np)
+			nn = minetest.get_node(np)
+		end
 		if not node_replaceable(nn.name) then
-
+			if #nodes >= maximum then return nil end
 			table.insert(nodes, {node = nn, pos = np})
-			if #nodes > maximum then return nil end
 
 			-- add connected nodes to frontiers, connected is a vector list
 			-- the vectors must be absolute positions
@@ -246,13 +248,6 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 		minetest.get_meta(np):from_table(n.meta)
 	end
 
-	for i in ipairs(nodes) do
-		if first_dropper and i >= first_dropper then
-			break
-		end
-		nodes[i].pos = vector.add(nodes[i].pos, movedir)
-	end
-
 	local moved_nodes = {}
 	local oldstack = mesecon.tablecopy(nodes)
 	for i in ipairs(nodes) do
@@ -271,12 +266,6 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 
 	return true, nodes, oldstack
 end
-
-mesecon.register_on_mvps_move(function(moved_nodes)
-	for _, n in ipairs(moved_nodes) do
-		mesecon.on_placenode(n.pos, n.node)
-	end
-end)
 
 function mesecon.mvps_move_objects(pos, dir, nodestack)
 	local objects_to_move = {}
