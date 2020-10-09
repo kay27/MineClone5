@@ -112,7 +112,7 @@ local function node_replaceable(name)
 	return false
 end
 
-function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
+function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky, piston_pos)
 	-- determine the number of nodes to be pushed
 	local nodes = {}
 	local frontiers = {pos}
@@ -125,7 +125,7 @@ function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
 			nn = minetest.get_node(np)
 		end
 		if not node_replaceable(nn.name) then
-			if #nodes >= maximum then return nil end
+			if #nodes >= maximum then return nil, false end
 			table.insert(nodes, {node = nn, pos = np})
 
 			-- add connected nodes to frontiers, connected is a vector list
@@ -133,7 +133,10 @@ function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
 			local connected = {}
 			if minetest.registered_nodes[nn.name]
 			and minetest.registered_nodes[nn.name].mvps_sticky then
-				connected = minetest.registered_nodes[nn.name].mvps_sticky(np, nn)
+				connected, has_loop = minetest.registered_nodes[nn.name].mvps_sticky(np, nn, piston_pos)
+				if has_loop then
+					return {}, true
+				end
 			end
 
 			table.insert(connected, vector.add(np, dir))
@@ -145,8 +148,11 @@ function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
 				local adjnode = minetest.get_node(adjpos)
 				if minetest.registered_nodes[adjnode.name]
 				and minetest.registered_nodes[adjnode.name].mvps_sticky then
-					local sticksto = minetest.registered_nodes[adjnode.name]
-						.mvps_sticky(adjpos, adjnode)
+					local sticksto, has_loop = minetest.registered_nodes[adjnode.name]
+						.mvps_sticky(adjpos, adjnode, piston_pos)
+					if has_loop then
+						return {}, true
+					end
 
 					-- connects to this position?
 					for _, link in ipairs(sticksto) do
@@ -183,33 +189,60 @@ function mesecon.mvps_get_stack(pos, dir, maximum, all_pull_sticky)
 		table.remove(frontiers, 1)
 	end
 
-	return nodes
+	return nodes, false
 end
 
-function mesecon.mvps_push(pos, dir, maximum)
-	return mesecon.mvps_push_or_pull(pos, dir, dir, maximum, nil, false)
+function mesecon.mvps_push(pos, dir, maximum, player_name, piston_pos)
+	return mesecon.mvps_push_or_pull(pos, dir, dir, maximum, false, player_name, piston_pos)
 end
 
-function mesecon.mvps_pull_all(pos, dir, maximum)
-	return mesecon.mvps_push_or_pull(pos, vector.multiply(dir, -1), dir, maximum, true, true)
+function mesecon.mvps_pull_all(pos, dir, maximum, player_name, piston_pos)
+	return mesecon.mvps_push_or_pull(pos, vector.multiply(dir, -1), dir, maximum, true, player_name, piston_pos)
 end
 
-function mesecon.mvps_pull_single(pos, dir, maximum)
-	return mesecon.mvps_push_or_pull(pos, vector.multiply(dir, -1), dir, maximum, nil, true)
+function mesecon.mvps_pull_single(pos, dir, maximum, player_name, piston_pos)
+	return mesecon.mvps_push_or_pull(pos, vector.multiply(dir, -1), dir, maximum, false, player_name, piston_pos)
 end
 
 -- pos: pos of mvps; stackdir: direction of building the stack
 -- movedir: direction of actual movement
 -- maximum: maximum nodes to be pushed
 -- all_pull_sticky: All nodes are sticky in the direction that they are pulled from
-function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sticky)
-	local nodes = mesecon.mvps_get_stack(pos, movedir, maximum, all_pull_sticky)
+function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sticky, player_name, piston_pos)
+	local nodes, has_loop = mesecon.mvps_get_stack(pos, movedir, maximum, all_pull_sticky, piston_pos)
+
+	if has_loop then
+		return false
+	end
 
 	if not nodes then return end
 	-- determine if one of the nodes blocks the push / pull
 	for id, n in ipairs(nodes) do
 		if mesecon.is_mvps_stopper(n.node, movedir, nodes, id) then
 			return
+		end
+	end
+
+	local newpos={}
+	-- check node availability to push/pull into, and fill newpos[i]
+	for i in ipairs(nodes) do
+		newpos[i] = vector.add(nodes[i].pos, movedir)
+		local newnode = minetest.get_node(newpos[i])
+		if newnode then
+			if newnode.name ~= "air" then
+				local available = false
+				for j in ipairs(nodes) do
+					if i ~= j then
+						if (newpos[i].x == nodes[j].pos.x) and (newpos[i].y == nodes[j].pos.y) and (newpos[i].z == nodes[j].pos.z) then
+							available = true
+							break
+						end
+					end
+				end
+				if not available then
+					return
+				end
+			end
 		end
 	end
 
@@ -243,7 +276,7 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 		if first_dropper and id >= first_dropper then
 			break
 		end
-		local np = vector.add(n.pos, movedir)
+		local np = newpos[id]
 		minetest.add_node(np, n.node)
 		minetest.get_meta(np):from_table(n.meta)
 	end
@@ -256,7 +289,7 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 		end
 		moved_nodes[i] = {}
 		moved_nodes[i].oldpos = nodes[i].pos
-		nodes[i].pos = vector.add(nodes[i].pos, movedir)
+		nodes[i].pos = newpos[i]
 		moved_nodes[i].pos = nodes[i].pos
 		moved_nodes[i].node = nodes[i].node
 		moved_nodes[i].meta = nodes[i].meta

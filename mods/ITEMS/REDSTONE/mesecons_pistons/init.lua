@@ -94,7 +94,7 @@ local piston_on = function (pos, node)
 
 	local dir = piston_get_direction(pistonspec.dir, node)
 	local np = vector.add(pos, dir)
-	local success, stack, oldstack = mesecon.mvps_push(np, dir, PISTON_MAXIMUM_PUSH)
+	local success, stack, oldstack = mesecon.mvps_push(np, dir, PISTON_MAXIMUM_PUSH, nil, pos)
 	if success then
 		minetest.add_node(pos, {param2 = node.param2, name = pistonspec.onname})
 		minetest.add_node(np, {param2 = node.param2, name = pistonspec.pusher})
@@ -120,7 +120,7 @@ local piston_off = function (pos, node)
 	if pistonspec.sticky then
 		local dir = piston_get_direction(pistonspec.dir, node)
 		local pullpos = vector.add(pos, vector.multiply(dir, 2))
-		local stack = mesecon.mvps_pull_single(pullpos, vector.multiply(dir, -1), PISTON_MAXIMUM_PUSH)
+		local stack = mesecon.mvps_pull_single(pullpos, vector.multiply(dir, -1), PISTON_MAXIMUM_PUSH, nil, pos)
 		mesecon.mvps_process_stack(pos, dir, stack)
 	end
 end
