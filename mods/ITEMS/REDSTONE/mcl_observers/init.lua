@@ -252,7 +252,6 @@ function mcl_observers.check_around(pos)
 		if n then
 			nn = n.name
 			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
-				minetest.chat_send_all("check around "..minetest.pos_to_string(pos).." -> observer"..minetest.pos_to_string(np))
 				mcl_observers.observer_scan(np, false)
 			end
 		end
