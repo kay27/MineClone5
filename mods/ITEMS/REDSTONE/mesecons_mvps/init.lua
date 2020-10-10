@@ -278,6 +278,18 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 		end
 		local np = newpos[id]
 		minetest.add_node(np, n.node)
+		if string.find(n.node.name, "mcl_observers:observer") then
+			-- It also counts as a block update when the observer itself is moved by a piston (Wiki):
+			minetest.after(mcl_vars.redstone_tick, function(pos)
+				local node = minetest.get_node(pos)
+				if node then
+					if string.find(node.name, "mcl_observers:observer") then
+						minetest.get_meta(pos):set_string("node_name", "TICK")
+						mcl_observers.observer_scan(pos, false)
+					end
+				end
+			end, {x=np.x, y=np.y, z=np.z})
+		end
 		minetest.get_meta(np):from_table(n.meta)
 	end
 

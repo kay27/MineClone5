@@ -96,8 +96,8 @@ local piston_on = function (pos, node)
 	local np = vector.add(pos, dir)
 	local success, stack, oldstack = mesecon.mvps_push(np, dir, PISTON_MAXIMUM_PUSH, nil, pos)
 	if success then
-		minetest.add_node(pos, {param2 = node.param2, name = pistonspec.onname})
-		minetest.add_node(np, {param2 = node.param2, name = pistonspec.pusher})
+		minetest.set_node(pos, {param2 = node.param2, name = pistonspec.onname})
+		minetest.set_node(np, {param2 = node.param2, name = pistonspec.pusher})
 		local below = minetest.get_node({x=np.x,y=np.y-1,z=np.z})
 		if below.name == "mcl_farming:soil" or below.name == "mcl_farming:soil_wet" then
 			minetest.set_node({x=np.x,y=np.y-1,z=np.z}, {name = "mcl_core:dirt"})

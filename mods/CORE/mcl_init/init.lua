@@ -1,6 +1,8 @@
 -- Some global variables (don't overwrite them!)
 mcl_vars = {}
 
+mcl_vars.redstone_tick = 0.1
+
 --- GUI / inventory menu settings
 mcl_vars.gui_slots = "listcolors[#9990;#FFF7;#FFF0;#000;#FFF]"
 -- nonbg is added as formspec prepend in mcl_formspec_prepend
@@ -127,4 +129,32 @@ minetest.craftitemdef_default.stack_max = 64
 -- Set random seed for all other mods (Remember to make sure no other mod calls this function)
 math.randomseed(os.time())
 
-
+-- Override some functions for for observer to observe:
+mcl_vars.add_node =	minetest.add_node
+mcl_vars.set_node =	minetest.set_node
+mcl_vars.swap_node =	minetest.swap_node
+mcl_vars.remove_node =	minetest.remove_node
+minetest.add_node = function(pos, node)
+	mcl_vars.add_node(pos, node)
+	if mcl_observers then
+		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+	end
+end
+minetest.set_node = function(pos, node)
+	mcl_vars.set_node(pos, node)
+	if mcl_observers then
+		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+	end
+end
+minetest.swap_node = function(pos, node)
+	mcl_vars.swap_node(pos, node)
+	if mcl_observers then
+		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+	end
+end
+minetest.remove_node = function(pos)
+	mcl_vars.remove_node(pos)
+	if mcl_observers then
+		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+	end
+end

@@ -1,5 +1,7 @@
 local S = minetest.get_translator("mcl_observers")
 
+mcl_observers = {}
+
 local rules_flat = {
 	{ x = 0, y = 0, z = -1, spread = true },
 }
@@ -18,7 +20,7 @@ local rules_up = {{ x = 0, y = -1, z = 0, spread = true }}
 -- and update the observer state if needed.
 -- TODO: Also scan metadata changes.
 -- TODO: Ignore some node changes.
-local observer_scan = function(pos, initialize)
+mcl_observers.observer_scan = function(pos, initialize)
 	local node = minetest.get_node(pos)
 	local front
 	if node.name == "mcl_observers:observer_up_off" or node.name == "mcl_observers:observer_up_on" then
@@ -102,7 +104,7 @@ mesecon.register_node("mcl_observers:observer",
 		rules = get_rules_flat,
 	}},
 	on_construct = function(pos)
-		observer_scan(pos, true)
+		mcl_observers.observer_scan(pos, true)
 	end,
 	after_place_node = observer_orientate,
 },
@@ -122,8 +124,7 @@ mesecon.register_node("mcl_observers:observer",
 	-- VERY quickly disable observer after construction
 	on_construct = function(pos)
 		local timer = minetest.get_node_timer(pos)
-		-- 1 redstone tick = 0.1 seconds
-		timer:start(0.1)
+		timer:start(mcl_vars.redstone_tick)
 	end,
 	on_timer = function(pos, elapsed)
 		local node = minetest.get_node(pos)
@@ -154,7 +155,7 @@ mesecon.register_node("mcl_observers:observer_down",
 		rules = rules_down,
 	}},
 	on_construct = function(pos)
-		observer_scan(pos, true)
+		mcl_observers.observer_scan(pos, true)
 	end,
 },
 {
@@ -172,8 +173,7 @@ mesecon.register_node("mcl_observers:observer_down",
 	-- VERY quickly disable observer after construction
 	on_construct = function(pos)
 		local timer = minetest.get_node_timer(pos)
-		-- 1 redstone tick = 0.1 seconds
-		timer:start(0.1)
+		timer:start(mcl_vars.redstone_tick)
 	end,
 	on_timer = function(pos, elapsed)
 		local node = minetest.get_node(pos)
@@ -203,7 +203,7 @@ mesecon.register_node("mcl_observers:observer_up",
 		rules = rules_up,
 	}},
 	on_construct = function(pos)
-		observer_scan(pos, true)
+		mcl_observers.observer_scan(pos, true)
 	end,
 },
 {
@@ -221,8 +221,7 @@ mesecon.register_node("mcl_observers:observer_up",
 	-- VERY quickly disable observer after construction
 	on_construct = function(pos)
 		local timer = minetest.get_node_timer(pos)
-		-- 1 redstone tick = 0.1 seconds
-		timer:start(0.1)
+		timer:start(mcl_vars.redstone_tick)
 	end,
 	on_timer = function(pos, elapsed)
 		minetest.set_node(pos, {name = "mcl_observers:observer_up_off"})
@@ -241,10 +240,24 @@ minetest.register_abm({
 	interval = 1,
 	chance = 1,
 	action = function(pos, node)
-		observer_scan(pos)
+		mcl_observers.observer_scan(pos)
 	end,
 })
 
+function mcl_observers.check_around(pos)
+	local n, np
+	for _, v in ipairs(mesecon.rules.alldirs) do
+		np = {x = pos.x+v.x, y = pos.y+v.y, z = pos.z+v.z}
+		n = minetest.get_node(np)
+		if n then
+			nn = n.name
+			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
+				minetest.chat_send_all("check around "..minetest.pos_to_string(pos).." -> observer"..minetest.pos_to_string(np))
+				mcl_observers.observer_scan(np, false)
+			end
+		end
+	end
+end
 
 minetest.register_craft({
 	output = "mcl_observers:observer_off",
