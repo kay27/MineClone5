@@ -17,7 +17,6 @@ local rules_down = {{ x = 0, y = 1, z = 0, spread = true }}
 local rules_up = {{ x = 0, y = -1, z = 0, spread = true }}
 
 function mcl_observers.observer_activate(pos)
-	-- Activate observer
 	minetest.after(mcl_vars.redstone_tick, function(pos)
 		node = minetest.get_node(pos)
 		if not node then
@@ -214,8 +213,6 @@ function mcl_observers.check_around(pos)
 					frontpos = vector.add(np, minetest.facedir_to_dir(n.param2))
 				end
 				if (pos.x == frontpos.x) and (pos.y == frontpos.y) and (pos.z == frontpos.z) then
-					minetest.chat_send_all("observer fire "..minetest.pos_to_string(pos).." -> observer"..minetest.pos_to_string(np).." -> node"..minetest.pos_to_string(frontpos))
-					-- Activate observer
 					mcl_observers.observer_activate(np)
 				end
 			end

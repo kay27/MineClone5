@@ -129,7 +129,7 @@ minetest.craftitemdef_default.stack_max = 64
 -- Set random seed for all other mods (Remember to make sure no other mod calls this function)
 math.randomseed(os.time())
 
--- Override some functions for for observer to observe:
+-- Override some functions for observer to observe:
 mcl_vars.add_node =	minetest.add_node
 mcl_vars.set_node =	minetest.set_node
 mcl_vars.swap_node =	minetest.swap_node
