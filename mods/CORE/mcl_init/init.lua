@@ -137,24 +137,24 @@ mcl_vars.remove_node =	minetest.remove_node
 minetest.add_node = function(pos, node)
 	mcl_vars.add_node(pos, node)
 	if mcl_observers then
-		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+		mcl_observers.check_around(pos)
 	end
 end
 minetest.set_node = function(pos, node)
 	mcl_vars.set_node(pos, node)
 	if mcl_observers then
-		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+		mcl_observers.check_around(pos)
 	end
 end
 minetest.swap_node = function(pos, node)
 	mcl_vars.swap_node(pos, node)
 	if mcl_observers then
-		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+		mcl_observers.check_around(pos)
 	end
 end
 minetest.remove_node = function(pos)
 	mcl_vars.remove_node(pos)
 	if mcl_observers then
-		minetest.after(mcl_vars.redstone_tick, mcl_observers.check_around, {x=pos.x, y=pos.y, z=pos.z})
+		mcl_observers.check_around(pos)
 	end
 end

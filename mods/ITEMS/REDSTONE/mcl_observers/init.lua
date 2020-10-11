@@ -16,48 +16,25 @@ end
 local rules_down = {{ x = 0, y = 1, z = 0, spread = true }}
 local rules_up = {{ x = 0, y = -1, z = 0, spread = true }}
 
--- Scan the node in front of the observer
--- and update the observer state if needed.
--- TODO: Also scan metadata changes.
--- TODO: Ignore some node changes.
-mcl_observers.observer_scan = function(pos, initialize)
-	local node = minetest.get_node(pos)
-	local front
-	if node.name == "mcl_observers:observer_up_off" or node.name == "mcl_observers:observer_up_on" then
-		front = vector.add(pos, {x=0, y=1, z=0})
-	elseif node.name == "mcl_observers:observer_down_off" or node.name == "mcl_observers:observer_down_on" then
-		front = vector.add(pos, {x=0, y=-1, z=0})
-	else
-		front = vector.add(pos, minetest.facedir_to_dir(node.param2))
-	end
-	local frontnode = minetest.get_node(front)
-	local meta = minetest.get_meta(pos)
-	local oldnode = meta:get_string("node_name")
-	local oldparam2 = meta:get_string("node_param2")
-	local meta_needs_updating = false
-	if oldnode ~= "" and not initialize then
-		if not (frontnode.name == oldnode and frontnode.param2) then
-			-- Node state changed! Activate observer
-			if node.name == "mcl_observers:observer_off" then
-				minetest.set_node(pos, {name = "mcl_observers:observer_on", param2 = node.param2})
-				mesecon.receptor_on(pos, get_rules_flat(node))
-			elseif node.name == "mcl_observers:observer_down_off" then
-				minetest.set_node(pos, {name = "mcl_observers:observer_down_on"})
-				mesecon.receptor_on(pos, rules_down)
-			elseif node.name == "mcl_observers:observer_up_off" then
-				minetest.set_node(pos, {name = "mcl_observers:observer_up_on"})
-				mesecon.receptor_on(pos, rules_up)
-			end
-			meta_needs_updating = true
+function mcl_observers.observer_activate(pos)
+	-- Activate observer
+	minetest.after(mcl_vars.redstone_tick, function(pos)
+		node = minetest.get_node(pos)
+		if not node then
+			return
 		end
-	else
-		meta_needs_updating = true
-	end
-	if meta_needs_updating then
-		meta:set_string("node_name", frontnode.name)
-		meta:set_string("node_param2", frontnode.param2)
-	end
-	return frontnode
+		local nn = node.name
+		if nn == "mcl_observers:observer_off" then
+			minetest.set_node(pos, {name = "mcl_observers:observer_on", param2 = node.param2})
+			mesecon.receptor_on(pos, get_rules_flat(node))
+		elseif nn == "mcl_observers:observer_down_off" then
+			minetest.set_node(pos, {name = "mcl_observers:observer_down_on"})
+			mesecon.receptor_on(pos, rules_down)
+		elseif nn == "mcl_observers:observer_up_off" then
+			minetest.set_node(pos, {name = "mcl_observers:observer_up_on"})
+			mesecon.receptor_on(pos, rules_up)
+		end
+	end, {x=pos.x, y=pos.y, z=pos.z})
 end
 
 -- Vertical orientation (CURRENTLY DISABLED)
@@ -103,9 +80,6 @@ mesecon.register_node("mcl_observers:observer",
 		state = mesecon.state.off,
 		rules = get_rules_flat,
 	}},
-	on_construct = function(pos)
-		mcl_observers.observer_scan(pos, true)
-	end,
 	after_place_node = observer_orientate,
 },
 {
@@ -154,9 +128,6 @@ mesecon.register_node("mcl_observers:observer_down",
 		state = mesecon.state.off,
 		rules = rules_down,
 	}},
-	on_construct = function(pos)
-		mcl_observers.observer_scan(pos, true)
-	end,
 },
 {
 	_doc_items_create_entry = false,
@@ -202,9 +173,6 @@ mesecon.register_node("mcl_observers:observer_up",
 		state = mesecon.state.off,
 		rules = rules_up,
 	}},
-	on_construct = function(pos)
-		mcl_observers.observer_scan(pos, true)
-	end,
 },
 {
 	_doc_items_create_entry = false,
@@ -229,30 +197,27 @@ mesecon.register_node("mcl_observers:observer_up",
 	end,
 })
 
-
-
-
--- Regularily check the observer nodes.
--- TODO: This is rather slow and clunky. Find a more efficient way to do this.
-minetest.register_abm({
-	label = "Observer node check",
-	nodenames = {"mcl_observers:observer_off", "mcl_observers:observer_down_off", "mcl_observers:observer_up_off"},
-	interval = 1,
-	chance = 1,
-	action = function(pos, node)
-		mcl_observers.observer_scan(pos)
-	end,
-})
-
 function mcl_observers.check_around(pos)
-	local n, np
+	local n, np, frontpos
 	for _, v in ipairs(mesecon.rules.alldirs) do
 		np = {x = pos.x+v.x, y = pos.y+v.y, z = pos.z+v.z}
 		n = minetest.get_node(np)
 		if n then
 			nn = n.name
 			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
-				mcl_observers.observer_scan(np, false)
+				-- Calculate front position and compare to position:
+				if nn == "mcl_observers:observer_up_off" or nn == "mcl_observers:observer_up_on" then
+					frontpos = vector.add(np, {x=0, y=1, z=0})
+				elseif nn == "mcl_observers:observer_down_off" or nn == "mcl_observers:observer_down_on" then
+					frontpos = vector.add(np, {x=0, y=-1, z=0})
+				else
+					frontpos = vector.add(np, minetest.facedir_to_dir(n.param2))
+				end
+				if (pos.x == frontpos.x) and (pos.y == frontpos.y) and (pos.z == frontpos.z) then
+					minetest.chat_send_all("observer fire "..minetest.pos_to_string(pos).." -> observer"..minetest.pos_to_string(np).." -> node"..minetest.pos_to_string(frontpos))
+					-- Activate observer
+					mcl_observers.observer_activate(np)
+				end
 			end
 		end
 	end
@@ -274,4 +239,3 @@ minetest.register_craft({
 		{ "mcl_core:cobble", "mcl_core:cobble", "mcl_core:cobble" },
 	}
 })
-
