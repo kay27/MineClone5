@@ -227,6 +227,9 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, all_pull_sti
 	-- check node availability to push/pull into, and fill newpos[i]
 	for i in ipairs(nodes) do
 		newpos[i] = vector.add(nodes[i].pos, movedir)
+		if (newpos[i].x == piston_pos.x) and (newpos[i].y == piston_pos.y) and (newpos[i].z == piston_pos.z) then
+			return
+		end
 		local newnode = minetest.get_node(newpos[i])
 		if newnode then
 			if newnode.name ~= "air" then
