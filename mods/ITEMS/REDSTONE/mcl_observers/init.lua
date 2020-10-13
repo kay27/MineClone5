@@ -206,9 +206,9 @@ function mcl_observers.check_around(pos)
 			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
 				-- Calculate front position and compare to position:
 				if nn == "mcl_observers:observer_up_off" or nn == "mcl_observers:observer_up_on" then
-					frontpos = vector.add(np, {x=0, y=1, z=0})
+					frontpos = {x=np.x, y=np.y+1, z=np.z}
 				elseif nn == "mcl_observers:observer_down_off" or nn == "mcl_observers:observer_down_on" then
-					frontpos = vector.add(np, {x=0, y=-1, z=0})
+					frontpos = {x=np.x, y=np.y-1, z=np.z}
 				else
 					frontpos = vector.add(np, minetest.facedir_to_dir(n.param2))
 				end
