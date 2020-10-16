@@ -179,17 +179,6 @@ minetest.register_on_joinplayer(function(player)
 	name = player:get_player_name()
 	temp_pool = pool[name]
 		
-    hud_manager.add_hud(player,"heart_bar_bg",{
-        hud_elem_type = "statbar",
-        position = {x = 0.5, y = 1},
-        text = "heart_bg.png",
-        number = core.PLAYER_MAX_HP_DEFAULT,
-        direction = 0,
-        size = {x = 24, y = 24},
-        offset = {x = (-10 * 24) - 25, y = -(48 + 24 + 38)},
-	})
-	
-
     hud_manager.add_hud(player,"experience_bar_background",{
         hud_elem_type = "statbar",
         position = {x=0.5, y=1},
