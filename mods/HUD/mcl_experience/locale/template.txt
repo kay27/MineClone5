@@ -1,1 +1,5 @@
-Gives 1000 XP=
+[<player>] [<xp>]=
+Gives [player <player>] [<xp>] XP=
+Error: Too many parameters!=
+Error: Incorrect number of XP=
+Error: Player not found=

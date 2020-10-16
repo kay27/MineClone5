@@ -226,10 +226,10 @@ function minetest.handle_node_drops(pos, drops, digger)
 	local dug_node = minetest.get_node(pos)
 	local toolcaps
 	if digger ~= nil then
-		if minetest.throw_experience then
+		if mcl_experience.throw_experience then
 		        local experience_amount = minetest.get_item_group(dug_node.name,"experience")
 		        if experience_amount > 0 then
-		            minetest.throw_experience(pos, experience_amount)
+		            mcl_experience.throw_experience(pos, experience_amount)
 		        end
 		end
 		local tool = digger:get_wielded_item()

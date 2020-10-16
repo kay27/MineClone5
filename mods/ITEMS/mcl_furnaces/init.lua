@@ -345,9 +345,9 @@ local function furnace_node_timer(pos, elapsed)
 				srclist = inv:get_list("src")
 				src_time = 0
 
-				if minetest.throw_experience then
+				if mcl_experience.throw_experience then
 					local dir = vector.divide(minetest.facedir_to_dir(minetest.get_node(pos).param2),-1.95)
-					minetest.throw_experience(vector.add(pos, dir), 1)
+					mcl_experience.throw_experience(vector.add(pos, dir), 1)
 				end
 			end
 		end

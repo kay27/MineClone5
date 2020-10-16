@@ -44,7 +44,7 @@ minetest.register_node("mcl_core:stone_with_iron", {
 	tiles = {"mcl_core_iron_ore.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=3, building_block=1, material_stone=1, experience=2},
+	groups = {pickaxey=3, building_block=1, material_stone=1},
 	drop = 'mcl_core:stone_with_iron',
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 3,
@@ -58,7 +58,7 @@ minetest.register_node("mcl_core:stone_with_gold", {
 	tiles = {"mcl_core_gold_ore.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=4, building_block=1, material_stone=1, experience=3},
+	groups = {pickaxey=4, building_block=1, material_stone=1},
 	drop = "mcl_core:stone_with_gold",
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 3,
@@ -77,7 +77,7 @@ minetest.register_node("mcl_core:stone_with_redstone", {
 	tiles = {"mcl_core_redstone_ore.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=4, building_block=1, material_stone=1, experience=2},
+	groups = {pickaxey=4, building_block=1, material_stone=1, experience=7},
 	drop = {
 		items = {
 			max_items = 1,
@@ -110,7 +110,7 @@ minetest.register_node("mcl_core:stone_with_redstone_lit", {
 	light_source = 9,
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=4, not_in_creative_inventory=1, material_stone=1, experience=3},
+	groups = {pickaxey=4, not_in_creative_inventory=1, material_stone=1, experience=7},
 	drop = {
 		items = {
 			max_items = 1,
@@ -141,7 +141,7 @@ minetest.register_node("mcl_core:stone_with_lapis", {
 	tiles = {"mcl_core_lapis_ore.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=3, building_block=1, material_stone=1, experience=3},
+	groups = {pickaxey=3, building_block=1, material_stone=1, experience=6},
 	drop = {
 		max_items = 1,
 		items = {
@@ -163,7 +163,7 @@ minetest.register_node("mcl_core:stone_with_emerald", {
 	tiles = {"mcl_core_emerald_ore.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {pickaxey=4, building_block=1, material_stone=1, experience=5},
+	groups = {pickaxey=4, building_block=1, material_stone=1, experience=6},
 	drop = "mcl_core:emerald",
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 3,

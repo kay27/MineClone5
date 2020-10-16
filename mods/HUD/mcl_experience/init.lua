@@ -1,4 +1,5 @@
 local S = minetest.get_translator("mcl_experience")
+mcl_experience = {}
 
 local
 minetest,math,vector,os,pairs,type
@@ -259,7 +260,7 @@ end
 
 local name
 local temp_pool
-local function add_experience(player,experience)
+function mcl_experience.add_experience(player,experience)
 	name = player:get_player_name()
 	temp_pool = pool[name]
 	
@@ -319,32 +320,17 @@ minetest.register_on_dieplayer(function(player)
 		data     = temp_pool.xp_bar
 	})
 
-    minetest.throw_experience(player:get_pos(), xp_amount)                       
+    mcl_experience.throw_experience(player:get_pos(), xp_amount)
 end)
 
 
-local name
-local temp_pool
-local collector
-local pos
-local pos2
-local direction
-local distance
-local player_velocity
-local goal
-local currentvel
-local acceleration
-local multiplier
-local velocity
-local node
-local vel
-local def
-local is_moving
-local is_slippery
-local slippery
-local slip_factor
-local size
-local data
+local name, temp_pool
+local collector, pos, pos2
+local direction, distance, player_velocity, goal
+local currentvel, acceleration, multiplier, velocity
+local node, vel, def
+local is_moving, is_slippery, slippery, slip_factor
+local size, data
 local function xp_step(self, dtime)
 	--if item set to be collected then only execute go to player
 	if self.collected == true then
@@ -391,8 +377,8 @@ local function xp_step(self, dtime)
 				self.object:add_velocity(acceleration)
 			end
 			if distance < 0.4 and temp_pool.buffer <= 0 then
-				temp_pool.buffer = 0.04
-				add_experience(collector,2)
+				temp_pool.buffer = temp_pool.buffer + 0.04
+				mcl_experience.add_experience(collector,2)
 				self.object:remove()
 			end
 			return
@@ -542,18 +528,41 @@ minetest.register_entity("mcl_experience:orb", {
 
 
 minetest.register_chatcommand("xp", {
-	params = "nil",
-	description = S("Gives 1000 XP"),
+	params = S("[<player>] [<xp>]"),
+	description = S("Gives [player <player>] [<xp>] XP"),
 	privs = {server=true},
-	func = function(name)
-		local player = minetest.get_player_by_name(name)
+	func = function(name, params)
+		local player, xp = nil, 1000
+		local P, i = {}, 0
+		for str in string.gmatch(params, "([^ ]+)") do
+			i = i + 1
+			P[i] = str
+		end
+		if i > 2 then
+			return false, S("Error: Too many parameters!")
+		end
+		if i > 0 then
+			xp = tonumber(P[i])
+		end
+		if i < 2 then
+			player = minetest.get_player_by_name(name)
+		end
+		if i == 2 then
+			player = minetest.get_player_by_name(P[1])
+		end
+		if (not xp) or (xp < 1) then
+			return false, S("Error: Incorrect number of XP")
+		end
+		if not player then
+			return false, S("Error: Player not found")
+		end
 		local pos = player:get_pos()
 		pos.y = pos.y + 1.2
-		minetest.throw_experience(pos, 1000)
+		mcl_experience.throw_experience(pos, xp)
 	end,
 })
 
-function minetest.throw_experience(pos, amount)
+function mcl_experience.throw_experience(pos, amount)
     for i = 1,amount do
         object = minetest.add_entity(pos, "mcl_experience:orb")
         if object then
