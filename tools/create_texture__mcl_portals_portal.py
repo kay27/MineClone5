@@ -1,6 +1,36 @@
 import png
-w, h = 64, 256;
+w, h = 16, 128;
 s = [[int(0) for c in range(w)] for c in range(h)] 
+
+def drawpixel(x, y):
+	if (x >= 0) and (x < w) and (y >= 0) and (y < h):
+		s[y][x] = 1 - s[y][x]
+
+def circle(X1, Y1, R):
+	x = 0
+	y = R
+	delta = 1 - 2 * R
+	error = 0
+	while y >= 0:
+		if Y1%w + y < w:
+			drawpixel(X1 + x, Y1 + y)
+		if Y1%w - y >= 0:
+			drawpixel(X1 + x, Y1 - y)
+		if Y1%w + y < w:
+			drawpixel(X1 - x, Y1 + y)
+		if Y1%w - y >= 0:
+			drawpixel(X1 - x, Y1 - y)
+		error = 2 * (delta + y) - 1
+		if ((delta < 0) and (error <= 0)):
+			x = x + 1
+			delta = delta + 2 * x + 1
+		elif ((delta > 0) and (error > 0)):
+			y = y - 1
+			delta = delta - 2 * y + 1
+		else:
+			x = x + 1
+			y = y - 1
+			delta = delta + 2 * (x - y)
 
 def line(y1, x1, y2, x2, v):
 	signx = 1
@@ -37,21 +67,32 @@ def line(y1, x1, y2, x2, v):
 				offsx -= dy
 
 # R, G, B, Alpha (0xFF = opaque):
-palette=[(0x00,0x00,0xaf,0xa0), (0x7f,0x0f,0xaf,0xb8)]
+palette=[(0x4f,0x1c,0xaf,0xb4), (0x30,0x03,0xaf,0xa4)]
 
-for j in range(16):
-	i = j * 4
-	line(i, 0, 63-i, 63, 2)
-	line(63, i, 0, 63-i, 2)
-	i+=1
-	line(i, 64, 63-i, 127, 2)
-	line(63, 64+i, 0, 127-i, 2)
-	i+=1
-	line(i, 128, 63-i, 191, 2)
-	line(63, 128+i, 0, 191-i, 2)
-	i+=1
-	line(i, 192, 63-i, 255, 2)
-	line(63, 192+i, 0, 255-i, 2)
+circles = h//w
+maxr = w//2
+#circle(8,12,10)
+#circle(8,24,7)
+for i in [1,2,3,5,9,10,11,13]:
+	for c in range(circles):
+		q = ((circles-c-1)+i)%w
+		circle(maxr, maxr+c*w, q)
+
+
+linesperside = 2
+linestarts = round(w / linesperside) # 8
+lineoffset = round(w / linestarts) # 2
+wminus = w - 1
+
+for j in range(linesperside):
+	for k in range(linestarts):
+		offset = k * w
+		for q in [0,1,3,4]:
+			i = j*linestarts + ((k+q)%linestarts)
+			line(i, offset, wminus-i, offset+wminus, 1)
+			line(wminus, offset+i, 0, offset+wminus-i, 1)
+
+
 
 w = png.Writer(len(s[0]), len(s), palette=palette, bitdepth=1)
 f = open('mcl_portals_portal.png', 'wb')
