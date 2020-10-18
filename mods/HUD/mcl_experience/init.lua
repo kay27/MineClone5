@@ -130,14 +130,14 @@ end)
 
 
 local name
-function get_player_xp_level(player)
+function mcl_experience.get_player_xp_level(player)
 	name = player:get_player_name()
 	return(pool[name].xp_level)
 end
 
 local name
 local temp_pool
-function set_player_xp_level(player,level)
+function mcl_experience.set_player_xp_level(player,level)
 	name = player:get_player_name()
 	pool[name].xp_level = level
 	hud_manager.change_hud({

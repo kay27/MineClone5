@@ -171,6 +171,25 @@ minetest.register_tool("mcl_tools:pick_diamond", {
 	sound = { breaks = "default_tool_breaks" },
 	_repair_material = "mcl_core:diamond",
 })
+minetest.register_tool("mcl_tools:pick_pala", {
+	description = S("Pala Pickaxe"),
+	_doc_items_longdesc = pickaxe_longdesc,
+	inventory_image = "default_tool_diamondpick.png",
+	wield_scale = wield_scale,
+	groups = { tool=1, pickaxe=1, dig_speed_class=6, },
+	tool_capabilities = {
+		-- 1/1.2
+		full_punch_interval = 0.33333333,
+		max_drop_level=15,
+		groupcaps={
+			pickaxey_dig_pala = {times=mcl_autogroup.digtimes.pickaxey_dig_diamond, uses=9999, maxlevel=0},
+		},
+		damage_groups = {fleshy=5},
+		punch_attack_uses = 781,
+	},
+	sound = { breaks = "default_tool_breaks" },
+	_repair_material = "mcl_core:diamond",
+})
 
 local get_shovel_dig_group = function(itemstring)
 	local def = minetest.registered_items[itemstring]
@@ -592,3 +611,4 @@ minetest.register_tool("mcl_tools:shears", {
 
 dofile(minetest.get_modpath("mcl_tools").."/crafting.lua")
 dofile(minetest.get_modpath("mcl_tools").."/aliases.lua")
+dofile(minetest.get_modpath("mcl_tools").."/enchanting.lua")
