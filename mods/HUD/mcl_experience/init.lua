@@ -24,12 +24,10 @@ local load_data = function(player)
 	if storage:get_int(name.."xp_save") > 0 then
 		temp_pool.xp_level = storage:get_int(name.."xp_level")
 		temp_pool.xp_bar   = storage:get_int(name.."xp_bar"  )
-		temp_pool.buffer   = 0
 		temp_pool.last_time= minetest.get_us_time()/1000000
 	else
 		temp_pool.xp_level = 0
 		temp_pool.xp_bar   = 0
-		temp_pool.buffer   = 0
 		temp_pool.last_time= minetest.get_us_time()/1000000
 	end
 end
@@ -112,10 +110,6 @@ hud_manager.hud_exists = function(player,hud_name)
     end
 end
 -------------------
-
-
-
-
 
 -- saves specific users data for when they relog
 minetest.register_on_leaveplayer(function(player)
@@ -313,7 +307,7 @@ minetest.register_on_dieplayer(function(player)
 end)
 
 
-local name, temp_pool
+local name
 local collector, pos, pos2
 local direction, distance, player_velocity, goal
 local currentvel, acceleration, multiplier, velocity
@@ -329,8 +323,6 @@ local function xp_step(self, dtime)
 		end
 		collector = minetest.get_player_by_name(self.collector)
 		if collector and collector:get_hp() > 0 and vector.distance(self.object:get_pos(),collector:get_pos()) < 5 then
-			temp_pool = pool[self.collector]
-
 			self.object:set_acceleration(vector.new(0,0,0))
 			self.disable_physics(self)
 			--get the variables
@@ -356,17 +348,7 @@ local function xp_step(self, dtime)
 				goal = velocity
 				acceleration = vector.new(goal.x-currentvel.x,goal.y-currentvel.y,goal.z-currentvel.z)
 				self.object:add_velocity(vector.add(acceleration,player_velocity))
-			elseif distance > 0.9 and temp_pool.buffer > 0 then
-				temp_pool.buffer = temp_pool.buffer - dtime
-				multiplier = 20 - distance
-				velocity = vector.multiply(direction,multiplier)
-				goal = vector.multiply(minetest.yaw_to_dir(minetest.dir_to_yaw(vector.direction(vector.new(pos.x,0,pos.z),vector.new(pos2.x,0,pos2.z)))+math.pi/2),10)
-				goal = vector.add(player_velocity,goal)
-				acceleration = vector.new(goal.x-currentvel.x,goal.y-currentvel.y,goal.z-currentvel.z)
-				self.object:add_velocity(acceleration)
-			end
-			if distance < 0.4 and temp_pool.buffer <= 0 then
-				temp_pool.buffer = temp_pool.buffer + 0.04
+			elseif distance < 0.4 then
 				mcl_experience.add_experience(collector,2)
 				self.object:remove()
 			end
