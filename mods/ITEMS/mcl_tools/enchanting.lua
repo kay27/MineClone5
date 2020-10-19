@@ -16,7 +16,7 @@ local enchantment_list = {"swiftness", "durable", "careful", "fortune", "autorep
 local hexer = {"a","b","c","d","e","f","1","2","3","4","5","6","7","8","9","0"}
 minetest.register_node("mcl_tools:enchantingtable", {
 	description = S("Enchanting Table"),
-	tiles = {"mcl_core_bedrock.png"},
+	tiles = {"enchantment_top.png", "default_obsidian.png", "enchantment_side.png", "enchantment_side.png", "enchantment_side.png", "enchantment_side.png"},
 	groups = {wood = 1, pathable = 1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	is_ground_content = false,
