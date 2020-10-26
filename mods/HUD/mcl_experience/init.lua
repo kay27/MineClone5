@@ -3,6 +3,7 @@ mcl_experience = {}
 local pool = {}
 local registered_nodes
 local max_xp = 2^31-1
+local max_orb_age = 300 -- seconds
 
 local gravity = {x = 0, y = -((tonumber(minetest.settings:get("movement_gravity"))) or 9.81), z = 0}
 local size_min, size_max = 20, 59 -- percents
@@ -147,7 +148,7 @@ function mcl_experience.set_player_xp_level(player,level)
 		return
 	end
 	pool[name].level = level
-	pool[name].xp, pool[name].next_level = mcl_experience.bar_to_xp(pool[name].bar, level)
+	pool[name].xp, pool[name].bar_step, pool[name].next_level = mcl_experience.bar_to_xp(pool[name].bar, level)
 	hud_manager.change_hud({player = player, hud_name = "xp_level", element = "text", data = tostring(level)})
 	-- we may don't update the bar
 end
@@ -237,30 +238,30 @@ function mcl_experience.add_experience(player, experience)
 
 	local old_bar, old_xp, old_level = temp_pool.bar, temp_pool.xp, temp_pool.level
 	temp_pool.xp = math.min(math.max(temp_pool.xp + experience, 0), max_xp)
-	if (temp_pool.xp >= temp_pool.xp_next_level) or (experience < 1) then
+
+	if (temp_pool.xp < temp_pool.xp_next_level) and (temp_pool.xp >= old_xp) then
+		temp_pool.bar = temp_pool.bar + temp_pool.bar_step * experience
+	else
 		temp_pool.level = mcl_experience.xp_to_level(temp_pool.xp)
 		temp_pool.bar, temp_pool.bar_step, temp_pool.xp_next_level = mcl_experience.xp_to_bar(temp_pool.xp, temp_pool.level)
-		if old_level ~= temp_pool.level then
-			if minetest.get_us_time()/1000000 - temp_pool.last_time > 0.04 then
-				if experience > 0 then
-					minetest.sound_play("level_up",{gain=0.2,to_player = name})
-				end
-				temp_pool.last_time = minetest.get_us_time()/1000000
-			end
-			hud_manager.change_hud({player = player, hud_name = "xp_level", element = "text", data = tostring(temp_pool.level)})
-		end
-	else
-		if minetest.get_us_time()/1000000 - temp_pool.last_time > 0.01 then
-			temp_pool.last_time = minetest.get_us_time()/1000000
-			if experience > 0 then
-				minetest.sound_play("experience",{gain=0.1,to_player = name,pitch=math.random(75,99)/100})
-			end
-		end
-		temp_pool.bar = temp_pool.bar + temp_pool.bar_step * experience
 	end
 
 	if old_bar ~= temp_pool.bar then
 		hud_manager.change_hud({player = player, hud_name = "experience_bar", element = "number", data = math.floor(temp_pool.bar)})
+	end
+
+	if experience > 0 and minetest.get_us_time()/1000000 - temp_pool.last_time > 0.01 then
+		if old_level ~= temp_pool.level then
+			minetest.sound_play("level_up",{gain=0.2,to_player = name})
+			temp_pool.last_time = minetest.get_us_time()/1000000 + 0.2
+		else
+			minetest.sound_play("experience",{gain=0.1,to_player = name,pitch=math.random(75,99)/100})
+			temp_pool.last_time = minetest.get_us_time()/1000000
+		end
+	end
+
+	if old_level ~= temp_pool.level then
+		hud_manager.change_hud({player = player, hud_name = "xp_level", element = "text", data = tostring(temp_pool.level)})
 	end
 end
 
@@ -342,7 +343,7 @@ local function xp_step(self, dtime)
 
 					
 	self.age = self.age + dtime
-	if self.age > 300 then
+	if self.age > max_orb_age then
 		self.object:remove()
 		return
 	end
