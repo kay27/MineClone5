@@ -196,30 +196,6 @@ mesecon.register_node("mcl_observers:observer_up",
 	end,
 })
 
-function mcl_observers.check_around(pos)
-	local n, np, frontpos
-	for _, v in ipairs(mesecon.rules.alldirs) do
-		np = {x = pos.x+v.x, y = pos.y+v.y, z = pos.z+v.z}
-		n = minetest.get_node(np)
-		if n then
-			nn = n.name
-			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
-				-- Calculate front position and compare to position:
-				if nn == "mcl_observers:observer_up_off" or nn == "mcl_observers:observer_up_on" then
-					frontpos = {x=np.x, y=np.y+1, z=np.z}
-				elseif nn == "mcl_observers:observer_down_off" or nn == "mcl_observers:observer_down_on" then
-					frontpos = {x=np.x, y=np.y-1, z=np.z}
-				else
-					frontpos = vector.add(np, minetest.facedir_to_dir(n.param2))
-				end
-				if (pos.x == frontpos.x) and (pos.y == frontpos.y) and (pos.z == frontpos.z) then
-					mcl_observers.observer_activate(np)
-				end
-			end
-		end
-	end
-end
-
 minetest.register_craft({
 	output = "mcl_observers:observer_off",
 	recipe = {
@@ -236,3 +212,160 @@ minetest.register_craft({
 		{ "mcl_core:cobble", "mcl_core:cobble", "mcl_core:cobble" },
 	}
 })
+
+-- Override some functions for observer to observe:
+mcl_observers.add_node =	minetest.add_node
+mcl_observers.set_node =	minetest.set_node
+mcl_observers.swap_node =	minetest.swap_node
+mcl_observers.remove_node =	minetest.remove_node
+
+--[[function mcl_observers.check_around(pos)
+	local n, np, fp, nn
+	for _, v in ipairs(mesecon.rules.alldirs) do
+		np = {x = pos.x+v.x, y = pos.y+v.y, z = pos.z+v.z}
+		n = minetest.get_node(np)
+		if n then
+			nn = n.name
+			if string.sub(nn, 1, 22) == "mcl_observers:observer" then
+				-- Calculate front position and compare to position:
+				if nn == "mcl_observers:observer_up_off" or nn == "mcl_observers:observer_up_on" then
+					fp = {x=np.x, y=np.y+1, z=np.z}
+				elseif nn == "mcl_observers:observer_down_off" or nn == "mcl_observers:observer_down_on" then
+					fp = {x=np.x, y=np.y-1, z=np.z}
+				else
+					fp = vector.add(np, minetest.facedir_to_dir(n.param2))
+				end
+				if (pos.x == fp.x) and (pos.y == fp.y) and (pos.z == fp.z) then
+					mcl_observers.observer_activate(np)
+				end
+			end
+		end
+	end
+end
+minetest.add_node=function(pos,node)
+	mcl_observers.add_node(pos,node)
+	mcl_observers.check_around(pos)
+end
+minetest.set_node = function(pos, node)
+	mcl_observers.set_node(pos, node)
+	mcl_observers.check_around(pos)
+end
+minetest.swap_node = function(pos, node)
+	mcl_observers.swap_node(pos, node)
+	mcl_observers.check_around(pos)
+end
+minetest.remove_node = function(pos)
+	mcl_observers.remove_node(pos)
+	mcl_observers.check_around(pos)
+end]]
+--
+-- The following 'messy' functions are 3.5 times faster!
+-- (!) 23-30 vs 95-120 (us) on Intel X3363 CPU:
+minetest.add_node=function(pos,node)
+	mcl_observers.add_node(pos,node)
+	local n=minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==-1 then
+		mcl_observers.observer_activate({x=pos.x+1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==1 then
+		mcl_observers.observer_activate({x=pos.x-1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==-1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z+1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z-1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_u" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y-1,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_d" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y+1,z=pos.z})
+	end
+end
+minetest.set_node=function(pos,node)
+	mcl_observers.set_node(pos,node)
+	local n=minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==-1 then
+		mcl_observers.observer_activate({x=pos.x+1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==1 then
+		mcl_observers.observer_activate({x=pos.x-1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==-1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z+1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z-1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_u" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y-1,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_d" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y+1,z=pos.z})
+	end
+end
+minetest.swap_node=function(pos,node)
+	mcl_observers.swap_node(pos,node)
+	local n=minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==-1 then
+		mcl_observers.observer_activate({x=pos.x+1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==1 then
+		mcl_observers.observer_activate({x=pos.x-1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==-1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z+1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z-1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_u" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y-1,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_d" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y+1,z=pos.z})
+	end
+end
+minetest.remove_node=function(pos)
+	mcl_observers.remove_node(pos)
+	local n=minetest.get_node({x=pos.x+1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==-1 then
+		mcl_observers.observer_activate({x=pos.x+1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x-1,y=pos.y,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).x==1 then
+		mcl_observers.observer_activate({x=pos.x-1,y=pos.y,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z-1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==-1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z+1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y,z=pos.z+1})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_o" and minetest.facedir_to_dir(n.param2).z==1 then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y,z=pos.z-1})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_u" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y-1,z=pos.z})
+	end
+	n=minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z})
+	if n and n.name and string.sub(n.name,1,24)=="mcl_observers:observer_d" then
+		mcl_observers.observer_activate({x=pos.x,y=pos.y+1,z=pos.z})
+	end
+end
