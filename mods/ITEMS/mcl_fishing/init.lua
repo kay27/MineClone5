@@ -32,16 +32,20 @@ local fish = function(itemstack, player)
 		local num = 0
 		local ent = nil
 		local noent = true
-
+	
+	
+		local durability = 65
+		local unbreaking = mcl_enchanting.get_enchantment(itemstack, "unbreaking")
+		if unbreaking > 0 then
+			durability = durability * (unbreaking + 1)
+		end
+		
 		--Check for bobber if so handle.
 		for n = 1, #objs do
 			ent = objs[n]:get_luaentity()
 			if ent then
 				if ent.player and ent.objtype=="fishing" then
 					if (player:get_player_name() == ent.player) then
-						if mcl_experience.throw_experience then
-							mcl_experience.throw_experience(pos, math.random(1,6))
-						end
 						noent = false
 						if ent._dive == true then
 							local itemname
@@ -104,10 +108,13 @@ local fish = function(itemstack, player)
 							if inv:room_for_item("main", item) then
 								inv:add_item("main", item)
 							end
+							if mcl_experience.throw_experience then
+								mcl_experience.throw_experience(pos, math.random(1,6))
+							end
 
 							if not minetest.is_creative_enabled(player:get_player_name()) then
 								local idef = itemstack:get_definition()
-								itemstack:add_wear(65535/65) -- 65 uses
+								itemstack:add_wear(65535/durability) -- 65 uses
 								if itemstack:get_count() == 0 and idef.sound and idef.sound.breaks then
 									minetest.sound_play(idef.sound.breaks, {pos=player:get_pos(), gain=0.5}, true)
 								end
@@ -121,7 +128,7 @@ local fish = function(itemstack, player)
 						if def.walkable then
 							if not minetest.is_creative_enabled(player:get_player_name()) then
 								local idef = itemstack:get_definition()
-								itemstack:add_wear((65535/65)*2) -- if so and not creative then wear double like in MC.
+								itemstack:add_wear((65535/durability)*2) -- if so and not creative then wear double like in MC.
 								if itemstack:get_count() == 0 and idef.sound and idef.sound.breaks then
 									minetest.sound_play(idef.sound.breaks, {pos=player:get_pos(), gain=0.5}, true)
 								end
@@ -177,7 +184,7 @@ local bobber_on_step = function(self, dtime)
 	if self._tick % 5 == 0 and self.player ~= nil and player ~= nil then
 		--Destroy bobber if item not wielded.
 		local wield = player:get_wielded_item()
-		if ((not wield) or (wield:get_name() ~= "mcl_fishing:fishing_rod")) then
+		if ((not wield) or (minetest.get_item_group(wield:get_name(), "fishing_rod") <= 0)) then
 			self.object:remove()
 			return
 		end
@@ -315,7 +322,7 @@ minetest.register_tool("mcl_fishing:fishing_rod", {
 	_tt_help = S("Catches fish in water"),
 	_doc_items_longdesc = S("Fishing rods can be used to catch fish."),
 	_doc_items_usagehelp = S("Rightclick to launch the bobber. When it sinks right-click again to reel in an item. Who knows what you're going to catch?"),
-	groups = { tool=1 },
+	groups = { tool=1, fishing_rod=1 },
 	inventory_image = "mcl_fishing_fishing_rod.png",
 	wield_image = "mcl_fishing_fishing_rod.png^[transformR270",
 	wield_scale = { x = 1.5, y = 1.5, z = 1 },
@@ -343,7 +350,7 @@ minetest.register_craft({
 })
 minetest.register_craft({
 	type = "fuel",
-	recipe = "mcl_fishing:fishing_rod",
+	recipe = "group:fishing_rod",
 	burntime = 15,
 })
 
