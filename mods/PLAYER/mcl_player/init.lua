@@ -163,3 +163,19 @@ minetest.register_globalstep(function(dtime)
 		end
 	end
 end)
+
+-- Don't change HP if the player falls in the water:
+-- TODO 1: other liquid nodes, e.g. cauldrons, lava too?
+-- TODO 2: monitor https://github.com/minetest/minetest/issues/10588
+minetest.register_on_player_hpchange(function(player, hp_change, reason)
+	if reason and reason.type == "fall" and player then
+		local pos = player:get_pos()
+		if pos then
+			local node = minetest.get_node(pos)
+			if (minetest.get_item_group(node.name, "water") ~= 0) then
+				hp_change = 0
+			end
+		end
+	end
+	return hp_change
+end, true)
