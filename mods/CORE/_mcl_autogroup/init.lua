@@ -127,6 +127,9 @@ local overwrite = function()
 						local diggroup = basegroup.."_dig_"..materials[g]
 						newgroups = calculate_group(hardness, materials[g], diggroup, newgroups, g, ndef.groups[basegroup])
 						for e=1,max_efficiency_level do
+							if minetest.is_creative_enabled("") then
+								break
+							end
 							newgroups = calculate_group(hardness, materials[g], diggroup .. "_efficiency_" .. e, newgroups, g, ndef.groups[basegroup], e)
 						end
 						groups_changed = true
@@ -151,6 +154,9 @@ local overwrite = function()
 							(ndef.groups[minigroup] and minigroup ~= "swordy_cobweb" and minigroup ~= "shearsy_wool") then
 						newgroups = calculate_group(hardness, minigroup, diggroup, newgroups, ar, 1)
 						for e=1,max_efficiency_level do
+							if minetest.is_creative_enabled("") then
+								break
+							end
 							newgroups = calculate_group(hardness, minigroup, diggroup .. "_efficiency_" .. e, newgroups, ar, 1, e)
 						end
 						groups_changed = true
