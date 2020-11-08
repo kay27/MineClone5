@@ -69,7 +69,7 @@ mcl_enchanting.enchantments.curse_of_vanishing = {
 	disallow = {clock = true},
 	incompatible = {},
 	weight = 1,
-	description = "Except when in creative mode, items cannot be removed from armor slots except due to death or breaking.",
+	description = "Item destroyed on death.",
 	curse = true,
 	on_enchant = function() end,
 	requires_tool = false,
@@ -101,7 +101,7 @@ mcl_enchanting.enchantments.efficiency = {
 	weight = 10,
 	description = "Increases mining speed.",
 	curse = false,
-	on_enchant = function(itemstack, level, itemdef)
+	on_enchant = function(itemstack, level)
 		local tool_capabilities = itemstack:get_tool_capabilities()
 		local groupcaps = {}
 		for group, capability in pairs(tool_capabilities.groupcaps) do
@@ -129,8 +129,8 @@ mcl_enchanting.enchantments.feather_falling = {
 	requires_tool = false,
 }
 
--- unimplemented
-mcl_enchanting.enchantments.fire_aspect = {
+-- requires missing MineClone2 feature
+--[[mcl_enchanting.enchantments.fire_aspect = {
 	name = "Fire Aspect",
 	max_level = 2,
 	primary = {sword = true},
@@ -142,7 +142,7 @@ mcl_enchanting.enchantments.fire_aspect = {
 	curse = false,
 	on_enchant = function() end,
 	requires_tool = false,
-}
+}]]--
 
 -- unimplemented
 mcl_enchanting.enchantments.fire_protection = {
@@ -159,8 +159,8 @@ mcl_enchanting.enchantments.fire_protection = {
 	requires_tool = false,
 }
 
--- unimplemented
-mcl_enchanting.enchantments.flame = {
+-- requires missing MineClone2 feature
+--[[mcl_enchanting.enchantments.flame = {
 	name = "Flame",
 	max_level = 1,
 	primary = {bow = true},
@@ -172,9 +172,9 @@ mcl_enchanting.enchantments.flame = {
 	curse = false,
 	on_enchant = function() end,
 	requires_tool = false,
-}
+}]]--
 
--- unimplemented
+-- implemented in mcl_item_entity
 mcl_enchanting.enchantments.fortune = {
 	name = "Fortune",
 	max_level = 4,
@@ -189,7 +189,7 @@ mcl_enchanting.enchantments.fortune = {
 	requires_tool = false,
 }
 
--- unimplemented
+-- implemented via walkover.register_global
 mcl_enchanting.enchantments.frost_walker = {
 	name = "Frost Walker",
 	max_level = 2,
@@ -203,6 +203,23 @@ mcl_enchanting.enchantments.frost_walker = {
 	on_enchant = function() end,
 	requires_tool = false,
 }
+
+walkover.register_global(function(pos, _, player)
+	local boots = player:get_inventory():get_stack("armor", 5)
+	local frost_walker = mcl_enchanting.get_enchantment(boots, "frost_walker")
+	if frost_walker <= 0 then
+		return
+	end
+	local radius = frost_walker + 2
+	local minp = {x = pos.x - radius, y = pos.y, z = pos.z - radius}
+	local maxp = {x = pos.x + radius, y = pos.y, z = pos.z + radius}
+	local positions = minetest.find_nodes_in_area_under_air(minp, maxp, "mcl_core:water_source")
+	for _, p in ipairs(positions) do
+		if vector.distance(pos, p) <= radius then
+			minetest.set_node(p, {name = "mcl_core:frosted_ice_0"})
+		end
+	end
+end)
 
 -- implemented in mcl_bows
 mcl_enchanting.enchantments.infinity = {
@@ -219,7 +236,7 @@ mcl_enchanting.enchantments.infinity = {
 	requires_tool = false,
 }
 
--- unimplemented
+-- implemented via minetest.calculate_knockback
 mcl_enchanting.enchantments.knockback = {
 	name = "Knockback",
 	max_level = 2,
@@ -233,6 +250,22 @@ mcl_enchanting.enchantments.knockback = {
 	on_enchant = function() end,
 	requires_tool = false,
 }
+
+local old_calculate_knockback = minetest.calculate_knockback
+function minetest.calculate_knockback(player, hitter, time_from_last_punch, tool_capabilities, dir, distance, damage)
+	local knockback = old_calculate_knockback(player, hitter, time_from_last_punch, tool_capabilities, dir, distance, damage)
+	local luaentity
+	if hitter then
+		luaentity = hitter:get_luaentity()
+	end
+	if hitter and hitter:is_player() then
+		local wielditem = hitter:get_wielded_item()
+		knockback = knockback + 3 * mcl_enchanting.get_enchantment(wielditem, "knockback")
+	elseif luaentity and luaentity._knockback then
+		knockback = knockback + luaentity._knockback
+	end
+	return knockback
+end
 
 -- unimplemented
 mcl_enchanting.enchantments.looting = {
@@ -294,7 +327,7 @@ mcl_enchanting.enchantments.mending = {
 	requires_tool = true,
 }
 
--- unimplemented
+-- implemented in mcl_bows
 mcl_enchanting.enchantments.power = {
 	name = "Power",
 	max_level = 5,
@@ -339,7 +372,7 @@ mcl_enchanting.enchantments.protection = {
 	requires_tool = false,
 }
 
--- unimplemented
+-- implemented via minetest.calculate_knockback (together with the Knockback enchantment) and mcl_bows
 mcl_enchanting.enchantments.punch = {
 	name = "Punch",
 	max_level = 2,
@@ -369,7 +402,7 @@ mcl_enchanting.enchantments.respiration = {
 	requires_tool = false,
 }
 
--- unimplemented
+-- implemented via on_enchant
 mcl_enchanting.enchantments.sharpness = {
 	name = "Sharpness",
 	max_level = 5,
@@ -378,13 +411,21 @@ mcl_enchanting.enchantments.sharpness = {
 	disallow = {},
 	incompatible = {bane_of_anthropods = true, smite = true},
 	weight = 5,
-	description = "Increases damage and applies Slowness IV to arthropod mobs (spiders, cave spiders, silverfish and endermites).",
+	description = "Increases damage.",
 	curse = false,
-	on_enchant = function() end,
+	on_enchant = function(itemstack, level)
+		local tool_capabilities = itemstack:get_tool_capabilities()
+		local damage_groups = {}
+		for group, damage in pairs(tool_capabilities.damage_groups) do
+			damage_groups[group] = damage + level * 0.5
+		end
+		tool_capabilities.damage_groups = damage_groups
+		itemstack:get_meta():set_tool_capabilities(tool_capabilities)
+	end,
 	requires_tool = false,
 }
 
--- unimplemented
+-- implemented in mcl_item_entity
 mcl_enchanting.enchantments.silk_touch = {
 	name = "Silk Touch",
 	max_level = 1,
@@ -398,7 +439,6 @@ mcl_enchanting.enchantments.silk_touch = {
 	on_enchant = function() end,
 	requires_tool = false,
 }
-
 
 -- unimplemented
 mcl_enchanting.enchantments.smite = {
@@ -424,14 +464,14 @@ mcl_enchanting.enchantments.soul_speed = {
 	disallow = {non_combat_armor = true},
 	incompatible = {frost_walker = true},
 	weight = 2,
-	description = "Incerases walking speed on soul sand.",
+	description = "Increases walking speed on soul sand.",
 	curse = false,
 	on_enchant = function() end,
 	requires_tool = false,
 }
 
--- unimplemented
-mcl_enchanting.enchantments.sweeping_edge = {
+-- requires missing MineClone2 feature
+--[[mcl_enchanting.enchantments.sweeping_edge = {
 	name = "Sweeping Edge",
 	max_level = 3,
 	primary = {sword = true},
@@ -443,7 +483,7 @@ mcl_enchanting.enchantments.sweeping_edge = {
 	curse = false,
 	on_enchant = function() end,
 	requires_tool = false,
-}
+}]]--
 
 -- unimplemented
 mcl_enchanting.enchantments.thorns = {
@@ -471,91 +511,13 @@ mcl_enchanting.enchantments.unbreaking = {
 	weight = 5,
 	description = "Increases item durability.",
 	curse = false,
-	on_enchant = function(itemstack, level, itemdef)		
-		local new_capabilities = itemstack:get_tool_capabilities()
-		for group, capability in pairs(new_capabilities.groupcaps) do
+	on_enchant = function(itemstack, level)		
+		local tool_capabilities = itemstack:get_tool_capabilities()
+		for group, capability in pairs(tool_capabilities.groupcaps) do
 			capability.uses = capability.uses * (1 + level)
 		end
-		new_capabilities.punch_attack_uses = new_capabilities.punch_attack_uses * (1 + level)
-		itemstack:get_meta():set_tool_capabilities(new_capabilities)
+		tool_capabilities.punch_attack_uses = tool_capabilities.punch_attack_uses * (1 + level)
+		itemstack:get_meta():set_tool_capabilities(tool_capabilities)
 	end,
 	requires_tool = true,
 }
-
---[[
-local pickaxes = {"mcl_tools:pick_wood", "mcl_tools:pick_stone", "mcl_tools:pick_gold", "mcl_tools:pick_iron", "mcl_tools:pick_diamond"}
-local pickaxes_better_than_iron = {"mcl_tools:pick_iron", "mcl_tools:pick_diamond"}
-local pickaxes_better_than_stone = {"mcl_tools:pick_stone", "mcl_tools:pick_gold", "mcl_tools:pick_iron", "mcl_tools:pick_diamond"}
-local shovels = {"mcl_tools:shovel_wood", "mcl_tools:shovel_stone", "mcl_tools:shovel_gold", "mcl_tools:shovel_iron", "mcl_tools:shovel_diamond"}
-
-local silk_touch_tool_lists = {
-	["mcl_books:bookshelf"] = true,
-	["mcl_core:clay"] = true,
-	["mcl_core:stone_with_coal"] = pickaxes,
-	["group:coral_block"] = pickaxes,
-	["group:coral"] = true,
-	["group:coral_fan"] = true,
-	["mcl_core:stone_with_diamond"] = pickaxes_better_than_iron,
-	["mcl_core:stone_with_emerald"] = pickaxes_better_than_iron,
-	["mcl_chests:ender_chest"] = pickaxes,
-	["group:glass"] = true,
-	["mcl_nether:glowstone"] = true,
-	["mcl_core:dirt_with_grass"] = true,
-	["mcl_core:gravel"] = true,
-	["mcl_core:ice"] = true,
-	["mcl_core:stone_with_lapis"] = pickaxes_better_than_stone,
-	["group:leaves"] = true,
-	["mcl_farming:melon"] = true,
-	["group:huge_mushroom"] = true,
-	["mcl_core:mycelium"] = true,
-	["mcl_nether:quartz_ore"] = pickaxes,
-	["mcl_core:packed_ice"] = true,
-	["mcl_core:podzol"] = true,
-	["mcl_core:stone_with_redstone"] = pickaxes_better_than_iron,
-	["mcl_ocean:sea_lantern"] = true,
-	["group:top_snow"] = shovels,
-	["mcl_core:snowblock"] = shovels,
-	["mcl_core:stone"] = pickaxes,
-}
-
-minetest.register_on_mods_loaded(function()
-	local old_handle_node_drops = minetest.handle_node_drops
-	function minetest.handle_node_drops(pos, drops, digger)
-		if digger and digger:is_player() then
-			local wielditem = digger:get_wielded_item()
-			local tooldef = wielditem:get_definition()
-			if tooldef._silk_touch then
-				local nodename = minetest.get_node(pos).name
-				local nodedef = minetest.registered_nodes[nodename]
-				local silk_touch_spec = silk_touch_tool_lists[nodename]
-				local suitable_tool = false
-				local tool_list
-				if silk_touch_spec == true then
-					suitable_tool = true
-				elseif silk_touch_spec then
-					tool_list = silk_touch_spec
-				else
-					for k, v in pairs(nodedef.groups) do
-						if v > 0 then
-							local group_spec = silk_touch_tool_lists["group:" .. k]
-							if group_spec == true then
-								suitable_tool = true
-							elseif group_spec then
-								toollist = group_spec
-								break
-							end
-						end
-					end
-				end
-				if tool_list and not suitable_tool then
-					suitable_tool = (table.indexof(tool_list, tooldef._original_tool) ~= -1)
-				end
-				if suitable_tool then
-					drops = {nodename}
-				end
-			end
-		end
-		old_handle_node_drops(pos, drops, digger)
-	end
-end) 
---]] 
