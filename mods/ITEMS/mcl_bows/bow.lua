@@ -130,13 +130,8 @@ S("The speed and damage of the arrow increases the longer you charge. The regula
 	stack_max = 1,
 	range = 4,
 	-- Trick to disable digging as well
-<<<<<<< HEAD
 	on_use = function() return end,
-	groups = {weapon=1,weapon_ranged=1,bow=1},
-=======
-	on_use = function() end,
 	groups = {weapon=1,weapon_ranged=1,bow=1,enchantability=1},
->>>>>>> ef/master
 })
 
 -- Iterates through player inventory and resets all the bows in "charging" state back to their original stage
