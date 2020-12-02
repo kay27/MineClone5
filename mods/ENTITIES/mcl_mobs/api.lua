@@ -139,7 +139,7 @@ local mob_sound = function(self, soundname, is_opinion, fixed_pitch)
 	end
 end
 
--- Reeturn true if object is in view_range
+-- Return true if object is in view_range
 local function object_in_range(self, object)
 	if not object then
 		return false
@@ -158,11 +158,9 @@ local function object_in_range(self, object)
 	else
 		dist = self.view_range
 	end
-	if vector.distance(self.object:get_pos(), object:get_pos()) > dist then
-		return false
-	else
-		return true
-	end
+
+	local p1, p2 = self.object:get_pos(), object:get_pos()
+	return p1 and p2 and (vector.distance(p1, p2) <= dist)
 end
 
 -- attack player/mob
@@ -2227,10 +2225,8 @@ local do_states = function(self, dtime)
 	-- attack routines (explode, dogfight, shoot, dogshoot)
 	elseif self.state == "attack" then
 
-		-- calculate distance from mob and enemy
 		local s = self.object:get_pos()
 		local p = self.attack:get_pos() or s
-		local dist = vector.distance(p, s)
 
 		-- stop attacking if player invisible or out of range
 		if not self.attack
@@ -2250,6 +2246,9 @@ local do_states = function(self, dtime)
 
 			return
 		end
+
+		-- calculate distance from mob and enemy
+		local dist = vector.distance(p, s)
 
 		if self.attack_type == "explode" then
 
