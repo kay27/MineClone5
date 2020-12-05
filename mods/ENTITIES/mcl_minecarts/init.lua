@@ -177,12 +177,8 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 	function cart:on_step(dtime)
 		local vel = self.object:get_velocity()
 		local update = {}
-		if self._last_float_check == nil then
-			self._last_float_check = 0
-		else
-			self._last_float_check = self._last_float_check + dtime
-		end
-		local pos, rou_pos, node
+		self._last_float_check = (self._last_float_check or 0) + dtime
+		local pos, rou_pos, node, speed_mod
 		-- Drop minecart if it isn't on a rail anymore
 		if self._last_float_check >= mcl_minecarts.check_float_time then
 			pos = self.object:get_pos()
@@ -295,8 +291,36 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 			vel = vector.add(vel, self._velocity)
 			self.object:set_velocity(vel)
 			self._old_dir.y = 0
-		elseif vector.equals(vel, {x=0, y=0, z=0}) and (not has_fuel) then
-			return
+		elseif vel.x == 0 and vel.y == 0 and vel.z == 0 then
+			if self._last_vel_not_zero then
+				if not node then
+					pos = self.object:get_pos()
+					rou_pos = vector.round(pos)
+					node = minetest.get_node(rou_pos)
+				end
+				if node then
+					speed_mod = minetest.registered_nodes[node.name]._rail_acceleration
+					if speed_mod and speed_mod == 0 then
+						speed_mod = false
+					end
+				end
+				if speed_mod then
+					local last_dir = mcl_minecarts:velocity_to_dir(self._last_vel_not_zero)
+					local dir = {x=-last_dir.x, y=-last_dir.y, z=-last_dir.z}
+					vel = vector.multiply(dir, speed_mod)
+					self.object:set_velocity(vel)
+					self.object:set_acceleration(vel)
+					self._old_pos = vector.new(pos)
+					self._old_dir = vector.new(dir)
+					self._old_vel = vector.new(vel)
+					return
+				end
+			end
+			if not has_fuel then
+				return
+			end
+		else
+			self._last_vel_not_zero = {x = vel.x, y = vel.y, z = vel.z}
 		end
 
 		local dir, last_switch = nil, nil
@@ -313,11 +337,9 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 
 			if not rou_pos then
 				rou_pos = vector.round(pos)
-			end
-			local rou_old = vector.round(self._old_pos)
-			if not node then
 				node = minetest.get_node(rou_pos)
 			end
+			local rou_old = vector.round(self._old_pos)
 			local node_old = minetest.get_node(rou_old)
 
 			-- Update detector rails
@@ -346,8 +368,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 		end
 
 		-- Stop cart if velocity vector flips
-		if self._old_vel and self._old_vel.y == 0 and
-				(self._old_vel.x * vel.x < 0 or self._old_vel.z * vel.z < 0) then
+		if self._old_vel and self._old_vel.y == 0 and (self._old_vel.x * vel.x < 0 or self._old_vel.z * vel.z < 0) then
 			self._old_vel = {x = 0, y = 0, z = 0}
 			self._old_pos = pos
 			self.object:set_velocity(vector.new())
@@ -415,7 +436,12 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 			-- Slow down or speed up
 			local acc = dir.y * -1.8
 			local friction = 0.4
-			local speed_mod = minetest.registered_nodes[minetest.get_node(pos).name]._rail_acceleration
+			if speed_mod == nil then
+				speed_mod = minetest.registered_nodes[minetest.get_node(pos).name]._rail_acceleration
+				if speed_mod and speed_mod == 0 then
+					speed_mod = false
+				end
+			end
 
 			acc = acc - friction
 
@@ -423,7 +449,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 				acc = acc + 0.6
 			end
 
-			if speed_mod and speed_mod ~= 0 then
+			if speed_mod then
 				acc = acc + speed_mod + friction
 			end
 
