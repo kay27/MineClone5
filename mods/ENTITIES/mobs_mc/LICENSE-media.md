@@ -84,6 +84,12 @@ Origin of those models:
 * [AGFX](http://www.freesound.org/people/DrMinky/sounds/) (CC0)
     * `mobs_mc_chicken_child.ogg`
         * Source: <https://freesound.org/people/AGFX/sounds/43380/>
+* [evsecrets](https://freesound.org/people/evsecrets/sounds/) (CC0)
+    * `mobs_mc_chicken_*.ogg`
+        * Source: <https://freesound.org/people/evsecrets/sounds/346961/>
+* [contramundum](https://freesound.org/people/contramundum/sounds/)
+    * `mobs_mc_parrot_*.ogg`
+        * Source: <https://freesound.org/people/contramundum/sounds/388417/>
 * Randomation (CC0)
     * `green_slime_damage.ogg`
     * `green_slime_attack.ogg`
@@ -99,6 +105,14 @@ Origin of those models:
     * `mobs_mc_cow_hurt.ogg` (CC0)
         * Heavily modified
         * Source: <https://freesound.org/people/Bird_man/packs/16972/>
+* [Klaraschick](https://freesound.org/people/Klaraschick/)
+    * `mobs_mc_cow_milk.ogg` (CC0)
+        * shortened
+        * Source: <https://freesound.org/people/Klaraschick/sounds/415312/>
+* [Hitrison](https://freesound.org/people/Hitrison/)
+    * `mobs_mc_cow_mushroom_stew.ogg` (CC BY 3.0)
+        * sound was modified
+        * Source: <https://freesound.org/people/Hitrison/sounds/251411/>
 * [NPXcoot](https://github.com/NPXcoot1) (CC BY-SA 4.0)
     * `mobs_mc_ender_dragon_*`
 * Blender Foundation (CC BY 3.0)
@@ -111,7 +125,6 @@ Origin of those models:
     * `mobs_mc_blaze_hurt.ogg`
 	* Source: <https://freesound.org/people/thefilmbakery/sounds/137836/>
 * TenPlus1, from `mobs_monster` or `mobs_animal` mod (MIT License)
-    * `mobs_chicken.ogg`
     * `mobs_fireball.ogg`
     * `mobs_mc_cat_idle.1.ogg`
     * `mobs_mc_llama.ogg`
@@ -147,6 +160,13 @@ Origin of those models:
         * Source: <https://freesound.org/people/GoodListener/sounds/322454/>
     * `mobs_mc_horse_death.ogg` (CC BY 3.0)
         * Source: <https://freesound.org/people/GoodListener/sounds/322445/>
+* [Garuda1982](https://freesound.org/people/Garuda1982/)
+    * `mobs_mc_donkey_random.1.ogg` (CC BY 3.0)
+    * `mobs_mc_donkey_hurt.ogg` (CC BY 3.0)
+    * `mobs_mc_donkey_death.ogg` (CC BY 3.0)
+        * Source: <https://freesound.org/people/Garuda1982/sounds/539505/>
+* [JarredGibb](https://freesound.org/people/JarredGibb/sounds/233131/)
+    * `mobs_mc_donkey_random.2.ogg` (CC0)
 * [ERH](https://freesound.org/people/ERH/)
     * `mobs_mc_horse_random.2.ogg` (CC BY 3.0)
         * Source: <https://freesound.org/people/ERH/sounds/32043/>
@@ -164,6 +184,10 @@ Origin of those models:
 * [suonho](https://freesound.org/people/suonho/)
     * `mobs_mc_bat_idle.ogg` (CC BY 3.0)
         * Source: <https://freesound.org/people/suonho/sounds/59344/>
+* [toefur](https://freesound.org/people/toefur/)
+    * `mobs_mc_bat_hurt.*.ogg` (CC0)
+    * `mobs_mc_bat_death.ogg` (CC0)
+        * Source: <https://freesound.org/people/toefur/sounds/288941/>
 * [cmusounddesign](https://freesound.org/people/cmusounddesign/)
     * `mobs_mc_cat_hiss.ogg` (CC BY 3.0)
         * Source: <https://freesound.org/people/cmusounddesign/sounds/71899/>

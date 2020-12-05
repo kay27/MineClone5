@@ -22,10 +22,14 @@ mobs:register_mob("mobs_mc:parrot", {
 	mesh = "mobs_mc_parrot.b3d",
 	textures = {{"mobs_mc_parrot_blue.png"},{"mobs_mc_parrot_green.png"},{"mobs_mc_parrot_grey.png"},{"mobs_mc_parrot_red_blue.png"},{"mobs_mc_parrot_yellow_blue.png"}},
 	visual_size = {x=3, y=3},
-	makes_footstep_sound = true,
 	walk_velocity = 3,
 	run_velocity = 5,
-	-- TODO: sounds
+	sounds = {
+		random = "mobs_mc_parrot_random",
+		damage = {name="mobs_mc_parrot_hurt", gain=0.3},
+		death = {name="mobs_mc_parrot_death", gain=0.6},
+		distance = 16,
+	},
 	drops = {
 		{name = mobs_mc.items.feather,
 		chance = 1,
@@ -54,6 +58,7 @@ mobs:register_mob("mobs_mc:parrot", {
 	floats = 1,
 	physical = true,
 	fly = true,
+	makes_footstep_sound = false,
 	fear_height = 0,
 	view_range = 16,
 	follow = mobs_mc.follow.parrot,
@@ -80,10 +85,8 @@ mobs:register_mob("mobs_mc:parrot", {
 
 })
 
-
--- Spawn disabled because parrots are not very smart.
--- TODO: Re-enable when parrots are finished
---mobs:spawn_specific("mobs_mc:parrot", mobs_mc.spawn.jungle, {"air"}, 0, minetest.LIGHT_MAX+1, 30, 30000, 1, mobs_mc.spawn_height.water+1, mobs_mc.spawn_height.overworld_max)
+-- Parrots spawn rarely in jungles. TODO: Also check for jungle *biome*
+mobs:spawn_specific("mobs_mc:parrot", {"mcl_core:jungletree", "mcl_core:jungleleaves"}, {"air"}, 0, minetest.LIGHT_MAX+1, 7, 30000, 1, mobs_mc.spawn_height.water+7, mobs_mc.spawn_height.overworld_max)
 
 -- spawn eggs
-mobs:register_egg("mobs_mc:parrot", S("Parrot"), "mobs_mc_spawn_icon_parrot.png", 0, true)
+mobs:register_egg("mobs_mc:parrot", S("Parrot"), "mobs_mc_spawn_icon_parrot.png", 0)
