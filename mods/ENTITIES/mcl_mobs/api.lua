@@ -759,7 +759,7 @@ local check_for_death = function(self, cause, cmi_cause)
 
 		local pos = self.object:get_pos()
 
-		if mod_experience and self.hp_min and self.hp_max then
+		if mod_experience and self.hp_min and self.hp_max and (not self.child and self.type ~= "monster") then
 			mcl_experience.throw_experience(pos, math.ceil( math.random(self.hp_min,self.hp_max+5) / 5) )
 		end
 	end
@@ -2160,7 +2160,9 @@ local follow_flop = function(self)
 			self.object:set_acceleration({x = 0, y = DEFAULT_FALL_SPEED, z = 0})
 
 			local sdef = minetest.registered_nodes[self.standing_on]
+			-- Flop on ground
 			if sdef and sdef.walkable then
+				mob_sound(self, "flop")
 				self.object:set_velocity({
 					x = math.random(-FLOP_HOR_SPEED, FLOP_HOR_SPEED),
 					y = FLOP_HEIGHT,
@@ -4354,6 +4356,8 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 			clicker:set_wielded_item(item)
 		end
+
+		mob_sound(self, "eat", nil, true)
 
 		-- increase health
 		self.health = self.health + 4

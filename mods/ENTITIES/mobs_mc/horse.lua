@@ -106,6 +106,7 @@ local horse = {
 		-- TODO: Separate damage sound
 		damage = "mobs_mc_horse_death",
 		death = "mobs_mc_horse_death",
+		eat = "mobs_mc_animal_eat_generic",
 		distance = 16,
 	},
 	fear_height = 4,
@@ -362,6 +363,8 @@ skeleton_horse.sounds = {
 	random = "mobs_mc_skeleton_random",
 	death = "mobs_mc_skeleton_death",
 	damage = "mobs_mc_skeleton_hurt",
+	eat = "mobs_mc_animal_eat_generic",
+	base_pitch = 0.95,
 	distance = 16,
 }
 skeleton_horse.harmed_by_heal = true
@@ -379,9 +382,12 @@ zombie_horse.drops = {
 	max = 2,},
 }
 zombie_horse.sounds = {
-	random = "mobs_mc_zombie_growl",
-	death = "mobs_mc_zombie_death",
-	damage = "mobs_mc_zombie_hurt",
+	random = "mobs_mc_horse_random",
+	-- TODO: Separate damage sound
+	damage = "mobs_mc_horse_death",
+	death = "mobs_mc_horse_death",
+	eat = "mobs_mc_animal_eat_generic",
+	base_pitch = 0.5,
 	distance = 16,
 }
 zombie_horse.harmed_by_heal = true
@@ -400,6 +406,7 @@ donkey.sounds = {
 	random = "mobs_mc_donkey_random",
 	damage = "mobs_mc_donkey_hurt",
 	death = "mobs_mc_donkey_death",
+	eat = "mobs_mc_animal_eat_generic",
 	distance = 16,
 }
 donkey.visual_size = { x=horse.visual_size.x*d, y=horse.visual_size.y*d }
@@ -421,7 +428,8 @@ local m = 0.94
 local mule = table.copy(donkey)
 mule.textures = {{"blank.png", "mobs_mc_mule.png", "blank.png"}}
 mule.visual_size = { x=horse.visual_size.x*m, y=horse.visual_size.y*m }
-mule.sounds = horse.sounds
+mule.sounds = table.copy(donkey.sounds)
+mule.sounds.base_pitch = 1.15
 mule.collisionbox = {
 	horse.collisionbox[1] * m,
 	horse.collisionbox[2] * m,

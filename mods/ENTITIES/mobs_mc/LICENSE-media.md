@@ -115,12 +115,31 @@ Origin of those models:
         * Source: <https://freesound.org/people/Hitrison/sounds/251411/>
 * [NPXcoot](https://github.com/NPXcoot1) (CC BY-SA 4.0)
     * `mobs_mc_ender_dragon_*`
+* [bevibeldesign](https://freesound.org/people/bevibeldesign/)
+    * `mobs_mc_wither_spawn.ogg` (CC0)
+        * Source: <https://freesound.org/people/bevibeldesign/sounds/366095/>
+* [pointparkcinema](https://freesound.org/people/pointparkcinema/)
+    * `mobs_mc_guardian_random.1.ogg` (CC0)
+        * Source: <https://freesound.org/people/pointparkcinema/sounds/407252/>
+* [nornalbion](https://freesound.org/people/nornalbion/)
+    * `mobs_mc_guardian_random.2.ogg` (CC BY 3.0)
+    * `mobs_mc_guardian_random.3.ogg` (CC BY 3.0)
+    * `mobs_mc_guardian_hurt.*.ogg` (CC BY 3.0)
+        * Sounds were modified
+        * Source: <https://freesound.org/people/nornalbion/sounds/195733/>
+* [TheBuilder15](https://freesound.org/people/TheBuilder15/)
+    * `mobs_mc_guardian_death.ogg` (CC0)
+        * Source: <https://freesound.org/people/pointparkcinema/sounds/407252/>
 * Blender Foundation (CC BY 3.0)
     * `mobs_sheep.ogg`,
 * daufinsyd (MIT License)
     * `mobs_mc_blaze_breath.ogg`
     * `mobs_mc_blaze_died.ogg`
     * `mobs_mc_squid_hurt.ogg`
+* [kyles](https://freesound.org/people/kyles/)
+    * `mobs_mc_squid_flop.*.ogg` (CC0)
+        * Source: <https://freesound.org/people/kyles/sounds/450830/>
+    * `mobs_mc_squid_flop.*.ogg` (CC0)
 * [thefilmbakery](https://freesound.org/people/thefilmbakery/) (CC0)
     * `mobs_mc_blaze_hurt.ogg`
 	* Source: <https://freesound.org/people/thefilmbakery/sounds/137836/>
@@ -197,6 +216,13 @@ Origin of those models:
 * [ebcrosby](https://freesound.org/people/ebcrosby/)
     * `mobs_mc_ocelot_hurt.ogg` (CC BY 3.0)
         * Source: <https://freesound.org/people/ebcrosby/sounds/332979/>
+* Hybrid Dog (forum.minetest.net)
+    * `mobs_mc_wolf_hurt.*.ogg` (CC0)
+    * `mobs_mc_wolf_bark.*.ogg` (CC0)
+    * `mobs_mc_wolf_death.*.ogg` (CC0)
+    * `mobs_mc_wolf_growl.*.ogg` (CC0)
+        * Sounds modified and simplified
+        * Source: "dogblocks" mod by Hybrid Dog <https://github.com/HybridDog/dogblocks/>
 * [Inocodum](https://forum.minetest.net/memberlist.php?mode=viewprofile&u=3115)
     * `mobs_mc_silverfish_hurt.ogg` (CC BY-SA 4.0)
     * `mobs_mc_silverfish_death.ogg` (CC BY-SA 4.0)
@@ -210,6 +236,9 @@ Origin of those models:
 * [kbnevel](https://freesound.org/people/kbnevel/)
     * `mobs_mc_magma_cube_attack.ogg` (CC0)
         * Derived from: <https://freesound.org/people/kbnevel/sounds/119863/>
+* [InspectorJ](https://freesound.org/people/InspectorJ/sounds/429591/)
+    * `mobs_mc_animal_eat_generic.ogg` (CC BY 3.0)
+        * Source: <https://freesound.org/people/InspectorJ/>
 
 Note: Many of these sounds have been more or less modified to fit the game.
 
