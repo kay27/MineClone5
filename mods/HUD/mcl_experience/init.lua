@@ -1,5 +1,5 @@
 local S = minetest.get_translator("mcl_experience")
-local USE_XP = minetest.settings:get_bool("mcl_experience", false)
+local USE_XP = minetest.settings:get_bool("mcl_experience", true)
 mcl_experience = {}
 local pool = {}
 local registered_nodes
