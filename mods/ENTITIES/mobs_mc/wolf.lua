@@ -39,7 +39,7 @@ local wolf = {
 		war_cry = "mobs_mc_wolf_growl",
 		damage = {name = "mobs_mc_wolf_hurt", gain=0.6},
 		death = {name = "mobs_mc_wolf_death", gain=0.6},
-		sounds = "mobs_mc_animal_eat_generic",
+		eat = "mobs_mc_animal_eat_generic",
 		distance = 16,
 	},
 	pathfinding = 1,
@@ -60,6 +60,7 @@ local wolf = {
 		local dog, ent
 		if tool:get_name() == mobs_mc.items.bone then
 
+			minetest.sound_play("mobs_mc_wolf_take_bone", {object=self.object, max_hear_distance=16}, true)
 			if not minetest.is_creative_enabled(clicker:get_player_name()) then
 				tool:take_item()
 				clicker:set_wielded_item(tool)
@@ -72,7 +73,8 @@ local wolf = {
 				ent = dog:get_luaentity()
 				ent.owner = clicker:get_player_name()
 				-- cornfirm taming
-				minetest.sound_play("mobs_mc_wolf_bark", {object=self.object, max_hear_distance=16}, true)
+				minetest.sound_play("mobs_mc_wolf_bark", {object=dog, max_hear_distance=16}, true)
+				-- Replace wolf
 				self.object:remove()
 			end
 		end
