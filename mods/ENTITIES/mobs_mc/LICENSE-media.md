@@ -118,6 +118,10 @@ Origin of those models:
 * [bevibeldesign](https://freesound.org/people/bevibeldesign/)
     * `mobs_mc_wither_spawn.ogg` (CC0)
         * Source: <https://freesound.org/people/bevibeldesign/sounds/366095/>
+* [rubberduck](https://opengameart.org/users/rubberduck)
+    * `mobs_mc_endermite_*.ogg` (CC0)
+        * Source 1: <https://opengameart.org/content/80-cc0-creature-sfx>
+        * Source 2: <https://opengameart.org/content/80-cc0-creture-sfx-2>
 * [pointparkcinema](https://freesound.org/people/pointparkcinema/)
     * `mobs_mc_guardian_random.1.ogg` (CC0)
         * Source: <https://freesound.org/people/pointparkcinema/sounds/407252/>
@@ -139,7 +143,8 @@ Origin of those models:
 * [kyles](https://freesound.org/people/kyles/)
     * `mobs_mc_squid_flop.*.ogg` (CC0)
         * Source: <https://freesound.org/people/kyles/sounds/450830/>
-    * `mobs_mc_squid_flop.*.ogg` (CC0)
+    * `mobs_mc_snowman_hurt.1.ogg` (CC0)
+        * Source: <https://freesound.org/people/kyles/sounds/450848/>
 * [thefilmbakery](https://freesound.org/people/thefilmbakery/) (CC0)
     * `mobs_mc_blaze_hurt.ogg`
 	* Source: <https://freesound.org/people/thefilmbakery/sounds/137836/>
@@ -149,9 +154,15 @@ Origin of those models:
     * `mobs_mc_llama.ogg`
     * `mobs_pig.ogg`
     * `mobs_pig_angry.ogg`
-    * `mobs_rat.ogg`
     * `mobs_sandmonster.ogg`
-    * `mobs_spider.ogg`
+* [Daysycho](https://freesound.org/people/Darsycho/)
+    * `mobs_mc_spider_hurt.*.ogg` (CC0)
+        * Source: <https://freesound.org/people/Darsycho/sounds/505185/>
+* [columbia23](https://freesound.org/people/columbia23/)
+    * `mobs_mc_spider_death.ogg` (CC BY 3.0)
+    * `mobs_mc_spider_random.*.ogg` (CC BY 3.0)
+    * `mobs_mc_spider_attack.*.ogg` (CC BY 3.0)
+        * Source: <https://freesound.org/people/columbia23/sounds/395395/>
 * BrandonReese (LGPL v2.1)
     * `mobs_eerie.ogg`
 * [Under7dude](https://freesound.org/people/Under7dude/) (CC0)
@@ -257,6 +268,14 @@ Origin of those models:
     * `mobs_mc_bear_hurt.1.ogg` (CC BY 3.0)
         * Changes were made
         * Source: <https://freesound.org/people/YleArkisto/sounds/249441/>
+* [alexo400](https://freesound.org/people/alexo400/)
+    * `mobs_mc_snowman_death.*.ogg` (CC0)
+        * Source: <https://freesound.org/people/alexo400/sounds/543385/>
+* [cabled\_mess](https://freesound.org/people/cabled_mess/)
+    * `mobs_mc_snowman_hurt.2.ogg` (CC0)
+        * Source: <https://freesound.org/people/cabled_mess/sounds/384424/>
+    * `mobs_mc_snowman_hurt.3.ogg` (CC0)
+        * Source: <https://freesound.org/people/cabled_mess/sounds/384421/>
 
 Note: Many of these sounds have been more or less modified to fit the game.
 

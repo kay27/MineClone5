@@ -188,6 +188,8 @@ mobs:register_mob("mobs_mc:enderman", {
 	pathfinding = 1,
 	hp_min = 40,
 	hp_max = 40,
+	xp_min = 5,
+	xp_max = 5,
 	collisionbox = {-0.3, -0.01, -0.3, 0.3, 2.89, 0.3},
 	visual = "mesh",
 	mesh = "mobs_mc_enderman.b3d",
@@ -362,7 +364,7 @@ mobs:register_mob("mobs_mc:enderman", {
 			self._take_place_timer = 0
 			self._next_take_place_time = math.random(place_frequency_min, place_frequency_max)
 			local pos = self.object:get_pos()
-			local takable_nodes = minetest.find_nodes_in_area({x=pos.x-2, y=pos.y-1, z=pos.z-2}, {x=pos.x+2, y=pos.y+1, z=pos.z+2}, mobs_mc.enderman_takable)
+			local takable_nodes = minetest.find_nodes_in_area_under_air({x=pos.x-2, y=pos.y-1, z=pos.z-2}, {x=pos.x+2, y=pos.y+1, z=pos.z+2}, mobs_mc.enderman_takable)
 			if #takable_nodes >= 1 then
 				local r = pr:next(1, #takable_nodes)
 				local take_pos = takable_nodes[r]
