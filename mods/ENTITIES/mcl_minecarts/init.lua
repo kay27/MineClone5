@@ -300,20 +300,41 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 				end
 				if node then
 					speed_mod = minetest.registered_nodes[node.name]._rail_acceleration
-					if speed_mod and speed_mod == 0 then
+					if speed_mod == 0 then
 						speed_mod = false
 					end
 				end
 				if speed_mod then
 					local last_dir = mcl_minecarts:velocity_to_dir(self._last_vel_not_zero)
-					local dir = {x=-last_dir.x, y=-last_dir.y, z=-last_dir.z}
-					vel = vector.multiply(dir, speed_mod)
-					self.object:set_velocity(vel)
-					self.object:set_acceleration(vel)
-					self._old_pos = vector.new(pos)
-					self._old_dir = vector.new(dir)
-					self._old_vel = vector.new(vel)
-					return
+					self._last_vel_not_zero = nil
+					local stopper_pos = vector.add(rou_pos, last_dir)
+					local stopper_node = minetest.get_node(stopper_pos)
+					if stopper_node.name == "ignore" then
+						minetest.get_voxel_manip():read_from_map(stopper_pos, stopper_pos)
+						stopper_node = minetest.get_node(stopper_pos)
+					end
+					local def = minetest.registered_nodes[stopper_node.name]
+					if def and def.groups and def.groups.opaque == 1 then
+						local new_dir = {x=-last_dir.x, y=-last_dir.y, z=-last_dir.z}
+						local can_turn = (not self._last_turn_pos) or (not self._last_turn_dir)
+						if not can_turn then
+							can_turn = (self._last_turn_pos.x ~= rou_pos.x) or (self._last_turn_pos.y ~= rou_pos.y) or (self._last_turn_pos.z ~= rou_pos.z)
+							if not can_turn then
+								can_turn = (self._last_turn_dir.x ~= new_dir.x) or (self._last_turn_dir.y ~= new_dir.y) or (self._last_turn_dir.z ~= new_dir.z)
+							end
+						end
+						if can_turn then
+							local new_vel = vector.multiply(new_dir, speed_mod)
+							self.object:set_velocity(new_vel)
+							self.object:set_acceleration(new_vel)
+							self._old_pos = vector.new(pos)
+							self._old_dir = vector.new(new_dir)
+							self._old_vel = vector.new(new_vel)
+							self._last_turn_pos = vector.new(rou_pos)
+							self._last_turn_dir = vector.new(last_dir)
+							return
+						end
+					end
 				end
 			end
 			if not has_fuel then
