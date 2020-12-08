@@ -60,7 +60,7 @@ mcl_bows.shoot_arrow = function(arrow_item, pos, dir, yaw, shooter, power, damag
 	le._is_critical = is_critical
 	le._startpos = pos
 	le._knockback = knockback
-	minetest.sound_play("mcl_bows_bow_shoot", {pos=pos}, true)
+	minetest.sound_play("mcl_bows_bow_shoot", {pos=pos, max_hear_distance=16}, true)
 	if shooter ~= nil and shooter:is_player() then
 		if obj:get_luaentity().player == "" then
 			obj:get_luaentity().player = shooter
