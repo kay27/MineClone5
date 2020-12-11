@@ -27,6 +27,11 @@ local spawn_smoke = function(pos)
 	}, "high")
 end
 
+local get_node = minetest.get_node
+local find_node_near = minetest.find_node_near
+local find_nodes_in_area = minetest.find_nodes_in_area
+local random = math.random
+
 --
 -- Items
 --
@@ -424,32 +429,23 @@ else -- Fire enabled
 		interval = 7,
 		chance = 2,
 		catch_up = false,
-		action = function(pos)
-			local node = minetest.get_node(pos)
-			local def = minetest.registered_nodes[node.name]
-			-- Check if liquid source node
-			if def and def.liquidtype ~= "source" then
-				return
-			end
-			local function try_ignite(airs)
-				while #airs > 0 do
-					local r = math.random(1, #airs)
-					if minetest.find_node_near(airs[r], 1, {"group:flammable"}) then
-						spawn_fire(airs[r])
-						return true
-					else
+		action = function(pos, node)
+			if node and node.name == "mcl_core:lava_source" then
+				local airs = find_nodes_in_area({x=pos.x-1, y=pos.y+1, z=pos.z-1}, {x=pos.x+1, y=pos.y+1, z=pos.z+1}, "air")
+				if #airs > 0 then
+					if random(1, 2) == 2 then
+						airs = find_nodes_in_area({x=pos.x-2, y=pos.y+2, z=pos.z-2}, {x=pos.x+2, y=pos.y+2, z=pos.z+2}, "air")
+					end
+					local r
+					while #airs > 0 do
+						r = random(1, #airs)
+						if find_node_near(airs[r], 1, {"group:flammable"}) then
+							spawn_fire(airs[r])
+							return
+						end
 						table.remove(airs, r)
 					end
 				end
-				return false
-			end
-			local airs1 = minetest.find_nodes_in_area({x=pos.x-1, y=pos.y+1, z=pos.z-1}, {x=pos.x+1, y=pos.y+1, z=pos.z+1}, {"air"})
-			local h = math.random(1, 2)
-			if h == 2 and #airs1 > 0 then
-				local airs2 = minetest.find_nodes_in_area({x=pos.x-2, y=pos.y+2, z=pos.z-2}, {x=pos.x+2, y=pos.y+2, z=pos.z+2}, {"air"})
-				try_ignite(airs2)
-			else
-				try_ignite(airs1)
 			end
 		end,
 	})
