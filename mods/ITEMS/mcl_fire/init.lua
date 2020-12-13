@@ -5,6 +5,29 @@ mcl_fire = {}
 local S = minetest.get_translator("mcl_fire")
 local N = function(s) return s end
 
+-- inverse pyramid pattern above lava source, floor 1 of 2:
+local lava_fire=
+{
+	{ x =-1, y = 1, z =-1},
+	{ x =-1, y = 1, z = 0},
+	{ x =-1, y = 1, z = 1},
+	{ x = 0, y = 1, z =-1},
+	{ x = 0, y = 1, z = 0},
+	{ x = 0, y = 1, z = 1},
+	{ x = 1, y = 1, z =-1},
+	{ x = 1, y = 1, z = 0},
+	{ x = 1, y = 1, z = 1}
+}
+local alldirs=
+{
+	{ x =-1, y = 0, z = 0},
+	{ x = 1, y = 0, z = 0},
+	{ x = 0, y =-1, z = 0},
+	{ x = 0, y = 1, z = 0},
+	{ x = 0, y = 0, z =-1},
+	{ x = 0, y = 0, z = 1}
+}
+
 local spawn_smoke = function(pos)
 	mcl_particles.add_node_particlespawner(pos, {
 		amount = 0.1,
@@ -26,11 +49,6 @@ local spawn_smoke = function(pos)
 		},
 	}, "high")
 end
-
-local get_node = minetest.get_node
-local find_node_near = minetest.find_node_near
-local find_nodes_in_area = minetest.find_nodes_in_area
-local random = math.random
 
 --
 -- Items
@@ -407,6 +425,18 @@ minetest.register_abm({
 
 -- Enable the following ABMs according to 'enable fire' setting
 
+local function has_flammable(pos)
+	local npos, node
+	for n, v in ipairs(alldirs) do
+		npos = vector.add(pos, v)
+		node = minetest.get_node_or_nil(npos)
+		if node and node.name and minetest.get_item_group(node.name, "flammable") ~= 0 then
+			return true
+		end
+	end
+	return false
+end
+
 if not fire_enabled then
 
 	-- Occasionally remove fire if fire disabled
@@ -422,30 +452,54 @@ if not fire_enabled then
 
 else -- Fire enabled
 
-	-- Set fire to air nodes (inverse pyramid pattern) above lava source
+	-- Set fire to air nodes
 	minetest.register_abm({
 		label = "Ignite fire by lava",
 		nodenames = {"group:lava"},
-		interval = 7,
-		chance = 2,
+		interval = 4,
+		chance = 3,
 		catch_up = false,
-		action = function(pos, node)
-			if node and node.name == "mcl_core:lava_source" then
-				local airs = find_nodes_in_area({x=pos.x-1, y=pos.y+1, z=pos.z-1}, {x=pos.x+1, y=pos.y+1, z=pos.z+1}, "air")
-				if #airs > 0 then
-					if random(1, 2) == 2 then
-						airs = find_nodes_in_area({x=pos.x-2, y=pos.y+2, z=pos.z-2}, {x=pos.x+2, y=pos.y+2, z=pos.z+2}, "air")
-					end
-					local r
-					while #airs > 0 do
-						r = random(1, #airs)
-						if find_node_near(airs[r], 1, {"group:flammable"}) then
-							spawn_fire(airs[r])
-							return
-						end
-						table.remove(airs, r)
-					end
+		action = function(pos)
+			local dir = math.random(1,9)
+			local target = vector.add(pos, lava_fire[dir])
+			local node = minetest.get_node(target)
+			if not node or node.name ~= "air" then
+				dir = ((dir + math.random(0,7)) % 9) + 1
+				target = vector.add(pos, lava_fire[dir])
+				node = minetest.get_node(target)
+				if not node or node.name ~= "air" then
+					return
 				end
+			end
+			local dir2 = math.random(1,15)
+			if dir2 < 10 then
+				local target2 = vector.add(target, lava_fire[dir2])
+				local node2 = minetest.get_node(target2)
+				if node2 and node2.name == "air" and has_flammable(target2) then
+					minetest.after(1, spawn_fire, {x=target2.x, y=target2.y, z=target2.z})
+					minetest.add_particle({
+						pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
+						velocity=vector.add(lava_fire[dir],lava_fire[dir2]),
+						expirationtime=1,
+						size=1,
+						collisiondetection=false,
+						glow=minetest.LIGHT_MAX,
+						texture="mcl_particles_flame.png"
+					})
+					return
+				end
+			end
+			if has_flammable(target) then
+				minetest.after(1, spawn_fire, {x=target.x, y=target.y, z=target.z})
+				minetest.add_particle({
+					pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
+					velocity=vector.new(lava_fire[dir]),
+					expirationtime=1,
+					size=1,
+					collisiondetection=false,
+					glow=minetest.LIGHT_MAX,
+					texture="mcl_particles_flame.png"
+				})
 			end
 		end,
 	})
