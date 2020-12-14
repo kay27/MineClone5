@@ -431,7 +431,7 @@ local function has_flammable(pos)
 		npos = vector.add(pos, v)
 		node = minetest.get_node_or_nil(npos)
 		if node and node.name and minetest.get_item_group(node.name, "flammable") ~= 0 then
-			return true
+			return npos
 		end
 	end
 	return false
@@ -456,49 +456,53 @@ else -- Fire enabled
 	minetest.register_abm({
 		label = "Ignite fire by lava",
 		nodenames = {"group:lava"},
-		interval = 4,
+		neighbors = {"air"},
+		interval = 7,
 		chance = 3,
 		catch_up = false,
 		action = function(pos)
-			local dir = math.random(1,9)
-			local target = vector.add(pos, lava_fire[dir])
-			local node = minetest.get_node(target)
+			local i, dir, target, node, i2, f
+			i = math.random(1,9)
+			dir = lava_fire[i]
+			target = {x=pos.x+dir.x, y=pos.y+dir.y, z=pos.z+dir.z}
+			node = minetest.get_node(target)
 			if not node or node.name ~= "air" then
-				dir = ((dir + math.random(0,7)) % 9) + 1
-				target = vector.add(pos, lava_fire[dir])
+				i = ((i + math.random(0,7)) % 9) + 1
+				dir = lava_fire[i]
+				target = {x=pos.x+dir.x, y=pos.y+dir.y, z=pos.z+dir.z}
 				node = minetest.get_node(target)
 				if not node or node.name ~= "air" then
 					return
 				end
 			end
-			local dir2 = math.random(1,15)
-			if dir2 < 10 then
-				local target2 = vector.add(target, lava_fire[dir2])
-				local node2 = minetest.get_node(target2)
-				if node2 and node2.name == "air" and has_flammable(target2) then
-					minetest.after(1, spawn_fire, {x=target2.x, y=target2.y, z=target2.z})
-					minetest.add_particle({
-						pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
-						velocity=vector.add(lava_fire[dir],lava_fire[dir2]),
-						expirationtime=1,
-						size=1,
-						collisiondetection=false,
-						glow=minetest.LIGHT_MAX,
-						texture="mcl_particles_flame.png"
-					})
-					return
+			i2 = math.random(1,15)
+			if i2 < 10 then
+				local dir2, target2, node2
+				dir2 = lava_fire[i2]
+				target2 = {x=target.x+dir2.x, y=target.y+dir2.y, z=target.z+dir2.z}
+				node2 = minetest.get_node(target2)
+				if node2 and node2.name == "air" then
+					f = has_flammable(target2)
+					if f then
+						minetest.after(1, spawn_fire, {x=target2.x, y=target2.y, z=target2.z})
+						minetest.add_particle({
+							pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
+							velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.7), z=f.z-pos.z},
+							expirationtime=1, size=1.5, collisiondetection=false,
+							glow=minetest.LIGHT_MAX, texture="mcl_particles_flame.png"
+						})
+						return
+					end
 				end
 			end
-			if has_flammable(target) then
+			f = has_flammable(target)
+			if f then
 				minetest.after(1, spawn_fire, {x=target.x, y=target.y, z=target.z})
 				minetest.add_particle({
 					pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
-					velocity=vector.new(lava_fire[dir]),
-					expirationtime=1,
-					size=1,
-					collisiondetection=false,
-					glow=minetest.LIGHT_MAX,
-					texture="mcl_particles_flame.png"
+					velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.25), z=f.z-pos.z},
+					expirationtime=1, size=1, collisiondetection=false,
+					glow=minetest.LIGHT_MAX, texture="mcl_particles_flame.png"
 				})
 			end
 		end,
