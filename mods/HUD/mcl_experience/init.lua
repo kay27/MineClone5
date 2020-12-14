@@ -1,5 +1,4 @@
 local S = minetest.get_translator("mcl_experience")
-local USE_XP = minetest.settings:get_bool("mcl_experience", true)
 mcl_experience = {}
 local pool = {}
 local registered_nodes
@@ -100,9 +99,6 @@ end
 
 -- change element of hud
 hud_manager.change_hud = function(data)
-    if not USE_XP then
-        return
-    end
     local name = data.player:get_player_name()
     if player_huds[name] and player_huds[name][data.hud_name] then
         data.player:hud_change(player_huds[name][data.hud_name], data.element, data.data)
@@ -153,9 +149,7 @@ function mcl_experience.set_player_xp_level(player,level)
 	end
 	pool[name].level = level
 	pool[name].xp, pool[name].bar_step, pool[name].next_level = mcl_experience.bar_to_xp(pool[name].bar, level)
-	if USE_XP then
-		hud_manager.change_hud({player = player, hud_name = "xp_level", element = "text", data = tostring(level)})
-	end
+	hud_manager.change_hud({player = player, hud_name = "xp_level", element = "text", data = tostring(level)})
 	-- we may don't update the bar
 end
 
@@ -168,10 +162,6 @@ minetest.register_on_joinplayer(function(player)
 	name = player:get_player_name()
 	temp_pool = pool[name]
 		
-	if not USE_XP then
-		return
-	end
-
 	hud_manager.add_hud(player,"experience_bar",
 	{
 	        hud_elem_type = "statbar", position = {x=0.5, y=1},
@@ -250,7 +240,7 @@ function mcl_experience.add_experience(player, experience)
 	temp_pool.xp = math.min(math.max(temp_pool.xp + experience, 0), max_xp)
 
 	if (temp_pool.xp < temp_pool.xp_next_level) and (temp_pool.xp >= old_xp) then
-		temp_pool.bar = temp_pool.bar + temp_pool.bar_step * experience
+		temp_pool.bar = mcl_experience.xp_to_bar(temp_pool.xp, temp_pool.level)
 	else
 		temp_pool.level = mcl_experience.xp_to_level(temp_pool.xp)
 		temp_pool.bar, temp_pool.bar_step, temp_pool.xp_next_level = mcl_experience.xp_to_bar(temp_pool.xp, temp_pool.level)
@@ -280,7 +270,7 @@ local name
 local temp_pool
 local xp_amount
 minetest.register_on_dieplayer(function(player)
-	if minetest.settings:get_bool("mcl_keepInventory", false) or not USE_XP then
+	if minetest.settings:get_bool("mcl_keepInventory", false) then
 		return
 	end
 
@@ -496,9 +486,6 @@ minetest.register_chatcommand("xp", {
 	description = S("Gives a player some XP"),
 	privs = {server=true},
 	func = function(name, params)
-		if not USE_XP then
-			return false, S("XP are disabled!")
-		end
 		local player, xp = nil, 1000
 		local P, i = {}, 0
 		for str in string.gmatch(params, "([^ ]+)") do
@@ -530,9 +517,6 @@ minetest.register_chatcommand("xp", {
 })
 
 function mcl_experience.throw_experience(pos, amount)
-	if not USE_XP then
-		return false
-	end
 	local i, j = 0, 0
 	local obj, xp
 	while i < amount and j < 100 do
