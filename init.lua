@@ -7,7 +7,7 @@
 --require('mobdebug').start()
 
 settlements = {}
-settlements.modpath = minetest.get_modpath("settlements");
+settlements.modpath = minetest.get_modpath("mcl_villages");
 
 vm, data, va, emin, emax = 1
 
@@ -22,6 +22,8 @@ dofile(settlements.modpath.."/convert_lua_mts.lua")
 --
 settlements_in_world = settlements.load()
 settlements.grundstellungen()
+
+--[[ Disable custom NPC spawning for now.
 --
 -- register block for npc spawn
 --
@@ -52,6 +54,8 @@ if minetest.get_modpath("mobs_npc") ~= nil then
     31000, --max_height
     nil)--day_toggle
 end 
+--]]
+
 --
 -- on map generation, try to build a settlement
 --
@@ -170,10 +174,11 @@ minetest.register_on_generated(function(minp, maxp)
 --
 -- manually place buildings, for debugging only
 --
-minetest.register_craftitem("settlements:tool", {
-    description = "settlements build tool",
+minetest.register_craftitem("mcl_villages:tool", {
+    description = "mcl_villages build tool",
     inventory_image = "default_tool_woodshovel.png",
-    --
+    
+	--[[ Disable on_use for now.
     -- build single house
     --
     on_use = function(itemstack, placer, pointed_thing)
@@ -193,6 +198,7 @@ minetest.register_craftitem("settlements:tool", {
 --        settlements.mts_save()
       end
     end,
+--]]
     --
     -- build ssettlement
     --
@@ -265,7 +271,7 @@ minetest.register_craftitem("settlements:tool", {
         --
         settlements.initialize_nodes()
         local end_time = os.time()
-        minetest.chat_send_all("Zeit ".. end_time - start_time)
+        minetest.chat_send_all("Time ".. end_time - start_time)
 --
         --settlements.convert_mts_to_lua()
         --settlements.mts_save()

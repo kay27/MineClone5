@@ -2,7 +2,7 @@
 -- generate paths between buildings
 -------------------------------------------------------------------------------
 function settlements.paths_lvm(minp)
-  local c_gravel             = minetest.get_content_id("default:gravel")
+  local c_gravel             = minetest.get_content_id("mcl_core:grass_path")
   local starting_point
   local end_point
   local distance
@@ -69,13 +69,13 @@ function settlements.paths_lvm(minp)
         end
         -- find surface of new starting point
         local surface_point, surface_mat = settlements.find_surface_lvm(starting_point, minp)
-        -- replace surface node with default:gravel 
+        -- replace surface node with mcl_core:grass_path 
         if surface_point
         then
           local vi = va:index(surface_point.x, surface_point.y, surface_point.z)
           data[vi] = c_gravel
 
-          --minetest.swap_node(surface_point,{name="default:gravel"}) 
+          --minetest.swap_node(surface_point,{name="mcl_core:grass_path"}) 
           -- don't set y coordinate, surface might be too low or high
           starting_point.x = surface_point.x
           starting_point.z = surface_point.z
@@ -161,10 +161,10 @@ function settlements.paths()
         end
         -- find surface of new starting point
         local surface_point, surface_mat = settlements.find_surface(starting_point)
-        -- replace surface node with default:gravel 
+        -- replace surface node with mcl_core:grass_path 
         if surface_point
         then
-          minetest.swap_node(surface_point,{name="default:gravel"}) 
+          minetest.swap_node(surface_point,{name="mcl_core:grass_path"}) 
           -- don't set y coordinate, surface might be too low or high
           starting_point.x = surface_point.x
           starting_point.z = surface_point.z

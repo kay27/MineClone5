@@ -22,13 +22,17 @@ function settlements.build_schematic(vm, data, va, pos, building, replace_wall, 
     {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
   -- replace material
   if replace_wall == "y" then
-    schem_lua = schem_lua:gsub("default:cobble", material)
+    schem_lua = schem_lua:gsub("mcl_core:cobble", material)
   end
-  schem_lua = schem_lua:gsub("default:dirt_with_grass", 
+  schem_lua = schem_lua:gsub("mcl_core:dirt_with_grass", 
     platform_material)
-  -- special material for spawning npcs
-  schem_lua = schem_lua:gsub("default:junglewood", 
+
+--[[  Disable special junglewood for now.
+ -- special material for spawning npcs
+  schem_lua = schem_lua:gsub("mcl_core:junglewood", 
     "settlements:junglewood")
+--]]
+
   -- format schematic string
   local schematic = loadstring(schem_lua)()
   -- build foundation for the building an make room above
@@ -74,7 +78,7 @@ function settlements.initialize_settlement_info()
   number_built = 1
   if settlements.debug == true
   then
-    minetest.chat_send_all("settlement ".. number_of_buildings)
+    minetest.chat_send_all("Village ".. number_of_buildings)
   end
 end
 -------------------------------------------------------------------------------
@@ -300,13 +304,16 @@ function settlements.place_schematics_lvm()
       {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
     -- replace material
     if replace_wall == "y" then
-      schem_lua = schem_lua:gsub("default:cobble", material)
+      schem_lua = schem_lua:gsub("mcl_core:cobble", material)
     end
-    schem_lua = schem_lua:gsub("default:dirt_with_grass", 
+    schem_lua = schem_lua:gsub("mcl_core:dirt_with_grass", 
       platform_material_name)
+
+--[[ Disable special junglewood for now.
     -- special material for spawning npcs
-    schem_lua = schem_lua:gsub("default:junglewood", 
+    schem_lua = schem_lua:gsub("mcl_core:junglewood", 
       "settlements:junglewood")
+--]]
     -- format schematic string
     local schematic = loadstring(schem_lua)()
     -- build foundation for the building an make room above
@@ -351,17 +358,20 @@ function settlements.place_schematics()
       {lua_use_comments = false, lua_num_indent_spaces = 0}).." return(schematic)"
     -- replace material
     if replace_wall == "y" then
-      schem_lua = schem_lua:gsub("default:cobble", material)
+      schem_lua = schem_lua:gsub("mcl_core:cobble", material)
     end
-    schem_lua = schem_lua:gsub("default:dirt_with_grass", 
+    schem_lua = schem_lua:gsub("mcl_core:dirt_with_grass", 
       platform_material)
+
+--[[ Disable special junglewood for now.
     -- special material for spawning npcs
-    schem_lua = schem_lua:gsub("default:junglewood", 
+    schem_lua = schem_lua:gsub("mcl_core:junglewood", 
       "settlements:junglewood")
-    -- compatibility with 0.4.17, can be removed when 5 is released
-    schem_lua = schem_lua:gsub("stairs:stair_outer_wood", 
-      "stairs:slab_wood")
-    schem_lua = schem_lua:gsub("stairs:stair_outer_stone_block", 
+--]]
+
+    schem_lua = schem_lua:gsub("mcl_stairs:stair_wood_outer", 
+      "mcl_stairs:slab_wood")
+    schem_lua = schem_lua:gsub("mcl_stairs:stair_stone_rough_outer", 
       "air")
 
     -- format schematic string

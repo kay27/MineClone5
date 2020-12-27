@@ -1,4 +1,9 @@
-Minetest mod "Settlements"
+MCL_Villages:
+============================
+
+A fork of Rochambeau's "Settlements" mod converted for use in MineClone2.
+
+
 =========================
 version: 0.1 alpha
 
@@ -21,3 +26,8 @@ This mod adds settlements on world generation
 Credits:
 --------------
 This mod is based on "ruins" by BlockMen
+
+
+Completely new schematics for MineClone2:
+MysticTempest - CC-BY-SA 4.0
+

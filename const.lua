@@ -15,16 +15,16 @@ settlements.min_timer = 20
 -- material to replace cobblestone with
 --
 wallmaterial = {
-  "default:junglewood", 
-  "default:pine_wood", 
-  "default:wood", 
-  "default:aspen_wood", 
-  "default:acacia_wood",   
-  "default:stonebrick", 
-  "default:cobble", 
-  "default:desert_stonebrick", 
-  "default:desert_cobble", 
-  "default:sandstone"
+  "mcl_core:junglewood", 
+  "mcl_core:sprucewood", 
+  "mcl_core:wood", 
+  "mcl_core:birchwood", 
+  "mcl_core:acaciawood",   
+  "mcl_core:stonebrick", 
+  "mcl_core:cobble", 
+  "mcl_core:sandstonecarved", 
+  "mcl_core:sandstone", 
+  "mcl_core:sandstonesmooth2"
 }
 settlements.surface_mat = {}
 -------------------------------------------------------------------------------
@@ -33,15 +33,15 @@ settlements.surface_mat = {}
 -------------------------------------------------------------------------------
 function settlements.grundstellungen ()
   settlements.surface_mat = settlements.Set {
-    "default:dirt_with_grass",
-    "default:dry_dirt_with_grass",
-    "default:dirt_with_snow",
-    "default:dirt_with_dry_grass",
-    "default:dirt_with_coniferous_litter",
-    "default:sand",
-    "default:silver_sand",
-    "default:desert_sand",
-    "default:snow_block"
+    "mcl_core:dirt_with_grass",
+    --"mcl_core:dry_dirt_with_grass",
+    "mcl_core:dirt_with_grass_snow",
+    --"mcl_core:dirt_with_dry_grass",
+    "mcl_core:podzol",
+    "mcl_core:sand",
+    "mcl_core:redsand",
+    --"mcl_core:silver_sand",
+    "mcl_core:snowblock"
   }
 end
 --
@@ -56,13 +56,13 @@ schem_path = settlements.modpath.."/schematics/"
 -- list of schematics
 --
 schematic_table = { 
-  {name = "townhall", mts = schem_path.."townhall.mts", hwidth = 10, hdepth = 11, hheight = 12, hsize = 15, max_num = 0, rplc = "n"},
+  {name = "large_house", mts = schem_path.."large_house.mts", hwidth = 10, hdepth = 11, hheight = 12, hsize = 15, max_num = 0, rplc = "n"},
   {name = "well", mts = schem_path.."well.mts", hwidth = 5, hdepth = 5, hheight = 13, hsize = 11, max_num = 0.045, rplc = "n"},
-  {name = "hut", mts = schem_path.."hut.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.9, rplc = "y"},
-  {name = "garden", mts = schem_path.."garden.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.1, rplc = "n"},
+  {name = "small_house", mts = schem_path.."small_house.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.9, rplc = "y"},
+  {name = "farm", mts = schem_path.."farm.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.1, rplc = "n"},
   {name = "lamp", mts = schem_path.."lamp.mts", hwidth = 3, hdepth = 3, hheight = 13, hsize = 10, max_num = 0.1, rplc = "n"},
-  {name = "tower", mts = schem_path.."tower.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.055, rplc = "n"},
-  {name = "church", mts = schem_path.."church.mts", hwidth = 7, hdepth = 10, hheight = 13, hsize = 17, max_num = 0.050, rplc = "n"},
+  {name = "library", mts = schem_path.."library.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.055, rplc = "n"},
+  {name = "butcher", mts = schem_path.."butcher.mts", hwidth = 7, hdepth = 10, hheight = 13, hsize = 17, max_num = 0.050, rplc = "n"},
   {name = "blacksmith", mts = schem_path.."blacksmith.mts", hwidth = 7, hdepth = 7, hheight = 13, hsize = 11, max_num = 0.050, rplc = "n"},
 }
 --
