@@ -499,7 +499,7 @@ local function show_trade_formspec(playername, trader, tradenum)
 	local wanted1 = inv:get_stack("wanted", 1)
 	local wanted2 = inv:get_stack("wanted", 2)
 	local offered = inv:get_stack("offered", 1)
-	
+
 	local w2_formspec = ""
 	if not wanted2:is_empty() then
 		w2_formspec = "item_image[3,1;1,1;"..wanted2:to_string().."]"
