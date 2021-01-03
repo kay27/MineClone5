@@ -647,9 +647,9 @@ local item_drop = function(self, cooked, looting_level)
 
 	-- no drops if disabled by setting
 	if not mobs_drop_items then return end
-	
+
 	looting_level = looting_level or 0
-	
+
 	-- no drops for child mobs (except monster)
 	if (self.child and self.type ~= "monster") then
 		return
@@ -664,7 +664,7 @@ local item_drop = function(self, cooked, looting_level)
 		local dropdef = self.drops[n]
 		local chance = 1 / dropdef.chance
 		local looting_type = dropdef.looting
-		
+
 		if looting_level > 0 then
 			local chance_function = dropdef.looting_chance_function
 			if chance_function then
@@ -673,7 +673,7 @@ local item_drop = function(self, cooked, looting_level)
 				chance = chance + (dropdef.looting_factor or 0.01) * looting_level
 			end
 		end
-		
+
 		local num = 0
 		local do_common_looting = (looting_level > 0 and looting_type == "common")
 		if random() < chance then
@@ -681,11 +681,11 @@ local item_drop = function(self, cooked, looting_level)
 		elseif not dropdef.looting_ignore_chance then
 			do_common_looting = false
 		end
-		
+
 		if do_common_looting then
 			num = num + math.floor(math.random(0, looting_level) + 0.5)
 		end
-		
+
 		if num > 0 then
 			item = dropdef.name
 
@@ -938,7 +938,7 @@ local is_at_cliff_or_danger = function(self)
 			return true
 		else
 			local def = minetest.registered_nodes[bnode.name]
-			if def and def.walkable then 
+			if def and def.walkable then
 				return false
 			end
 		end
@@ -951,7 +951,7 @@ end
 -- copy the 'mob facing cliff_or_danger check' from above, and rework to avoid water
 local is_at_water_danger = function(self)
 
-	
+
 	if not self.object:get_luaentity() then
 		return false
 	end
@@ -976,7 +976,7 @@ local is_at_water_danger = function(self)
 			return true
 		else
 			local def = minetest.registered_nodes[bnode.name]
-			if def and def.walkable then 
+			if def and def.walkable then
 				return false
 			end
 		end
@@ -2350,10 +2350,10 @@ local do_states = function(self, dtime)
 						lp = minetest.find_nodes_in_area_under_air(
 							{x = s.x - 5, y = s.y - 0.5, z = s.z - 5},
 							{x = s.x + 5, y = s.y + 1, z = s.z + 5},
-							{"group:solid"}) 
+							{"group:solid"})
 
 						lp = #lp > 0 and lp[random(#lp)]
-	
+
 						-- did we find land?
 						if lp then
 
@@ -2962,7 +2962,7 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 				* tmp * ((armor[group] or 0) / 100.0)
 		end
 	end
-	
+
 	if weapon then
 		local fire_aspect_level = mcl_enchanting.get_enchantment(weapon, "fire_aspect")
 		if fire_aspect_level > 0 then
@@ -3379,11 +3379,11 @@ end
 
 -- main mob function
 local mob_step = function(self, dtime)
-	
+
 	if not self.fire_resistant then
 		mcl_burning.tick(self.object, dtime)
 	end
-	
+
 	if use_cmi then
 		cmi.notify_step(self.object, dtime)
 	end
@@ -3598,14 +3598,14 @@ local mob_step = function(self, dtime)
 					for n = 1, #close_objs do
 						if close_objs[n]:is_player() then
 							self.lifetimer = 20
-						else
-							if math.random(1,10) <= 3 then
-								minetest.log("action", "Mob "..self.name.." despawns in mob_step at "..minetest.pos_to_string(pos))
-								mcl_burning.extinguish(self.object)
-								self.object:remove()
-								return
-							end
+							return
 						end
+					end
+					if math.random(1, 10) <= 3 then
+						minetest.log("action", "Mob "..self.name.." despawns in mob_step at "..minetest.pos_to_string(pos))
+						mcl_burning.extinguish(self.object)
+						self.object:remove()
+						return
 					end
 				else
 					minetest.log("action", "Mob "..self.name.." despawns in mob_step at "..minetest.pos_to_string(pos))
@@ -3842,7 +3842,7 @@ minetest.register_entity(name, {
 	get_staticdata = function(self)
 		return mob_staticdata(self)
 	end,
-	
+
 	harmed_by_heal = def.harmed_by_heal,
 
 })
