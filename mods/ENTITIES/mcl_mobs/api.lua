@@ -801,7 +801,7 @@ local check_for_death = function(self, cause, cmi_cause)
 	if self.on_die then
 
 		local pos = self.object:get_pos()
-		local on_die_exit = self.on_die(self, pos)
+		local on_die_exit = self.on_die(self, pos, cmi_cause)
 		if on_die_exit ~= true then
 			death_handle(self)
 		end
@@ -2776,7 +2776,7 @@ local do_states = function(self, dtime)
 				p.y = p.y + (self.collisionbox[2] + self.collisionbox[5]) / 2
 
 				-- Shoot arrow
-				if minetest.registered_entities[self.arrow] then
+				if not minetest.raycast(self.object:get_pos(), self.attack:get_pos(), false, false):next() and minetest.registered_entities[self.arrow] then
 
 					local arrow, ent
 					local v = 1
