@@ -1148,7 +1148,7 @@ local do_env_damage = function(self)
 		end
 
 	-- damage_per_second node check
-	elseif nodef.damage_per_second ~= 0 then
+	elseif nodef.damage_per_second ~= 0 and not nodef.groups.lava and not nodef.groups.fire then
 
 		self.health = self.health - nodef.damage_per_second
 
@@ -1280,7 +1280,7 @@ local do_jump = function(self)
 	}, "air")
 
 	-- we don't attempt to jump if there's a stack of blocks blocking
-	if minetest.registered_nodes[nodTop.name] == true then
+	if minetest.registered_nodes[nodTop.name].walkable == true then
 		return false
 	end
 
@@ -1311,7 +1311,7 @@ local do_jump = function(self)
 				end
 				self.object:set_acceleration({
 					x = v.x * 2,
-					y = 0,
+					y = -10,
 					z = v.z * 2,
 				})
 			end, self, v)
@@ -2764,8 +2764,12 @@ local do_states = function(self, dtime)
 
 			set_velocity(self, 0)
 
+			local p = self.object:get_pos()
+			p.y = p.y + (self.collisionbox[2] + self.collisionbox[5]) / 2
+
 			if self.shoot_interval
 			and self.timer > self.shoot_interval
+			and not minetest.raycast(p, self.attack:get_pos(), false, false):next()
 			and random(1, 100) <= 60 then
 
 				self.timer = 0
@@ -2774,12 +2778,8 @@ local do_states = function(self, dtime)
 				-- play shoot attack sound
 				mob_sound(self, "shoot_attack")
 
-				local p = self.object:get_pos()
-
-				p.y = p.y + (self.collisionbox[2] + self.collisionbox[5]) / 2
-
 				-- Shoot arrow
-				if not minetest.raycast(self.object:get_pos(), self.attack:get_pos(), false, false):next() and minetest.registered_entities[self.arrow] then
+				if minetest.registered_entities[self.arrow] then
 
 					local arrow, ent
 					local v = 1
@@ -3179,7 +3179,7 @@ local mob_staticdata = function(self)
 	and ((not self.nametag) or (self.nametag == ""))
 	and self.lifetimer <= 20 then
 
-		minetest.log("action", "Mob "..name.." despawns in mob_staticdata at "..minetest.pos_to_string(self.object.get_pos()))
+		minetest.log("action", "Mob "..name.." despawns in mob_staticdata at "..minetest.pos_to_string(self.object.get_pos(), 1))
 		mcl_burning.extinguish(self.object)
 		self.object:remove()
 
@@ -3590,7 +3590,7 @@ local mob_step = function(self, dtime)
 
 		self.lifetimer = self.lifetimer - dtime
 		if self.despawn_immediately or self.lifetimer <= 0 then
-			minetest.log("action", "Mob "..self.name.." despawns in mob_step at "..minetest.pos_to_string(pos))
+			minetest.log("action", "Mob "..self.name.." despawns in mob_step at "..minetest.pos_to_string(pos, 1))
 			mcl_burning.extinguish(self.object)
 			self.object:remove()
 		elseif self.lifetimer <= 10 then
