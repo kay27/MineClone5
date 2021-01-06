@@ -235,6 +235,8 @@ function mcl_portals.end_teleport(obj, pos)
 		if obj:is_player() then
 			_, target = mcl_spawn.spawn(obj)
 		end
+
+		target = target or mcl_spawn.get_world_spawn_pos(obj)
 	else
 		-- End portal in any other dimension:
 		-- Teleport to the End at a fixed position and generate a
