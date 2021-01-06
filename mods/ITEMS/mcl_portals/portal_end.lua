@@ -52,7 +52,7 @@ minetest.register_node("mcl_portals:portal_end", {
 	paramtype = "light",
 	sunlight_propagates = true,
 	use_texture_alpha = true,
-	walkable = true,
+	walkable = false,
 	diggable = false,
 	pointable = false,
 	buildable_to = false,
@@ -222,82 +222,90 @@ local function end_portal_area(pos, destroy)
 	minetest.bulk_set_node(posses, {name=name})
 end
 
+function mcl_portals.end_teleport(obj, pos)
+	if not obj then return end
+	local pos = pos or obj:get_pos()
+	if not pos then return end
+	local dim = mcl_worlds.pos_to_dimension(pos)
+
+	local target
+	if dim == "end" then
+		-- End portal in the End:
+		-- Teleport back to the player's spawn or world spawn in the Overworld.
+		if obj:is_player() then
+			_, target = mcl_spawn.spawn(obj)
+		end
+	else
+		-- End portal in any other dimension:
+		-- Teleport to the End at a fixed position and generate a
+		-- 5×5 obsidian platform below.
+
+		local platform_pos = mcl_vars.mg_end_platform_pos
+		-- force emerge of target1 area
+		minetest.get_voxel_manip():read_from_map(platform_pos, platform_pos)
+		if not minetest.get_node_or_nil(platform_pos) then
+			minetest.emerge_area(vector.subtract(platform_pos, 3), vector.add(platform_pos, 3))
+		end
+
+		-- Build destination
+		local function check_and_build_end_portal_destination(pos)
+			local n = minetest.get_node_or_nil(pos)
+			if n and n.name ~= "mcl_core:obsidian" then
+				build_end_portal_destination(pos)
+				minetest.after(2, check_and_build_end_portal_destination, pos)
+			elseif not n then
+				minetest.after(1, check_and_build_end_portal_destination, pos)
+			end
+		end
+
+		local platform
+		build_end_portal_destination(platform_pos)
+		check_and_build_end_portal_destination(platform_pos)
+
+		target = table.copy(platform_pos)
+		target.y = target.y + 1
+	end
+
+	-- Teleport
+	obj:set_pos(target)
+
+	if obj:is_player() then
+		-- Look towards the main End island
+		if dim ~= "end" then
+			obj:set_look_horizontal(math.pi/2)
+		end
+		mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
+		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
+	end
+end
+
+function mcl_portals.end_portal_teleport(pos, node)
+	for _,obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
+		local lua_entity = obj:get_luaentity() --maikerumine added for objects to travel
+		if obj:is_player() or lua_entity then
+			local objpos = obj:get_pos()
+			if objpos == nil then
+				return
+			end
+
+			-- Check if object is actually in portal.
+			objpos.y = math.ceil(objpos.y)
+			if minetest.get_node(objpos).name ~= "mcl_portals:portal_end" then
+				return
+			end
+
+			mcl_portals.end_teleport(obj, objpos)
+
+		end
+	end
+end
+
 minetest.register_abm({
 	label = "End portal teleportation",
 	nodenames = {"mcl_portals:portal_end"},
-	interval = 0.1,
+	interval = 1,
 	chance = 1,
-	action = function(pos, node)
-		for _,obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
-			local lua_entity = obj:get_luaentity() --maikerumine added for objects to travel
-			if obj:is_player() or lua_entity then
-				local dim = mcl_worlds.pos_to_dimension(pos)
-
-				local objpos = obj:get_pos()
-				if objpos == nil then
-					return
-				end
-
-				-- Check if object is actually in portal.
-				objpos.y = math.ceil(objpos.y)
-				if minetest.get_node(objpos).name ~= "mcl_portals:portal_end" then
-					return
-				end
-
-				local target
-				if dim == "end" then
-					-- End portal in the End:
-					-- Teleport back to the player's spawn or world spawn in the Overworld.
-					if obj:is_player() then
-						_, target = mcl_spawn.spawn(obj)
-					end
-
-					target = target or mcl_spawn.get_world_spawn_pos(obj)
-				else
-					-- End portal in any other dimension:
-					-- Teleport to the End at a fixed position and generate a
-					-- 5×5 obsidian platform below.
-
-					local platform_pos = mcl_vars.mg_end_platform_pos
-					-- force emerge of target1 area
-					minetest.get_voxel_manip():read_from_map(platform_pos, platform_pos)
-					if not minetest.get_node_or_nil(platform_pos) then
-						minetest.emerge_area(vector.subtract(platform_pos, 3), vector.add(platform_pos, 3))
-					end
-
-					-- Build destination
-					local function check_and_build_end_portal_destination(pos)
-						local n = minetest.get_node_or_nil(pos)
-						if n and n.name ~= "mcl_core:obsidian" then
-							build_end_portal_destination(pos)
-							minetest.after(2, check_and_build_end_portal_destination, pos)
-						elseif not n then
-							minetest.after(1, check_and_build_end_portal_destination, pos)
-						end
-					end
-
-					local platform
-					build_end_portal_destination(platform_pos)
-					check_and_build_end_portal_destination(platform_pos)
-
-					target = table.copy(platform_pos)
-					target.y = target.y + 1
-				end
-
-				-- Teleport
-				obj:set_pos(target)
-
-				if obj:is_player() then
-					-- Look towards the main End island
-					if dim ~= "end" then
-						obj:set_look_horizontal(math.pi/2)
-					end
-					mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
-					minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
-				end
-			end
-		end
-	end,
+	action = mcl_portals.end_portal_teleport,
 })
 
 local rotate_frame, rotate_frame_eye
