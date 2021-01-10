@@ -3,6 +3,41 @@ mcl_spawn = {}
 local S = minetest.get_translator("mcl_spawn")
 local mg_name = minetest.get_mapgen_setting("mg_name")
 
+-- Parameters
+-------------
+
+-- Resolution of search grid in nodes.
+local res = 64
+-- Number of points checked in the square search grid (edge * edge).
+local checks = 128 * 128
+-- Starting point for biome checks. This also sets the y co-ordinate for all
+-- points checked, so the suitable biomes must be active at this y.
+local start_pos = minetest.setting_get_pos("static_spawnpoint") or {x = 0, y = 8, z = 0}
+local current_pos = start_pos
+-- Table of suitable biomes
+local biome_ids
+minetest.register_on_mods_loaded(function()
+	biome_ids = {
+		minetest.get_biome_id("ColdTaiga"),
+		minetest.get_biome_id("Taiga"),
+		minetest.get_biome_id("MegaTaiga"),
+		minetest.get_biome_id("MegaSpruceTaiga"),
+		minetest.get_biome_id("Plains"),
+		minetest.get_biome_id("SunflowerPlains"),
+		minetest.get_biome_id("Forest"),
+		minetest.get_biome_id("FlowerForest"),
+		minetest.get_biome_id("BirchForest"),
+		minetest.get_biome_id("BirchForestM"),
+		minetest.get_biome_id("Jungle"),
+		minetest.get_biome_id("JungleM"),
+		minetest.get_biome_id("JungleEdge"),
+		minetest.get_biome_id("JungleEdgeM"),
+		minetest.get_biome_id("Savanna"),
+		minetest.get_biome_id("SavannaM"),
+	}
+	end
+)
+-- Bed spawning offsets
 local node_search_list =
 	{
 	--[[1]]	{x =  0, y = 0, z = -1},	--
@@ -19,41 +54,115 @@ local node_search_list =
 	--[[C]]	{x =  0, y = 1, z =  1},	--
 	}
 
-local cached_world_spawn
+-- End of parameters
+--------------------
+
+
+-- Direction table
+
+local dirs = {
+	{x = 0, y = 0, z = 1},
+	{x = -1, y = 0, z = 0},
+	{x = 0, y = 0, z = -1},
+	{x = 1, y = 0, z = 0},
+}
+
+
+-- Initial variables
+
+local edge_len = 1
+local edge_dist = 0
+local dir_step = 0
+local dir_ind = 1
+local searched = mg_name == "v6" or mg_name == "singlenode" or
+	minetest.settings:get("static_spawnpoint")
+local success = false
+local world_spawn_pos = {}
+
+
+-- Get world 'mapgen_limit' and 'chunksize' to calculate 'spawn_limit'.
+-- This accounts for how mapchunks are not generated if they or their shell exceed
+-- 'mapgen_limit'.
+
+local mapgen_limit = tonumber(minetest.get_mapgen_setting("mapgen_limit"))
+local chunksize = tonumber(minetest.get_mapgen_setting("chunksize"))
+local spawn_limit = math.max(mapgen_limit - (chunksize + 1) * 16, 0)
+
+
+--Functions
+-----------
+
+-- Get next position on square search spiral
+
+local function next_pos()
+	if edge_dist == edge_len then
+		edge_dist = 0
+		dir_ind = dir_ind + 1
+		if dir_ind == 5 then
+			dir_ind = 1
+		end
+		dir_step = dir_step + 1
+		edge_len = math.floor(dir_step / 2) + 1
+	end
+
+	local dir = dirs[dir_ind]
+	local move = vector.multiply(dir, res)
+
+	edge_dist = edge_dist + 1
+
+	return vector.add(current_pos, move)
+end
+
+
+-- Spawn position search
+
+local function search()
+	for iter = 1, checks do
+		local biome_data = minetest.get_biome_data(current_pos)
+		-- Sometimes biome_data is nil
+		local biome = biome_data and biome_data.biome
+		for id_ind = 1, #biome_ids do
+			local biome_id = biome_ids[id_ind]
+			if biome == biome_id then
+				local spawn_y = minetest.get_spawn_level(current_pos.x, current_pos.z)
+
+				if spawn_y then
+					world_spawn_pos = {x = current_pos.x, y = spawn_y, z = current_pos.z}
+					return true
+				end
+			end
+		end
+
+		current_pos = next_pos()
+		-- Check for position being outside world edge
+		if math.abs(current_pos.x) > spawn_limit or math.abs(current_pos.z) > spawn_limit then
+			return false
+		end
+	end
+
+	return false
+end
 
 mcl_spawn.get_world_spawn_pos = function()
-	local spawn
-	spawn = minetest.setting_get_pos("static_spawnpoint")
-	if spawn then
-		return spawn
-	end
-	if cached_world_spawn then
-		return cached_world_spawn
-	end
-	-- 32 attempts to find a suitable spawn point
-	spawn = { x=math.random(-16, 16), y=8, z=math.random(-16, 16) }
-	for i=1, 32 do
-		local y = minetest.get_spawn_level(spawn.x, spawn.z)
-		if y then
-			spawn.y = y
-			cached_world_spawn = spawn
-			minetest.log("action", "[mcl_spawn] Dynamic world spawn determined to be "..minetest.pos_to_string(spawn))
-			return spawn
+	if not searched then
+		success = search()
+		searched = true
+		if success then
+			minetest.log("action", "[mcl_spawn] Dynamic world spawn determined to be "..minetest.pos_to_string(world_spawn_pos))
 		end
-		-- Random walk
-		spawn.x = spawn.x + math.random(-64, 64)
-		spawn.z = spawn.z + math.random(-64, 64)
+	end
+	if success then
+		return world_spawn_pos
 	end
 	minetest.log("action", "[mcl_spawn] Failed to determine dynamic world spawn!")
-	-- Use dummy position if nothing found
-	return { x=math.random(-16, 16), y=8, z=math.random(-16, 16) }
+	return start_pos
 end
 
 -- Returns a spawn position of player.
 -- If player is nil or not a player, a world spawn point is returned.
 -- The second return value is true if returned spawn point is player-chosen,
 -- false otherwise.
-mcl_spawn.get_spawn_pos = function(player)
+mcl_spawn.get_bed_spawn_pos = function(player)
 	local spawn, custom_spawn = nil, false
 	if player ~= nil and player:is_player() then
 		local attr = player:get_meta():get_string("mcl_beds:spawn")
@@ -122,8 +231,8 @@ local function good_for_respawn(pos)
 		(def1.damage_per_second == nil or def2.damage_per_second <= 0)
 end
 
-mcl_spawn.spawn = function(player)
-	local pos, custom_spawn = mcl_spawn.get_spawn_pos(player)
+mcl_spawn.get_player_spawn_pos = function(player)
+	local pos, custom_spawn = mcl_spawn.get_bed_spawn_pos(player)
 	if pos and custom_spawn then
 		-- Check if bed is still there
 		local node_bed = get_far_node(pos)
@@ -134,7 +243,7 @@ mcl_spawn.spawn = function(player)
 				player:get_meta():set_string("mcl_beds:spawn", "")
 			end
 			minetest.chat_send_player(player:get_player_name(), S("Your spawn bed was missing or blocked."))
-			return false
+			return mcl_spawn.get_world_spawn_pos(), false
 		end
 
 		-- Find spawning position on/near the bed free of solid or damaging blocks iterating a square spiral 15x15:
@@ -151,16 +260,20 @@ mcl_spawn.spawn = function(player)
 			else -- dir.x == 1
 				offset = {x = -o.z, y = o.y,  z =  o.x}
 			end
-			local spawn_pos = vector.add(pos, offset)
-			if good_for_respawn(spawn_pos) then
-				player:set_pos(spawn_pos)
-				return true, spawn_pos
+			local player_spawn_pos = vector.add(pos, offset)
+			if good_for_respawn(player_spawn_pos) then
+				return player_spawn_pos, true
 			end
 		end
-
-		-- We here if we didn't find suitable place for respawn:
-		return false
+		-- We here if we didn't find suitable place for respawn
 	end
+	return mcl_spawn.get_world_spawn_pos(), false
+end
+
+mcl_spawn.spawn = function(player)
+	local pos, in_bed = mcl_spawn.get_player_spawn_pos(player)
+	player:set_pos(pos)
+	return in_bed or success
 end
 
 -- Respawn player at specified respawn position
