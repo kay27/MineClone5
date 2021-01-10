@@ -8,33 +8,39 @@ local mg_name = minetest.get_mapgen_setting("mg_name")
 
 -- Resolution of search grid in nodes.
 local res = 64
+local half_res = 32 -- for emerge areas around the position
+local alt_min = -10
+local alt_max = 200
 -- Number of points checked in the square search grid (edge * edge).
 local checks = 128 * 128
+local check = 0
 -- Starting point for biome checks. This also sets the y co-ordinate for all
 -- points checked, so the suitable biomes must be active at this y.
 local start_pos = minetest.setting_get_pos("static_spawnpoint") or {x = 0, y = 8, z = 0}
-local current_pos = start_pos
+local cp = {x=start_pos.x, y=start_pos.y, z=start_pos.z}
 -- Table of suitable biomes
 local biome_ids
-minetest.register_on_mods_loaded(function()
-	biome_ids = {
-		minetest.get_biome_id("ColdTaiga"),
-		minetest.get_biome_id("Taiga"),
-		minetest.get_biome_id("MegaTaiga"),
-		minetest.get_biome_id("MegaSpruceTaiga"),
-		minetest.get_biome_id("Plains"),
-		minetest.get_biome_id("SunflowerPlains"),
-		minetest.get_biome_id("Forest"),
-		minetest.get_biome_id("FlowerForest"),
-		minetest.get_biome_id("BirchForest"),
-		minetest.get_biome_id("BirchForestM"),
-		minetest.get_biome_id("Jungle"),
-		minetest.get_biome_id("JungleM"),
-		minetest.get_biome_id("JungleEdge"),
-		minetest.get_biome_id("JungleEdgeM"),
-		minetest.get_biome_id("Savanna"),
-		minetest.get_biome_id("SavannaM"),
-	}
+minetest.register_on_mods_loaded(
+	function()
+		biome_ids = {
+			minetest.get_biome_id("ColdTaiga"),
+			minetest.get_biome_id("Taiga"),
+			minetest.get_biome_id("MegaTaiga"),
+			minetest.get_biome_id("MegaSpruceTaiga"),
+			minetest.get_biome_id("Plains"),
+			minetest.get_biome_id("SunflowerPlains"),
+			minetest.get_biome_id("Forest"),
+			minetest.get_biome_id("FlowerForest"),
+			minetest.get_biome_id("BirchForest"),
+			minetest.get_biome_id("BirchForestM"),
+			minetest.get_biome_id("Jungle"),
+			minetest.get_biome_id("JungleM"),
+			minetest.get_biome_id("JungleEdge"),
+			minetest.get_biome_id("JungleEdgeM"),
+			minetest.get_biome_id("Savanna"),
+			minetest.get_biome_id("SavannaM"),
+		}
+		minetest.after(20, mcl_spawn.get_world_spawn_pos)
 	end
 )
 -- Bed spawning offsets
@@ -58,16 +64,6 @@ local node_search_list =
 --------------------
 
 
--- Direction table
-
-local dirs = {
-	{x = 0, y = 0, z = 1},
-	{x = -1, y = 0, z = 0},
-	{x = 0, y = 0, z = -1},
-	{x = 1, y = 0, z = 0},
-}
-
-
 -- Initial variables
 
 local edge_len = 1
@@ -77,7 +73,7 @@ local dir_ind = 1
 local searched = mg_name == "v6" or mg_name == "singlenode" or
 	minetest.settings:get("static_spawnpoint")
 local success = false
-local world_spawn_pos = {}
+local wsp = {} -- world spawn position
 
 
 -- Get world 'mapgen_limit' and 'chunksize' to calculate 'spawn_limit'.
@@ -92,67 +88,152 @@ local spawn_limit = math.max(mapgen_limit - (chunksize + 1) * 16, 0)
 --Functions
 -----------
 
--- Get next position on square search spiral
-
-local function next_pos()
-	if edge_dist == edge_len then
-		edge_dist = 0
-		dir_ind = dir_ind + 1
-		if dir_ind == 5 then
-			dir_ind = 1
-		end
-		dir_step = dir_step + 1
-		edge_len = math.floor(dir_step / 2) + 1
+local function get_far_node(pos)
+	local node = minetest.get_node(pos)
+	if node.name ~= "ignore" then
+		return node
 	end
-
-	local dir = dirs[dir_ind]
-	local move = vector.multiply(dir, res)
-
-	edge_dist = edge_dist + 1
-
-	return vector.add(current_pos, move)
+	minetest.get_voxel_manip():read_from_map(pos, pos)
+	return minetest.get_node(pos)
 end
 
+local function good_for_respawn(pos)
+	local pos0 = {x = pos.x, y = pos.y - 1, z = pos.z}
+	local pos1 = {x = pos.x, y = pos.y, z = pos.z}
+	local pos2 = {x = pos.x, y = pos.y + 1, z = pos.z}
+	local node0 = get_far_node(pos0)
+	local node1 = get_far_node(pos1)
+	local node2 = get_far_node(pos2)
+
+	local nn0, nn1, nn2 = node0.name, node1.name, node2.name
+	minetest.log("action", "[mcl_spawn] * "..nn0.." "..nn1.." "..nn2)
+	if	   minetest.get_item_group(nn0, "destroys_items") ~=0
+		or minetest.get_item_group(nn1, "destroys_items") ~=0
+		or minetest.get_item_group(nn2, "destroys_items") ~=0
+		or minetest.is_protected(pos0, "")
+		or minetest.is_protected(pos1, "")
+		or minetest.is_protected(pos2, "")
+		or minetest.get_node_light(pos1, 0.5) < 8
+		or minetest.get_node_light(pos2, 0.5) < 8
+		   then
+			return false
+	end
+
+	local def0 = minetest.registered_nodes[nn0]
+	local def1 = minetest.registered_nodes[nn1]
+	local def2 = minetest.registered_nodes[nn2]
+	return def0.walkable and (not def1.walkable) and (not def2.walkable) and
+		(def1.damage_per_second == nil or def2.damage_per_second <= 0) and
+		(def1.damage_per_second == nil or def2.damage_per_second <= 0)
+end
+
+local function next_pos()
+	if edge_dist >= edge_len then
+		edge_dist = 1
+		dir_ind = (dir_ind % 4) + 1
+		dir_step = dir_step + 1
+		edge_len = math.floor(dir_step / 2) + 1
+	else
+		edge_dist = edge_dist + 1
+	end
+	if dir_ind==1 then
+		cp.z = cp.z + res
+	elseif dir_ind==2 then
+		cp.x = cp.x - res
+	elseif dir_ind==3 then
+		cp.z = cp.z - res
+	else
+		cp.x = cp.x + res
+	end
+end
 
 -- Spawn position search
 
-local function search()
-	for iter = 1, checks do
-		local biome_data = minetest.get_biome_data(current_pos)
+local function next_biome()
+	while check <= checks do
+		local biome_data = minetest.get_biome_data(cp)
 		-- Sometimes biome_data is nil
 		local biome = biome_data and biome_data.biome
-		for id_ind = 1, #biome_ids do
-			local biome_id = biome_ids[id_ind]
-			if biome == biome_id then
-				local spawn_y = minetest.get_spawn_level(current_pos.x, current_pos.z)
-
-				if spawn_y then
-					world_spawn_pos = {x = current_pos.x, y = spawn_y, z = current_pos.z}
-					return true
+		if biome then
+			minetest.log("action", "[mcl_spawn] Search white-listed biome at "..minetest.pos_to_string(cp)..": "..minetest.get_biome_name(biome))
+			for _, biome_id in ipairs(biome_ids) do
+				if biome == biome_id then
+					cp.y = minetest.get_spawn_level(cp.x, cp.z) or start_pos.y
+					if cp.y then
+						wsp = {x = cp.x, y = cp.y, z = cp.z}
+						return true
+					end
+					break
 				end
 			end
 		end
 
-		current_pos = next_pos()
+		next_pos()
+
 		-- Check for position being outside world edge
-		if math.abs(current_pos.x) > spawn_limit or math.abs(current_pos.z) > spawn_limit then
+		if math.abs(cp.x) > spawn_limit or math.abs(cp.z) > spawn_limit then
+			check = checks + 1
 			return false
 		end
+
+		check = check + 1
 	end
 
 	return false
 end
 
+local function ecb_search_continue(blockpos, action, calls_remaining, param)
+	if calls_remaining <= 0 then
+		local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
+		local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
+		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:solid"})
+		minetest.log("action", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
+		if nodes then
+			for i=1, #nodes do
+				wsp = nodes[i]
+				if wsp then
+					wsp.y = wsp.y + 1
+					if good_for_respawn(wsp) then
+						minetest.log("action", "[mcl_spawn] Dynamic world spawn determined to be "..minetest.pos_to_string(wsp))
+						searched = true
+						success = true
+						return
+					end
+				end
+			end
+		end
+		next_pos()
+		mcl_spawn.search()
+	end
+end
+
+function mcl_spawn.search()
+	if not next_biome() or check > checks then
+		return false
+	end
+	check = check + 1
+	if not wsp.y then
+		wsp.y = 8
+	end
+	local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
+	local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
+	minetest.emerge_area(pos1, pos2, ecb_search_continue)
+end
+
+
 mcl_spawn.get_world_spawn_pos = function()
 	if not searched then
-		success = search()
+		mcl_spawn.search()
 		searched = true
-		if success then
-			minetest.log("action", "[mcl_spawn] Dynamic world spawn determined to be "..minetest.pos_to_string(world_spawn_pos))
-		end
+		minetest.log("action", "[mcl_spawn] Started world spawn point search")
+	end
+	if success and not good_for_respawn(wsp) then
+		minetest.log("action", "[mcl_spawn] World spawn position isn't safe anymore: "..minetest.pos_to_string(wsp))
+		success, searched = false, false
+		success, searched = mcl_spawn.search(), true
 	end
 	if success then
-		return world_spawn_pos
+		return wsp
 	end
 	minetest.log("action", "[mcl_spawn] Failed to determine dynamic world spawn!")
 	return start_pos
@@ -208,27 +289,6 @@ mcl_spawn.set_spawn_pos = function(player, pos, message)
 		end
 	end
 	return spawn_changed
-end
-
-local function get_far_node(pos)
-	local node = minetest.get_node(pos)
-	if node.name ~= "ignore" then
-		return node
-	end
-	minetest.get_voxel_manip():read_from_map(pos, pos)
-	return minetest.get_node(pos)
-end
-
-local function good_for_respawn(pos)
-	local node0 = get_far_node({x = pos.x, y = pos.y - 1, z = pos.z})
-	local node1 = get_far_node({x = pos.x, y = pos.y, z = pos.z})
-	local node2 = get_far_node({x = pos.x, y = pos.y + 1, z = pos.z})
-	local def0 = minetest.registered_nodes[node0.name]
-	local def1 = minetest.registered_nodes[node1.name]
-	local def2 = minetest.registered_nodes[node2.name]
-	return def0.walkable and (not def1.walkable) and (not def2.walkable) and
-		(def1.damage_per_second == nil or def2.damage_per_second <= 0) and
-		(def1.damage_per_second == nil or def2.damage_per_second <= 0)
 end
 
 mcl_spawn.get_player_spawn_pos = function(player)
