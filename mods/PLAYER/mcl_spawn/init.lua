@@ -45,8 +45,8 @@ local node_search_list =
 
 -- Initial variables
 
-local success = (storage:get_int("mcl_spawn_success") and true) or false
-local searched = (storage:get_int("mcl_spawn_searched") and true) or mg_name == "v6" or mg_name == "singlenode" or minetest.settings:get("static_spawnpoint")
+local success = storage:get_int("mcl_spawn_success")==1
+local searched = (storage:get_int("mcl_spawn_searched")==1) or mg_name == "v6" or mg_name == "singlenode" or minetest.settings:get("static_spawnpoint")
 local wsp = minetest.string_to_pos(storage:get_string("mcl_spawn_world_spawn_point")) or {} -- world spawn position
 local check = storage:get_int("mcl_spawn_check") or 0
 local cp = minetest.string_to_pos(storage:get_string("mcl_spawn_cp")) or {x=start_pos.x, y=start_pos.y, z=start_pos.z}
@@ -367,9 +367,9 @@ end
 minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
 
 minetest.register_on_shutdown(function()
-		storage:set_int("mcl_spawn_success", (success and 1) or 0)
+		storage:set_int("mcl_spawn_success", success and 1 or 0)
 		storage:set_string("mcl_spawn_world_spawn_point", minetest.pos_to_string(wsp))
-		storage:set_int("mcl_spawn_searched", (searched and 1) or 0)
+		storage:set_int("mcl_spawn_searched", searched and 1 or 0)
 		storage:set_int("mcl_spawn_check", check)
 		storage:set_string("mcl_spawn_cp", minetest.pos_to_string(cp))
 		storage:set_int("mcl_spawn_edge_len", edge_len)

@@ -21,6 +21,21 @@ local destroy_portal = function(pos)
 	end
 end
 
+local ep_scheme = {
+	{ o={x=0, y=0, z=1}, p=3 },
+	{ o={x=0, y=0, z=2}, p=3 },
+	{ o={x=0, y=0, z=3}, p=3 },
+	{ o={x=1, y=0, z=4}, p=0 },
+	{ o={x=2, y=0, z=4}, p=0 },
+	{ o={x=3, y=0, z=4}, p=0 },
+	{ o={x=4, y=0, z=3}, p=1 },
+	{ o={x=4, y=0, z=2}, p=1 },
+	{ o={x=4, y=0, z=1}, p=1 },
+	{ o={x=3, y=0, z=0}, p=2 },
+	{ o={x=2, y=0, z=0}, p=2 },
+	{ o={x=1, y=0, z=0}, p=2 },
+}
+
 -- End portal
 minetest.register_node("mcl_portals:portal_end", {
 	description = S("End Portal"),
@@ -107,97 +122,21 @@ end
 
 -- Check if pos is part of a valid end portal frame, filled with eyes of ender.
 local function check_end_portal_frame(pos)
-	-- Check if pos has an end portal frame with eye of ender
-	local eframe = function(pos, param2)
-		local node = minetest.get_node(pos)
-		if node.name == "mcl_portals:end_portal_frame_eye" then
-			if param2 == nil or node.param2 == param2 then
-				return true, node
+	for i = 1, 12 do
+		local pos0 = vector.subtract(pos, ep_scheme[i].o)
+		local portal = true
+		for j = 1, 12 do
+			local k = ((i+j-2) % 12) + 1
+			local p = vector.add(pos0, ep_scheme[k].o)
+			local node = minetest.get_node(p)
+			if not node or node.name ~= "mcl_portals:end_portal_frame_eye" or node.param2 ~= ep_scheme[k].p then
+			--if not node or node.name ~= "mcl_portals:end_portal_frame_eye" then
+				portal = false
+				break
 			end
 		end
-		return false
-	end
-
-	-- Step 1: Find a row of 3 end portal frames with eyes, all facing the same direction
-	local streak = 0
-	local streak_start, streak_end, streak_start_node, streak_end_node
-	local last_param2
-	local axes = { "x", "z" }
-	for a=1, #axes do
-		local axis = axes[a]
-		for b=pos[axis]-2, pos[axis]+2 do
-			local cpos = table.copy(pos)
-			cpos[axis] = b
-			local e, node = eframe(cpos, last_param2)
-			if e then
-				last_param2 = node.param2
-				streak = streak + 1
-				if streak == 1 then
-					streak_start = table.copy(pos)
-					streak_start[axis] = b
-					streak_start_node = node
-				elseif streak == 3 then
-					streak_end = table.copy(pos)
-					streak_end[axis] = b
-					streak_end_node = node
-					break
-				end
-			else
-				streak = 0
-				last_param2 = nil
-			end
-		end
-		if streak_end then
-			break
-		end
-		streak = 0
-		last_param2 = nil
-	end
-	-- Has a row been found?
-	if streak_end then
-		-- Step 2: Using the known facedir, check the remaining spots in which we expect
-		-- “eyed” end portal frames.
-		local dir = minetest.facedir_to_dir(streak_start_node.param2)
-		if dir.x ~= 0 then
-			for i=1, 3 do
-				if not eframe({x=streak_start.x + i*dir.x, y=streak_start.y, z=streak_start.z - 1}) then
-					return false
-				end
-				if not eframe({x=streak_start.x + i*dir.x, y=streak_start.y, z=streak_end.z + 1}) then
-					return false
-				end
-				if not eframe({x=streak_start.x + 4*dir.x, y=streak_start.y, z=streak_start.z + i-1}) then
-					return false
-				end
-			end
-			-- All checks survived! We have a valid portal!
-			local k
-			if dir.x > 0 then
-				k = 1
-			else
-				k = -3
-			end
-			return true, { x = streak_start.x + k, y = streak_start.y, z = streak_start.z }
-		elseif dir.z ~= 0 then
-			for i=1, 3 do
-				if not eframe({x=streak_start.x - 1, y=streak_start.y, z=streak_start.z + i*dir.z}) then
-					return false
-				end
-				if not eframe({x=streak_end.x + 1, y=streak_start.y, z=streak_start.z + i*dir.z}) then
-					return false
-				end
-				if not eframe({x=streak_start.x + i-1, y=streak_start.y, z=streak_start.z + 4*dir.z}) then
-					return false
-				end
-			end
-			local k
-			if dir.z > 0 then
-				k = 1
-			else
-				k = -3
-			end
-			-- All checks survived! We have a valid portal!
-			return true, { x = streak_start.x, y = streak_start.y, z = streak_start.z + k }
+		if portal then
+			return true, {x=pos0.x+1, y=pos0.y, z=pos0.z+1}
 		end
 	end
 	return false
@@ -305,7 +244,7 @@ end
 minetest.register_abm({
 	label = "End portal teleportation",
 	nodenames = {"mcl_portals:portal_end"},
-	interval = 1,
+	interval = 0.1,
 	chance = 1,
 	action = mcl_portals.end_portal_teleport,
 })
