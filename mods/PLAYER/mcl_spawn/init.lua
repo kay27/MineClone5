@@ -2,6 +2,7 @@ mcl_spawn = {}
 
 local S = minetest.get_translator("mcl_spawn")
 local mg_name = minetest.get_mapgen_setting("mg_name")
+local storage = minetest.get_mod_storage()
 
 -- Parameters
 -------------
@@ -15,11 +16,9 @@ local alt_min = -10
 local alt_max = 200
 -- Number of points checked in the square search grid (edge * edge).
 local checks = 128 * 128
-local check = 0
 -- Starting point for biome checks. This also sets the y co-ordinate for all
 -- points checked, so the suitable biomes must be active at this y.
 local start_pos = minetest.setting_get_pos("static_spawnpoint") or {x = 0, y = 8, z = 0}
-local cp = {x=start_pos.x, y=start_pos.y, z=start_pos.z}
 -- Table of suitable biomes
 local biome_ids = false
 
@@ -46,15 +45,15 @@ local node_search_list =
 
 -- Initial variables
 
-local edge_len = 1
-local edge_dist = 0
-local dir_step = 0
-local dir_ind = 1
-local searched = mg_name == "v6" or mg_name == "singlenode" or
-	minetest.settings:get("static_spawnpoint")
-local success = false
-local wsp = {} -- world spawn position
-
+local success = (storage:get_int("mcl_spawn_success") and true) or false
+local searched = (storage:get_int("mcl_spawn_searched") and true) or mg_name == "v6" or mg_name == "singlenode" or minetest.settings:get("static_spawnpoint")
+local wsp = minetest.string_to_pos(storage:get_string("mcl_spawn_world_spawn_point")) or {} -- world spawn position
+local check = storage:get_int("mcl_spawn_check") or 0
+local cp = minetest.string_to_pos(storage:get_string("mcl_spawn_cp")) or {x=start_pos.x, y=start_pos.y, z=start_pos.z}
+local edge_len = storage:get_int("mcl_spawn_edge_len") or 1
+local edge_dist = storage:get_int("mcl_spawn_edge_dist") or 0
+local dir_step = storage:get_int("mcl_spawn_dir_step") or 0
+local dir_ind = storage:get_int("mcl_spawn_dir_ind") or 1
 
 -- Get world 'mapgen_limit' and 'chunksize' to calculate 'spawn_limit'.
 -- This accounts for how mapchunks are not generated if they or their shell exceed
@@ -77,7 +76,7 @@ local function get_far_node(pos)
 	return minetest.get_node(pos)
 end
 
-local function good_for_respawn(pos)
+local function good_for_respawn(pos, player)
 	local pos0 = {x = pos.x, y = pos.y - 1, z = pos.z}
 	local pos1 = {x = pos.x, y = pos.y, z = pos.z}
 	local pos2 = {x = pos.x, y = pos.y + 1, z = pos.z}
@@ -89,11 +88,11 @@ local function good_for_respawn(pos)
 	if	   minetest.get_item_group(nn0, "destroys_items") ~=0
 		or minetest.get_item_group(nn1, "destroys_items") ~=0
 		or minetest.get_item_group(nn2, "destroys_items") ~=0
-		or minetest.is_protected(pos0, "")
-		or minetest.is_protected(pos1, "")
-		or minetest.is_protected(pos2, "")
-		or minetest.get_node_light(pos1, 0.5) < 8
-		or minetest.get_node_light(pos2, 0.5) < 8
+		or minetest.is_protected(pos0, player or "")
+		or minetest.is_protected(pos1, player or "")
+		or minetest.is_protected(pos2, player or "")
+		or (not player and minetest.get_node_light(pos1, 0.5) < 8)
+		or (not player and minetest.get_node_light(pos2, 0.5) < 8)
 		   then
 			return false
 	end
@@ -313,7 +312,7 @@ mcl_spawn.get_player_spawn_pos = function(player)
 				offset = {x = -o.z, y = o.y,  z =  o.x}
 			end
 			local player_spawn_pos = vector.add(pos, offset)
-			if good_for_respawn(player_spawn_pos) then
+			if good_for_respawn(player_spawn_pos, player:get_player_name()) then
 				return player_spawn_pos, true
 			end
 		end
@@ -366,3 +365,16 @@ function mcl_spawn.shadow_worker()
 	minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
 end
 minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
+
+minetest.register_on_shutdown(function()
+		storage:set_int("mcl_spawn_success", (success and 1) or 0)
+		storage:set_string("mcl_spawn_world_spawn_point", minetest.pos_to_string(wsp))
+		storage:set_int("mcl_spawn_searched", (searched and 1) or 0)
+		storage:set_int("mcl_spawn_check", check)
+		storage:set_string("mcl_spawn_cp", minetest.pos_to_string(cp))
+		storage:set_int("mcl_spawn_edge_len", edge_len)
+		storage:set_int("mcl_spawn_edge_dist", edge_dist)
+		storage:set_int("mcl_spawn_dir_step", dir_step)
+		storage:set_int("mcl_spawn_dir_ind", dir_ind)
+	end
+)
