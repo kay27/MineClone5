@@ -6,6 +6,8 @@ local mg_name = minetest.get_mapgen_setting("mg_name")
 -- Parameters
 -------------
 
+local respawn_search_interval = 30 -- seconds
+
 -- Resolution of search grid in nodes.
 local res = 64
 local half_res = 32 -- for emerge areas around the position
@@ -19,30 +21,8 @@ local check = 0
 local start_pos = minetest.setting_get_pos("static_spawnpoint") or {x = 0, y = 8, z = 0}
 local cp = {x=start_pos.x, y=start_pos.y, z=start_pos.z}
 -- Table of suitable biomes
-local biome_ids
-minetest.register_on_mods_loaded(
-	function()
-		biome_ids = {
-			minetest.get_biome_id("ColdTaiga"),
-			minetest.get_biome_id("Taiga"),
-			minetest.get_biome_id("MegaTaiga"),
-			minetest.get_biome_id("MegaSpruceTaiga"),
-			minetest.get_biome_id("Plains"),
-			minetest.get_biome_id("SunflowerPlains"),
-			minetest.get_biome_id("Forest"),
-			minetest.get_biome_id("FlowerForest"),
-			minetest.get_biome_id("BirchForest"),
-			minetest.get_biome_id("BirchForestM"),
-			minetest.get_biome_id("Jungle"),
-			minetest.get_biome_id("JungleM"),
-			minetest.get_biome_id("JungleEdge"),
-			minetest.get_biome_id("JungleEdgeM"),
-			minetest.get_biome_id("Savanna"),
-			minetest.get_biome_id("SavannaM"),
-		}
-		minetest.after(20, mcl_spawn.get_world_spawn_pos)
-	end
-)
+local biome_ids = false
+
 -- Bed spawning offsets
 local node_search_list =
 	{
@@ -106,7 +86,6 @@ local function good_for_respawn(pos)
 	local node2 = get_far_node(pos2)
 
 	local nn0, nn1, nn2 = node0.name, node1.name, node2.name
-	minetest.log("action", "[mcl_spawn] * "..nn0.." "..nn1.." "..nn2)
 	if	   minetest.get_item_group(nn0, "destroys_items") ~=0
 		or minetest.get_item_group(nn1, "destroys_items") ~=0
 		or minetest.get_item_group(nn2, "destroys_items") ~=0
@@ -125,6 +104,29 @@ local function good_for_respawn(pos)
 	return def0.walkable and (not def1.walkable) and (not def2.walkable) and
 		(def1.damage_per_second == nil or def2.damage_per_second <= 0) and
 		(def1.damage_per_second == nil or def2.damage_per_second <= 0)
+end
+
+local function can_find_tree(pos1)
+	local trees = minetest.find_nodes_in_area(vector.subtract(pos1,half_res), vector.add(pos1,half_res), {"group:tree"}, false)
+	for _, pos2 in ipairs(trees) do
+		if not minetest.is_protected(pos2, "") then
+			if pos2.x < pos1.x then
+				pos2.x = pos2.x + 1
+			elseif pos2.x > pos1.x then
+				pos2.x = pos2.x - 1
+			end
+			if pos2.z < pos1.z then
+				pos2.z = pos2.z + 1
+			elseif pos2.z > pos1.z then
+				pos2.z = pos2.z - 1
+			end
+			local way = minetest.find_path(pos1, pos2, res, 1, 3, "A*_noprefetch")
+			if way then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 local function next_pos()
@@ -155,7 +157,7 @@ local function next_biome()
 		-- Sometimes biome_data is nil
 		local biome = biome_data and biome_data.biome
 		if biome then
-			minetest.log("action", "[mcl_spawn] Search white-listed biome at "..minetest.pos_to_string(cp)..": "..minetest.get_biome_name(biome))
+			minetest.log("verbose", "[mcl_spawn] Search white-listed biome at "..minetest.pos_to_string(cp)..": "..minetest.get_biome_name(biome))
 			for _, biome_id in ipairs(biome_ids) do
 				if biome == biome_id then
 					cp.y = minetest.get_spawn_level(cp.x, cp.z) or start_pos.y
@@ -187,13 +189,13 @@ local function ecb_search_continue(blockpos, action, calls_remaining, param)
 		local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
 		local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
 		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:solid"})
-		minetest.log("action", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
+		minetest.log("verbose", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
 		if nodes then
 			for i=1, #nodes do
 				wsp = nodes[i]
 				if wsp then
 					wsp.y = wsp.y + 1
-					if good_for_respawn(wsp) then
+					if good_for_respawn(wsp) and can_find_tree(wsp) then
 						minetest.log("action", "[mcl_spawn] Dynamic world spawn determined to be "..minetest.pos_to_string(wsp))
 						searched = true
 						success = true
@@ -222,16 +224,6 @@ end
 
 
 mcl_spawn.get_world_spawn_pos = function()
-	if not searched then
-		mcl_spawn.search()
-		searched = true
-		minetest.log("action", "[mcl_spawn] Started world spawn point search")
-	end
-	if success and not good_for_respawn(wsp) then
-		minetest.log("action", "[mcl_spawn] World spawn position isn't safe anymore: "..minetest.pos_to_string(wsp))
-		success, searched = false, false
-		success, searched = mcl_spawn.search(), true
-	end
 	if success then
 		return wsp
 	end
@@ -338,3 +330,39 @@ end
 
 -- Respawn player at specified respawn position
 minetest.register_on_respawnplayer(mcl_spawn.spawn)
+
+function mcl_spawn.shadow_worker()
+	if not biome_ids or #biome_ids < 1 then
+		biome_ids = {
+			minetest.get_biome_id("ColdTaiga"),
+			minetest.get_biome_id("Taiga"),
+			minetest.get_biome_id("MegaTaiga"),
+			minetest.get_biome_id("MegaSpruceTaiga"),
+			minetest.get_biome_id("Plains"),
+			minetest.get_biome_id("SunflowerPlains"),
+			minetest.get_biome_id("Forest"),
+			minetest.get_biome_id("FlowerForest"),
+			minetest.get_biome_id("BirchForest"),
+			minetest.get_biome_id("BirchForestM"),
+			minetest.get_biome_id("Jungle"),
+			minetest.get_biome_id("JungleM"),
+			minetest.get_biome_id("JungleEdge"),
+			minetest.get_biome_id("JungleEdgeM"),
+			minetest.get_biome_id("Savanna"),
+			minetest.get_biome_id("SavannaM"),
+		}
+	end
+	if not searched then
+		searched = true
+		mcl_spawn.search()
+		minetest.log("action", "[mcl_spawn] Started world spawn point search")
+	end
+	if success and ((not good_for_respawn(wsp)) or (not can_find_tree(wsp))) then
+		success = false
+		minetest.log("action", "[mcl_spawn] World spawn position isn't safe anymore: "..minetest.pos_to_string(wsp))
+		mcl_spawn.search()
+	end
+
+	minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
+end
+minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
