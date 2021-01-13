@@ -88,6 +88,9 @@ local function good_for_respawn(pos, player)
 	if	   minetest.get_item_group(nn0, "destroys_items") ~=0
 		or minetest.get_item_group(nn1, "destroys_items") ~=0
 		or minetest.get_item_group(nn2, "destroys_items") ~=0
+		or minetest.get_item_group(nn0, "portal") ~=0
+		or minetest.get_item_group(nn1, "portal") ~=0
+		or minetest.get_item_group(nn2, "portal") ~=0
 		or minetest.is_protected(pos0, player or "")
 		or minetest.is_protected(pos1, player or "")
 		or minetest.is_protected(pos2, player or "")
