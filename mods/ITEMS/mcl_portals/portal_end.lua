@@ -126,11 +126,9 @@ local function check_end_portal_frame(pos)
 		local pos0 = vector.subtract(pos, ep_scheme[i].o)
 		local portal = true
 		for j = 1, 12 do
-			local k = ((i+j-2) % 12) + 1
-			local p = vector.add(pos0, ep_scheme[k].o)
+			local p = vector.add(pos0, ep_scheme[j].o)
 			local node = minetest.get_node(p)
-			if not node or node.name ~= "mcl_portals:end_portal_frame_eye" or node.param2 ~= ep_scheme[k].p then
-			--if not node or node.name ~= "mcl_portals:end_portal_frame_eye" then
+			if not node or node.name ~= "mcl_portals:end_portal_frame_eye" or node.param2 ~= ep_scheme[j].p then
 				portal = false
 				break
 			end
