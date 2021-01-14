@@ -23,7 +23,7 @@ dofile(settlements.modpath.."/convert_lua_mts.lua")
 settlements_in_world = settlements.load()
 settlements.grundstellungen()
 
---[[ Disable custom NPC spawning for now.
+--[[ Disable custom node spawning.
 --
 -- register block for npc spawn
 --
@@ -33,26 +33,23 @@ minetest.register_node("settlements:junglewood", {
     groups = {choppy=3, wood=2},
     sounds = default.node_sound_wood_defaults(),
   })
+
+--]]
+
+
+--[[ Enable for testing, but use MineClone2's own spawn code if/when merging.
 --
 -- register inhabitants
 --
-if minetest.get_modpath("mobs_npc") ~= nil then
-  mobs:register_spawn("mobs_npc:npc", --name
-    {"settlements:junglewood"}, --nodes
-    20, --max_light
+if minetest.get_modpath("mobs_mc") ~= nil then
+  mobs:register_spawn("mobs_mc:villager", --name
+    {"mcl_core:stonebrickcarved"}, --nodes
+    15, --max_light
     0, --min_light
     20, --chance
-    2, --active_object_count
+    7, --active_object_count
     31000, --max_height
     nil) --day_toggle
-  mobs:register_spawn("mobs_npc:trader", --name
-    {"settlements:junglewood"}, --nodes
-    20, --max_light
-    0, --min_light
-    20, --chance
-    2, --active_object_count
-    31000, --max_height
-    nil)--day_toggle
 end 
 --]]
 
@@ -67,7 +64,7 @@ minetest.register_on_generated(function(minp, maxp)
     --
     -- randomly try to build settlements
     -- 
-    if math.random(1,10)<6 then 
+    if math.random(1,10)<=7 then
       --
       -- time between creation of two settlements
       --
