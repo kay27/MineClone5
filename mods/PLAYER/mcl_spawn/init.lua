@@ -190,7 +190,8 @@ local function ecb_search_continue(blockpos, action, calls_remaining, param)
 	if calls_remaining <= 0 then
 		local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
 		local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
-		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:solid"})
+		-- local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:solid"})
+		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:soil"})
 		minetest.log("verbose", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
 		if nodes then
 			for i=1, #nodes do
