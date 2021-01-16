@@ -8,6 +8,26 @@ local storage = minetest.get_mod_storage()
 -------------
 
 local respawn_search_interval = 30 -- seconds
+local respawn_search_initial_delay = 30 -- seconds
+local node_groups_white_list = {"group:soil"}
+local biomes_white_list = {
+	"ColdTaiga",
+	"Taiga",
+	"MegaTaiga",
+	"MegaSpruceTaiga",
+	"Plains",
+	"SunflowerPlains",
+	"Forest",
+	"FlowerForest",
+	"BirchForest",
+	"BirchForestM",
+	"Jungle",
+	"JungleM",
+	"JungleEdge",
+	"JungleEdgeM",
+	"Savanna",
+	"SavannaM",
+}
 
 -- Resolution of search grid in nodes.
 local res = 64
@@ -20,7 +40,7 @@ local checks = 128 * 128
 -- points checked, so the suitable biomes must be active at this y.
 local start_pos = minetest.setting_get_pos("static_spawnpoint") or {x = 0, y = 8, z = 0}
 -- Table of suitable biomes
-local biome_ids = false
+local biome_ids = {}
 
 -- Bed spawning offsets
 local node_search_list =
@@ -190,8 +210,7 @@ local function ecb_search_continue(blockpos, action, calls_remaining, param)
 	if calls_remaining <= 0 then
 		local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
 		local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
-		-- local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:solid"})
-		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:soil"})
+		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, node_groups_white_list)
 		minetest.log("verbose", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
 		if nodes then
 			for i=1, #nodes do
@@ -335,25 +354,10 @@ end
 minetest.register_on_respawnplayer(mcl_spawn.spawn)
 
 function mcl_spawn.shadow_worker()
-	if not biome_ids or #biome_ids < 1 then
-		biome_ids = {
-			minetest.get_biome_id("ColdTaiga"),
-			minetest.get_biome_id("Taiga"),
-			minetest.get_biome_id("MegaTaiga"),
-			minetest.get_biome_id("MegaSpruceTaiga"),
-			minetest.get_biome_id("Plains"),
-			minetest.get_biome_id("SunflowerPlains"),
-			minetest.get_biome_id("Forest"),
-			minetest.get_biome_id("FlowerForest"),
-			minetest.get_biome_id("BirchForest"),
-			minetest.get_biome_id("BirchForestM"),
-			minetest.get_biome_id("Jungle"),
-			minetest.get_biome_id("JungleM"),
-			minetest.get_biome_id("JungleEdge"),
-			minetest.get_biome_id("JungleEdgeM"),
-			minetest.get_biome_id("Savanna"),
-			minetest.get_biome_id("SavannaM"),
-		}
+	if #biome_ids < 1 then
+		for _, biome_name in pairs(biomes_white_list) do
+			table.insert(biome_ids, minetest.get_biome_id(biome_name))
+		end
 	end
 	if not searched then
 		searched = true
@@ -368,7 +372,7 @@ function mcl_spawn.shadow_worker()
 
 	minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
 end
-minetest.after(respawn_search_interval, mcl_spawn.shadow_worker)
+minetest.after(respawn_search_initial_delay, mcl_spawn.shadow_worker)
 
 minetest.register_on_shutdown(function()
 		storage:set_int("mcl_spawn_success", success and 1 or 0)
