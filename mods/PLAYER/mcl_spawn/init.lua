@@ -74,6 +74,7 @@ local edge_len = storage:get_int("mcl_spawn_edge_len") or 1
 local edge_dist = storage:get_int("mcl_spawn_edge_dist") or 0
 local dir_step = storage:get_int("mcl_spawn_dir_step") or 0
 local dir_ind = storage:get_int("mcl_spawn_dir_ind") or 1
+local emerge_pos1, emerge_pos2
 
 -- Get world 'mapgen_limit' and 'chunksize' to calculate 'spawn_limit'.
 -- This accounts for how mapchunks are not generated if they or their shell exceed
@@ -116,6 +117,9 @@ local function good_for_respawn(pos, player)
 		or minetest.is_protected(pos2, player or "")
 		or (not player and minetest.get_node_light(pos1, 0.5) < 8)
 		or (not player and minetest.get_node_light(pos2, 0.5) < 8)
+		or nn0 == "ignore"
+		or nn1 == "ignore"
+		or nn2 == "ignore"
 		   then
 			return false
 	end
@@ -129,7 +133,8 @@ local function good_for_respawn(pos, player)
 end
 
 local function can_find_tree(pos1)
-	local trees = minetest.find_nodes_in_area(vector.subtract(pos1,half_res), vector.add(pos1,half_res), {"group:tree"}, false)
+	if not emerge_pos1 or not emerge_pos2 then return false end
+	local trees = minetest.find_nodes_in_area(emerge_pos1, emerge_pos2, {"group:tree"}, false)
 	for _, pos2 in ipairs(trees) do
 		if not minetest.is_protected(pos2, "") then
 			if pos2.x < pos1.x then
@@ -208,9 +213,9 @@ end
 
 local function ecb_search_continue(blockpos, action, calls_remaining, param)
 	if calls_remaining <= 0 then
-		local pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
-		local pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
-		local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, node_groups_white_list)
+		emerge_pos1 = {x = wsp.x-half_res, y = alt_min, z = wsp.z-half_res}
+		emerge_pos2 = {x = wsp.x+half_res, y = alt_max, z = wsp.z+half_res}
+		local nodes = minetest.find_nodes_in_area_under_air(emerge_pos1, emerge_pos2, node_groups_white_list)
 		minetest.log("verbose", "[mcl_spawn] Data emerge callback: "..minetest.pos_to_string(wsp).." - "..tostring(nodes and #nodes) .. " node(s) found under air")
 		if nodes then
 			for i=1, #nodes do
