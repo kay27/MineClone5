@@ -32,10 +32,7 @@ local init_node_construct = function(pos)
 end
 
 -- The call of Struct
-mcl_structures.call_struct = function(pos, struct_style, rotation)
-	if not rotation then
-		rotation = "random"
-	end
+local call_struct_no_delay = function(pos, struct_style, rotation)
 	if struct_style == "desert_temple" then
 		return mcl_structures.generate_desert_temple(pos, rotation)
 	elseif struct_style == "desert_well" then
@@ -57,6 +54,18 @@ mcl_structures.call_struct = function(pos, struct_style, rotation)
 	elseif struct_style == "end_portal_shrine" then
 		return mcl_structures.generate_end_portal_shrine(pos, rotation)
 	end
+end
+local function ecb_call_struct(blockpos, action, calls_remaining, param)
+	if calls_remaining <= 0 then
+		call_struct_no_delay(param.pos, param.struct_style, param.rotation)
+	end
+end
+
+mcl_structures.call_struct = function(pos, struct_style, rotation)
+	if not rotation then
+		rotation = "random"
+	end
+	minetest.emerge_area(vector.subtract(pos,3), vector.add(pos,42), ecb_call_struct, {pos = vector.new(pos), struct_style=struct_style, rotation=rotation})
 end
 
 mcl_structures.generate_desert_well = function(pos)
