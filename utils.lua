@@ -243,7 +243,11 @@ function settlements.fill_chest(pos)
   -- initialize chest (mts chests don't have meta)
   local meta = minetest.get_meta(chestpos)
   if meta:get_string("infotext") ~= "Chest" then
-    minetest.registered_nodes["mcl_chests:chest"].on_construct(chestpos)
+	-- For MineClone2 0.70 or before
+	-- minetest.registered_nodes["mcl_chests:chest"].on_construct(chestpos)
+	--
+	-- For MineClone2 after commit 09ab1482b5 (the new entity chests)
+    minetest.registered_nodes["mcl_chests:chest_small"].on_construct(chestpos)
   end
   -- fill chest
   local inv = minetest.get_inventory( {type="node", pos=chestpos} )
