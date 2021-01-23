@@ -60,7 +60,7 @@ minetest.register_on_generated(function(minp, maxp)
     --
     -- needed for manual and automated settlement building
     --
-    heightmap = minetest.get_mapgen_object("heightmap")
+    local heightmap = minetest.get_mapgen_object("heightmap")
     --
     -- randomly try to build settlements
     -- 
@@ -111,6 +111,7 @@ minetest.register_on_generated(function(minp, maxp)
       
       -- waiting necessary for chunk to load, otherwise, townhall is not in the middle, no map found behind townhall
       minetest.after(3, function()
+          local suitable_place_found = false
           --
           -- fill settlement_info with buildings and their data
           --
@@ -222,6 +223,7 @@ minetest.register_craftitem("mcl_villages:tool", {
         -- fill settlement_info with buildings and their data
         --
         local start_time = os.time()
+        local suitable_place_found = false
         if settlements.lvm == true
         then
           suitable_place_found = settlements.create_site_plan_lvm(maxp, minp)

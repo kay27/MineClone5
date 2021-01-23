@@ -103,6 +103,7 @@ function settlements.terraform()
   local fheight
   local fwidth
   local fdepth
+  local schematic_data
 
   for i, built_house in ipairs(settlement_info) do
     -- pick right schematic_info to current built_house

@@ -8,9 +8,9 @@ local c_desert_sand                 = minetest.get_content_id("mcl_core:redsand"
 --
 local c_air                         = minetest.get_content_id("air")
 local c_snow                        = minetest.get_content_id("mcl_core:snowblock")
-local c_fern_1                      = minetest.get_content_id("mcl_core:fern")
-local c_fern_2                      = minetest.get_content_id("mcl_core:fern")
-local c_fern_3                      = minetest.get_content_id("mcl_core:fern")
+local c_fern_1                      = minetest.get_content_id("mcl_flowers:fern")
+local c_fern_2                      = minetest.get_content_id("mcl_flowers:fern")
+local c_fern_3                      = minetest.get_content_id("mcl_flowers:fern")
 local c_rose                        = minetest.get_content_id("mcl_flowers:poppy")
 local c_viola                       = minetest.get_content_id("mcl_flowers:blue_orchid")
 local c_geranium                    = minetest.get_content_id("mcl_flowers:allium")
@@ -319,6 +319,7 @@ end
 -------------------------------------------------------------------------------
 -- initialize furnace, chests, anvil
 -------------------------------------------------------------------------------
+local building_all_info
 function settlements.initialize_nodes()
   for i, built_house in ipairs(settlement_info) do
     for j, schem in ipairs(schematic_table) do
@@ -370,6 +371,7 @@ end
 -- evaluate heightmap
 -------------------------------------------------------------------------------
 function settlements.evaluate_heightmap()
+  local heightmap = minetest.get_mapgen_object("heightmap")
   -- max height and min height, initialize with impossible values for easier first time setting
   local max_y = -50000
   local min_y = 50000
