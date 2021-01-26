@@ -96,72 +96,72 @@ end
 -- returns surface postion
 -------------------------------------------------------------------------------
 function settlements.find_surface(pos)
-  local p6 = vector.new(pos)
-  local cnt = 0
-  local itter -- count up or down
-  local cnt_max = 200
--- check, in which direction to look for surface
-  local surface_node = minetest.get_node_or_nil(p6)
-  if surface_node and string.find(surface_node.name,"air") then 
-    itter = -1
-  else
-    itter = 1
-  end
-  -- go through nodes an find surface
-  while cnt < cnt_max do
-    cnt = cnt+1
-    minetest.forceload_block(p6)
-    surface_node = minetest.get_node_or_nil(p6)
-    
-    if not surface_node then
-    -- Load the map at pos and try again
-      minetest.get_voxel_manip():read_from_map(p6, p6)
-      surface_node = minetest.get_node(p6)
-      if surface_node.name == "ignore" then
-         settlements.debug("find_surface1: nil or ignore")
-         return nil
-      end
-    end
-    
---    if surface_node == nil or surface_node.name == "ignore" then 
---      --return nil 
---      local fl = minetest.forceload_block(p6)
---      if not fl then
---      
---        return nil
---      end
---    end
-    --
-    -- Check Surface_node and Node above
-    --
-      if settlements.surface_mat[surface_node.name] then
-         local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
-         if surface_node_plus_1 and surface_node and 
-         (string.find(surface_node_plus_1.name,"air") or
-           string.find(surface_node_plus_1.name,"snow") or
-           string.find(surface_node_plus_1.name,"fern") or
-           string.find(surface_node_plus_1.name,"flower") or
-           string.find(surface_node_plus_1.name,"bush") or
-           string.find(surface_node_plus_1.name,"tree") or
-           string.find(surface_node_plus_1.name,"grass")) 
-         then 
-           settlements.debug("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
-           return p6, surface_node.name 
-         else
-           settlements.debug("find_surface2: wrong surface+1")
-         end
-      else
-        settlements.debug("find_surface3: wrong surface "..surface_node.name)
-      end
-   -- end
-    p6.y = p6.y + itter
-    if p6.y < 0 then 
-      settlements.debug("find_surface4: y<0")
-      return nil
-    end
-  end
-  settlements.debug("find_surface5: cnt_max overflow")
-  return nil
+	local p6 = vector.new(pos)
+	local cnt = 0
+	local itter -- count up or down
+	local cnt_max = 200
+	-- check, in which direction to look for surface
+	local surface_node = minetest.get_node_or_nil(p6)
+	if surface_node and string.find(surface_node.name,"air") then
+		itter = -1
+	else
+		itter = 1
+	end
+	-- go through nodes an find surface
+	while cnt < cnt_max do
+		cnt = cnt+1
+		minetest.forceload_block(p6)
+		surface_node = minetest.get_node_or_nil(p6)
+
+		if not surface_node then
+			-- Load the map at pos and try again
+			minetest.get_voxel_manip():read_from_map(p6, p6)
+			surface_node = minetest.get_node(p6)
+			if surface_node.name == "ignore" then
+				settlements.debug("find_surface1: nil or ignore")
+				return nil
+			end
+		end
+
+		-- if surface_node == nil or surface_node.name == "ignore" then
+		-- 	--return nil
+		-- 	local fl = minetest.forceload_block(p6)
+		-- 	if not fl then
+		--
+		-- 		return nil
+		-- 	end
+		-- end
+		--
+		-- Check Surface_node and Node above
+		--
+		if settlements.surface_mat[surface_node.name] then
+			local surface_node_plus_1 = minetest.get_node_or_nil({ x=p6.x, y=p6.y+1, z=p6.z})
+			if surface_node_plus_1 and surface_node and
+				(string.find(surface_node_plus_1.name,"air") or
+				string.find(surface_node_plus_1.name,"snow") or
+				string.find(surface_node_plus_1.name,"fern") or
+				string.find(surface_node_plus_1.name,"flower") or
+				string.find(surface_node_plus_1.name,"bush") or
+				string.find(surface_node_plus_1.name,"tree") or
+				string.find(surface_node_plus_1.name,"grass"))
+				then
+					settlements.debug("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
+					return p6, surface_node.name
+			else
+				settlements.debug("find_surface2: wrong surface+1")
+			end
+		else
+			settlements.debug("find_surface3: wrong surface "..surface_node.name.." at pos "..minetest.pos_to_string(p6))
+		end
+
+		p6.y = p6.y + itter
+		if p6.y < 0 then
+			settlements.debug("find_surface4: y<0")
+			return nil
+		end
+	end
+	settlements.debug("find_surface5: cnt_max overflow")
+	return nil
 end
 -------------------------------------------------------------------------------
 -- check distance for new building
