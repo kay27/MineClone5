@@ -73,9 +73,9 @@ local function build_a_settlement_no_delay(minp, maxp, blockseed)
 
 	-- evaluate settlement_info and prepair terrain
 	if settlements.lvm == true then
-		settlements.terraform_lvm()
+		settlements.terraform_lvm(pr)
 	else
-		settlements.terraform()
+		settlements.terraform(pr)
 	end
 
 	-- evaluate settlement_info and build paths between buildings
@@ -162,8 +162,8 @@ minetest.register_craftitem("mcl_villages:tool", {
     -- build ssettlement
     --
     on_place = function(itemstack, placer, pointed_thing)
+		local pr = PseudoRandom(math.rand(0,32767))
       -- enable debug routines
-      settlements.debug = true
       local center_surface = pointed_thing.under
       if center_surface then
         local minp = {
@@ -187,9 +187,9 @@ minetest.register_craftitem("mcl_villages:tool", {
         local suitable_place_found = false
         if settlements.lvm == true
         then
-          suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, PseudoRandom(math.rand(0,32767)))
+          suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, pr)
         else
-          suitable_place_found = settlements.create_site_plan(maxp, minp, PseudoRandom(math.rand(0,32767)))
+          suitable_place_found = settlements.create_site_plan(maxp, minp, pr)
         end
         if not suitable_place_found
         then
@@ -200,9 +200,9 @@ minetest.register_craftitem("mcl_villages:tool", {
         --
         if settlements.lvm == true
         then
-          settlements.terraform_lvm()
+          settlements.terraform_lvm(pr)
         else
-          settlements.terraform()
+          settlements.terraform(pr)
         end
 
         --
@@ -220,7 +220,7 @@ minetest.register_craftitem("mcl_villages:tool", {
         if settlements.lvm == true
         then
           vm:set_data(data)
-          settlements.place_schematics_lvm(PseudoRandom(math.rand(0,32767)))
+          settlements.place_schematics_lvm(pr)
           vm:write_to_map(true)
         else
           settlements.place_schematics()
@@ -229,7 +229,7 @@ minetest.register_craftitem("mcl_villages:tool", {
         --
         -- evaluate settlement_info and initialize furnaces and chests
         --
-        settlements.initialize_nodes(PseudoRandom(math.rand(0,32767)))
+        settlements.initialize_nodes(pr)
         local end_time = os.time()
         minetest.chat_send_all("Time ".. end_time - start_time)
 --

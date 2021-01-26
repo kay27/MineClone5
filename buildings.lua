@@ -27,11 +27,11 @@ function settlements.build_schematic(vm, data, va, pos, building, replace_wall, 
   schem_lua = schem_lua:gsub("mcl_core:dirt_with_grass", 
     platform_material)
 
---[[  Disable special junglewood for now.
+--  Disable special junglewood for now.
  -- special material for spawning npcs
-  schem_lua = schem_lua:gsub("mcl_core:junglewood", 
-    "settlements:junglewood")
---]]
+ -- schem_lua = schem_lua:gsub("mcl_core:junglewood", 
+ --   "settlements:junglewood")
+--
 
   -- format schematic string
   local schematic = loadstring(schem_lua)()
@@ -62,7 +62,7 @@ end]]
 -------------------------------------------------------------------------------
 -- initialize settlement_info 
 -------------------------------------------------------------------------------
-function settlements.initialize_settlement_info(seed)
+function settlements.initialize_settlement_info(pr)
 	-- settlement_info table reset
 	for k,v in pairs(settlement_info) do
 		settlement_info[k] = nil
@@ -74,11 +74,9 @@ function settlements.initialize_settlement_info(seed)
 	end
 
 	-- randomize number of buildings
-	number_of_buildings = (seed % 16) + 10
+	number_of_buildings = pr:next(10, 25)
 	number_built = 1
-	if settlements.debug == true then
-		minetest.chat_send_all("Village ".. number_of_buildings)
-	end
+	settlements.debug("Village ".. number_of_buildings)
 end
 -------------------------------------------------------------------------------
 -- everything necessary to pick a fitting next building
@@ -122,7 +120,7 @@ function settlements.create_site_plan_lvm(maxp, minp, pr)
 		-- save list to file
 		settlements.save()
 		-- initialize all settlement_info table
-		settlements.initialize_settlement_info(seed)
+		settlements.initialize_settlement_info(pr)
 		-- first building is townhall in the center
 		building_all_info = schematic_table[1]
 		local rotation = possible_rotations[ pr:next(1, #possible_rotations ) ]
@@ -174,9 +172,7 @@ function settlements.create_site_plan_lvm(maxp, minp, pr)
 				r = r + pr:next(2,5)
 			end
 		end
-		if settlements.debug == true then
-			minetest.chat_send_all("really ".. number_built)
-		end
+		settlements.debug("really ".. number_built)
 		return true
 	else
 		return false
@@ -202,7 +198,7 @@ function settlements.create_site_plan(maxp, minp, pr)
 		-- save list to file
 		settlements.save()
 		-- initialize all settlement_info table
-		settlements.initialize_settlement_info(seed)
+		settlements.initialize_settlement_info(pr)
 		-- first building is townhall in the center
 		building_all_info = schematic_table[1]
 		local rotation = possible_rotations[ pr:next(1, #possible_rotations ) ]
@@ -254,9 +250,7 @@ function settlements.create_site_plan(maxp, minp, pr)
 				r = r + pr:next(2,5)
 			end
 		end
-		if settlements.debug == true then
-			minetest.chat_send_all("really ".. number_built)
-		end
+		settlements.debug("really ".. number_built)
 		return true
 	else
 		return false

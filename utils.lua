@@ -118,9 +118,7 @@ function settlements.find_surface(pos)
       minetest.get_voxel_manip():read_from_map(p6, p6)
       surface_node = minetest.get_node(p6)
       if surface_node.name == "ignore" then
-         if settlements.debug == true then
-           minetest.chat_send_all("find_surface1: nil or ignore")
-         end
+         settlements.debug("find_surface1: nil or ignore")
          return nil
       end
     end
@@ -147,36 +145,22 @@ function settlements.find_surface(pos)
            string.find(surface_node_plus_1.name,"tree") or
            string.find(surface_node_plus_1.name,"grass")) 
          then 
-           if settlements.debug == true then
-             minetest.chat_send_all("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
-           end
+           settlements.debug("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
            return p6, surface_node.name 
          else
-           if settlements.debug == true then
-             minetest.chat_send_all("find_surface2: wrong surface+1")
-           end
+           settlements.debug("find_surface2: wrong surface+1")
          end
       else
-        if settlements.debug == true then
-          if string.find(surface_node.name,"air") then
-            local a=1
-          else
-             minetest.chat_send_all("find_surface3: wrong surface "..surface_node.name)
-          end
-        end
+        settlements.debug("find_surface3: wrong surface "..surface_node.name)
       end
    -- end
     p6.y = p6.y + itter
     if p6.y < 0 then 
-      if settlements.debug == true then
-        minetest.chat_send_all("find_surface4: y<0")
-      end
-      return nil 
+      settlements.debug("find_surface4: y<0")
+      return nil
     end
   end
-  if settlements.debug == true then
-     minetest.chat_send_all("find_surface5: cnt_max overflow")
-  end
+  settlements.debug("find_surface5: cnt_max overflow")
   return nil
 end
 -------------------------------------------------------------------------------
@@ -405,10 +389,7 @@ function settlements.evaluate_heightmap()
     return max_height_difference + 1
   end
   -- debug info
-  if settlements.debug == true
-  then
-    minetest.chat_send_all("heightdiff ".. height_diff)
-  end
+  settlements.debug("heightdiff ".. height_diff)
   return height_diff
 end
 -------------------------------------------------------------------------------

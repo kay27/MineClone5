@@ -41,7 +41,7 @@ end
 -------------------------------------------------------------------------------
 -- function clear space above baseplate 
 -------------------------------------------------------------------------------
-function settlements.terraform_lvm()
+function settlements.terraform_lvm(pr)
   local c_air = minetest.get_content_id("air")
   local fheight
   local fwidth
@@ -75,7 +75,7 @@ function settlements.terraform_lvm()
         for xi = 0,fwidth-1 do
           if yi == 0 then
             local p = {x=pos.x+xi, y=pos.y, z=pos.z+zi}
-            settlements.ground_lvm(p)
+            settlements.ground_lvm(p, pr)
           else
             --break --todo
             -- write ground
@@ -98,7 +98,7 @@ end
 -------------------------------------------------------------------------------
 -- function clear space above baseplate 
 -------------------------------------------------------------------------------
-function settlements.terraform()
+function settlements.terraform(pr)
   local fheight
   local fwidth
   local fdepth
@@ -132,7 +132,7 @@ function settlements.terraform()
         for yi = 0,fheight *3 do
           if yi == 0 then
             local p = {x=pos.x+xi, y=pos.y, z=pos.z+zi}
-            settlements.ground(p)
+            settlements.ground(p, pr)
           else
             -- write ground
             local p = {x=pos.x+xi, y=pos.y+yi, z=pos.z+zi}
