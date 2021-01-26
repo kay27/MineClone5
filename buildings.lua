@@ -2,9 +2,9 @@ local count_buildings ={}
 -- iterate over whole table to get all keys
 --local variables for buildings
 local building_all_info
-local number_of_buildings 
+local number_of_buildings
 local number_built
--------------------------------------------------------------------------------
+--[[-------------------------------------------------------------------------------
 -- build schematic, replace material, rotation
 -------------------------------------------------------------------------------
 function settlements.build_schematic(vm, data, va, pos, building, replace_wall, name)
@@ -58,7 +58,7 @@ function settlements.build_schematic(vm, data, va, pos, building, replace_wall, 
     nil, 
     true)
   vm:write_to_map(true)
-end
+end]]
 -------------------------------------------------------------------------------
 -- initialize settlement_info 
 -------------------------------------------------------------------------------
@@ -83,32 +83,29 @@ end
 -------------------------------------------------------------------------------
 -- everything necessary to pick a fitting next building
 -------------------------------------------------------------------------------
-function settlements.pick_next_building(pos_surface)
-  local randomized_schematic_table = shuffle(schematic_table)
-  -- pick schematic
-  local size = #randomized_schematic_table
-  for i = size, 1, -1 do
-    -- already enough buildings of that type?
-    if count_buildings[randomized_schematic_table[i]["name"]] < randomized_schematic_table[i]["max_num"]*number_of_buildings    then
-      building_all_info = randomized_schematic_table[i]
-      -- check distance to other buildings
-      local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, 
-        building_all_info["hsize"])
-      if distance_to_other_buildings_ok 
-      then
-        -- count built houses
-        count_buildings[building_all_info["name"]] = count_buildings[building_all_info["name"]] +1
-        return building_all_info["mts"]
-      end
-    end
-  end
-  return nil
+function settlements.pick_next_building(pos_surface, pr)
+	local randomized_schematic_table = shuffle(schematic_table, pr)
+	-- pick schematic
+	local size = #randomized_schematic_table
+	for i = size, 1, -1 do
+		-- already enough buildings of that type?
+		if count_buildings[randomized_schematic_table[i]["name"]] < randomized_schematic_table[i]["max_num"]*number_of_buildings then
+			building_all_info = randomized_schematic_table[i]
+			-- check distance to other buildings
+			local distance_to_other_buildings_ok = settlements.check_distance(pos_surface, building_all_info["hsize"])
+			if distance_to_other_buildings_ok then
+				-- count built houses
+				count_buildings[building_all_info["name"]] = count_buildings[building_all_info["name"]] +1
+				return building_all_info["mts"]
+			end
+		end
+	end
+	return nil
 end
 -------------------------------------------------------------------------------
 -- fill settlement_info with LVM
 --------------------------------------------------------------------------------
-function settlements.create_site_plan_lvm(maxp, minp, seed)
-	local pr = PseudoRandom(seed)
+function settlements.create_site_plan_lvm(maxp, minp, pr)
 	local possible_rotations = {"0", "90", "180", "270"}
 	-- find center of chunk
 	local center = {
@@ -155,7 +152,7 @@ function settlements.create_site_plan_lvm(maxp, minp, seed)
 
 					local pos_surface , surface_material = settlements.find_surface_lvm(pos1, minp)
 					if pos_surface then
-						if settlements.pick_next_building(pos_surface) then
+						if settlements.pick_next_building(pos_surface, pr) then
 							rotation = possible_rotations[ pr:next(1, #possible_rotations ) ]
 							number_built = number_built + 1
 							settlement_info[index] = {
@@ -188,8 +185,7 @@ end
 -------------------------------------------------------------------------------
 -- fill settlement_info
 --------------------------------------------------------------------------------
-function settlements.create_site_plan(maxp, minp, seed)
-	local pr = PseudoRandom(seed)
+function settlements.create_site_plan(maxp, minp, pr)
 	local possible_rotations = {"0", "90", "180", "270"}
 	-- find center of chunk
 	local center = {
@@ -225,7 +221,7 @@ function settlements.create_site_plan(maxp, minp, seed)
 		local x, z, r = center_surface.x, center_surface.z, building_all_info["hsize"]
 		-- draw j circles around center and increase radius by math.random(2,5)
 		for j = 1,20 do
-			if number_built < number_of_buildings then 
+			if number_built < number_of_buildings then
 				-- set position on imaginary circle
 				for j = 0, 360, 15 do
 					local angle = j * math.pi / 180
@@ -236,7 +232,7 @@ function settlements.create_site_plan(maxp, minp, seed)
 
 					local pos_surface , surface_material = settlements.find_surface(pos1)
 					if pos_surface then
-						if settlements.pick_next_building(pos_surface) then
+						if settlements.pick_next_building(pos_surface, pr) then
 							rotation = possible_rotations[ pr:next(1, #possible_rotations ) ]
 							number_built = number_built + 1
 							settlement_info[index] = {
@@ -269,7 +265,7 @@ end
 -------------------------------------------------------------------------------
 -- evaluate settlement_info and place schematics
 -------------------------------------------------------------------------------
-function settlements.place_schematics_lvm()
+function settlements.place_schematics_lvm(pr)
   for i, built_house in ipairs(settlement_info) do
     for j, schem in ipairs(schematic_table) do
       if settlement_info[i]["name"] == schem["name"]
@@ -282,10 +278,10 @@ function settlements.place_schematics_lvm()
     local pos = settlement_info[i]["pos"] 
     local rotation = settlement_info[i]["rotat"] 
     -- get building node material for better integration to surrounding
-    local platform_material =  settlement_info[i]["surface_mat"] 
+    local platform_material = settlement_info[i]["surface_mat"]
     platform_material_name = minetest.get_name_from_content_id(platform_material)
     -- pick random material
-    local material = wallmaterial[math.random(1,#wallmaterial)]
+    local material = wallmaterial[pr:next(1,#wallmaterial)]
     --
     local building = building_all_info["mts"]
     local replace_wall = building_all_info["rplc"]
@@ -323,7 +319,7 @@ end
 -------------------------------------------------------------------------------
 -- evaluate settlement_info and place schematics
 -------------------------------------------------------------------------------
-function settlements.place_schematics()
+function settlements.place_schematics(pr)
   for i, built_house in ipairs(settlement_info) do
     for j, schem in ipairs(schematic_table) do
       if settlement_info[i]["name"] == schem["name"]
@@ -339,7 +335,7 @@ function settlements.place_schematics()
     local platform_material =  settlement_info[i]["surface_mat"] 
     --platform_material_name = minetest.get_name_from_content_id(platform_material)
     -- pick random material
-    local material = wallmaterial[math.random(1,#wallmaterial)]
+    local material = wallmaterial[pr:next(1,#wallmaterial)]
     --
     local building = building_all_info["mts"]
     local replace_wall = building_all_info["rplc"]

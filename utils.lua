@@ -27,11 +27,11 @@ local c_water_flowing                = minetest.get_content_id("mcl_core:water_f
 -- function to copy tables
 -------------------------------------------------------------------------------
 function settlements.shallowCopy(original)
-  local copy = {}
-  for key, value in pairs(original) do
-    copy[key] = value
-  end
-  return copy
+	local copy = {}
+	for key, value in pairs(original) do
+		copy[key] = value
+	end
+	return copy
 end
 --
 --
@@ -46,7 +46,7 @@ end
 -------------------------------------------------------------------------------
 function settlements.find_surface_lvm(pos, minp)
   --ab hier altes verfahren
-  local p6 = settlements.shallowCopy(pos)
+  local p6 = vector.new(pos)
   local surface_mat = {
     c_dirt_with_grass,            
     c_dirt_with_snow,            
@@ -96,7 +96,7 @@ end
 -- returns surface postion
 -------------------------------------------------------------------------------
 function settlements.find_surface(pos)
-  local p6 = settlements.shallowCopy(pos)
+  local p6 = vector.new(pos)
   local cnt = 0
   local itter -- count up or down
   local cnt_max = 200
@@ -236,7 +236,7 @@ end
 -------------------------------------------------------------------------------
 -- fill chests
 -------------------------------------------------------------------------------
-function settlements.fill_chest(pos)
+function settlements.fill_chest(pos, pr)
   -- find chests within radius
   --local chestpos = minetest.find_node_near(pos, 6, {"mcl_core:chest"})
   local chestpos = pos
@@ -252,31 +252,31 @@ function settlements.fill_chest(pos)
   -- fill chest
   local inv = minetest.get_inventory( {type="node", pos=chestpos} )
   -- always
-  inv:add_item("main", "mcl_core:apple "..math.random(1,3))
+  inv:add_item("main", "mcl_core:apple "..pr:next(1,3))
   -- low value items
-  if math.random(0,1) < 1 then
-    inv:add_item("main", "mcl_farming:bread "..math.random(0,3))
-    inv:add_item("main", "mcl_core:iron_ingot "..math.random(0,3))
-    inv:add_item("main", "mcl_farming:melon_item "..math.random(0,3))
-    inv:add_item("main", "mcl_farming:carrot_item "..math.random(0,3))
+  if pr:next(0,1) < 1 then
+    inv:add_item("main", "mcl_farming:bread "..pr:next(0,3))
+    inv:add_item("main", "mcl_core:iron_ingot "..pr:next(0,3))
+    inv:add_item("main", "mcl_farming:melon_item "..pr:next(0,3))
+    inv:add_item("main", "mcl_farming:carrot_item "..pr:next(0,3))
 	--[[
     -- additional fillings when farmin mod enabled
     if minetest.get_modpath("farming") ~= nil and farming.mod == "redo" then
-      if math.random(0,1) < 1 then
-        inv:add_item("main", "mcl_farming:melon_item "..math.random(0,3))
-        inv:add_item("main", "mcl_farming:carrot_item "..math.random(0,3))
-        inv:add_item("main", "farming:corn "..math.random(0,3))
+      if pr:next(0,1) < 1 then
+        inv:add_item("main", "mcl_farming:melon_item "..pr:next(0,3))
+        inv:add_item("main", "mcl_farming:carrot_item "..pr:next(0,3))
+        inv:add_item("main", "farming:corn "..pr:next(0,3))
       end
     end
 	--]]
   end
   -- medium value items
-  if math.random(0,3) < 1 then
-    inv:add_item("main", "mcl_tools:pick_iron "..math.random(0,1))
-    inv:add_item("main", "mcl_tools:pick_stone "..math.random(0,1))
-    inv:add_item("main", "mcl_fire:flint_and_steel "..math.random(0,1))
-    inv:add_item("main", "mcl_buckets:bucket_empty "..math.random(0,1))
-    inv:add_item("main", "mcl_tools:sword_iron "..math.random(0,1))
+  if pr:next(0,3) < 1 then
+    inv:add_item("main", "mcl_tools:pick_iron "..pr:next(0,1))
+    inv:add_item("main", "mcl_tools:pick_stone "..pr:next(0,1))
+    inv:add_item("main", "mcl_fire:flint_and_steel "..pr:next(0,1))
+    inv:add_item("main", "mcl_buckets:bucket_empty "..pr:next(0,1))
+    inv:add_item("main", "mcl_tools:sword_iron "..pr:next(0,1))
   end
 end
 
@@ -320,52 +320,50 @@ end
 -- initialize furnace, chests, anvil
 -------------------------------------------------------------------------------
 local building_all_info
-function settlements.initialize_nodes()
-  for i, built_house in ipairs(settlement_info) do
-    for j, schem in ipairs(schematic_table) do
-      if settlement_info[i]["name"] == schem["name"]
-      then
-        building_all_info = schem
-        break
-      end
-    end
+function settlements.initialize_nodes(pr)
+	for i, built_house in ipairs(settlement_info) do
+		for j, schem in ipairs(schematic_table) do
+			if settlement_info[i]["name"] == schem["name"] then
+				building_all_info = schem
+				break
+			end
+		end
 
-    local width = building_all_info["hwidth"] 
-    local depth = building_all_info["hdepth"] 
-    local height = building_all_info["hheight"] 
+		local width = building_all_info["hwidth"] 
+		local depth = building_all_info["hdepth"] 
+		local height = building_all_info["hheight"] 
 
-    local p = settlement_info[i]["pos"]
-    for yi = 1,height do
-      for xi = 0,width do
-        for zi = 0,depth do
-          local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
-          local node = minetest.get_node(ptemp) 
-          if node.name == "mcl_furnaces:furnace" or
-          node.name == "mcl_chests:chest" or
-          node.name == "mcl_anvils:anvil"
-          then
-            minetest.registered_nodes[node.name].on_construct(ptemp)
-          end
-          -- when chest is found -> fill with stuff
-          if node.name == "mcl_chests:chest" then
-            minetest.after(3,settlements.fill_chest,ptemp)
-          end
-        end
-      end
-    end
-  end
+		local p = settlement_info[i]["pos"]
+		for yi = 1,height do
+			for xi = 0,width do
+				for zi = 0,depth do
+					local ptemp = {x=p.x+xi, y=p.y+yi, z=p.z+zi}
+					local node = minetest.get_node(ptemp) 
+					if node.name == "mcl_furnaces:furnace" or
+						node.name == "mcl_chests:chest" or
+						node.name == "mcl_anvils:anvil" then
+							minetest.registered_nodes[node.name].on_construct(ptemp)
+					end
+					-- when chest is found -> fill with stuff
+					if node.name == "mcl_chests:chest" then
+						minetest.after(3, settlements.fill_chest, ptemp, pr)
+					end
+				end
+			end
+		end
+	end
 end
 -------------------------------------------------------------------------------
 -- randomize table
 -------------------------------------------------------------------------------
-function shuffle(tbl)
-  local table = settlements.shallowCopy(tbl)
-  local size = #table
-  for i = size, 1, -1 do
-    local rand = math.random(size)
-    table[i], table[rand] = table[rand], table[i]
-  end
-  return table
+function shuffle(tbl, pr)
+	local table = settlements.shallowCopy(tbl)
+	local size = #table
+	for i = size, 1, -1 do
+		local rand = pr:next(1, size)
+		table[i], table[rand] = table[rand], table[i]
+	end
+	return table
 end
 -------------------------------------------------------------------------------
 -- evaluate heightmap

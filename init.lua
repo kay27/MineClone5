@@ -58,15 +58,16 @@ end
 --
 local function build_a_settlement_no_delay(minp, maxp, blockseed)
 	local suitable_place_found = false
+	local pr = PseudoRandom(blockseed)
 	--
 	-- fill settlement_info with buildings and their data
 	--
 	if settlements.lvm == true then
 		-- get LVM of current chunk
 		vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
-		suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, blockseed)
+		suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, pr)
 	else
-		suitable_place_found = settlements.create_site_plan(maxp, minp)
+		suitable_place_found = settlements.create_site_plan(maxp, minp, pr)
 	end
 	if not suitable_place_found then return end
 
@@ -87,14 +88,14 @@ local function build_a_settlement_no_delay(minp, maxp, blockseed)
 	-- evaluate settlement_info and place schematics
 	if settlements.lvm == true then
 		vm:set_data(data)
-		settlements.place_schematics_lvm()
+		settlements.place_schematics_lvm(pr)
 		vm:write_to_map(true)
 	else
-		settlements.place_schematics()
+		settlements.place_schematics(pr)
 	end
 
 	-- evaluate settlement_info and initialize furnaces and chests
-	settlements.initialize_nodes()
+	settlements.initialize_nodes(pr)
 end
 
 local function ecb_build_a_settlement(blockpos, action, calls_remaining, param)
@@ -108,7 +109,7 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 	local heightmap = minetest.get_mapgen_object("heightmap")
 
 	-- randomly try to build settlements
-	if blockseed % 100 ~= 17 then return end
+	if blockseed % 77 ~= 17 then return end
 
 	-- don't build settlement underground
 	if maxp.y < 0 then return end
@@ -186,9 +187,9 @@ minetest.register_craftitem("mcl_villages:tool", {
         local suitable_place_found = false
         if settlements.lvm == true
         then
-          suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, math.random(0,499))
+          suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, PseudoRandom(math.rand(0,32767)))
         else
-          suitable_place_found = settlements.create_site_plan(maxp, minp)
+          suitable_place_found = settlements.create_site_plan(maxp, minp, PseudoRandom(math.rand(0,32767)))
         end
         if not suitable_place_found
         then
@@ -219,7 +220,7 @@ minetest.register_craftitem("mcl_villages:tool", {
         if settlements.lvm == true
         then
           vm:set_data(data)
-          settlements.place_schematics_lvm()
+          settlements.place_schematics_lvm(PseudoRandom(math.rand(0,32767)))
           vm:write_to_map(true)
         else
           settlements.place_schematics()
@@ -228,7 +229,7 @@ minetest.register_craftitem("mcl_villages:tool", {
         --
         -- evaluate settlement_info and initialize furnaces and chests
         --
-        settlements.initialize_nodes()
+        settlements.initialize_nodes(PseudoRandom(math.rand(0,32767)))
         local end_time = os.time()
         minetest.chat_send_all("Time ".. end_time - start_time)
 --
