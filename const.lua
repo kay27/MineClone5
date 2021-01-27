@@ -1,15 +1,14 @@
 -- switch for debugging
 settlements.debug = function(message)
 	-- minetest.chat_send_all(message)
-	minetest.log("warning", "[mcl_villages] "..message)
+	-- minetest.log("warning", "[mcl_villages] "..message)
+	minetest.log("verbose", "[mcl_villages] "..message)
 end
 
 -- switch for lvm
 settlements.lvm = false
 
--- timer between creation of two settlements
 settlements.last_settlement = os.time()
-settlements.min_timer = 20
 
 -- material to replace cobblestone with
 wallmaterial = {
@@ -65,10 +64,6 @@ schematic_table = {
 	{name = "tavern",	mts = schem_path.."tavern.mts",		hwidth = 11, hdepth = 10, hheight = 10, hsize = 13, max_num = 0.050, rplc = "n"},
 	{name = "well",		mts = schem_path.."well.mts",		hwidth = 6, hdepth = 8, hheight = 6, hsize = 10, max_num = 0.045, rplc = "n"},
 }
---
--- temporary info for currentliy built settlement (position of each building) 
---
-settlement_info = {}
 --
 -- list of settlements, load on server start up
 --

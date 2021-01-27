@@ -9,8 +9,6 @@
 settlements = {}
 settlements.modpath = minetest.get_modpath("mcl_villages");
 
-vm, data, va, emin, emax = 1
-
 dofile(settlements.modpath.."/const.lua")
 dofile(settlements.modpath.."/utils.lua")
 dofile(settlements.modpath.."/foundation.lua")
@@ -57,45 +55,45 @@ end
 -- on map generation, try to build a settlement
 --
 local function build_a_settlement_no_delay(minp, maxp, blockseed)
-	local suitable_place_found = false
+	local settlement_info
 	local pr = PseudoRandom(blockseed)
 	--
 	-- fill settlement_info with buildings and their data
 	--
 	if settlements.lvm == true then
 		-- get LVM of current chunk
-		vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
-		suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, pr)
+		local vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
+		settlement_info = settlements.create_site_plan_lvm(maxp, minp, pr)
 	else
-		suitable_place_found = settlements.create_site_plan(maxp, minp, pr)
+		settlement_info = settlements.create_site_plan(maxp, minp, pr)
 	end
-	if not suitable_place_found then return end
+	if not settlement_info then return end
 
 	-- evaluate settlement_info and prepair terrain
 	if settlements.lvm == true then
-		settlements.terraform_lvm(pr)
+		settlements.terraform_lvm(settlement_info, pr)
 	else
-		settlements.terraform(pr)
+		settlements.terraform(settlement_info, pr)
 	end
 
 	-- evaluate settlement_info and build paths between buildings
 	if settlements.lvm == true then
-		settlements.paths_lvm(minp)
+		settlements.paths_lvm(settlement_info, minp)
 	else
-		settlements.paths()
+		settlements.paths(settlement_info)
 	end
 
 	-- evaluate settlement_info and place schematics
 	if settlements.lvm == true then
 		vm:set_data(data)
-		settlements.place_schematics_lvm(pr)
+		settlements.place_schematics_lvm(settlement_info, pr)
 		vm:write_to_map(true)
 	else
-		settlements.place_schematics(pr)
+		settlements.place_schematics(settlement_info, pr)
 	end
 
 	-- evaluate settlement_info and initialize furnaces and chests
-	settlements.initialize_nodes(pr)
+	settlements.initialize_nodes(settlement_info, pr)
 end
 
 local function ecb_build_a_settlement(blockpos, action, calls_remaining, param)
@@ -181,57 +179,50 @@ minetest.register_craftitem("mcl_villages:tool", {
         --
         -- get LVM of current chunk
         --
-        vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
+        local vm, data, va, emin, emax = settlements.getlvm(minp, maxp)
         --
         -- fill settlement_info with buildings and their data
         --
         local start_time = os.time()
-        local suitable_place_found = false
-        if settlements.lvm == true
-        then
-          suitable_place_found = settlements.create_site_plan_lvm(maxp, minp, pr)
+        local settlement_info
+        if settlements.lvm == true then
+		settlement_info = settlements.create_site_plan_lvm(maxp, minp, pr)
         else
-          suitable_place_found = settlements.create_site_plan(maxp, minp, pr)
+		settlement_info = settlements.create_site_plan(maxp, minp, pr)
         end
-        if not suitable_place_found
-        then
-          return
-        end
+        if not settlement_info then return end
         --
         -- evaluate settlement_info and prepair terrain
         --
-        if settlements.lvm == true
-        then
-          settlements.terraform_lvm(pr)
+        if settlements.lvm == true then
+		settlements.terraform_lvm(settlement_info, pr)
         else
-          settlements.terraform(pr)
+		settlements.terraform(settlement_info, pr)
         end
 
         --
         -- evaluate settlement_info and build paths between buildings
         --
-        if settlements.lvm == true
-        then
-          settlements.paths_lvm(minp)
+        if settlements.lvm == true then
+		settlements.paths_lvm(settlement_info, minp)
         else
-          settlements.paths()
+		settlements.paths(settlement_info)
         end
         --
         -- evaluate settlement_info and place schematics
         --
-        if settlements.lvm == true
-        then
-          vm:set_data(data)
-          settlements.place_schematics_lvm(pr)
-          vm:write_to_map(true)
+        if settlements.lvm == true then
+		vm:set_data(data)
+		settlements.place_schematics_lvm(pr)
+		vm:write_to_map(true)
         else
-          settlements.place_schematics()
+		settlements.place_schematics()
         end
 
         --
         -- evaluate settlement_info and initialize furnaces and chests
         --
-        settlements.initialize_nodes(pr)
+        settlements.initialize_nodes(settlement_info, pr)
         local end_time = os.time()
         minetest.chat_send_all("Time ".. end_time - start_time)
 --

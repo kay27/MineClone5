@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- generate paths between buildings
 -------------------------------------------------------------------------------
-function settlements.paths_lvm(minp)
+function settlements.paths_lvm(settlement_info, minp)
   local c_grasspath             = minetest.get_content_id("mcl_core:grass_path")
   local starting_point
   local end_point
@@ -94,7 +94,7 @@ end
 -------------------------------------------------------------------------------
 -- generate paths between buildings
 -------------------------------------------------------------------------------
-function settlements.paths()
+function settlements.paths(settlement_info)
   local starting_point
   local end_point
   local distance

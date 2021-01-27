@@ -41,7 +41,7 @@ end
 -------------------------------------------------------------------------------
 -- function clear space above baseplate 
 -------------------------------------------------------------------------------
-function settlements.terraform_lvm(pr)
+function settlements.terraform_lvm(settlement_info, pr)
   local c_air = minetest.get_content_id("air")
   local fheight
   local fwidth
@@ -98,7 +98,7 @@ end
 -------------------------------------------------------------------------------
 -- function clear space above baseplate 
 -------------------------------------------------------------------------------
-function settlements.terraform(pr)
+function settlements.terraform(settlement_info, pr)
   local fheight
   local fwidth
   local fdepth

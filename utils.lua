@@ -166,7 +166,7 @@ end
 -------------------------------------------------------------------------------
 -- check distance for new building
 -------------------------------------------------------------------------------
-function settlements.check_distance(building_pos, building_size)
+function settlements.check_distance(settlement_info, building_pos, building_size)
   local distance
   for i, built_house in ipairs(settlement_info) do
     distance = math.sqrt(
@@ -304,7 +304,7 @@ end
 -- initialize furnace, chests, anvil
 -------------------------------------------------------------------------------
 local building_all_info
-function settlements.initialize_nodes(pr)
+function settlements.initialize_nodes(settlement_info, pr)
 	for i, built_house in ipairs(settlement_info) do
 		for j, schem in ipairs(schematic_table) do
 			if settlement_info[i]["name"] == schem["name"] then
