@@ -3,7 +3,6 @@ local S = minetest.get_translator("mcl_minecarts")
 mcl_minecarts = {}
 mcl_minecarts.modpath = minetest.get_modpath("mcl_minecarts")
 mcl_minecarts.speed_max = 10
-mcl_minecarts.check_float_time = 15
 
 dofile(mcl_minecarts.modpath.."/functions.lua")
 dofile(mcl_minecarts.modpath.."/rails.lua")
@@ -12,15 +11,14 @@ local function detach_driver(self)
 	if not self._driver then
 		return
 	end
-	mcl_player.player_attached[self._driver] = nil
-	local player = minetest.get_player_by_name(self._driver)
+	if self._driver:is_player() then
+		mcl_player.player_attached[self._driver:get_player_name()] = nil
+		self._driver:set_detach()
+		self._driver:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
+		mcl_player.player_set_animation(self._driver, "stand" , 30)
+	end
 	self._driver = nil
 	self._start_pos = nil
-	if player then
-		player:set_detach()
-		player:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
-		mcl_player.player_set_animation(player, "stand" , 30)
-	end
 end
 
 local function activate_tnt_minecart(self, timer)
@@ -53,8 +51,13 @@ local entity_mapping = {}
 
 local function register_entity(entity_id, mesh, textures, drop, on_rightclick, on_activate_by_rail)
 	local cart = {
-		physical = false,
-		collisionbox = {-10/16., -0.5, -10/16, 10/16, 0.25, 10/16},
+		physical = true,
+		collide_with_objects = true,
+		pointable = true,
+
+		--collisionbox = {-0.625, -0.5, -0.625, 0.625, 0.25, 0.625},
+		collisionbox = {-0.5  , -0.5, -0.5  , 0.5  , 0.25, 0.5  },
+		selectionbox = {-0.5  , -0.4, -0.5  , 0.5  , 0.25, 0.5  },
 		visual = "mesh",
 		mesh = mesh,
 		visual_size = {x=1, y=1},
@@ -62,7 +65,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 
 		on_rightclick = on_rightclick,
 
-		_driver = nil, -- player who sits in and controls the minecart (only for minecart!)
+		_driver = nil, -- player (or mob) who sits in and controls the minecart (only for minecart!)
 		_punched = false, -- used to re-send _velocity and position
 		_velocity = {x=0, y=0, z=0}, -- only used on punch
 		_start_pos = nil, -- Used to calculate distance for “On A Rail” achievement
@@ -71,19 +74,14 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 		_boomtimer = nil, -- how many seconds are left before exploding
 		_blinktimer = nil, -- how many seconds are left before TNT blinking
 		_blink = false, -- is TNT blink texture active?
-		_old_dir = {x=0, y=0, z=0},
-		_old_pos = nil,
-		_old_vel = {x=0, y=0, z=0},
-		_old_switch = 0,
-		_railtype = nil,
+--		_old_dir = {x=0, y=0, z=0},
+--		_old_pos = nil,
+--		_old_vel = {x=0, y=0, z=0},
+--		_old_yaw = 0,
+		_g = -9.8,
 	}
 
 	function cart:on_activate(staticdata, dtime_s)
-		-- Initialize
-		local data = minetest.deserialize(staticdata)
-		if type(data) == "table" then
-			self._railtype = data._railtype
-		end
 		self.object:set_armor_groups({immortal=1})
 
 		-- Activate cart if on activator rail
@@ -97,444 +95,175 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 	end
 
 	function cart:on_punch(puncher, time_from_last_punch, tool_capabilities, direction)
+		-- Punch: Pick up minecart (unless TNT was ignited)
+		if self._boomtimer then return end
+		if self._driver then
+			detach_driver(self)
+		end
 		local pos = self.object:get_pos()
-		if not self._railtype then
-			local node = minetest.get_node(vector.floor(pos)).name
-			self._railtype = minetest.get_item_group(node, "connect_to_raillike")
+
+		-- Disable detector rail
+		local rou_pos = vector.round(pos)
+		local node = minetest.get_node(rou_pos)
+		if node.name == "mcl_minecarts:detector_rail_on" then
+			local newnode = {name="mcl_minecarts:detector_rail", param2 = node.param2}
+			minetest.swap_node(rou_pos, newnode)
+			mesecon.receptor_off(rou_pos)
 		end
 
-		if not puncher or not puncher:is_player() then
-			local cart_dir = mcl_minecarts:get_rail_direction(pos, {x=1, y=0, z=0}, nil, nil, self._railtype)
-			if vector.equals(cart_dir, {x=0, y=0, z=0}) then
-				return
+		-- Drop items and remove cart entity
+		if not minetest.is_creative_enabled(puncher:get_player_name()) then
+			for d=1, #drop do
+				minetest.add_item(self.object:get_pos(), drop[d])
 			end
-			self._velocity = vector.multiply(cart_dir, 3)
-			self._old_pos = nil
-			self._punched = true
-			return
-		end
-
-		-- Punch+sneak: Pick up minecart (unless TNT was ignited)
-		if puncher:get_player_control().sneak and not self._boomtimer then
-			if self._driver then
-				if self._old_pos then
-					self.object:set_pos(self._old_pos)
-				end
-				detach_driver(self)
-			end
-
-			-- Disable detector rail
-			local rou_pos = vector.round(pos)
-			local node = minetest.get_node(rou_pos)
-			if node.name == "mcl_minecarts:detector_rail_on" then
-				local newnode = {name="mcl_minecarts:detector_rail", param2 = node.param2}
-				minetest.swap_node(rou_pos, newnode)
-				mesecon.receptor_off(rou_pos)
-			end
-
-			-- Drop items and remove cart entity
-			if not minetest.is_creative_enabled(puncher:get_player_name()) then
-				for d=1, #drop do
-					minetest.add_item(self.object:get_pos(), drop[d])
-				end
-			elseif puncher and puncher:is_player() then
-				local inv = puncher:get_inventory()
-				for d=1, #drop do
-					if not inv:contains_item("main", drop[d]) then
-						inv:add_item("main", drop[d])
-					end
+		elseif puncher and puncher:is_player() then
+			local inv = puncher:get_inventory()
+			for d=1, #drop do
+				if not inv:contains_item("main", drop[d]) then
+					inv:add_item("main", drop[d])
 				end
 			end
-
-			self.object:remove()
-			return
 		end
 
-		local vel = self.object:get_velocity()
-		if puncher:get_player_name() == self._driver then
-			if math.abs(vel.x + vel.z) > 7 then
-				return
-			end
-		end
-
-		local punch_dir = mcl_minecarts:velocity_to_dir(puncher:get_look_dir())
-		punch_dir.y = 0
-		local cart_dir = mcl_minecarts:get_rail_direction(pos, punch_dir, nil, nil, self._railtype)
-		if vector.equals(cart_dir, {x=0, y=0, z=0}) then
-			return
-		end
-
-		time_from_last_punch = math.min(time_from_last_punch, tool_capabilities.full_punch_interval)
-		local f = 3 * (time_from_last_punch / tool_capabilities.full_punch_interval)
-
-		self._velocity = vector.multiply(cart_dir, f)
-		self._old_pos = nil
-		self._punched = true
+		self.object:remove()
+		return false
 	end
 
 	cart.on_activate_by_rail = on_activate_by_rail
 
-	function cart:on_step(dtime)
-		local vel = self.object:get_velocity()
-		local update = {}
-		self._last_float_check = (self._last_float_check or 0) + dtime
-		local pos, rou_pos, node, speed_mod
-		-- Drop minecart if it isn't on a rail anymore
-		if self._last_float_check >= mcl_minecarts.check_float_time then
-			pos = self.object:get_pos()
-			rou_pos = vector.round(pos)
-			node = minetest.get_node(rou_pos)
-			local g = minetest.get_item_group(node.name, "connect_to_raillike")
-			if g ~= self._railtype and self._railtype ~= nil then
-				local player
-				-- Detach driver
-				if self._driver then
-					if self._old_pos then
-						self.object:set_pos(self._old_pos)
-					end
-					mcl_player.player_attached[self._driver] = nil
-					player = minetest.get_player_by_name(self._driver)
-					if player then
-						player:set_detach()
-						player:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
-					end
-				end
-
-				-- Explode if already ignited
-				if self._boomtimer then
-					self.object:remove()
-					mcl_explosions.explode(pos, 4, { drop_chance = 1.0 })
+	function cart:on_step(dtime, moveresult)
+		local ctrl
+		-- player detach
+		if self._driver and self._driver:is_player() then
+			ctrl = self._driver:get_player_control()
+			if ctrl.sneak then
+				detach_driver(self)
+				return
+			end
+		end
+		-- use collisions to accelerate carts or place mobs
+		local fp = self.object:get_pos()
+		local pos = vector.round(fp)
+		local push = false
+		for _,object in pairs(minetest.get_objects_inside_radius(fp, 1.3)) do
+			if object ~= self.object then
+				local mob = object:get_luaentity()
+				if mob then mob = mob._cmi_is_mob == true end
+				if mob and (not self._driver) and not object:get_attach() then
+					self._driver = object
+					object:set_attach(self.object, "", {x=0, y=-1.75, z=-2}, {x=0, y=0, z=0})
+					mobs:set_animation(self.object, "sit")
 					return
 				end
-
-				-- Drop items and remove cart entity
-				local pname = ""
-				if player then
-					pname = player:get_player_name()
+				if object ~= self._driver then
+					local op = object:get_pos()
+					local vec = vector.subtract(fp, op)
+					local force = 1.8 - vector.distance(fp, op)
+					self.object:set_acceleration(vector.add(self.object:get_acceleration(), vector.multiply(vec, force)))
+					push = true
 				end
-				if not minetest.is_creative_enabled(pname) then
-					for d=1, #drop do
-						minetest.add_item(self.object:get_pos(), drop[d])
-					end
+			end
+		end
+		-- check rails presence
+		local nn = mcl_minecarts:get_node_name(pos)
+		local v = self.object:get_velocity()
+		local rails = (minetest.get_item_group(nn, "rail") > 0) or (nn == "air" and minetest.get_item_group(mcl_minecarts:get_node_name({x=pos.x,y=pos.y-1,z=pos.z}), "rail") > 0)
+		if rails then -------- ON RAILS --------
+			if ctrl then minetest.chat_send_all("rails! "..nn) end --TODO REMOVE ME
+			local cd = mcl_minecarts:velocity_to_dir(v)
+			local rd = mcl_minecarts:get_rail_direction(pos, cd, ctrl)
+			if rd.x ~= cd.x or rd.y ~= cd.y or rd.z ~= cd.z then
+				-- direction should be changed instantly:
+				local vmax = math.max(math.abs(v.x), math.abs(v.z))
+				if vmax > 0 then
+					v = vector.multiply(rd, vmax)
+					self.object:set_velocity(v)
 				end
-
-				self.object:remove()
-				return
-			end
-			self._last_float_check = 0
-		end
-
-		-- Update furnace stuff
-		if self._fueltime and self._fueltime > 0 then
-			self._fueltime = self._fueltime - dtime
-			if self._fueltime <= 0 then
-				self.object:set_properties({textures =
-					{
-					"default_furnace_top.png",
-					"default_furnace_top.png",
-					"default_furnace_front.png",
-					"default_furnace_side.png",
-					"default_furnace_side.png",
-					"default_furnace_side.png",
-					"mcl_minecarts_minecart.png",
-				}})
-				self._fueltime = 0
-			end
-		end
-		local has_fuel = self._fueltime and self._fueltime > 0
-
-		-- Update TNT stuff
-		if self._boomtimer then
-			-- Explode
-			self._boomtimer = self._boomtimer - dtime
-			local pos = self.object:get_pos()
-			if self._boomtimer <= 0 then
-				self.object:remove()
-				mcl_explosions.explode(pos, 4, { drop_chance = 1.0 })
-				return
-			else
-				tnt.smoke_step(pos)
-			end
-		end
-		if self._blinktimer then
-			self._blinktimer = self._blinktimer - dtime
-			if self._blinktimer <= 0 then
-				self._blink = not self._blink
-				if self._blink then
-					self.object:set_properties({textures =
-					{
-					"default_tnt_top.png",
-					"default_tnt_bottom.png",
-					"default_tnt_side.png",
-					"default_tnt_side.png",
-					"default_tnt_side.png",
-					"default_tnt_side.png",
-					"mcl_minecarts_minecart.png",
-					}})
+				if ctrl then minetest.chat_send_all("dir change: "..minetest.pos_to_string(rd)) end --TODO REMOVE ME
+				if v.y == 0 then
+					self._g = -9.8
 				else
-					self.object:set_properties({textures =
-					{
-					"mcl_tnt_blink.png",
-					"mcl_tnt_blink.png",
-					"mcl_tnt_blink.png",
-					"mcl_tnt_blink.png",
-					"mcl_tnt_blink.png",
-					"mcl_tnt_blink.png",
-					"mcl_minecarts_minecart.png",
-					}})
+					local a = self.object:get_acceleration()
+					a.y = v.y
+					self.object:set_acceleration(a)
+					self._g = 0
 				end
-				self._blinktimer = tnt.BLINKTIMER
 			end
-		end
+			-- derail prevention:
+			if rd.z == 0 and rd.x ~= 0 then
+				if v.z ~= 0 then
+					v.z = 0
+					self.object:set_velocity(v)
+				end
+				if fp.z ~= pos.z then
+					self.object:set_pos({x=fp.x, y=fp.y, z = pos.z})
+				end
+			end
+			if rd.x == 0 and rd.z ~= 0 then
+				if v.x ~= 0 then
+					v.x = 0
+					self.object:set_velocity(v)
+				end
+				if fp.x ~= pos.x then
+					self.object:set_pos({x=pos.x, y=fp.y, z = fp.z})
+				end
+			end
+			if not push then 
+				self.object:set_acceleration({x=-v.x/4,y=self._g,z=-v.z/4})
+			end
 
-		if self._punched then
-			vel = vector.add(vel, self._velocity)
-			self.object:set_velocity(vel)
-			self._old_dir.y = 0
-		elseif vel.x == 0 and vel.y == 0 and vel.z == 0 then
-			if self._last_vel_not_zero then
-				if not node then
-					pos = self.object:get_pos()
-					rou_pos = vector.round(pos)
-					node = minetest.get_node(rou_pos)
+			local old_yaw, new_yaw = self.object:get_yaw(), minetest.dir_to_yaw(v)
+			if old_yaw < new_yaw then
+				while new_yaw - old_yaw > 3.14 do
+					new_yaw = new_yaw - 3.14
 				end
-				if node then
-					speed_mod = minetest.registered_nodes[node.name]._rail_acceleration
-					if speed_mod == 0 then
-						speed_mod = false
-					end
-				end
-				if speed_mod then
-					local last_dir = mcl_minecarts:velocity_to_dir(self._last_vel_not_zero)
-					self._last_vel_not_zero = nil
-					local stopper_pos = vector.add(rou_pos, last_dir)
-					local stopper_node = minetest.get_node(stopper_pos)
-					if stopper_node.name == "ignore" then
-						minetest.get_voxel_manip():read_from_map(stopper_pos, stopper_pos)
-						stopper_node = minetest.get_node(stopper_pos)
-					end
-					local def = minetest.registered_nodes[stopper_node.name]
-					if def and def.groups and def.groups.opaque == 1 then
-						local new_dir = {x=-last_dir.x, y=-last_dir.y, z=-last_dir.z}
-						local can_turn = (not self._last_turn_pos) or (not self._last_turn_dir)
-						if not can_turn then
-							can_turn = (self._last_turn_pos.x ~= rou_pos.x) or (self._last_turn_pos.y ~= rou_pos.y) or (self._last_turn_pos.z ~= rou_pos.z)
-							if not can_turn then
-								can_turn = (self._last_turn_dir.x ~= new_dir.x) or (self._last_turn_dir.y ~= new_dir.y) or (self._last_turn_dir.z ~= new_dir.z)
-							end
-						end
-						if can_turn then
-							local new_vel = vector.multiply(new_dir, speed_mod)
-							self.object:set_velocity(new_vel)
-							self.object:set_acceleration(new_vel)
-							self._old_pos = vector.new(pos)
-							self._old_dir = vector.new(new_dir)
-							self._old_vel = vector.new(new_vel)
-							self._last_turn_pos = vector.new(rou_pos)
-							self._last_turn_dir = vector.new(last_dir)
-							return
-						end
-					end
+			else
+				while old_yaw - new_yaw > 3.14 do
+					new_yaw = new_yaw + 3.14
 				end
 			end
-			if not has_fuel then
-				return
+			if old_yaw - new_yaw > 0.1 or new_yaw - old_yaw > 1.58 then
+				self.object:set_yaw(old_yaw - 0.1*(math.abs(v.x)+math.abs(v.z)+0.1))
+			elseif new_yaw - old_yaw > 0.1 or old_yaw - new_yaw > 1.58  then
+				self.object:set_yaw(old_yaw + 0.1*(math.abs(v.x)+math.abs(v.z)+0.1))
 			end
+			--[[ 360 is too mach for carts, 180 needed instead
+			local old_yaw, new_yaw = self.object:get_yaw(), minetest.dir_to_yaw(v)
+			local dy = math.abs(old_yaw - new_yaw)
+			if dy < 0.16 or dy > 6.12 then
+				self.object:set_yaw(new_yaw)
+			elseif ((old_yaw > new_yaw) and (dy < 3.15)) or (old_yaw < -1.57 and new_yaw > 1.57) then
+				self.object:set_yaw(old_yaw - 0.1*(math.abs(v.x)+math.abs(v.z)+0.1))
+			else
+				self.object:set_yaw(old_yaw + 0.1*(math.abs(v.x)+math.abs(v.z)+0.1))
+			end
+			]]
+			-- self.object:set_yaw((self.object:get_yaw()*7 + minetest.dir_to_yaw(v))/8)
+
+			if ctrl and self._driver then
+				--minetest.chat_send_all(tostring(old_yaw) .. " --- " .. tostring(new_yaw)) --TODO REMOVE ME
+				if ctrl.right then
+					self.object:set_acceleration(vector.add(self.object:get_acceleration(), vector.multiply(minetest.yaw_to_dir(self._driver:get_look_horizontal()-1.57), 2)))
+				end
+				if ctrl.left then
+					self.object:set_acceleration(vector.add(self.object:get_acceleration(), vector.multiply(minetest.yaw_to_dir(self._driver:get_look_horizontal()+1.57), 2)))
+				end
+				if ctrl.up then
+					self.object:set_acceleration(vector.add(self.object:get_acceleration(), vector.multiply(self._driver:get_look_dir(), 2)))
+				end
+				if ctrl.down then
+					self.object:set_acceleration(vector.subtract(self.object:get_acceleration(), vector.multiply(self._driver:get_look_dir(), 2)))
+				end
+			end
+
 		else
-			self._last_vel_not_zero = {x = vel.x, y = vel.y, z = vel.z}
-		end
-
-		local dir, last_switch = nil, nil
-		if not pos then
-			pos = self.object:get_pos()
-		end
-		if self._old_pos and not self._punched then
-			local flo_pos = vector.floor(pos)
-			local flo_old = vector.floor(self._old_pos)
-			if vector.equals(flo_pos, flo_old) and (not has_fuel) then
-				return
-				-- Prevent querying the same node over and over again
+			if fp.y ~= pos.y and nn ~= "air" then
+				self.object:set_pos({x=fp.x, y=pos.y, z = fp.z})
 			end
-
-			if not rou_pos then
-				rou_pos = vector.round(pos)
-				node = minetest.get_node(rou_pos)
-			end
-			local rou_old = vector.round(self._old_pos)
-			local node_old = minetest.get_node(rou_old)
-
-			-- Update detector rails
-			if node.name == "mcl_minecarts:detector_rail" then
-				local newnode = {name="mcl_minecarts:detector_rail_on", param2 = node.param2}
-				minetest.swap_node(rou_pos, newnode)
-				mesecon.receptor_on(rou_pos)
-			end
-			if node_old.name == "mcl_minecarts:detector_rail_on" then
-				local newnode = {name="mcl_minecarts:detector_rail", param2 = node_old.param2}
-				minetest.swap_node(rou_old, newnode)
-				mesecon.receptor_off(rou_old)
-			end
-			-- Activate minecart if on activator rail
-			if node_old.name == "mcl_minecarts:activator_rail_on" and self.on_activate_by_rail then
-				self:on_activate_by_rail()
+			if not push then 
+				self.object:set_acceleration({x=-v.x*2,y=-9.8,z=-v.z*2})
 			end
 		end
-
-		local ctrl, player = nil, nil
-		if self._driver then
-			player = minetest.get_player_by_name(self._driver)
-			if player then
-				ctrl = player:get_player_control()
-			end
-		end
-
-		-- Stop cart if velocity vector flips
-		if self._old_vel and self._old_vel.y == 0 and (self._old_vel.x * vel.x < 0 or self._old_vel.z * vel.z < 0) then
-			self._old_vel = {x = 0, y = 0, z = 0}
-			self._old_pos = pos
-			self.object:set_velocity(vector.new())
-			self.object:set_acceleration(vector.new())
-			return
-		end
-		self._old_vel = vector.new(vel)
-
-		if self._old_pos then
-			local diff = vector.subtract(self._old_pos, pos)
-			for _,v in ipairs({"x","y","z"}) do
-				if math.abs(diff[v]) > 1.1 then
-					local expected_pos = vector.add(self._old_pos, self._old_dir)
-					dir, last_switch = mcl_minecarts:get_rail_direction(pos, self._old_dir, ctrl, self._old_switch, self._railtype)
-					if vector.equals(dir, {x=0, y=0, z=0}) then
-						dir = false
-						pos = vector.new(expected_pos)
-						update.pos = true
-					end
-					break
-				end
-			end
-		end
-
-		if vel.y == 0 then
-			for _,v in ipairs({"x", "z"}) do
-				if vel[v] ~= 0 and math.abs(vel[v]) < 0.9 then
-					vel[v] = 0
-					update.vel = true
-				end
-			end
-		end
-
-		local cart_dir = mcl_minecarts:velocity_to_dir(vel)
-		local max_vel = mcl_minecarts.speed_max
-		if not dir then
-			dir, last_switch = mcl_minecarts:get_rail_direction(pos, cart_dir, ctrl, self._old_switch, self._railtype)
-		end
-
-		local new_acc = {x=0, y=0, z=0}
-		if vector.equals(dir, {x=0, y=0, z=0}) and not has_fuel then
-			vel = {x=0, y=0, z=0}
-			update.vel = true
-		else
-			-- If the direction changed
-			if dir.x ~= 0 and self._old_dir.z ~= 0 then
-				vel.x = dir.x * math.abs(vel.z)
-				vel.z = 0
-				pos.z = math.floor(pos.z + 0.5)
-				update.pos = true
-			end
-			if dir.z ~= 0 and self._old_dir.x ~= 0 then
-				vel.z = dir.z * math.abs(vel.x)
-				vel.x = 0
-				pos.x = math.floor(pos.x + 0.5)
-				update.pos = true
-			end
-			-- Up, down?
-			if dir.y ~= self._old_dir.y then
-				vel.y = dir.y * math.abs(vel.x + vel.z)
-				pos = vector.round(pos)
-				update.pos = true
-			end
-
-			-- Slow down or speed up
-			local acc = dir.y * -1.8
-			local friction = 0.4
-			if speed_mod == nil then
-				speed_mod = minetest.registered_nodes[minetest.get_node(pos).name]._rail_acceleration
-				if speed_mod and speed_mod == 0 then
-					speed_mod = false
-				end
-			end
-
-			acc = acc - friction
-
-			if has_fuel then
-				acc = acc + 0.6
-			end
-
-			if speed_mod then
-				acc = acc + speed_mod + friction
-			end
-
-			new_acc = vector.multiply(dir, acc)
-		end
-
-		self.object:set_acceleration(new_acc)
-		self._old_pos = vector.new(pos)
-		self._old_dir = vector.new(dir)
-		self._old_switch = last_switch
-
-		-- Limits
-		for _,v in ipairs({"x","y","z"}) do
-			if math.abs(vel[v]) > max_vel then
-				vel[v] = mcl_minecarts:get_sign(vel[v]) * max_vel
-				new_acc[v] = 0
-				update.vel = true
-			end
-		end
-
-		-- Give achievement when player reached a distance of 1000 nodes from the start position
-		if self._driver and (vector.distance(self._start_pos, pos) >= 1000) then
-			awards.unlock(self._driver, "mcl:onARail")
-		end
-
-
-		if update.pos or self._punched then
-			local yaw = 0
-			if dir.x < 0 then
-				yaw = 0.5
-			elseif dir.x > 0 then
-				yaw = 1.5
-			elseif dir.z < 0 then
-				yaw = 1
-			end
-			self.object:set_yaw(yaw * math.pi)
-		end
-
-		if self._punched then
-			self._punched = false
-		end
-
-		if not (update.vel or update.pos) then
-			return
-		end
-
-
-		local anim = {x=0, y=0}
-		if dir.y == -1 then
-			anim = {x=1, y=1}
-		elseif dir.y == 1 then
-			anim = {x=2, y=2}
-		end
-		self.object:set_animation(anim, 1, 0)
-
-		self.object:set_velocity(vel)
-		if update.pos then
-			self.object:set_pos(pos)
-		end
-		update = nil
-	end
-
-	function cart:get_staticdata()
-		return minetest.serialize({_railtype = self._railtype})
 	end
 
 	minetest.register_entity(entity_id, cart)
@@ -566,12 +295,7 @@ mcl_minecarts.place_minecart = function(itemstack, pointed_thing, placer)
 
 	local entity_id = entity_mapping[itemstack:get_name()]
 	local cart = minetest.add_entity(railpos, entity_id)
-	local railtype = minetest.get_item_group(node.name, "connect_to_raillike")
-	local le = cart:get_luaentity()
-	if le ~= nil then
-		le._railtype = railtype
-	end
-	local cart_dir = mcl_minecarts:get_rail_direction(railpos, {x=1, y=0, z=0}, nil, nil, railtype)
+	local cart_dir = mcl_minecarts:get_rail_direction(railpos, {x=1, y=0, z=0}, nil, nil)
 	cart:set_yaw(minetest.dir_to_yaw(cart_dir))
 
 	local pname = ""
@@ -656,191 +380,197 @@ local function register_minecart(itemstring, entity_id, description, tt_help, lo
 	end
 end
 
--- Minecart
-register_minecart(
-	"mcl_minecarts:minecart",
-	"mcl_minecarts:minecart",
-	S("Minecart"),
-	S("Vehicle for fast travel on rails"),
-	S("Minecarts can be used for a quick transportion on rails.") .. "\n" ..
-	S("Minecarts only ride on rails and always follow the tracks. At a T-junction with no straight way ahead, they turn left. The speed is affected by the rail type."),
-	S("You can place the minecart on rails. Right-click it to enter it. Punch it to get it moving.") .. "\n" ..
-	S("To obtain the minecart, punch it while holding down the sneak key.") .. "\n" ..
-	S("If it moves over a powered activator rail, you'll get ejected."),
-	"mcl_minecarts_minecart.b3d",
-	{"mcl_minecarts_minecart.png"},
-	"mcl_minecarts_minecart_normal.png",
-	{"mcl_minecarts:minecart"},
-	function(self, clicker)
-		local name = clicker:get_player_name()
-		if not clicker or not clicker:is_player() then
-			return
-		end
-		local player_name = clicker:get_player_name()
-		if self._driver and player_name == self._driver then
-			detach_driver(self)
-		elseif not self._driver then
-			self._driver = player_name
-			self._start_pos = self.object:get_pos()
-			mcl_player.player_attached[player_name] = true
-			clicker:set_attach(self.object, "", {x=0, y=-1.75, z=-2}, {x=0, y=0, z=0})
-			mcl_player.player_attached[name] = true
-			minetest.after(0.2, function(name)
-				local player = minetest.get_player_by_name(name)
-				if player then
-					mcl_player.player_set_animation(player, "sit" , 30)
-					player:set_eye_offset({x=0, y=-5.5, z=0},{x=0, y=-4, z=0})
-				end
-			end, name)
-		end
-	end, activate_normal_minecart
+register_minecart(	-- Minecart --
+--[[itemstring]]		"mcl_minecarts:minecart",
+--[[entity_id]]			"mcl_minecarts:minecart",
+--[[description]]		S("Minecart"),
+--[[tt_help]]			S("Vehicle for fast travel on rails"),
+--[[longdesc]]			S("Minecarts can be used for a quick transportion on rails.") .. "\n" ..
+				S("Minecarts only ride on rails and always follow the tracks. At a T-junction with no straight way ahead, they turn left. The speed is affected by the rail type."),
+--[[usagehelp]]			S("You can place the minecart on rails. Right-click it to enter it. Punch it to get it moving.") .. "\n" ..
+				S("To obtain the minecart, punch it while holding down the sneak key.") .. "\n" ..
+				S("If it moves over a powered activator rail, you'll get ejected."),
+--[[mesh]]			"mcl_minecarts_minecart.b3d",
+--[[textures]]			{"mcl_minecarts_minecart.png"},
+--[[icon]]				"mcl_minecarts_minecart_normal.png",
+--[[drop]]				{"mcl_minecarts:minecart"},
+--[[on_rightclick]]			function(self, clicker)
+						if not clicker or not clicker:is_player() then return end
+						if clicker == self._driver then
+							detach_driver(self)
+						else
+							local name = clicker:get_player_name()
+							self._driver = clicker
+							self._start_pos = self.object:get_pos()
+							mcl_player.player_attached[name] = true
+							clicker:set_attach(self.object, "", {x=0, y=-1.75, z=-2}, {x=0, y=0, z=0})
+							mcl_player.player_attached[name] = true
+							minetest.after(0.2, function(name)
+								local player = minetest.get_player_by_name(name)
+								if player then
+									mcl_player.player_set_animation(player, "sit" , 30)
+									player:set_eye_offset({x=0, y=-5.5, z=0},{x=0, y=-4, z=0})
+									mcl_tmp_message.message(clicker, S("Sneak to dismount"))
+								end
+							end, name)
+							clicker:set_look_horizontal(self.object:get_yaw())
+						end
+					end,
+--[[on_activate_by_rail]]	activate_normal_minecart,
+--[[creative]]			true
 )
 
--- Minecart with Chest
-register_minecart(
-	"mcl_minecarts:chest_minecart",
-	"mcl_minecarts:chest_minecart",
-	S("Minecart with Chest"),
-	nil, nil, nil,
-	"mcl_minecarts_minecart_chest.b3d",
-	{ "mcl_chests_normal.png", "mcl_minecarts_minecart.png" },
-	"mcl_minecarts_minecart_chest.png",
-	{"mcl_minecarts:minecart", "mcl_chests:chest"},
-	nil, nil, false)
-
--- Minecart with Furnace
-register_minecart(
-	"mcl_minecarts:furnace_minecart",
-	"mcl_minecarts:furnace_minecart",
-	S("Minecart with Furnace"),
-	nil,
-	S("A minecart with furnace is a vehicle that travels on rails. It can propel itself with fuel."),
-	S("Place it on rails. If you give it some coal, the furnace will start burning for a long time and the minecart will be able to move itself. Punch it to get it moving.") .. "\n" ..
-	S("To obtain the minecart and furnace, punch them while holding down the sneak key."),
-
-	"mcl_minecarts_minecart_block.b3d",
-	{
-		"default_furnace_top.png",
-		"default_furnace_top.png",
-		"default_furnace_front.png",
-		"default_furnace_side.png",
-		"default_furnace_side.png",
-		"default_furnace_side.png",
-		"mcl_minecarts_minecart.png",
-	},
-	"mcl_minecarts_minecart_furnace.png",
-	{"mcl_minecarts:minecart", "mcl_furnaces:furnace"},
-	-- Feed furnace with coal
-	function(self, clicker)
-		if not clicker or not clicker:is_player() then
-			return
-		end
-		if not self._fueltime then
-			self._fueltime = 0
-		end
-		local held = clicker:get_wielded_item()
-		if minetest.get_item_group(held:get_name(), "coal") == 1 then
-			self._fueltime = self._fueltime + 180
-
-			if not minetest.is_creative_enabled(clicker:get_player_name()) then
-				held:take_item()
-				local index = clicker:get_wield_index()
-				local inv = clicker:get_inventory()
-				inv:set_stack("main", index, held)
-			end
-			self.object:set_properties({textures =
-			{
-				"default_furnace_top.png",
-				"default_furnace_top.png",
-				"default_furnace_front_active.png",
-				"default_furnace_side.png",
-				"default_furnace_side.png",
-				"default_furnace_side.png",
-				"mcl_minecarts_minecart.png",
-			}})
-		end
-	end, nil, false
+register_minecart(	-- Minecart with Chest --
+--[[itemstring]]		"mcl_minecarts:chest_minecart",	
+--[[entity_id]]			"mcl_minecarts:chest_minecart",
+--[[description]]		S("Minecart with Chest"),
+--[[tt_help]]			S("Minecart with a chest inside it"),
+--[[longdesc]]			S("A minecart with furnace is a vehicle that travels on rails. It can propel itself with fuel."),
+--[[usagehelp]]			S("Place it on rails. Access chest content by pressing [Usage] on it. The boost is dependent on the load."),
+--[[mesh]]			"mcl_minecarts_minecart_chest.b3d",
+--[[textures]]			{ "mcl_chests_normal.png", "mcl_minecarts_minecart.png" },
+--[[icon]]			"mcl_minecarts_minecart_chest.png",
+--[[drop]]			{"mcl_minecarts:minecart", "mcl_chests:chest"},
+--[[on_rightclick]]		nil,
+--[[on_activate_by_rail]]	nil,
+--[[creative]]			true
 )
 
--- Minecart with Command Block
-register_minecart(
-	"mcl_minecarts:command_block_minecart",
-	"mcl_minecarts:command_block_minecart",
-	S("Minecart with Command Block"),
-	nil, nil, nil,
-	"mcl_minecarts_minecart_block.b3d",
-	{
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"jeija_commandblock_off.png^[verticalframe:2:0",
-		"mcl_minecarts_minecart.png",
-	},
-	"mcl_minecarts_minecart_command_block.png",
-	{"mcl_minecarts:minecart"},
-	nil, nil, false
+register_minecart(	-- Minecart with Furnace --
+--[[itemstring]]		"mcl_minecarts:furnace_minecart",
+--[[entity_id]]			"mcl_minecarts:furnace_minecart",
+--[[description]]		S("Minecart with Furnace"),
+--[[tt_help]]			S("Minecart with a furnace inside it"),
+--[[longdesc]]			S("A minecart with furnace is a vehicle that travels on rails. It can propel itself with fuel."),
+--[[usagehelp]]			S("Place it on rails. If you give it some coal, the furnace will start burning for a long time and the minecart will be able to move itself. Punch it to get it moving.") .. "\n" ..
+				S("To obtain the minecart and furnace, punch them while holding down the sneak key."),
+--[[mesh]]			"mcl_minecarts_minecart_block.b3d",
+--[[textures]]			       {
+					"default_furnace_top.png",
+					"default_furnace_top.png",
+					"default_furnace_front.png",
+					"default_furnace_side.png",
+					"default_furnace_side.png",
+					"default_furnace_side.png",
+					"mcl_minecarts_minecart.png",
+				},
+--[[icon]]			"mcl_minecarts_minecart_furnace.png",
+--[[drop]]			{"mcl_minecarts:furnace_minecart"},
+--[[on_rightclick]]		-- Feed furnace with coal
+				function(self, clicker)
+					if not clicker or not clicker:is_player() then
+						return
+					end
+					if not self._fueltime then
+						self._fueltime = 0
+					end
+					local held = clicker:get_wielded_item()
+					if minetest.get_item_group(held:get_name(), "coal") == 1 then
+						self._fueltime = self._fueltime + 180
+						if not minetest.is_creative_enabled(clicker:get_player_name()) then
+							held:take_item()
+							local index = clicker:get_wield_index()
+							local inv = clicker:get_inventory()
+							inv:set_stack("main", index, held)
+						end
+						self.object:set_properties({textures =
+						{
+							"default_furnace_top.png",
+							"default_furnace_top.png",
+							"default_furnace_front_active.png",
+							"default_furnace_side.png",
+							"default_furnace_side.png",
+							"default_furnace_side.png",
+							"mcl_minecarts_minecart.png",
+						}})
+					end
+				end,
+--[[on_activate_by_rail]]	nil,
+--[[creative]]			true
 )
 
--- Minecart with Hopper
-register_minecart(
-	"mcl_minecarts:hopper_minecart",
-	"mcl_minecarts:hopper_minecart",
-	S("Minecart with Hopper"),
-	nil, nil, nil,
-	"mcl_minecarts_minecart_hopper.b3d",
-	{
-		"mcl_hoppers_hopper_inside.png",
-		"mcl_minecarts_minecart.png",
-		"mcl_hoppers_hopper_outside.png",
-		"mcl_hoppers_hopper_top.png",
-	},
-	"mcl_minecarts_minecart_hopper.png",
-	{"mcl_minecarts:minecart", "mcl_hoppers:hopper"},
-	nil, nil, false
+register_minecart(	-- Minecart with Command Block --
+--[[itemstring]]		"mcl_minecarts:command_block_minecart",
+--[[entity_id]]			"mcl_minecarts:command_block_minecart",
+--[[description]]		S("Minecart with Command Block"),
+--[[tt_help]]			nil,
+--[[longdesc]]			nil,
+--[[usagehelp]]			nil,
+--[[mesh]]			"mcl_minecarts_minecart_block.b3d",
+--[[textures]]			{
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"jeija_commandblock_off.png^[verticalframe:2:0",
+					"mcl_minecarts_minecart.png",
+				},
+--[[icon]]			"mcl_minecarts_minecart_command_block.png",
+--[[drop]]			{"mcl_minecarts:command_block_minecart"},
+--[[on_rightclick]]		nil,
+--[[on_activate_by_rail]]	nil,
+--[[creative]]			true
 )
 
--- Minecart with TNT
-register_minecart(
-	"mcl_minecarts:tnt_minecart",
-	"mcl_minecarts:tnt_minecart",
-	S("Minecart with TNT"),
-	S("Vehicle for fast travel on rails").."\n"..S("Can be ignited by tools or powered activator rail"),
-	S("A minecart with TNT is an explosive vehicle that travels on rail."),
-	S("Place it on rails. Punch it to move it. The TNT is ignited with a flint and steel or when the minecart is on an powered activator rail.") .. "\n" ..
-	S("To obtain the minecart and TNT, punch them while holding down the sneak key. You can't do this if the TNT was ignited."),
-	"mcl_minecarts_minecart_block.b3d",
-	{
-		"default_tnt_top.png",
-		"default_tnt_bottom.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
-		"mcl_minecarts_minecart.png",
-	},
-	"mcl_minecarts_minecart_tnt.png",
-	{"mcl_minecarts:minecart", "mcl_tnt:tnt"},
-	-- Ingite
-	function(self, clicker)
-		if not clicker or not clicker:is_player() then
-			return
-		end
-		if self._boomtimer then
-			return
-		end
-		local held = clicker:get_wielded_item()
-		if held:get_name() == "mcl_fire:flint_and_steel" then
-			if not minetest.is_creative_enabled(clicker:get_player_name()) then
-				held:add_wear(65535/65) -- 65 uses
-				local index = clicker:get_wield_index()
-				local inv = clicker:get_inventory()
-				inv:set_stack("main", index, held)
-			end
-			activate_tnt_minecart(self)
-		end
-	end, activate_tnt_minecart)
+register_minecart(	-- Minecart with Hopper --
+--[[itemstring]]		"mcl_minecarts:hopper_minecart",
+--[[entity_id]]			"mcl_minecarts:hopper_minecart",
+--[[description]]		S("Minecart with Hopper"),
+--[[tt_help]]			nil,
+--[[longdesc]]			nil,
+--[[usagehelp]]			nil,
+--[[mesh]]			"mcl_minecarts_minecart_hopper.b3d",
+--[[textures]]			{
+					"mcl_hoppers_hopper_inside.png",
+					"mcl_minecarts_minecart.png",
+					"mcl_hoppers_hopper_outside.png",
+					"mcl_hoppers_hopper_top.png",
+				},
+--[[icon]]			"mcl_minecarts_minecart_hopper.png",
+--[[drop]]			{"mcl_minecarts:minecart", "mcl_hoppers:hopper"},
+--[[on_rightclick]]		nil,
+--[[on_activate_by_rail]]	nil,
+--[[creative]]			true
+)
+
+register_minecart(	-- Minecart with TNT --
+--[[itemstring]]		"mcl_minecarts:tnt_minecart",
+--[[entity_id]]			"mcl_minecarts:tnt_minecart",
+--[[description]]		S("Minecart with TNT"),
+--[[tt_help]]			S("Vehicle for fast travel on rails").."\n"..S("Can be ignited by tools or powered activator rail"),
+--[[longdesc]]			S("A minecart with TNT is an explosive vehicle that travels on rail."),
+--[[usagehelp]]			S("Place it on rails. Punch it to move it. The TNT is ignited with a flint and steel or when the minecart is on an powered activator rail.") .. "\n" ..
+				S("To obtain the minecart and TNT, punch them while holding down the sneak key. You can't do this if the TNT was ignited."),
+--[[mesh]]			"mcl_minecarts_minecart_block.b3d",
+--[[textures]]			{
+					"default_tnt_top.png",
+					"default_tnt_bottom.png",
+					"default_tnt_side.png",
+					"default_tnt_side.png",
+					"default_tnt_side.png",
+					"default_tnt_side.png",
+					"mcl_minecarts_minecart.png",
+				},
+--[[icon]]			"mcl_minecarts_minecart_tnt.png",
+--[[drop]]			{"mcl_minecarts:minecart", "mcl_tnt:tnt"},
+--[[on_rightclick]]		-- Ingite
+				function(self, clicker)
+					if not clicker or not clicker:is_player() or self._boomtimer then return end
+					local held = clicker:get_wielded_item()
+					if held:get_name() == "mcl_fire:flint_and_steel" then
+						if not minetest.is_creative_enabled(clicker:get_player_name()) then
+							held:add_wear(65535/65) -- 65 uses
+							local index = clicker:get_wield_index()
+							local inv = clicker:get_inventory()
+							inv:set_stack("main", index, held)
+						end
+						activate_tnt_minecart(self)
+					end
+				end,
+--[[on_activate_by_rail]]	activate_tnt_minecart,
+--[[creative]]			true
+)
 
 
 minetest.register_craft({
