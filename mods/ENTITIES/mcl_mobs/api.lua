@@ -2501,7 +2501,7 @@ local do_states = function(self, dtime)
 			-- stop timer if out of reach or direct line of sight
 			elseif self.allow_fuse_reset
 			and self.v_start
-			and (dist > self.reach
+			and (dist >= self.explosiontimer_reset_radius
 					or not line_of_sight(self, s, p, 2)) then
 				self.v_start = false
 				self.timer = 0
@@ -2511,7 +2511,7 @@ local do_states = function(self, dtime)
 			end
 
 			-- walk right up to player unless the timer is active
-			if self.v_start and (self.stop_to_explode or dist < 1.5) then
+			if self.v_start and (self.stop_to_explode or dist < self.reach) then
 				set_velocity(self, 0)
 			else
 				set_velocity(self, self.run_velocity)
@@ -2975,7 +2975,8 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 	if weapon then
 		local fire_aspect_level = mcl_enchanting.get_enchantment(weapon, "fire_aspect")
 		if fire_aspect_level > 0 then
-			mcl_burning.set_on_fire(self.object, 4, fire_aspect_level * 2)
+			local damage = fire_aspect_level * 4 - 1
+			mcl_burning.set_on_fire(self.object, 4, 1, 4 / damage)
 		end
 	end
 
@@ -3068,7 +3069,7 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 			local up = 2
 
 			-- if already in air then dont go up anymore when hit
-			if v.y > 0
+			if v.y ~= 0
 			or self.fly then
 				up = 0
 			end
@@ -3540,6 +3541,10 @@ local mob_step = function(self, dtime)
 		return
 	end
 
+	if not self.object:get_luaentity() then
+		return false
+	end
+
 	do_jump(self)
 
 	runaway_from(self)
@@ -3707,6 +3712,7 @@ end
 
 minetest.register_entity(name, {
 
+	use_texture_alpha = true,
 	stepheight = def.stepheight or 0.6,
 	name = name,
 	type = def.type,
@@ -3789,6 +3795,7 @@ minetest.register_entity(name, {
 	immune_to = def.immune_to or {},
 	explosion_radius = def.explosion_radius, -- LEGACY
 	explosion_damage_radius = def.explosion_damage_radius, -- LEGACY
+	explosiontimer_reset_radius = def.explosiontimer_reset_radius,
 	explosion_timer = def.explosion_timer or 3,
 	allow_fuse_reset = def.allow_fuse_reset ~= false,
 	stop_to_explode = def.stop_to_explode ~= false,

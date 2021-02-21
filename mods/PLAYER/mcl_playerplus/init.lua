@@ -19,16 +19,25 @@ minetest.register_globalstep(function(dtime)
 
 	-- Update jump status immediately since we need this info in real time.
 	-- WARNING: This section is HACKY as hell since it is all just based on heuristics.
-	for _,player in pairs(minetest.get_connected_players()) do
+	for _,player in ipairs(minetest.get_connected_players()) do
 		local controls = player:get_player_control()
 		name = player:get_player_name()
 
 		-- controls head bone
-		pitch = degrees(player:get_look_vertical()) * -1
+		local pitch = degrees(player:get_look_vertical()) * -1
+		local yaw = degrees(player:get_look_horizontal()) * -1
 
-		if controls.LMB then
+		local node_in_head = minetest.registered_nodes[mcl_playerinfo[name].node_head]
+
+		-- controls right and left arms pitch when shooting a bow or punching
+		if string.find(player:get_wielded_item():get_name(), "mcl_bows:bow") and controls.RMB and not controls.LMB and not controls.up and not controls.down and not controls.left and not controls.right then
+			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch+90,-30,pitch * -1 * .35))
+			player:set_bone_position("Arm_Left_Pitch_Control", vector.new(3.5,5.785,0), vector.new(pitch+90,43,pitch * .35))
+		elseif controls.LMB then
 			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch,0,0))
+			player:set_bone_position("Arm_Left_Pitch_Control", vector.new(3,5.785,0), vector.new(0,0,0))
 		else
+			player:set_bone_position("Arm_Left_Pitch_Control", vector.new(3,5.785,0), vector.new(0,0,0))
 			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(0,0,0))
 		end
 
@@ -36,19 +45,24 @@ minetest.register_globalstep(function(dtime)
 			-- controls head pitch when sneaking
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch+36,0,0))
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({eye_height = 1.35, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
+			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.35, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
 
-		elseif minetest.get_item_group(mcl_playerinfo[name].node_stand, "water") ~= 0 and player:get_attach() == nil then
+		elseif minetest.get_item_group(mcl_playerinfo[name].node_head, "water") ~= 0 and player:get_attach() == nil and mcl_sprint.is_sprinting(name) == true or node_in_head and node_in_head.walkable then
 			-- controls head pitch when swiming
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch+90,0,0))
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({eye_height = 1.65, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,0.8,0.35}, eye_height = 0.65, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
 
-		else
+		elseif player:get_attach() == nil then
 			-- controls head pitch when not sneaking
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch,0,0))
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({eye_height = 1.65, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.65, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+		else
+			local attached = player:get_attach(parent)
+			local attached_yaw = degrees(attached:get_yaw())
+			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.65, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch,yaw + attached_yaw,0))
 		end
 
 		if mcl_playerplus_internal[name].jump_cooldown > 0 then
@@ -112,7 +126,7 @@ minetest.register_globalstep(function(dtime)
 	time = 0
 
 	-- check players
-	for _,player in pairs(minetest.get_connected_players()) do
+	for _,player in ipairs(minetest.get_connected_players()) do
 		-- who am I?
 		local name = player:get_player_name()
 

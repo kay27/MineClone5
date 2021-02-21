@@ -3,11 +3,13 @@ local S = minetest.get_translator("mcl_core")
 -- Simple solid cubic nodes, most of them are the ground materials and simple building blocks
 
 local translucent_ice = minetest.settings:get_bool("mcl_translucent_ice", false)
-local ice_drawtype
+local ice_drawtype, ice_texture_alpha
 if translucent_ice then
 	ice_drawtype = "glasslike"
+	ice_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true
 else
 	ice_drawtype = "normal"
+	ice_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false
 end
 
 mcl_core.fortune_drop_ore = {
@@ -389,6 +391,7 @@ minetest.register_node("mcl_core:grass_path", {
 	_doc_items_longdesc = S("Grass paths are a decorative variant of grass blocks. Their top has a different color and they are a bit lower than grass blocks, making them useful to build footpaths. Grass paths can be created with a shovel. A grass path turns into dirt when it is below a solid block."),
 	drop = "mcl_core:dirt",
 	is_ground_content = true,
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	drawtype = "nodebox",
 	paramtype = "light",
 	node_box = {
@@ -820,7 +823,7 @@ minetest.register_node("mcl_core:ice", {
 	tiles = {"default_ice.png"},
 	is_ground_content = true,
 	paramtype = "light",
-	use_texture_alpha = translucent_ice,
+	use_texture_alpha = ice_texture_alpha,
 	stack_max = 64,
 	groups = {handy=1,pickaxey=1, slippery=3, building_block=1, ice=1},
 	drop = "",
@@ -886,7 +889,7 @@ for i=0,3 do
 		tiles = {"mcl_core_frosted_ice_"..i..".png"},
 		is_ground_content = false,
 		paramtype = "light",
-		use_texture_alpha = translucent_ice,
+		use_texture_alpha = ice_texture_alpha,
 		stack_max = 64,
 		groups = {handy=1, frosted_ice=1, slippery=3, not_in_creative_inventory=1, ice=1},
 		drop = "",

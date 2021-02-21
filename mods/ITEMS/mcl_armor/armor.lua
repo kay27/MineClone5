@@ -108,10 +108,11 @@ armor.update_player_visuals = function(self, player)
 		return
 	end
 
-	local player_holding = player:get_wielded_item():get_name()
-	if string.find(player_holding,"mcl_tools:") or player_holding == "mcl_mobitems:bone" or player_holding == "mcl_fishing:fishing_rod" then
+	local wielditem = player:get_wielded_item()
+	local def = wielditem:get_definition()
+	if def and def._mcl_toollike_wield then
 		player:set_bone_position("Wield_Item", vector.new(0,3.9,1.3), vector.new(90,0,0))
-	elseif string.find(player_holding, "mcl_bows:bow") then
+	elseif string.find(wielditem:get_name(), "mcl_bows:bow") then
 		 player:set_bone_position("Wield_Item", vector.new(.5,4.5,-1.6), vector.new(90,0,20))
 	else
 		player:set_bone_position("Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
@@ -366,13 +367,15 @@ mcl_player.player_register_model("mcl_armor_character.b3d", {
 		walk_mine = {x=200, y=219},
 		sit = {x=81, y=160},
 		sneak_stand = {x=222, y=302},
-		sneak_mine = {x=346, y=366},
+		sneak_mine = {x=346, y=365},
 		sneak_walk = {x=304, y=323},
 		sneak_walk_mine = {x=325, y=344},
 		swim_walk = {x=368, y=387},
 		swim_walk_mine = {x=389, y=408},
 		swim_stand = {x=434, y=434},
 		swim_mine = {x=411, y=430},
+		run_walk	= {x=440, y=459},
+		run_walk_mine	= {x=461, y=480},
 	},
 })
 

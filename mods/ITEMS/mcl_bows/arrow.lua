@@ -64,6 +64,7 @@ minetest.register_node("mcl_bows:arrow_box", {
 		}
 	},
 	tiles = {"mcl_bows_arrow.png^[transformFX", "mcl_bows_arrow.png^[transformFX", "mcl_bows_arrow_back.png", "mcl_bows_arrow_front.png", "mcl_bows_arrow.png", "mcl_bows_arrow.png^[transformFX"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	sunlight_propagates = true,
@@ -252,7 +253,7 @@ ARROW_ENTITY.on_step = function(self, dtime)
 						end
 						damage_particles(self.object:get_pos(), self._is_critical)
 						if mcl_burning.is_burning(self.object) then
-							mcl_burning.set_on_fire(obj, 4)
+							mcl_burning.set_on_fire(obj, 5, 1, 5 / 4)
 						end
 						obj:punch(self.object, 1.0, {
 							full_punch_interval=1.0,

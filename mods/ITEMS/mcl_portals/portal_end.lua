@@ -4,6 +4,11 @@ local S = minetest.get_translator("mcl_portals")
 local SPAWN_MIN = mcl_vars.mg_end_min+70
 local SPAWN_MAX = mcl_vars.mg_end_min+98
 
+local PORTAL_ALPHA = 192
+if minetest.features.use_texture_alpha_string_modes then
+	PORTAL_ALPHA = nil
+end
+
 local mg_name = minetest.get_mapgen_setting("mg_name")
 
 local destroy_portal = function(pos)
@@ -66,7 +71,7 @@ minetest.register_node("mcl_portals:portal_end", {
 	drawtype = "nodebox",
 	paramtype = "light",
 	sunlight_propagates = true,
-	use_texture_alpha = true,
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true,
 	walkable = false,
 	diggable = false,
 	pointable = false,
@@ -76,7 +81,7 @@ minetest.register_node("mcl_portals:portal_end", {
 	-- This is 15 in MC.
 	light_source = 14,
 	post_effect_color = {a = 192, r = 0, g = 0, b = 0},
-	alpha = 192,
+	alpha = PORTAL_ALPHA,
 	after_destruct = destroy_portal,
 	-- This prevents “falling through”
 	collision_box = {
@@ -277,6 +282,7 @@ minetest.register_node("mcl_portals:end_portal_frame", {
 	_doc_items_usagehelp = S("To create an End portal, you need 12 end portal frames and 12 eyes of ender. The end portal frames have to be arranged around a horizontal 3×3 area with each block facing inward. Any other arrangement will fail.") .. "\n" .. S("Place an eye of ender into each block. The end portal appears in the middle after placing the final eye.") .. "\n" .. S("Once placed, an eye of ender can not be taken back."),
 	groups = { creative_breakable = 1, deco_block = 1, end_portal_frame = 1 },
 	tiles = { "mcl_portals_endframe_top.png", "mcl_portals_endframe_bottom.png", "mcl_portals_endframe_side.png" },
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype2 = "facedir",
 	drawtype = "nodebox",
 	node_box = {
@@ -303,6 +309,7 @@ minetest.register_node("mcl_portals:end_portal_frame_eye", {
 	_doc_items_create_entry = false,
 	groups = { creative_breakable = 1, deco_block = 1, comparator_signal = 15, end_portal_frame = 2 },
 	tiles = { "mcl_portals_endframe_top.png^[lowpart:75:mcl_portals_endframe_eye.png", "mcl_portals_endframe_bottom.png", "mcl_portals_endframe_eye.png^mcl_portals_endframe_side.png" },
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype2 = "facedir",
 	drawtype = "nodebox",
 	node_box = {

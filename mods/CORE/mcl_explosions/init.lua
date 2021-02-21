@@ -255,9 +255,9 @@ local function trace_explode(pos, strength, raydirs, radius, info, puncher)
 				local z_len = math.abs(z2 - z1)
 
 				-- Move object position to the center of its bounding box
-				opos.x = opos.x + x1 + x2
-				opos.y = opos.y + y1 + y2
-				opos.z = opos.z + z1 + z2
+				opos.x = opos.x + 0.5 * (x1 + x2)
+				opos.y = opos.y + 0.5 * (y1 + y2)
+				opos.z = opos.z + 0.5 * (z1 + z2)
 
 				-- Count number of rays from collision box which are unobstructed
 				local count = N_EXPOSURE_RAYS
@@ -440,10 +440,6 @@ function mcl_explosions.explode(pos, strength, info, puncher)
 	if info.max_blast_resistance == nil then
 		info.max_blast_resistance = INDESTRUCT_BLASTRES
 	end
-
-	-- For backwards compatibility
-	if info.no_particle then info.particles = false end
-	if info.no_sound then info.sound = false end
 
 	-- Dont do drops in creative mode
 	if minetest.is_creative_enabled("") then

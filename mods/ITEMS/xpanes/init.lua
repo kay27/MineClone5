@@ -194,7 +194,7 @@ local pane = function(description, node, append)
 		_doc_items_entry_name = entry_name,
 		_doc_items_longdesc = longdesc,
 		textures = {texture1, texture1, "xpanes_top_glass"..append..".png"},
-		use_texture_alpha = true,
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true,
 		inventory_image = texture1,
 		wield_image = texture1,
 		sounds = mcl_sounds.node_sound_glass_defaults(),
@@ -224,6 +224,7 @@ xpanes.register_pane("bar", {
 	wield_image = "xpanes_pane_iron.png",
 	groups = {pickaxey=1},
 	sounds = mcl_sounds.node_sound_metal_defaults(),
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	recipe = {
 		{"mcl_core:iron_ingot", "mcl_core:iron_ingot", "mcl_core:iron_ingot"},
 		{"mcl_core:iron_ingot", "mcl_core:iron_ingot", "mcl_core:iron_ingot"},

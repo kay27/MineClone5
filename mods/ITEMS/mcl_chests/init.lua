@@ -349,6 +349,7 @@ minetest.register_node("mcl_chests:"..basename, {
 	drawtype = "mesh",
 	mesh = "mcl_chests_chest.obj",
 	tiles = small_textures,
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	stack_max = 64,
@@ -385,6 +386,7 @@ minetest.register_node(small_name, {
         fixed = {-0.4375, -0.5, -0.4375, 0.4375, 0.375, 0.4375},
 	},
 	tiles = {"mcl_chests_blank.png"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	_chest_entity_textures = small_textures,
 	_chest_entity_sound = "default_chest",
 	_chest_entity_mesh = "mcl_chests_chest",
@@ -510,6 +512,7 @@ minetest.register_node(left_name, {
         fixed = {-0.4375, -0.5, -0.4375, 0.5, 0.375, 0.4375},
 	},
 	tiles = {"mcl_chests_blank.png"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	_chest_entity_textures = left_textures,
 	_chest_entity_sound = "default_chest",
 	_chest_entity_mesh = "mcl_chests_chest",
@@ -664,6 +667,7 @@ minetest.register_node("mcl_chests:"..basename.."_right", {
         fixed = {-0.5, -0.5, -0.4375, 0.4375, 0.375, 0.4375},
 	},
 	tiles = {"mcl_chests_blank.png"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	groups = {handy=1,axey=1, container=6,not_in_creative_inventory=1, material_wood=1,flammable=-1,double_chest=2},
 	drop = drop,
 	is_ground_content = false,
@@ -973,6 +977,7 @@ minetest.register_node("mcl_chests:ender_chest", {
 	drawtype = "mesh",
 	mesh = "mcl_chests_chest.obj",
 	tiles = {"mcl_chests_ender.png"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	stack_max = 64,
@@ -1013,6 +1018,7 @@ minetest.register_node("mcl_chests:ender_chest_small", {
 	_chest_entity_mesh = "mcl_chests_chest",
 	_chest_entity_animation_type = "chest",
 	tiles = {"mcl_chests_blank.png"},
+	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	--[[{"mcl_chests_ender_chest_top.png", "mcl_chests_ender_chest_bottom.png",
 		"mcl_chests_ender_chest_right.png", "mcl_chests_ender_chest_left.png",
 		"mcl_chests_ender_chest_back.png", "mcl_chests_ender_chest_front.png"},]]--
@@ -1146,6 +1152,7 @@ for color, desc in pairs(boxtypes) do
 		_doc_items_longdesc = longdesc,
 		_doc_items_usagehelp = usagehelp,
 		tiles = {mob_texture},
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 		drawtype = "mesh",
 		mesh = "mcl_chests_shulker.obj",
 		--[["mcl_chests_"..color.."_shulker_box_top.png", -- top
@@ -1210,6 +1217,7 @@ for color, desc in pairs(boxtypes) do
 		_doc_items_usagehelp = usagehelp,
 		drawtype = "nodebox",
 		tiles = {"mcl_chests_blank.png"},
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 		_chest_entity_textures = {mob_texture},
 		_chest_entity_sound = "mcl_chests_shulker",
 		_chest_entity_mesh = "mcl_chests_shulker",
@@ -1348,7 +1356,7 @@ local function select_and_spawn_entity(pos, node)
 	local node_name = node.name
 	local node_def = minetest.registered_nodes[node_name]
 	local double_chest = minetest.get_item_group(node_name, "double_chest") > 0
-	create_entity(pos, node_name, node_def._chest_entity_textures, node.param2, double_chest, node_def._chest_entity_sound, node_def._chest_entity_mesh, node_def._chest_entity_animation_type)
+	find_or_create_entity(pos, node_name, node_def._chest_entity_textures, node.param2, double_chest, node_def._chest_entity_sound, node_def._chest_entity_mesh, node_def._chest_entity_animation_type)
 end
 
 minetest.register_lbm({
