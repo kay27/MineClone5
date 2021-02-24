@@ -1,13 +1,24 @@
 local S = minetest.get_translator("mcl_boats")
---
--- Helper functions
---
 
-local function is_water(pos)
+local boat_visual_size = {x = 3, y = 3, z = 3}
+local paddling_speed = 22
+local boat_y_offset = 0.35
+local boat_y_offset_ground = boat_y_offset + 0.6
+local boat_side_offset = 1.001
+local boat_max_hp = 4
+
+local function is_group(pos, group)
 	local nn = minetest.get_node(pos).name
-	return minetest.get_item_group(nn, "water") ~= 0
+	return minetest.get_item_group(nn, group) ~= 0
 end
 
+local function is_water(pos)
+	return is_group(pos, "water")
+end
+
+local function is_ice(pos)
+	return is_group(pos, "ice")
+end
 
 local function get_sign(i)
 	if i == 0 then
@@ -17,26 +28,83 @@ local function get_sign(i)
 	end
 end
 
-
 local function get_velocity(v, yaw, y)
 	local x = -math.sin(yaw) * v
 	local z =  math.cos(yaw) * v
 	return {x = x, y = y, z = z}
 end
 
-
 local function get_v(v)
 	return math.sqrt(v.x ^ 2 + v.z ^ 2)
 end
 
-local boat_visual_size = {x = 3, y = 3}
--- Note: This mod assumes the default player visual_size is {x=1, y=1}
-local driver_visual_size = { x = 1/boat_visual_size.x, y = 1/boat_visual_size.y }
-local paddling_speed = 22
-local boat_y_offset = 0.35
-local boat_y_offset_ground = boat_y_offset + 0.6
-local boat_side_offset = 1.001
-local boat_max_hp = 4
+local function check_object(obj)
+	return obj and (obj:is_player() or obj:get_luaentity()) and obj
+end
+
+local function get_visual_size(obj)
+	return obj:is_player() and {x = 1, y = 1, z = 1} or obj:get_luaentity()._old_visual_size or obj:get_properties().visual_size
+end
+
+local function set_attach(boat)
+	boat._driver:set_attach(boat.object, "",
+		{x = 0, y = 0.42, z = -1}, {x = 0, y = 0, z = 0})
+end
+
+local function set_double_attach(boat)
+	boat._driver:set_attach(boat.object, "",
+		{x = 0, y = 0.42, z = 0.8}, {x = 0, y = 0, z = 0})
+	boat._passenger:set_attach(boat.object, "",
+		{x = 0, y = 0.42, z = -2.2}, {x = 0, y = 0, z = 0})
+end
+
+local function attach_object(self, obj)
+	if self._driver then
+		if self._driver:is_player() then
+			self._passenger = obj
+		else
+			self._passenger = self._driver
+			self._driver = obj
+		end
+		set_double_attach(self)
+	else
+		self._driver = obj
+		set_attach(self)
+	end
+
+	local visual_size = get_visual_size(obj)
+	local yaw = self.object:get_yaw()
+	obj:set_properties({visual_size = vector.divide(visual_size, boat_visual_size)})
+
+	if obj:is_player() then
+		local name = obj:get_player_name()
+		mcl_player.player_attached[name] = true
+		minetest.after(0.2, function(name)
+			local player = minetest.get_player_by_name(name)
+			if player then
+				mcl_player.player_set_animation(player, "sit" , 30)
+			end
+		end, name)
+		obj:set_look_horizontal(yaw)
+		mcl_tmp_message.message(obj, S("Sneak to dismount"))
+	else
+		obj:get_luaentity()._old_visual_size = visual_size
+	end
+end
+
+local function detach_object(obj, change_pos)
+	obj:set_detach()
+	obj:set_properties({visual_size = get_visual_size(obj)})
+	if obj:is_player() then
+		mcl_player.player_attached[obj:get_player_name()] = false
+		mcl_player.player_set_animation(obj, "stand" , 30)
+	else
+		obj:get_luaentity()._old_visual_size = nil
+	end
+	if change_pos then
+		 obj:set_pos(vector.add(obj:get_pos(), vector.new(0, 0.2, 0)))
+	end
+end
 
 --
 -- Boat entity
@@ -65,70 +133,13 @@ local boat = {
 	_damage_anim = 0,
 }
 
-local function detach_player(player, change_pos)
-	player:set_detach()
-	player:set_properties({visual_size = {x=1, y=1}})
-	mcl_player.player_attached[player:get_player_name()] = false
-	mcl_player.player_set_animation(player, "stand" , 30)
-	if change_pos then
-		 player:set_pos(vector.add(player:get_pos(), vector.new(0, 0.2, 0)))
-	end
-end
-
-local function check_object(obj)
-	return obj and (obj:is_player() or obj:get_luaentity()) and obj
-end
-
-local function set_attach(boat)
-	boat._driver:set_attach(boat.object, "",
-		{x = 0, y = 0.42, z = -1}, {x = 0, y = 0, z = 0})
-end
-
-local function set_double_attach(boat)
-	boat._driver:set_attach(boat.object, "",
-		{x = 0, y = 0.42, z = 0.8}, {x = 0, y = 0, z = 0})
-	boat._passenger:set_attach(boat.object, "",
-		{x = 0, y = 0.42, z = -2.2}, {x = 0, y = 0, z = 0})
-end
-
-minetest.register_on_respawnplayer(detach_player)
+minetest.register_on_respawnplayer(detach_object)
 
 function boat.on_rightclick(self, clicker)
 	if self._passenger or not clicker or clicker:get_attach() then
 		return
 	end
-	local name = clicker:get_player_name()
-	--[[if attach and attach:get_luaentity() then
-		local luaentity = attach:get_luaentity()
-		if luaentity._driver then
-			luaentity._driver = nil
-		end
-		clicker:set_detach()
-		clicker:set_properties({visual_size = {x=1, y=1}})
-	end--]]
-	if self._driver then
-		if self._driver:is_player() then
-			self._passenger = clicker
-		else
-			-- for later use: transport mobs in boats
-			self._passenger = self._driver
-			self._driver = clicker
-		end
-		set_double_attach(self)
-	else
-		self._driver = clicker
-		set_attach(self)
-	end
-	clicker:set_properties({ visual_size = driver_visual_size })
-	mcl_player.player_attached[name] = true
-	minetest.after(0.2, function(name)
-		local player = minetest.get_player_by_name(name)
-		if player then
-			mcl_player.player_set_animation(player, "sit" , 30)
-		end
-	end, name)
-	clicker:set_look_horizontal(self.object:get_yaw())
-	mcl_tmp_message.message(clicker, S("Sneak to dismount"))
+	attach_object(self, clicker)
 end
 
 
@@ -143,7 +154,6 @@ function boat.on_activate(self, staticdata, dtime_s)
 	end
 end
 
-
 function boat.get_staticdata(self)
 	return minetest.serialize({
 		v = self._v,
@@ -151,7 +161,6 @@ function boat.get_staticdata(self)
 		textures = self.object:get_properties().textures
 	})
 end
-
 
 function boat.on_death(self, killer)
 	if killer and killer:is_player() and minetest.is_creative_enabled(killer:get_player_name()) then
@@ -163,10 +172,10 @@ function boat.on_death(self, killer)
 		minetest.add_item(self.object:get_pos(), self._itemstring)
 	end
 	if self._driver then
-		detach_player(self._driver)
+		detach_object(self._driver)
 	end
 	if self._passenger then
-		detach_player(self._passenger)
+		detach_object(self._passenger)
 	end
 	self._driver = nil
 	self._passenger = nil
@@ -180,16 +189,23 @@ end
 
 function boat.on_step(self, dtime, moveresult)
 	self._v = get_v(self.object:get_velocity()) * get_sign(self._v)
-	local on_water = true
-	local in_water = false
 	local v_factor = 1
 	local v_slowdown = 0.02
 	local p = self.object:get_pos()
-	if (not is_water({x=p.x, y=p.y-boat_y_offset, z=p.z})) then
+	local on_water = true
+	local on_ice = false
+	local in_water = is_water({x=p.x, y=p.y-boat_y_offset+1, z=p.z})
+	local waterp = {x=p.x, y=p.y-boat_y_offset - 0.1, z=p.z}
+	if not is_water(waterp) then
 		on_water = false
+		if not in_water and is_ice(waterp) then
+			on_ice = true
+		else
+			v_slowdown = 0.04
+		end
+
 		v_factor = 0.5
-		v_slowdown = 0.04
-	elseif (is_water({x=p.x, y=p.y-boat_y_offset+1, z=p.z})) then
+	elseif in_water then
 		on_water = false
 		in_water = true
 		v_factor = 0.75
@@ -240,7 +256,7 @@ function boat.on_step(self, dtime, moveresult)
 		end
 		local ctrl = self._driver:get_player_control()
 		if ctrl and ctrl.sneak then
-			detach_player(self._driver, true)
+			detach_object(self._driver, true)
 			self._driver = nil
 			return
 		end
@@ -289,11 +305,19 @@ function boat.on_step(self, dtime, moveresult)
 			self.object:set_animation({x=0, y=40}, 0, 0, true)
 			self._animation = 0
 		end
+
+		for _, obj in ipairs(minetest.get_objects_inside_radius(self.object:get_pos(), 1.3)) do
+			local entity = obj:get_luaentity()
+			if entity and entity._cmi_is_mob then
+				attach_object(self, obj)
+				break
+			end
+		end
 	end
 	local s = get_sign(self._v)
-	if not on_water and not in_water and math.abs(self._v) > 1.0 then
-		v_slowdown = math.min(math.abs(self._v) - 1.0, v_slowdown * 5)
-	elseif in_water and math.abs(self._v) > 1.5 then
+	if not on_ice and not on_water and not in_water and math.abs(self._v) > 2.0 then
+		v_slowdown = math.min(math.abs(self._v) - 2.0, v_slowdown * 5)
+	elseif not on_ice and in_water and math.abs(self._v) > 1.5 then
 		v_slowdown = math.min(math.abs(self._v) - 1.5, v_slowdown * 5)
 	end
 	self._v = self._v - v_slowdown * s
@@ -304,7 +328,7 @@ function boat.on_step(self, dtime, moveresult)
 	p.y = p.y - boat_y_offset
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
-	if not is_water(p) then
+	if not is_water(p) and not on_ice then
 		-- Not on water or inside water: Free fall
 		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
 		new_acce = {x = 0, y = -9.8, z = 0}
@@ -334,9 +358,10 @@ function boat.on_step(self, dtime, moveresult)
 	end
 
 	-- Terminal velocity: 8 m/s per axis of travel
+	local terminal_velocity = on_ice and 57.1 or 8.0
 	for _,axis in pairs({"z","y","x"}) do
-		if math.abs(new_velo[axis]) > 8 then
-			new_velo[axis] = 8 * get_sign(new_velo[axis])
+		if math.abs(new_velo[axis]) > terminal_velocity then
+			new_velo[axis] = terminal_velocity * get_sign(new_velo[axis])
 		end
 	end
 
