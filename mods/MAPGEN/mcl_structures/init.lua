@@ -278,7 +278,7 @@ local function hut_placement_callback(p1, p2, size, orientation, pr)
 	end
 end
 
-mcl_structures.generate_witch_hut = function(pos, rotation)
+mcl_structures.generate_witch_hut = function(pos, rotation, pr)
 	local path = minetest.get_modpath("mcl_structures").."/schematics/mcl_structures_witch_hut.mts"
 	mcl_structures.place_schematic(pos, path, rotation, nil, true, nil, hut_placement_callback, pr)
 end
@@ -517,39 +517,56 @@ mcl_structures.register_structures = function(structure_type, structures)
 	registered_structures[structure_type] = structures
 end
 
+local function dir_to_rotation(dir)
+	local ax, az = math.abs(dir.x), math.abs(dir.z)
+	if ax > az then
+		if dir.x < 0 then
+			return "270"
+		end
+		return "90"
+	end
+	if dir.z < 0 then
+		return "180"
+	end
+	return "0"
+end
+
 -- Debug command
 minetest.register_chatcommand("spawnstruct", {
 	params = "desert_temple | desert_well | igloo | witch_hut | boulder | ice_spike_small | ice_spike_large | fossil | end_exit_portal | end_portal_shrine",
 	description = S("Generate a pre-defined structure near your position."),
 	privs = {debug = true},
 	func = function(name, param)
-		local pos = minetest.get_player_by_name(name):get_pos()
-		if not pos then
-			return
-		end
+		local player = minetest.get_player_by_name(name)
+		if not player then return end
+		local pos = player:get_pos()
+		if not pos then return end
 		pos = vector.round(pos)
+		local dir = minetest.yaw_to_dir(player:get_look_horizontal())
+		local rot = dir_to_rotation(dir)
+		local pr = PseudoRandom(pos.x+pos.y+pos.z)
 		local errord = false
 		local message = S("Structure placed.")
 		if param == "desert_temple" then
-			mcl_structures.generate_desert_temple(pos)
+			mcl_structures.generate_desert_temple(pos, rot, pr)
 		elseif param == "desert_well" then
-			mcl_structures.generate_desert_well(pos)
+			mcl_structures.generate_desert_well(pos, rot, pr)
 		elseif param == "igloo" then
-			mcl_structures.generate_igloo(pos)
+			mcl_structures.generate_igloo(pos, rot, pr)
 		elseif param == "witch_hut" then
-			mcl_structures.generate_witch_hut(pos)
+			mcl_structures.generate_witch_hut(pos, rot, pr)
 		elseif param == "boulder" then
-			mcl_structures.generate_boulder(pos)
+			mcl_structures.generate_boulder(pos, rot, pr)
 		elseif param == "fossil" then
-			mcl_structures.generate_fossil(pos)
+			mcl_structures.generate_fossil(pos, rot, pr)
 		elseif param == "ice_spike_small" then
-			mcl_structures.generate_ice_spike_small(pos)
+			mcl_structures.generate_ice_spike_small(pos, rot, pr)
 		elseif param == "ice_spike_large" then
-			mcl_structures.generate_ice_spike_large(pos)
+			mcl_structures.generate_ice_spike_large(pos, rot, pr)
 		elseif param == "end_exit_portal" then
-			mcl_structures.generate_end_exit_portal(pos)
+			mcl_structures.generate_end_exit_portal(pos, rot, pr)
 		elseif param == "end_portal_shrine" then
-			mcl_structures.generate_end_portal_shrine(pos)
+			mcl_structures.generate_end_portal_shrine(pos, rot, pr)
 		elseif param == "" then
 			message = S("Error: No structure type given. Please use “/spawnstruct <type>”.")
 			errord = true
