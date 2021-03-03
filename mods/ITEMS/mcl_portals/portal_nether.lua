@@ -1,68 +1,36 @@
+local W_MIN		=  4
+local W_MAX		= 23
+local H_MIN		=  5
+local H_MAX		= 23
+local TRAVEL_X		=  8
+local TRAVEL_Y		=  8
+local TRAVEL_Z		= 10
+local LIM_MIN		= mcl_vars.mapgen_edge_min
+local LIM_MAX		= mcl_vars.mapgen_edge_max
+local NODES_MIN		=  6
+local NODES_MAX 	= (W_MAX-2) * (H_MAX-2)
+local COOLOF	 	=  3 -- after player was teleported, for this many seconds they won't teleported again
+local MOB_COOLOFF	= 14 -- after mob was teleported, for this many seconds they won't teleported again
+local TOUCH_CHATTER_TIME=  1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
+local CHATTER_US	= TOUCH_CHATTER_TIME * 1000000
+local DELAY		= 3 -- seconds before teleporting in Nether portal in Survival mode (4 minus ABM interval time)
+local DISTANCE_MAX	= 128
+
+local min, max, floor = math.min, math.max, math.floor
+
+local O_Y_MIN		= max(mcl_vars.mg_overworld_min, -31)
+local O_Y_MAX		= min(mcl_vars.mg_overworld_max_official, 2048)
+local N_Y_MIN		= mcl_vars.mg_bedrock_nether_bottom_min
+local N_Y_MAX		= mcl_vars.mg_bedrock_nether_top_max
+local O_DY		= O_Y_MAX - O_Y_MIN + 1
+local N_DY		= N_Y_MAX - N_Y_MIN + 1
+
 local S = minetest.get_translator("mcl_portals")
 
--- Parameters
-
-local TRAVEL_X	=  8
-local TRAVEL_Y	=  8
-local TRAVEL_Z	= 10
-local LIMIT_MIN	= mcl_vars.mapgen_edge_min
-local LIMIT_MAX	= mcl_vars.mapgen_edge_max
-
--- Portal frame sizes
-local WIDTH_MIN	=  4
-local WIDTH_MAX	= 23
-local HEIGHT_MIN=  5
-local HEIGHT_MAX= 23
-
-local NODES_MIN	=  5
-local NODES_MAX = (WIDTH_MAX-2) * (HEIGHT_MAX-2)
-
-local TELEPORT_COOLOFF = 3 -- after player was teleported, for this many seconds they won't teleported again
-local MOB_TELEPORT_COOLOFF = 14 -- after mob was teleported, for this many seconds they won't teleported again
-local TOUCH_CHATTER_TIME = 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
-local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
-local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
-
-local PORTAL_DISTANCE_MAX = 128
-
-local PORTAL_ALPHA = 192
+local ALPHA = 192
 if minetest.features.use_texture_alpha_string_modes then
-	PORTAL_ALPHA = nil
+	ALPHA = nil
 end
-
--- Table of objects (including players) which recently teleported by a
--- Nether portal. Those objects have a brief cooloff period before they
--- can teleport again. This prevents annoying back-and-forth teleportation.
-mcl_portals.nether_portal_cooloff = {}
-local touch_chatter_prevention = {}
-mcl_portals.exits = {}
-
-local floor=math.floor
-
-local function add_exit(p)
-	if not p or not p.y or not p.z or not p.x then return end
-	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
-	local k = floor(z/256) * 256 + floor(x/256)
-	local p = {x = x, y = y, z = z}
-	if not mcl_portals.exists[k] then
-		mcl_portals.exists[k]={}
-	end
-	local exits = mcl_portals.exits[k]
-	for i = 1, #exits do
-		local e = exits[i]
-		if e.x == p.x and e.y == p.y and e.z == p.z then
-			return
-		end
-	end
-	exits[#exits] = p
-end
-
-local overworld_ymin = math.max(mcl_vars.mg_overworld_min, -31)
-local overworld_ymax = math.min(mcl_vars.mg_overworld_max_official, 63)
-local nether_ymin = mcl_vars.mg_bedrock_nether_bottom_min
-local nether_ymax = mcl_vars.mg_bedrock_nether_top_max
-local overworld_dy = overworld_ymax - overworld_ymin + 1
-local nether_dy = nether_ymax - nether_ymin + 1
 
 local node_particles_allowed = minetest.settings:get("mcl_node_particles") or "none"
 local node_particles_levels = {
@@ -71,35 +39,51 @@ local node_particles_levels = {
 	low = 1,
 	none = 0,
 }
-local node_particles_allowed_level = node_particles_levels[node_particles_allowed]
+local PARTICLES = node_particles_levels[node_particles_allowed]
 
+-- Table of objects (including players) which recently teleported by a
+-- Nether portal. Those objects have a brief cooloff period before they
+-- can teleport again. This prevents annoying back-and-forth teleportation.
+mcl_portals.cooloff = {}
+local exits, chatter = {}, {}
 
--- Functions
+local function add_exit(p)
+	if not p or not p.y or not p.z or not p.x then return end
+	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
+	local k = floor(z/256) * 256 + floor(x/256)
+	local p = {x = x, y = y, z = z}
+	if not exits[k] then
+		exits[k]={}
+	end
+	local e = exits[k]
+	for i = 1, #e do
+		local x = e[i]
+		if x.x == p.x and x.y == p.y and x.z == p.z then
+			return
+		end
+	end
+	e[#e] = p
+end
 
--- Ping-Pong fast travel, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
-local function nether_to_overworld(x)
-	return LIMIT - math.abs(((x * OVERWORLD_TO_NETHER_SCALE + LIMIT) % (LIMIT*4)) - (LIMIT*2))
+-- Ping-Pong the coordinate for Fast Travelling, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
+local function ping_pong(x, m, l1, l2)
+	if x < 0 then
+		return	 l1 - ((x*m+l1) % (l1*4)) - (l1*2)
+	end
+	return		 l2 - ((x*m+l2) % (l2*4)) - (l2*2)
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
 local function destroy_nether_portal(pos)
-	local meta = minetest.get_meta(pos)
-	local node = minetest.get_node(pos)
+	local node = get_node(pos)
 	local nn, orientation = node.name, node.param2
 	local obsidian = nn == "mcl_core:obsidian" 
 
-	local has_meta = minetest.string_to_pos(meta:get_string("portal_frame1"))
-	if has_meta then
-		meta:set_string("portal_frame1", "")
-		meta:set_string("portal_frame2", "")
-		meta:set_string("portal_target", "")
-		meta:set_string("portal_time", "")
-	end
 	local check_remove = function(pos, orientation)
-		local node = minetest.get_node(pos)
+		local node = get_node(pos)
 		if node and (node.name == "mcl_portals:portal" and (orientation == nil or (node.param2 == orientation))) then
 			minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos))
-			return minetest.remove_node(pos)
+			minetest.remove_node(pos)
 		end
 	end
 	if obsidian then -- check each of 6 sides of it and destroy every portal:
@@ -109,9 +93,6 @@ local function destroy_nether_portal(pos)
 		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
 		check_remove({x = pos.x, y = pos.y - 1, z = pos.z})
 		check_remove({x = pos.x, y = pos.y + 1, z = pos.z})
-		return
-	end
-	if not has_meta then -- no meta means repeated call: function calls on every node destruction
 		return
 	end
 	if orientation == 0 then
@@ -167,7 +148,7 @@ minetest.register_node("mcl_portals:portal", {
 	drop = "",
 	light_source = 11,
 	post_effect_color = {a = 180, r = 51, g = 7, b = 89},
-	alpha = PORTAL_ALPHA,
+	alpha = ALPHA,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -182,7 +163,7 @@ minetest.register_node("mcl_portals:portal", {
 })
 
 local function find_target_y(x, y, z, y_min, y_max)
-	local y_org = math.max(math.min(y, y_max), y_min)
+	local y_org = max(min(y, y_max), y_min)
 	local node = minetest.get_node_or_nil({x = x, y = y, z = z})
 	if node == nil then
 		return y_org
@@ -673,8 +654,8 @@ end
 
 -- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 local function stop_teleport_cooloff(o)
-	mcl_portals.nether_portal_cooloff[o] = false
-	touch_chatter_prevention[o] = nil
+	mcl_portals.cooloff[o] = false
+	chatter[o] = nil
 end
 
 local function teleport_cooloff(obj)
@@ -697,7 +678,7 @@ local function teleport_no_delay(obj, pos)
 		return
 	end
 
-	if mcl_portals.nether_portal_cooloff[obj] then
+	if mcl_portals.cooloff[obj] then
 		return
 	end
 	-- If player stands, player is at ca. something+0.5
@@ -718,7 +699,7 @@ local function teleport_no_delay(obj, pos)
 
 	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 	teleport_cooloff(obj)
-	mcl_portals.nether_portal_cooloff[obj] = true
+	mcl_portals.cooloff[obj] = true
 
 	-- Teleport
 	obj:set_pos(target)
@@ -733,22 +714,22 @@ end
 
 local function prevent_portal_chatter(obj)
 	local time_us = minetest.get_us_time()
-	local chatter = touch_chatter_prevention[obj] or 0
-	touch_chatter_prevention[obj] = time_us
+	local chatter = chatter[obj] or 0
+	chatter[obj] = time_us
 	minetest.after(TOUCH_CHATTER_TIME, function(o)
-		if not o or not touch_chatter_prevention[o] then
+		if not o or not chatter[o] then
 			return
 		end
-		if minetest.get_us_time() - touch_chatter_prevention[o] >= TOUCH_CHATTER_TIME_US then
-			touch_chatter_prevention[o] = nil
+		if minetest.get_us_time() - chatter[o] >= TOUCH_CHATTER_TIME_US then
+			chatter[o] = nil
 		end
 	end, obj)
 	return time_us - chatter > TOUCH_CHATTER_TIME_US
 end
 
 local function animation(player, playername)
-	local chatter = touch_chatter_prevention[player] or 0
-	if mcl_portals.nether_portal_cooloff[player] or minetest.get_us_time() - chatter < TOUCH_CHATTER_TIME_US then
+	local chatter = chatter[player] or 0
+	if mcl_portals.cooloff[player] or minetest.get_us_time() - chatter < TOUCH_CHATTER_TIME_US then
 		local pos = player:get_pos()
 		if not pos then
 			return
@@ -782,7 +763,7 @@ local function teleport(obj, portal_pos)
 	-- Call prepare_target() first because it might take a long
 	prepare_target(portal_pos)
 	-- Prevent quick back-and-forth teleportation
-	if not mcl_portals.nether_portal_cooloff[obj] then
+	if not mcl_portals.cooloff[obj] then
 		local creative_enabled = minetest.is_creative_enabled(name)
 		if creative_enabled then
 			return teleport_no_delay(obj, portal_pos)
@@ -824,7 +805,7 @@ minetest.register_abm({
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 15)) do
 			if obj:is_player() then
 				minetest.add_particlespawner({
-					amount = node_particles_allowed_level + 1,
+					amount = PARTICLES + 1,
 					minpos = distance,
 					maxpos = distance,
 					minvel = velocity,
