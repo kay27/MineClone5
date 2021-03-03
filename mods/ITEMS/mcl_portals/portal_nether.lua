@@ -2,27 +2,28 @@ local S = minetest.get_translator("mcl_portals")
 
 -- Parameters
 
-local OVERWORLD_TO_NETHER_SCALE = 8
-local LIMIT = math.min(math.abs(mcl_vars.mapgen_edge_min), math.abs(mcl_vars.mapgen_edge_max))
+local TRAVEL_X	=  8
+local TRAVEL_Y	=  8
+local TRAVEL_Z	= 10
+local LIMIT_MIN	= mcl_vars.mapgen_edge_min
+local LIMIT_MAX	= mcl_vars.mapgen_edge_max
 
 -- Portal frame sizes
-local FRAME_SIZE_X_MIN = 4
-local FRAME_SIZE_Y_MIN = 5
-local FRAME_SIZE_X_MAX = 23
-local FRAME_SIZE_Y_MAX = 23
+local WIDTH_MIN	=  4
+local WIDTH_MAX	= 23
+local HEIGHT_MIN=  5
+local HEIGHT_MAX= 23
 
-local PORTAL_NODES_MIN = 5
-local PORTAL_NODES_MAX = (FRAME_SIZE_X_MAX - 2) * (FRAME_SIZE_Y_MAX - 2)
+local NODES_MIN	=  5
+local NODES_MAX = (WIDTH_MAX-2) * (HEIGHT_MAX-2)
 
 local TELEPORT_COOLOFF = 3 -- after player was teleported, for this many seconds they won't teleported again
 local MOB_TELEPORT_COOLOFF = 14 -- after mob was teleported, for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME = 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
 local TOUCH_CHATTER_TIME_US = TOUCH_CHATTER_TIME * 1000000
 local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal (4 minus ABM interval time)
-local DESTINATION_EXPIRES = 60 * 1000000 -- cached destination expires after this number of microseconds have passed without using the same origin portal
 
-local PORTAL_SEARCH_HALF_CHUNK = 40 -- greater values may slow down the teleportation
-local PORTAL_SEARCH_ALTITUDE = 128
+local PORTAL_DISTANCE_MAX = 128
 
 local PORTAL_ALPHA = 192
 if minetest.features.use_texture_alpha_string_modes then
@@ -34,6 +35,27 @@ end
 -- can teleport again. This prevents annoying back-and-forth teleportation.
 mcl_portals.nether_portal_cooloff = {}
 local touch_chatter_prevention = {}
+mcl_portals.exits = {}
+
+local floor=math.floor
+
+local function add_exit(p)
+	if not p or not p.y or not p.z or not p.x then return end
+	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
+	local k = floor(z/256) * 256 + floor(x/256)
+	local p = {x = x, y = y, z = z}
+	if not mcl_portals.exists[k] then
+		mcl_portals.exists[k]={}
+	end
+	local exits = mcl_portals.exits[k]
+	for i = 1, #exits do
+		local e = exits[i]
+		if e.x == p.x and e.y == p.y and e.z == p.z then
+			return
+		end
+	end
+	exits[#exits] = p
+end
 
 local overworld_ymin = math.max(mcl_vars.mg_overworld_min, -31)
 local overworld_ymax = math.min(mcl_vars.mg_overworld_max_official, 63)
