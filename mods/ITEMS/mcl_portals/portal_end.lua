@@ -1,5 +1,3 @@
-local S = minetest.get_translator("mcl_portals")
-
 -- Parameters
 local SPAWN_MIN = mcl_vars.mg_end_min+70
 local SPAWN_MAX = mcl_vars.mg_end_min+98
