@@ -108,7 +108,9 @@ local function find_exit(p, dx, dy, dz)
 		end
 	end end
 
-	return t
+	if abs(t.x-p.x) <= dx and abs(t.y-p.y) <= dy and abs(t.z-p.z) <= dz then
+		return t
+	end
 end
 
 
