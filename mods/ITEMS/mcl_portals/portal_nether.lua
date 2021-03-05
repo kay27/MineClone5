@@ -66,6 +66,7 @@ local function add_exit(p)
 		end
 	end
 	e[#e] = p
+	minetest.log("action", "[mcl_portals] Nether added at " .. minetest.pos_to_string(p))
 end
 
 local function remove_exit(p)
@@ -79,6 +80,7 @@ local function remove_exit(p)
 		local t = e[i]
 		if t.x == p.x and t.y == p.y and t.z == p.z then
 			e[i] = nil
+			minetest.log("action", "[mcl_portals] Nether portal removed from " .. minetest.pos_to_string(p))
 			return
 		end
 	end
@@ -131,8 +133,8 @@ local function destroy_nether_portal(pos)
 	local check_remove = function(pos, orientation)
 		local node = get_node(pos)
 		if node and (node.name == PORTAL and (orientation == nil or (node.param2 == orientation))) then
-			minetest.log("action", "[mcl_portal] Destroying Nether portal at " .. minetest.pos_to_string(pos))
 			minetest.remove_node(pos)
+			remove_exit(pos)
 		end
 	end
 	if obsidian then -- check each of 6 sides of it and destroy every portal:
