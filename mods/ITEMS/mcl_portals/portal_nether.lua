@@ -60,16 +60,57 @@ local function add_exit(p)
 	end
 	local e = exits[k]
 	for i = 1, #e do
-		local x = e[i]
-		if x.x == p.x and x.y == p.y and x.z == p.z then
+		local t = e[i]
+		if t.x == p.x and t.y == p.y and t.z == p.z then
 			return
 		end
 	end
 	e[#e] = p
 end
 
-local function add_exit(p)
+local function remove_exit(p)
+	if not p or not p.y or not p.z or not p.x then return end
+	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
+	local k = floor(z/256) * 256 + floor(x/256)
+	if not exits[k] then return end
+	local p = {x = x, y = y, z = z}
+	local e = exits[k]
+	for i = 1, #e do
+		local t = e[i]
+		if t.x == p.x and t.y == p.y and t.z == p.z then
+			e[i] = nil
+			return
+		end
+	end
 end
+
+local function find_exit(p, dx, dy, dz)
+	if not p or not p.y or not p.z or not p.x then return end
+	local dx, dy, dz = dx or DISTANCE_MAX, dy or DISTANCE_MAX, dz or DISTANCE_MAX
+	if dx < 1 or dy < 1 or dz < 1 then return false end
+	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
+	local x1, y1, z1, x2, y2, z2 = x-dx+1, y-dy+1, z-dz+1, x+dx-1, y+dy-1, z+dz-1
+	local k1x, k2x = floor(x1/256), floor(x2/256)
+	local k1z, k2z = floor(z1/256), floor(z2/256)
+
+	local t, d
+	for kx = k1x, k2x do for kz = k1z, k2z do
+		local k = kz*256 + kx
+		local e = exits[k]
+		for i = 1, #e do
+			local t0 = e[i]
+			local d0 = dist(p, t)
+			if not d or d>d0 then
+				d = d0
+				t = t0
+				if d==0 then return t end
+			end
+		end
+	end end
+
+	return t
+end
+
 
 -- Ping-Pong the coordinate for Fast Travelling, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
 local function ping_pong(x, m, l1, l2)
