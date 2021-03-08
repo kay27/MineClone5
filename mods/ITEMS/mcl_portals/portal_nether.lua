@@ -285,36 +285,6 @@ local function find_overworld_target_y(x, y, z)
 end
 
 
-local function update_target(pos, target, time_str)
-	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
-	while #stack > 0 do
-		local i = #stack
-		local meta = minetest.get_meta(stack[i])
-		if meta:get_string("portal_time") == time_str then
-			stack[i] = nil -- Already updated, skip it
-		else
-			local node = minetest.get_node(stack[i])
-			local portal = node.name == PORTAL
-			if not portal then
-				stack[i] = nil
-			else
-				local x, y, z = stack[i].x, stack[i].y, stack[i].z
-				meta:set_string("portal_time", time_str)
-				meta:set_string("portal_target", target)
-				stack[i].y  = y - 1
-				stack[i + 1] = {x = x, y = y + 1, z = z}
-				if node.param2 == 0 then
-					stack[i + 2] = {x = x - 1, y = y, z = z}
-					stack[i + 3] = {x = x + 1, y = y, z = z}
-				else
-					stack[i + 2] = {x = x, y = y, z = z - 1}
-					stack[i + 3] = {x = x, y = y, z = z + 1}
-				end
-			end
-		end
-	end
-end
-
 local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 	-- param.: srcx, srcy, srcz, dstx, dsty, dstz, srcdim, ax1, ay1, az1, ax2, ay2, az2
 
@@ -340,7 +310,7 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 		minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged!")
 		local src_pos = {x = param.srcx, y = param.srcy, z = param.srcz}
 		local dst_pos = {x = param.dstx, y = param.dsty, z = param.dstz}
-		local meta = minetest.get_meta(src_pos)
+		-- local meta = minetest.get_meta(src_pos)
 		local portal_pos = portal_search(dst_pos, {x = param.ax1, y = param.ay1, z = param.az1}, {x = param.ax2, y = param.ay2, z = param.az2})
 
 		if portal_pos == false then
@@ -365,9 +335,9 @@ local function ecb_setup_target_portal(blockpos, action, calls_remaining, param)
 			end
 		end
 
-		local target_meta = minetest.get_meta(portal_pos)
-		local p3 = minetest.string_to_pos(target_meta:get_string("portal_frame1"))
-		local p4 = minetest.string_to_pos(target_meta:get_string("portal_frame2"))
+		-- local target_meta = minetest.get_meta(portal_pos)
+		-- local p3 = minetest.string_to_pos(target_meta:get_string("portal_frame1"))
+		-- local p4 = minetest.string_to_pos(target_meta:get_string("portal_frame2"))
 		if p3 and p4 then
 			portal_pos = vector.divide(vector.add(p3, p4), 2.0)
 			portal_pos.y = min(p3.y, p4.y)
@@ -494,14 +464,14 @@ local function light_frame(x1, y1, z1, x2, y2, z2, build_frame)
 						end
 					end
 					if not frame and pass == 2 then
-						local meta = minetest.get_meta({x = x, y = y, z = z})
+						--local meta = minetest.get_meta({x = x, y = y, z = z})
 						-- Portal frame corners
-						meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
-						meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
+						--meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
+						--meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
 						-- Portal target coordinates
-						meta:set_string("portal_target", "")
+						--meta:set_string("portal_target", "")
 						-- Portal last teleportation time
-						meta:set_string("portal_time", tostring(0))
+						--meta:set_string("portal_time", tostring(0))
 					end
 				end
 				if protection then
