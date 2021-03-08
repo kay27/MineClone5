@@ -3,8 +3,8 @@ local W_MAX		= 23
 local H_MIN		=  5
 local H_MAX		= 23
 local TRAVEL_X		=  8
-local TRAVEL_Y		=  8
-local TRAVEL_Z		= 10
+local TRAVEL_Y		= 10
+local TRAVEL_Z		=  8
 local LIM_MIN		= mcl_vars.mapgen_edge_min
 local LIM_MAX		= mcl_vars.mapgen_edge_max
 local NODES_MIN		=  6
@@ -122,6 +122,23 @@ local function ping_pong(x, m, l1, l2)
 		return	 l1 + abs(((x*m+l1) % (l1*4)) - (l1*2))
 	end
 	return		 l2 - abs(((x*m+l2) % (l2*4)) - (l2*2))
+end
+
+local function get_target(p)
+	if p and p.y and p.x and p.z then
+		local x, z = p.x, p.z
+		local y, d = mcl_worlds.y_to_layer(p.y)
+		if y then
+			if d=="nether" then
+				x, y, z = ping_pong(x, TRAVEL_X, LIM_MIN, LIM_MAX), y*TRAVEL_Y, ping_pong(z, TRAVEL_Z, LIM_MIN, LIM_MAX)
+				y = min(max(y + mcl_vars.mg_overworld_min, mcl_vars.mg_overworld_min), mcl_vars.mg_overworld_max)
+			elseif d=="overworld" then
+				x, y, z = floor(x / TRAVEL_X + 0.5), floor(y / TRAVEL_Y + 0.5), floor(z / TRAVEL_Z + 0.5)
+				y = min(max(y + mcl_vars.mg_nether_min, mcl_vars.mg_nether_min), mcl_vars.mg_nether_max)
+			end
+			return {x=x, y=y, z=z}
+		end
+	end
 end
 
 -- Destroy portal if pos (portal frame or portal node) got destroyed
