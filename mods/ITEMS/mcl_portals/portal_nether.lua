@@ -427,24 +427,18 @@ end
 local function check_and_light_shape(pos, orientation)
 	local stack = {{x = pos.x, y = pos.y, z = pos.z}}
 	local node_list = {}
+	local index_list = {}
 	local node_counter = 0
 	-- Search most low node from the left (pos1) and most right node from the top (pos2)
 	local pos1 = {x = pos.x, y = pos.y, z = pos.z}
 	local pos2 = {x = pos.x, y = pos.y, z = pos.z}
 
-	local wrong_portal_nodes_clean_up = function(node_list)
-		for i = 1, #node_list do
-			local meta = minetest.get_meta(node_list[i])
-			meta:set_string("portal_time", "")
-		end
-		return false
-	end
-
+	local kx, ky, kz = pos.x - 1999, pos.y - 1999, pos.z - 1999
 	while #stack > 0 do
 		local i = #stack
-		local meta = minetest.get_meta(stack[i])
-		local target = meta:get_string("portal_time")
-		if target and target == "-2" then
+		local x, y, z = stack[i].x, stack[i].y, stack[i].z
+		local k = (x-kx)*16000000 + (y-ky)*4000 + z-kz
+		if index_list[k] then
 			stack[i] = nil -- Already checked, skip it
 		else
 			local good, obsidian = available_for_nether_portal(stack[i])
@@ -452,12 +446,11 @@ local function check_and_light_shape(pos, orientation)
 				stack[i] = nil
 			else
 				if (not good) or (node_counter >= N_MAX) then
-					return wrong_portal_nodes_clean_up(node_list)
+					return false
 				end
-				local x, y, z = stack[i].x, stack[i].y, stack[i].z
-				meta:set_string("portal_time", "-2")
 				node_counter = node_counter + 1
 				node_list[node_counter] = {x = x, y = y, z = z}
+				index_list[k] = true
 				stack[i].y = y - 1
 				stack[i + 1] = {x = x, y = y + 1, z = z}
 				if orientation == 0 then
@@ -478,23 +471,18 @@ local function check_and_light_shape(pos, orientation)
 	end
 
 	if node_counter < N_MIN then
-		return wrong_portal_nodes_clean_up(node_list)
+		return false
 	end
 
 	-- Limit rectangles width and height
-	if math.abs(pos2.x - pos1.x + pos2.z - pos1.z) + 3 > W_MAX or math.abs(pos2.y - pos1.y) + 3 > H_MAX then
-		return wrong_portal_nodes_clean_up(node_list)
+	if abs(pos2.x - pos1.x + pos2.z - pos1.z) + 3 > W_MAX or abs(pos2.y - pos1.y) + 3 > H_MAX then
+		return false
 	end
 
 	for i = 1, node_counter do
 		local node_pos = node_list[i]
 		local node = minetest.get_node(node_pos)
 		minetest.set_node(node_pos, {name = PORTAL, param2 = orientation})
-		local meta = minetest.get_meta(node_pos)
-		meta:set_string("portal_frame1", minetest.pos_to_string(pos1))
-		meta:set_string("portal_frame2", minetest.pos_to_string(pos2))
-		meta:set_string("portal_time", tostring(0))
-		meta:set_string("portal_target", "")
 	end
 	return true	
 end
@@ -578,14 +566,14 @@ end
 
 local function prevent_portal_chatter(obj)
 	local time_us = minetest.get_us_time()
-	local chatter = chatter[obj] or 0
+	local ch = chatter[obj] or 0
 	chatter[obj] = time_us
 	minetest.after(TOUCH_CHATTER_TIME, function(o)
 		if o and chatter[o] and minetest.get_us_time() - chatter[o] >= TOUCH_CHATTER_TIME_US then
 			chatter[o] = nil
 		end
 	end, obj)
-	return time_us - chatter > TOUCH_CHATTER_TIME_US
+	return time_us - ch > TOUCH_CHATTER_TIME_US
 end
 
 local function animation(player, playername)
