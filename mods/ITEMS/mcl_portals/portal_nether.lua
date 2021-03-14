@@ -569,16 +569,16 @@ local function prevent_portal_chatter(obj)
 	local ch = chatter[obj] or 0
 	chatter[obj] = time_us
 	minetest.after(TOUCH_CHATTER_TIME, function(o)
-		if o and chatter[o] and minetest.get_us_time() - chatter[o] >= TOUCH_CHATTER_TIME_US then
+		if o and chatter[o] and minetest.get_us_time() - chatter[o] >= CHATTER_US then
 			chatter[o] = nil
 		end
 	end, obj)
-	return time_us - ch > TOUCH_CHATTER_TIME_US
+	return time_us - ch > CHATTER_US
 end
 
 local function animation(player, playername)
-	local chatter = chatter[player] or 0
-	if cooloff[player] or minetest.get_us_time() - chatter < TOUCH_CHATTER_TIME_US then
+	local ch = chatter[player] or 0
+	if cooloff[player] or minetest.get_us_time() - ch < CHATTER_US then
 		local pos = player:get_pos()
 		if not pos then
 			return
@@ -610,7 +610,7 @@ local function teleport(obj, portal_pos)
 		animation(obj, name)
 	end
 	-- Call prepare_target() first because it might take a long
-	prepare_target(portal_pos)
+	-- prepare_target(portal_pos)
 	-- Prevent quick back-and-forth teleportation
 	if not cooloff[obj] then
 		local creative_enabled = minetest.is_creative_enabled(name)
