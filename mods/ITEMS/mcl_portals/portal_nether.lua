@@ -380,11 +380,12 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 
 	-- loop in a spiral around pos
 	local cs, x, z, dx, dz, p0x, p0z, p1x, p1y, p1z, p2x, p2y, p2z = mcl_vars.chunk_size_in_nodes, 0, 0, 0, -1, pos.x, pos.z, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z
-	local px, pz = p0x + x, p0z + z
 	for i = 1, (cs*2-1) * (cs*2-1) do
+		local px, pz = p0x + x, p0z + z
 		if px >= p1x and pz >= p2z and px <= p2x and pz <= p2z then
-			local p1, p2 = {x=px, y=p1y, z=pz}, {x=px, y=p2y, z=pz}
-			local nodes = minetest.find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
+			local p = {x=px, y=p1y, z=pz}
+			local nodes = minetest.find_nodes_in_area_under_air(p, p, {"group:building_block"})
+			minetest.log("verbose", "[mcl_portal] check " .. minetest.pos_to_string(p1) .. ": " .. tostring(nodes and #nodes))
 			if nodes and #nodes > 3 then
 				for j = 1, #nodes do
 					local node = nodes[j]
