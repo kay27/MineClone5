@@ -43,7 +43,14 @@ function mcl_portals.nether_portal_cooloff(object)
 	return cooloff[object]
 end
 
-local exits, chatter = {}, {}
+local chatter = {}
+
+local storage = minetest.get_mod_storage()
+local exits = minetest.deserialize(storage:get_string("nether_exits") or "return {}") or {}
+minetest.register_on_shutdown(function()
+	storage:set_string("nether_exits", minetest.serialize(exits))
+end)
+
 local get_node = function(pos)
 	if mcl_mapgen_core and mcl_mapgen_core.get_node then
 		get_node = mcl_mapgen_core.get_node
@@ -82,7 +89,7 @@ local function add_exit(p)
 		end
 	end
 	e[#e] = p
-	minetest.log("action", "[mcl_portals] Nether added at " .. minetest.pos_to_string(p))
+	minetest.log("action", "[mcl_portals] Exit added at " .. minetest.pos_to_string(p))
 end
 
 -- This function removes Nether portals exits.
@@ -384,11 +391,11 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 
 	for i = 1, i_max do
 		local px, pz = p0x + x, p0z + z
-		minetest.log("verbose", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
+		minetest.log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
 		if px >= p1x and pz >= p2z and px <= p2x and pz <= p2z then
 			local p = {x=px, y=p1y, z=pz}
 			local nodes = minetest.find_nodes_in_area_under_air(p, p, {"group:building_block"})
-			minetest.log("verbose", "[mcl_portal] check " .. minetest.pos_to_string(p) .. ": " .. tostring(nodes and #nodes))
+			minetest.log("action", "[mcl_portal] check " .. minetest.pos_to_string(p) .. ": " .. tostring(nodes and #nodes))
 			if nodes and #nodes > 3 then
 				for j = 1, #nodes do
 					local node = nodes[j]
