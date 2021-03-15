@@ -62,9 +62,9 @@ local limits = {
 	},
 }
 
-+-- This function registers exits from Nether portals.
-+-- Incoming verification performed: two nodes must be portal nodes, and an obsidian below them.
-+-- If the verification passes - position adds to the table and saves to mod storage on exit.
+-- This function registers exits from Nether portals.
+-- Incoming verification performed: two nodes must be portal nodes, and an obsidian below them.
+-- If the verification passes - position adds to the table and saves to mod storage on exit.
 local function add_exit(p)
 	if not p or not p.y or not p.z or not p.x then return end
 	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
@@ -85,7 +85,7 @@ local function add_exit(p)
 	minetest.log("action", "[mcl_portals] Nether added at " .. minetest.pos_to_string(p))
 end
 
-+-- This function removes Nether portals exits.
+-- This function removes Nether portals exits.
 local function remove_exit(p)
 	if not p or not p.y or not p.z or not p.x then return end
 	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
@@ -105,7 +105,7 @@ local function remove_exit(p)
 	end
 end
 
-+-- This functon searches Nether portal nodes whitin distance specified
+-- This functon searches Nether portal nodes whitin distance specified
 local function find_exit(p, dx, dy, dz)
 	if not p or not p.y or not p.z or not p.x then return end
 	local dx, dy, dz = dx or DISTANCE_MAX, dy or DISTANCE_MAX, dz or DISTANCE_MAX
