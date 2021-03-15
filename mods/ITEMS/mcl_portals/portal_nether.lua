@@ -252,6 +252,81 @@ minetest.register_node(PORTAL, {
 	_mcl_blast_resistance = 0,
 })
 
+local function light_frame(x1, y1, z1, x2, y2, z2, name)
+	local orientation = 0
+	if x1 == x2 then
+		orientation = 1
+	end
+	local disperse = 50
+	local pass = 1
+	while true do
+		local protection = false
+
+		for x = x1 - 1 + orientation, x2 + 1 - orientation do
+			for z = z1 - orientation, z2 + orientation do
+				for y = y1 - 1, y2 + 1 do
+					local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
+					if frame then
+						if pass == 1 then
+							if minetest.is_protected({x = x, y = y, z = z}, name) then
+								protection = true
+								local offset_x = random(-disperse, disperse)
+								local offset_z = random(-disperse, disperse)
+								disperse = disperse + random(25, 177)
+								if disperse > 5000 then
+									return nil
+								end
+								x1, z1 = x1 + offset_x, z1 + offset_z
+								x2, z2 = x2 + offset_x, z2 + offset_z
+								local _, dimension = mcl_worlds.y_to_layer(y1)
+								local height = math.abs(y2 - y1)
+								y1 = (y1 + y2) / 2
+								if dimension == "nether" then
+									y1 = find_nether_target_y(math.min(x1, x2), y1, math.min(z1, z2))
+								else
+									y1 = find_overworld_target_y(math.min(x1, x2), y1, math.min(z1, z2))
+								end
+								y2 = y1 + height
+								break
+							end
+						else
+							minetest.set_node({x = x, y = y, z = z}, {name = OBSIDIAN})
+						end
+					else
+						if pass == 2 then
+							local node = get_node({x = x, y = y, z = z})
+							minetest.set_node({x = x, y = y, z = z}, {name = PORTAL, param2 = orientation})
+						end
+					end
+					if not frame and pass == 2 then
+						--local meta = minetest.get_meta({x = x, y = y, z = z})
+						-- Portal frame corners
+						--meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
+						--meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
+						-- Portal target coordinates
+						--meta:set_string("portal_target", "")
+						-- Portal last teleportation time
+						--meta:set_string("portal_time", tostring(0))
+					end
+				end
+				if protection then
+					break
+				end
+			end
+			if protection then
+				break
+			end
+		end
+		if pass == 2 then
+			break
+		end
+		if not protection and pass == 1 then
+			pass = 2
+		end
+	end
+	return {x = x1, y = y1, z = z1}
+end
+
 --Build arrival portal
 function build_nether_portal(pos, width, height, orientation, name)
 	local height = height or H_MIN - 2
@@ -400,81 +475,6 @@ local function available_for_nether_portal(p)
 		return false, obsidian
 	end
 	return true, obsidian
-end
-
-local function light_frame(x1, y1, z1, x2, y2, z2, name)
-	local orientation = 0
-	if x1 == x2 then
-		orientation = 1
-	end
-	local disperse = 50
-	local pass = 1
-	while true do
-		local protection = false
-
-		for x = x1 - 1 + orientation, x2 + 1 - orientation do
-			for z = z1 - orientation, z2 + orientation do
-				for y = y1 - 1, y2 + 1 do
-					local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
-					if frame then
-						if pass == 1 then
-							if minetest.is_protected({x = x, y = y, z = z}, name) then
-								protection = true
-								local offset_x = random(-disperse, disperse)
-								local offset_z = random(-disperse, disperse)
-								disperse = disperse + random(25, 177)
-								if disperse > 5000 then
-									return nil
-								end
-								x1, z1 = x1 + offset_x, z1 + offset_z
-								x2, z2 = x2 + offset_x, z2 + offset_z
-								local _, dimension = mcl_worlds.y_to_layer(y1)
-								local height = math.abs(y2 - y1)
-								y1 = (y1 + y2) / 2
-								if dimension == "nether" then
-									y1 = find_nether_target_y(math.min(x1, x2), y1, math.min(z1, z2))
-								else
-									y1 = find_overworld_target_y(math.min(x1, x2), y1, math.min(z1, z2))
-								end
-								y2 = y1 + height
-								break
-							end
-						else
-							minetest.set_node({x = x, y = y, z = z}, {name = OBSIDIAN})
-						end
-					else
-						if pass == 2 then
-							local node = get_node({x = x, y = y, z = z})
-							minetest.set_node({x = x, y = y, z = z}, {name = PORTAL, param2 = orientation})
-						end
-					end
-					if not frame and pass == 2 then
-						--local meta = minetest.get_meta({x = x, y = y, z = z})
-						-- Portal frame corners
-						--meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
-						--meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
-						-- Portal target coordinates
-						--meta:set_string("portal_target", "")
-						-- Portal last teleportation time
-						--meta:set_string("portal_time", tostring(0))
-					end
-				end
-				if protection then
-					break
-				end
-			end
-			if protection then
-				break
-			end
-		end
-		if pass == 2 then
-			break
-		end
-		if not protection and pass == 1 then
-			pass = 2
-		end
-	end
-	return {x = x1, y = y1, z = z1}
 end
 
 local function check_and_light_shape(pos, orientation)
