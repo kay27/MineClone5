@@ -257,71 +257,21 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 	if x1 == x2 then
 		orientation = 1
 	end
-	local disperse = 50
-	local pass = 1
-	while true do
-		local protection = false
-
-		for x = x1 - 1 + orientation, x2 + 1 - orientation do
-			for z = z1 - orientation, z2 + orientation do
-				for y = y1 - 1, y2 + 1 do
-					local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
-					if frame then
-						if pass == 1 then
-							if minetest.is_protected({x = x, y = y, z = z}, name) then
-								protection = true
-								local offset_x = random(-disperse, disperse)
-								local offset_z = random(-disperse, disperse)
-								disperse = disperse + random(25, 177)
-								if disperse > 5000 then
-									return nil
-								end
-								x1, z1 = x1 + offset_x, z1 + offset_z
-								x2, z2 = x2 + offset_x, z2 + offset_z
-								local _, dimension = mcl_worlds.y_to_layer(y1)
-								local height = math.abs(y2 - y1)
-								y1 = (y1 + y2) / 2
-								if dimension == "nether" then
-									y1 = find_nether_target_y(math.min(x1, x2), y1, math.min(z1, z2))
-								else
-									y1 = find_overworld_target_y(math.min(x1, x2), y1, math.min(z1, z2))
-								end
-								y2 = y1 + height
-								break
-							end
-						else
-							minetest.set_node({x = x, y = y, z = z}, {name = OBSIDIAN})
-						end
-					else
-						if pass == 2 then
-							local node = get_node({x = x, y = y, z = z})
-							minetest.set_node({x = x, y = y, z = z}, {name = PORTAL, param2 = orientation})
-						end
-					end
-					if not frame and pass == 2 then
-						--local meta = minetest.get_meta({x = x, y = y, z = z})
-						-- Portal frame corners
-						--meta:set_string("portal_frame1", minetest.pos_to_string({x = x1, y = y1, z = z1}))
-						--meta:set_string("portal_frame2", minetest.pos_to_string({x = x2, y = y2, z = z2}))
-						-- Portal target coordinates
-						--meta:set_string("portal_target", "")
-						-- Portal last teleportation time
-						--meta:set_string("portal_time", tostring(0))
-					end
-				end
-				if protection then
-					break
+	local pos = {}
+	for x = x1 - 1 + orientation, x2 + 1 - orientation do
+		pos.x = x
+		for z = z1 - orientation, z2 + orientation do
+			pos.z = z
+			for y = y1 - 1, y2 + 1 do
+				pos.y = y
+				local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
+				if frame then
+					minetest.set_node(pos, {name = OBSIDIAN})
+				else
+					minetest.set_node(pos, {name = PORTAL, param2 = orientation})
+					add_exit(pos)
 				end
 			end
-			if protection then
-				break
-			end
-		end
-		if pass == 2 then
-			break
-		end
-		if not protection and pass == 1 then
-			pass = 2
 		end
 	end
 	return {x = x1, y = y1, z = z1}
@@ -346,7 +296,7 @@ function build_nether_portal(pos, width, height, orientation, name)
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
 			local nn = get_node(pp).name
-			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, "") then
+			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, name) then
 				minetest.set_node(pp, {name = OBSIDIAN})
 			end
 		end
@@ -357,10 +307,23 @@ function build_nether_portal(pos, width, height, orientation, name)
 	return pos
 end
 
+-- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
+local function stop_teleport_cooloff(o)
+	cooloff[o] = nil
+	chatter[o] = nil
+end
+
+local function teleport_cooloff(obj)
+	cooloff[obj] = true
+	if obj:is_player() then
+		minetest.after(PLAYER_COOLOFF, stop_teleport_cooloff, obj)
+	else
+		minetest.after(MOB_COOLOFF, stop_teleport_cooloff, obj)
+	end
+end
+
 local function finalize_teleport(obj, exit)
-	minetest.log("warning", "[mcl_portal] 1")
 	if not obj or not exit or not exit.x or not exit.y or not exit.z then return end
-	minetest.log("warning", "[mcl_portal] 2")
 
 	local objpos = obj:get_pos()
 	if not objpos then return end
@@ -406,13 +369,13 @@ local function create_portal_2(pos1, name, obj)
 			orientation = 1
 		end
 	end
-	local exit = build_nether_portal(pos1, W_MIN, H_MIN, orientation, name)
+	local exit = build_nether_portal(pos1, W_MIN-2, H_MIN-2, orientation, name)
 	finalize_teleport(obj, exit)
 end
 
 local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	if calls_remaining and calls_remaining > 0 then return end
-	local pos, pos1, pos2, exit, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
+	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
 	minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged!")
 
 	-- loop in a spiral around pos
@@ -422,14 +385,14 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 		if px >= p1x and pz >= p2z and px <= p2x and pz <= p2z then
 			local p1, p2 = {x=px, y=p1y, z=pz}, {x=px, y=p2y, z=pz}
 			local nodes = minetest.find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
-			if nodes and #nodes > 0 then
+			if nodes and #nodes > 3 then
 				for j = 1, #nodes do
 					local node = nodes[j]
 					node.y = node.y + 1
 					if not minetest.is_protected(node, name) then
-						local node2 = {x = node.x, y = node.y + 4, z = node.z}
+						local node2 = {x = node.x, y = node.y + 3, z = node.z}
 						local nodes_j = minetest.find_nodes_in_area_under_air(node, node2, {"air"})
-						if №nodes_j == 4 then
+						if #nodes_j == 4 then
 							node2.x = node2.x + 2
 							node2.z = node2.z + 2
 							nodes_j = minetest.find_nodes_in_area_under_air(node, node2, {"air"})
@@ -559,21 +522,6 @@ function mcl_portals.light_nether_portal(pos)
 		orientation = 1 - orientation
 	end
 	return false
-end
-
--- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
-local function stop_teleport_cooloff(o)
-	cooloff[o] = nil
-	chatter[o] = nil
-end
-
-local function teleport_cooloff(obj)
-	cooloff[obj] = true
-	if obj:is_player() then
-		minetest.after(PLAYER_COOLOFF, stop_teleport_cooloff, obj)
-	else
-		minetest.after(MOB_COOLOFF, stop_teleport_cooloff, obj)
-	end
 end
 
 -- Teleport function
