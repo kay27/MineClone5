@@ -1,11 +1,16 @@
 local S = minetest.get_translator("mcl_portals")
 
--- Localize function for better performance
+-- Localize functions for better performance
 local abs = math.abs
 local ceil = math.ceil
 local floor = math.floor
 local max = math.max
 local min = math.min
+local random = math.random
+local dist = vector.distance
+local add = vector.add
+local mul = vector.multiply
+local sub = vector.subtract
 
 -- Setup
 local W_MIN, W_MAX			= 4, 23
@@ -39,8 +44,12 @@ function mcl_portals.nether_portal_cooloff(object)
 end
 
 local exits, chatter = {}, {}
---local get_node = mcl_mapgen_core.get_far_node
-local get_node = minetest.get_node
+local get_node = function(pos)
+	if mcl_mapgen_core and mcl_mapgen_core.get_node then
+		get_node = mcl_mapgen_core.get_node
+	end
+	return minetest.get_node(pos)
+end
 
 local limits = {
 	nether = {
@@ -53,6 +62,9 @@ local limits = {
 	},
 }
 
++-- This function registers exits from Nether portals.
++-- Incoming verification performed: two nodes must be portal nodes, and an obsidian below them.
++-- If the verification passes - position adds to the table and saves to mod storage on exit.
 local function add_exit(p)
 	if not p or not p.y or not p.z or not p.x then return end
 	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
@@ -73,6 +85,7 @@ local function add_exit(p)
 	minetest.log("action", "[mcl_portals] Nether added at " .. minetest.pos_to_string(p))
 end
 
++-- This function removes Nether portals exits.
 local function remove_exit(p)
 	if not p or not p.y or not p.z or not p.x then return end
 	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
@@ -92,6 +105,7 @@ local function remove_exit(p)
 	end
 end
 
++-- This functon searches Nether portal nodes whitin distance specified
 local function find_exit(p, dx, dy, dz)
 	if not p or not p.y or not p.z or not p.x then return end
 	local dx, dy, dz = dx or DISTANCE_MAX, dy or DISTANCE_MAX, dz or DISTANCE_MAX
@@ -238,6 +252,36 @@ minetest.register_node(PORTAL, {
 	_mcl_blast_resistance = 0,
 })
 
+--Build arrival portal
+function build_nether_portal(pos, width, height, orientation, name)
+	local height = height or H_MIN - 2
+	local width = width or W_MIN - 2
+	local orientation = orientation or random(0, 1)
+
+	if orientation == 0 then
+		minetest.load_area({x = pos.x - 3, y = pos.y - 1, z = pos.z - width * 2}, {x = pos.x + width + 2, y = pos.y + height + 2, z = pos.z + width * 2})
+	else
+		minetest.load_area({x = pos.x - width * 2, y = pos.y - 1, z = pos.z - 3}, {x = pos.x + width * 2, y = pos.y + height + 2, z = pos.z + width + 2})
+	end
+
+	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1))
+
+	-- Build obsidian platform:
+	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
+		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
+			local pp = {x = x, y = pos.y - 1, z = z}
+			local nn = get_node(pp).name
+			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, "") then
+				minetest.set_node(pp, {name = OBSIDIAN})
+			end
+		end
+	end
+
+	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
+
+	return pos
+end
+
 local function finalize_teleport(obj, exit)
 	minetest.log("warning", "[mcl_portal] 1")
 	if not obj or not exit or not exit.x or not exit.y or not exit.z then return end
@@ -257,7 +301,7 @@ local function finalize_teleport(obj, exit)
 
 	-- If player stands, player is at ca. something+0.5 which might cause precision problems, so we used ceil for objpos.y
 	objpos = {x = floor(objpos.x+0.5), y = ceil(objpos.y), z = floor(objpos.z+0.5)}
-	if minetest.get_node(objpos).name ~= PORTAL then return end
+	if get_node(objpos).name ~= PORTAL then return end
 
 	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 	teleport_cooloff(obj)
@@ -287,7 +331,7 @@ local function create_portal_2(pos1, name, obj)
 			orientation = 1
 		end
 	end
-	local exit = mcl_portals.build_nether_portal(pos1, W_MIN, H_MIN, orientation, name)
+	local exit = build_nether_portal(pos1, W_MIN, H_MIN, orientation, name)
 	finalize_teleport(obj, exit)
 end
 
@@ -336,8 +380,8 @@ local function create_portal(pos, limit1, limit2, name, obj)
 	-- we need to emerge the area here, but currently (mt5.4/mcl20.71) map generation is slow
 	-- so we'll emerge single chunk only: 5x5x5 blocks, 80x80x80 nodes maximum
 
-	local pos1 = vector.multiply(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes)
-	local pos2 = vector.add(pos1, mcl_vars.chunk_size_in_nodes - 1)
+	local pos1 = mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes)
+	local pos2 = add(pos1, mcl_vars.chunk_size_in_nodes - 1)
 
 	if limit1 and limit1.x and limit1.y and limit1.z then
 		pos1 = {x = max(min(limit1.x, pos.x), pos1.x), y = max(min(limit1.y, pos.y), pos1.y), z = max(min(limit1.z, pos.z), pos1.z)}
@@ -350,7 +394,7 @@ local function create_portal(pos, limit1, limit2, name, obj)
 end
 
 local function available_for_nether_portal(p)
-	local nn = minetest.get_node(p).name
+	local nn = get_node(p).name
 	local obsidian = nn == OBSIDIAN
 	if nn ~= "air" and minetest.get_item_group(nn, "fire") ~= 1 then
 		return false, obsidian
@@ -378,7 +422,7 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 								protection = true
 								local offset_x = random(-disperse, disperse)
 								local offset_z = random(-disperse, disperse)
-								disperse = disperse + math.random(25, 177)
+								disperse = disperse + random(25, 177)
 								if disperse > 5000 then
 									return nil
 								end
@@ -400,7 +444,7 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 						end
 					else
 						if pass == 2 then
-							local node = minetest.get_node({x = x, y = y, z = z})
+							local node = get_node({x = x, y = y, z = z})
 							minetest.set_node({x = x, y = y, z = z}, {name = PORTAL, param2 = orientation})
 						end
 					end
@@ -431,36 +475,6 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 		end
 	end
 	return {x = x1, y = y1, z = z1}
-end
-
---Build arrival portal
-function mcl_portals.build_nether_portal(pos, width, height, orientation, name)
-	local height = height or H_MIN - 2
-	local width = width or W_MIN - 2
-	local orientation = orientation or math.random(0, 1)
-
-	if orientation == 0 then
-		minetest.load_area({x = pos.x - 3, y = pos.y - 1, z = pos.z - width * 2}, {x = pos.x + width + 2, y = pos.y + height + 2, z = pos.z + width * 2})
-	else
-		minetest.load_area({x = pos.x - width * 2, y = pos.y - 1, z = pos.z - 3}, {x = pos.x + width * 2, y = pos.y + height + 2, z = pos.z + width + 2})
-	end
-
-	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1))
-
-	-- Build obsidian platform:
-	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
-		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
-			local pp = {x = x, y = pos.y - 1, z = z}
-			local nn = minetest.get_node(pp).name
-			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, "") then
-				minetest.set_node(pp, {name = OBSIDIAN})
-			end
-		end
-	end
-
-	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
-
-	return pos
 end
 
 local function check_and_light_shape(pos, orientation)
@@ -537,7 +551,7 @@ function mcl_portals.light_nether_portal(pos)
 	if dim ~= "overworld" and dim ~= "nether" then
 		return false
 	end
-	local orientation = math.random(0, 1)
+	local orientation = random(0, 1)
 	for orientation_iteration = 1, 2 do
 		if check_and_light_shape(pos, orientation) then
 			return true
@@ -565,14 +579,14 @@ end
 -- Teleport function
 local function teleport_no_delay(obj, pos)
 	local is_player = obj:is_player()
-	if ((not is_player) and (not obj:get_luaentity()) and (not is_player)) or cooloff[obj] then return end
+	if (not is_player and not obj:get_luaentity()) or cooloff[obj] then return end
 
 	local objpos = obj:get_pos()
 	if not objpos then return end
 
 	-- If player stands, player is at ca. something+0.5 which might cause precision problems, so we used ceil for objpos.y
 	objpos = {x = floor(objpos.x+0.5), y = ceil(objpos.y), z = floor(objpos.z+0.5)}
-	if minetest.get_node(objpos).name ~= PORTAL then return end
+	if get_node(objpos).name ~= PORTAL then return end
 
 	local target, dim = get_target(objpos)
 	if not target then return end
@@ -636,16 +650,15 @@ local function teleport(obj, portal_pos)
 		name = obj:get_player_name()
 		animation(obj, name)
 	end
-	-- Call prepare_target() first because it might take a long
-	-- prepare_target(portal_pos)
-	-- Prevent quick back-and-forth teleportation
-	if not cooloff[obj] then
-		local creative_enabled = minetest.is_creative_enabled(name)
-		if creative_enabled then
-			return teleport_no_delay(obj, portal_pos)
-		end
-		minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
+
+	if cooloff[obj] then return end
+
+	if minetest.is_creative_enabled(name) then
+		teleport_no_delay(obj, portal_pos)
+		return
 	end
+
+	minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
 end
 
 minetest.register_abm({
@@ -655,17 +668,17 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node)
 		local o = node.param2		-- orientation
-		local d = math.random(0, 1)	-- direction
-		local time = math.random() * 1.9 + 0.5
+		local d = random(0, 1)	-- direction
+		local time = random() * 1.9 + 0.5
 		local velocity, acceleration
 		if o == 1 then
-			velocity	= {x = math.random() * 0.7 + 0.3,	y = math.random() - 0.5,	z = math.random() - 0.5}
-			acceleration	= {x = math.random() * 1.1 + 0.3,	y = math.random() - 0.5,	z = math.random() - 0.5}
+			velocity	= {x = random() * 0.7 + 0.3,	y = random() - 0.5,	z = random() - 0.5}
+			acceleration	= {x = random() * 1.1 + 0.3,	y = random() - 0.5,	z = random() - 0.5}
 		else
-			velocity	= {x = math.random() - 0.5,		y = math.random() - 0.5,	z = math.random() * 0.7 + 0.3}
-			acceleration	= {x = math.random() - 0.5,		y = math.random() - 0.5,	z = math.random() * 1.1 + 0.3}
+			velocity	= {x = random() - 0.5,		y = random() - 0.5,	z = random() * 0.7 + 0.3}
+			acceleration	= {x = random() - 0.5,		y = random() - 0.5,	z = random() * 1.1 + 0.3}
 		end
-		local distance = vector.add(vector.multiply(velocity, time), vector.multiply(acceleration, time * time / 2))
+		local distance = add(mul(velocity, time), mul(acceleration, time * time / 2))
 		if d == 1 then
 			if o == 1 then
 				distance.x	= -distance.x
@@ -677,7 +690,7 @@ minetest.register_abm({
 				acceleration.z	= -acceleration.z
 			end
 		end
-		distance = vector.subtract(pos, distance)
+		distance = sub(pos, distance)
 		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 15)) do
 			if obj:is_player() then
 				minetest.add_particlespawner({
