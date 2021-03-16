@@ -65,7 +65,7 @@ function mcl_buckets.register_liquid(def)
 			_doc_items_usagehelp = def.usagehelp,
 			_tt_help = def.tt_help,
 			inventory_image = def.inventory_image,
-			stack_max = 16,
+			stack_max = 1,
 			groups = def.groups,
 			on_place = function(itemstack, user, pointed_thing)
 				-- Must be pointing to node
@@ -148,7 +148,7 @@ function mcl_buckets.register_liquid(def)
 			end,
 			_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
 				local iname = stack:get_name()
-				local buildable = minetest.registered_nodes[dropnode.name].buildable_to
+				local buildable = minetest.registered_nodes[dropnode.name].buildable_to or dropnode.name == "mcl_portals:portal"
 
 				if def.extra_check and def.extra_check(droppos, nil) == false then
 					-- Fail placement of liquid

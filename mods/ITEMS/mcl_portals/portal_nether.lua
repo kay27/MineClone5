@@ -64,7 +64,7 @@ local function destroy_nether_portal(pos)
 	local meta = minetest.get_meta(pos)
 	local node = minetest.get_node(pos)
 	local nn, orientation = node.name, node.param2
-	local obsidian = nn == "mcl_core:obsidian" 
+	local obsidian = nn == "mcl_core:obsidian"
 
 	local has_meta = minetest.string_to_pos(meta:get_string("portal_frame1"))
 	if has_meta then
@@ -138,8 +138,6 @@ minetest.register_node("mcl_portals:portal", {
 	sunlight_propagates = true,
 	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true,
 	walkable = false,
-	diggable = false,
-	pointable = false,
 	buildable_to = false,
 	is_ground_content = false,
 	drop = "",
@@ -152,7 +150,8 @@ minetest.register_node("mcl_portals:portal", {
 			{-0.5, -0.5, -0.1,  0.5, 0.5, 0.1},
 		},
 	},
-	groups = {portal=1, not_in_creative_inventory = 1},
+	groups = { creative_breakable = 1, portal = 1, not_in_creative_inventory = 1 },
+	sounds = mcl_sounds.node_sound_glass_defaults(),
 	on_destruct = destroy_nether_portal,
 
 	_mcl_hardness = -1,
@@ -583,7 +582,7 @@ local function check_and_light_shape(pos, orientation)
 		meta:set_string("portal_time", tostring(0))
 		meta:set_string("portal_target", "")
 	end
-	return true	
+	return true
 end
 
 -- Attempts to light a Nether portal at pos
@@ -799,7 +798,7 @@ minetest.register_abm({
 			end
 		end
 		distance = vector.subtract(pos, distance)
-		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 15)) do
+		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 15)) do
 			if obj:is_player() then
 				minetest.add_particlespawner({
 					amount = node_particles_allowed_level + 1,
@@ -819,7 +818,7 @@ minetest.register_abm({
 				})
 			end
 		end
-		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
+		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and prevent_portal_chatter(obj) then
 				teleport(obj, pos)
@@ -842,7 +841,7 @@ minetest.override_item("mcl_core:obsidian", {
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
-		local portals_placed = 
+		local portals_placed =
 				mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) or mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
@@ -863,4 +862,3 @@ minetest.override_item("mcl_core:obsidian", {
 		end
 	end,
 })
-
