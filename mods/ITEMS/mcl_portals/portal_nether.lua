@@ -368,12 +368,12 @@ end
 local function create_portal_2(pos1, name, obj)
 	local orientation = 0
 	local pos2 = {x = pos1.x + 3, y = pos1.y + 3, z = pos1.z + 3}
-	local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"air"})
+	local nodes = minetest.find_nodes_in_area(pos1, pos2, {"air"})
 	if #nodes == 64 then
 		orientation = random(2)
 	else
 		pos2.x = pos2.x - 1
-		nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"air"})
+		nodes = minetest.find_nodes_in_area(pos1, pos2, {"air"})
 		if #nodes == 48 then
 			orientation = 1
 		end
@@ -391,31 +391,41 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	local i_max = (cs*2-1) * (cs*2-1)
 	minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..minetest.pos_to_string(pos))
 
+	local backup_pos, bnc = nil, 0 -- 'better than nothing'
+
+	local p1 = {x=0, y=p1y, z=0}
+	local p2 = {x=0, y=p2y, z=0}
 	for i = 1, i_max do
 		local px, pz = p0x + x, p0z + z
-		minetest.log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
+		if ((i%100) == 1) then
+			minetest.log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
+		end
 		if px >= p1x and pz >= p1z and px <= p2x and pz <= p2z then
-			local p1 = {x=px, y=p1y, z=pz}
-			local p2 = {x=px, y=p2y, z=pz}
+			p1.x, p2.x, p1.z, p2.z = px, px, pz, pz
 			local nodes = minetest.find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
 			minetest.log("action", "[mcl_portal] check " .. minetest.pos_to_string(p1) .. "-" .. minetest.pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
-			if nodes and #nodes > 3 then
+			if nodes and #nodes > 0 then
 				for j = 1, #nodes do
 					local node = nodes[j]
 					if not minetest.is_protected(node, name) then
-						p.y = node.y + 2
-						node.y = node.y + 1
-						local node2 = {x = p.x, y = p.y + 2, z = p.z}
+						node.y = node.y + 2
+						local node2 = {x = node.x, y = node.y + 2, z = node.z}
 						if not minetest.is_protected(node2, name) then
-							local nodes_j = minetest.find_nodes_in_area_under_air(p, node2, {"air"})
-							if #nodes_j == 3 then
+							local nodes_j = minetest.find_nodes_in_area(node, node2, {"air"})
+							local nc = #nodes_j
+							if nc >= 3 then
 								node2.x = node2.x + 2
 								node2.z = node2.z + 2
-								nodes_j = minetest.find_nodes_in_area_under_air(node, node2, {"air"})
+								nodes_j = minetest.find_nodes_in_area(node, node2, {"air"})
 								if #nodes_j == 36 then
+									minetest.log("action", "[mcl_portal] found space at pos "..minetest.pos_to_string(node).." - creating a portal")
 									create_portal_2(node, name, obj)
 									return
 								end
+							elseif nc > bnc then
+								bnc = nc
+								backup_pos = {x = node.x, y = node.y-2, z = node.z}
+								minetest.log("action", "[mcl_portal] set backup pos "..minetest.pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
 							end
 						end
 					end
@@ -428,6 +438,12 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 		x, z = x+dx, z+dz
 		px, pz = p0x + x, p0z + z
 	end
+	if backup_pos then -- several nodes of air might be better than lava lake, right?
+		minetest.log("action", "[mcl_portal] using backup pos "..minetest.pos_to_string(backup_pos).." to create a portal")
+		create_portal_2(backup_pos, name, obj)
+		return
+	end
+	minetest.log("action", "[mcl_portal] found no space, reverting to target pos "..minetest.pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
 
