@@ -52,7 +52,7 @@ local function coordinate_to_block(x)
 end
 
 local function coordinate_to_chunk(x)
-	return math.floor((coordinate_to_block(x) + central_chunk_offset) / mcl_vars.chunksize)
+	return math.floor((coordinate_to_block(x) - central_chunk_offset) / mcl_vars.chunksize)
 end
 
 function mcl_vars.pos_to_block(pos)

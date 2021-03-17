@@ -394,10 +394,11 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	for i = 1, i_max do
 		local px, pz = p0x + x, p0z + z
 		minetest.log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
-		if px >= p1x and pz >= p2z and px <= p2x and pz <= p2z then
-			local p = {x=px, y=p1y, z=pz}
-			local nodes = minetest.find_nodes_in_area_under_air(p, p, {"group:building_block"})
-			minetest.log("action", "[mcl_portal] check " .. minetest.pos_to_string(p) .. ": " .. tostring(nodes and #nodes))
+		if px >= p1x and pz >= p1z and px <= p2x and pz <= p2z then
+			local p1 = {x=px, y=p1y, z=pz}
+			local p2 = {x=px, y=p2y, z=pz}
+			local nodes = minetest.find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
+			minetest.log("action", "[mcl_portal] check " .. minetest.pos_to_string(p1) .. "-" .. minetest.pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
 			if nodes and #nodes > 3 then
 				for j = 1, #nodes do
 					local node = nodes[j]
@@ -434,7 +435,7 @@ local function create_portal(pos, limit1, limit2, name, obj)
 	-- we need to emerge the area here, but currently (mt5.4/mcl20.71) map generation is slow
 	-- so we'll emerge single chunk only: 5x5x5 blocks, 80x80x80 nodes maximum
 
-	local pos1 = sub(mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes), mcl_vars.central_chunk_offset_in_nodes)
+	local pos1 = add(mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes), mcl_vars.central_chunk_offset_in_nodes)
 	local pos2 = add(pos1, mcl_vars.chunk_size_in_nodes - 1)
 
 	if limit1 and limit1.x and limit1.y and limit1.z then
