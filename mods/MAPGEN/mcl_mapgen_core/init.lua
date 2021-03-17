@@ -1847,6 +1847,7 @@ local generate_nether_decorations = function(minp, maxp, seed)
 end
 
 minetest.register_on_generated(function(minp, maxp, blockseed)
+	minetest.log("action", "[mcl_mapgen_core] Generating chunk " .. minetest.pos_to_string(minp) .. " ... " .. minetest.pos_to_string(maxp))
 	add_chunk(minp)
 	local p1, p2 = {x=minp.x, y=minp.y, z=minp.z}, {x=maxp.x, y=maxp.y, z=maxp.z}
 	if lvm > 0 then

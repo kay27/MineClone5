@@ -51,9 +51,9 @@ minetest.register_on_shutdown(function()
 	storage:set_string("nether_exits", minetest.serialize(exits))
 end)
 
-local get_node = function(pos)
+mcl_portals.get_node = function(pos)
 	if mcl_mapgen_core and mcl_mapgen_core.get_node then
-		get_node = mcl_mapgen_core.get_node
+		mcl_portals.get_node = mcl_mapgen_core.get_node
 	end
 	return minetest.get_node(pos)
 end
@@ -73,6 +73,7 @@ local limits = {
 -- Incoming verification performed: two nodes must be portal nodes, and an obsidian below them.
 -- If the verification passes - position adds to the table and saves to mod storage on exit.
 local function add_exit(p)
+	local get_node = mcl_portals.get_node
 	if not p or not p.y or not p.z or not p.x then return end
 	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
 	local p = {x = x, y = y, z = z}
@@ -176,6 +177,7 @@ local function destroy_nether_portal(pos, node)
 	local nn, orientation = node.name, node.param2
 	local obsidian = nn == OBSIDIAN 
 
+	local get_node = mcl_portals.get_node
 	local check_remove = function(pos, orientation)
 		local node = get_node(pos)
 		if node and (node.name == PORTAL and (orientation == nil or (node.param2 == orientation))) then
@@ -297,6 +299,7 @@ function build_nether_portal(pos, width, height, orientation, name)
 
 	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1))
 
+	local get_node = mcl_portals.get_node
 	-- Build obsidian platform:
 	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
@@ -345,7 +348,7 @@ local function finalize_teleport(obj, exit)
 
 	-- If player stands, player is at ca. something+0.5 which might cause precision problems, so we used ceil for objpos.y
 	objpos = {x = floor(objpos.x+0.5), y = ceil(objpos.y), z = floor(objpos.z+0.5)}
-	if get_node(objpos).name ~= PORTAL then return end
+	if mcl_portals.get_node(objpos).name ~= PORTAL then return end
 
 	-- Enable teleportation cooloff for some seconds, to prevent back-and-forth teleportation
 	teleport_cooloff(obj)
@@ -431,7 +434,7 @@ local function create_portal(pos, limit1, limit2, name, obj)
 	-- we need to emerge the area here, but currently (mt5.4/mcl20.71) map generation is slow
 	-- so we'll emerge single chunk only: 5x5x5 blocks, 80x80x80 nodes maximum
 
-	local pos1 = mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes)
+	local pos1 = sub(mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes), mcl_vars.central_chunk_offset_in_nodes)
 	local pos2 = add(pos1, mcl_vars.chunk_size_in_nodes - 1)
 
 	if limit1 and limit1.x and limit1.y and limit1.z then
@@ -445,7 +448,7 @@ local function create_portal(pos, limit1, limit2, name, obj)
 end
 
 local function available_for_nether_portal(p)
-	local nn = get_node(p).name
+	local nn = mcl_portals.get_node(p).name
 	local obsidian = nn == OBSIDIAN
 	if nn ~= "air" and minetest.get_item_group(nn, "fire") ~= 1 then
 		return false, obsidian
@@ -547,7 +550,7 @@ local function teleport_no_delay(obj, pos)
 
 	-- If player stands, player is at ca. something+0.5 which might cause precision problems, so we used ceil for objpos.y
 	objpos = {x = floor(objpos.x+0.5), y = ceil(objpos.y), z = floor(objpos.z+0.5)}
-	if get_node(objpos).name ~= PORTAL then return end
+	if mcl_portals.get_node(objpos).name ~= PORTAL then return end
 
 	local target, dim = get_target(objpos)
 	if not target then return end

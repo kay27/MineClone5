@@ -33,6 +33,7 @@ mcl_vars.MAP_BLOCKSIZE = math.max(1, core.MAP_BLOCKSIZE or 16)
 mcl_vars.mapgen_limit = math.max(1, tonumber(minetest.get_mapgen_setting("mapgen_limit")) or 31000)
 mcl_vars.MAX_MAP_GENERATION_LIMIT = math.max(1, core.MAX_MAP_GENERATION_LIMIT or 31000)
 local central_chunk_offset = -math.floor(mcl_vars.chunksize / 2)
+mcl_vars.central_chunk_offset_in_nodes = central_chunk_offset * mcl_vars.MAP_BLOCKSIZE
 mcl_vars.chunk_size_in_nodes = mcl_vars.chunksize * mcl_vars.MAP_BLOCKSIZE
 local central_chunk_min_pos = central_chunk_offset * mcl_vars.MAP_BLOCKSIZE
 local central_chunk_max_pos = central_chunk_min_pos + mcl_vars.chunk_size_in_nodes - 1
