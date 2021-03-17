@@ -238,8 +238,6 @@ minetest.register_node(PORTAL, {
 	sunlight_propagates = true,
 	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true,
 	walkable = false,
-	diggable = false,
-	pointable = false,
 	buildable_to = false,
 	is_ground_content = false,
 	drop = "",
@@ -252,7 +250,8 @@ minetest.register_node(PORTAL, {
 			{-0.5, -0.5, -0.1,  0.5, 0.5, 0.1},
 		},
 	},
-	groups = {portal=1, not_in_creative_inventory = 1},
+	groups = { creative_breakable = 1, portal = 1, not_in_creative_inventory = 1 },
+	sounds = mcl_sounds.node_sound_glass_defaults(),
 	after_destruct = destroy_nether_portal,
 
 	_mcl_hardness = -1,
@@ -514,7 +513,7 @@ local function check_and_light_shape(pos, orientation)
 		minetest.set_node(node_pos, {name = PORTAL, param2 = orientation})
 		add_exit(node_pos)
 	end
-	return true	
+	return true
 end
 
 -- Attempts to light a Nether portal at pos
@@ -653,7 +652,7 @@ minetest.register_abm({
 			end
 		end
 		distance = sub(pos, distance)
-		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 15)) do
+		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 15)) do
 			if obj:is_player() then
 				minetest.add_particlespawner({
 					amount = PARTICLES + 1,
@@ -673,7 +672,7 @@ minetest.register_abm({
 				})
 			end
 		end
-		for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
+		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and prevent_portal_chatter(obj) then
 				teleport(obj, pos)
@@ -696,7 +695,7 @@ minetest.override_item(OBSIDIAN, {
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:
-		local portals_placed = 
+		local portals_placed =
 				mcl_portals.light_nether_portal({x = x - 1, y = y, z = z}) or mcl_portals.light_nether_portal({x = x + 1, y = y, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
@@ -717,4 +716,3 @@ minetest.override_item(OBSIDIAN, {
 		end
 	end,
 })
-

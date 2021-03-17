@@ -15,6 +15,26 @@ local dir_to_pitch = function(dir)
 	return -math.atan2(-dir.y, xz)
 end
 
+local random_arrow_positions = function(positions, placement)
+	local min = 0
+	local max = 0
+	if positions == 'x' then
+		min = -4
+		max = 4
+	elseif positions == 'y' then
+		min = 0
+		max = 10
+	end
+	if placement == 'front' and positions == 'z' then
+		min = 3
+		max = 3
+	elseif placement == 'back' and positions == 'z' then
+		min = -3
+		max = -3
+	end
+	return math.random(max, min)
+end
+
 local mod_awards = minetest.get_modpath("awards") and minetest.get_modpath("mcl_achievements")
 local mod_button = minetest.get_modpath("mesecons_button")
 
@@ -35,53 +55,13 @@ S("Arrows might get stuck on solid blocks and can be retrieved again. They are a
 	end,
 })
 
--- This is a fake node, used as model for the arrow entity.
--- It's not supposed to be usable as item or real node.
--- TODO: Use a proper mesh for the arrow entity
-minetest.register_node("mcl_bows:arrow_box", {
-	drawtype = "nodebox",
-	is_ground_content = false,
-	node_box = {
-		type = "fixed",
-		fixed = {
-			-- Shaft
-			{-6.5/17, -1.5/17, -1.5/17, -4.5/17, 1.5/17, 1.5/17},
-			{-4.5/17, -0.5/17, -0.5/17, 5.5/17, 0.5/17, 0.5/17},
-			{5.5/17, -1.5/17, -1.5/17, 6.5/17, 1.5/17, 1.5/17},
-			-- Tip
-			{-4.5/17, 2.5/17, 2.5/17, -3.5/17, -2.5/17, -2.5/17},
-			{-8.5/17, 0.5/17, 0.5/17, -6.5/17, -0.5/17, -0.5/17},
-			-- Fletching
-			{6.5/17, 1.5/17, 1.5/17, 7.5/17, 2.5/17, 2.5/17},
-			{7.5/17, -2.5/17, 2.5/17, 6.5/17, -1.5/17, 1.5/17},
-			{7.5/17, 2.5/17, -2.5/17, 6.5/17, 1.5/17, -1.5/17},
-			{6.5/17, -1.5/17, -1.5/17, 7.5/17, -2.5/17, -2.5/17},
-
-			{7.5/17, 2.5/17, 2.5/17, 8.5/17, 3.5/17, 3.5/17},
-			{8.5/17, -3.5/17, 3.5/17, 7.5/17, -2.5/17, 2.5/17},
-			{8.5/17, 3.5/17, -3.5/17, 7.5/17, 2.5/17, -2.5/17},
-			{7.5/17, -2.5/17, -2.5/17, 8.5/17, -3.5/17, -3.5/17},
-		}
-	},
-	tiles = {"mcl_bows_arrow.png^[transformFX", "mcl_bows_arrow.png^[transformFX", "mcl_bows_arrow_back.png", "mcl_bows_arrow_front.png", "mcl_bows_arrow.png", "mcl_bows_arrow.png^[transformFX"},
-	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
-	paramtype = "light",
-	paramtype2 = "facedir",
-	sunlight_propagates = true,
-	groups = {not_in_creative_inventory=1, dig_immediate=3},
-	drop = "",
-	node_placement_prediction = "",
-	on_construct = function(pos)
-		minetest.log("error", "[mcl_bows] Trying to construct mcl_bows:arrow_box at "..minetest.pos_to_string(pos))
-		minetest.remove_node(pos)
-	end,
-})
-
 local ARROW_ENTITY={
 	physical = true,
-	visual = "wielditem",
-	visual_size = {x=0.4, y=0.4},
-	textures = {"mcl_bows:arrow_box"},
+	pointable = false,
+	visual = "mesh",
+	mesh = "mcl_bows_arrow.obj",
+	visual_size = {x=-1, y=1},
+	textures = {"mcl_bows_arrow.png"},
 	collisionbox = {-0.19, -0.125, -0.19, 0.19, 0.125, 0.19},
 	collide_with_objects = false,
 	_fire_damage_resistant = true,
@@ -141,6 +121,14 @@ ARROW_ENTITY.on_step = function(self, dtime)
 	dpos = vector.round(dpos)
 	local node = minetest.get_node(dpos)
 
+	if self.object:get_attach() ~= nil and self.object:get_attach(parent):get_hp() < 1 then
+		self.object:remove()
+	end
+
+	if self.object:get_attach() and not self.object:get_attach(parent) then
+		self.object:remove()
+	end
+
 	if self._stuck then
 		self._stucktimer = self._stucktimer + dtime
 		self._stuckrechecktimer = self._stuckrechecktimer + dtime
@@ -185,6 +173,25 @@ ARROW_ENTITY.on_step = function(self, dtime)
 
 	-- Check for object "collision". Done every tick (hopefully this is not too stressing)
 	else
+
+		if self._damage >= 9 and self._in_player == false then
+			minetest.add_particlespawner({
+				amount = 1,
+				time = .001,
+				minpos = pos,
+				maxpos = pos,
+				minvel = vector.new(-0.1,-0.1,-0.1),
+				maxvel = vector.new(0.1,0.1,0.1),
+				minexptime = 0.5,
+				maxexptime = 0.5,
+				minsize = 2,
+				maxsize = 2,
+				collisiondetection = false,
+				vertical = false,
+				texture = "mobs_mc_arrow_particle.png",
+				glow = 1,
+			})
+		end
 		-- We just check for any hurtable objects nearby.
 		-- The radius of 3 is fairly liberal, but anything lower than than will cause
 		-- arrow to hilariously go through mobs often.
@@ -251,19 +258,60 @@ ARROW_ENTITY.on_step = function(self, dtime)
 						if obj:is_player() and rawget(_G, "armor") and armor.last_damage_types then
 							armor.last_damage_types[obj:get_player_name()] = "projectile"
 						end
-						damage_particles(self.object:get_pos(), self._is_critical)
+						if self._in_player == false then
+							damage_particles(self.object:get_pos(), self._is_critical)
+						end
 						if mcl_burning.is_burning(self.object) then
 							mcl_burning.set_on_fire(obj, 5)
 						end
-						obj:punch(self.object, 1.0, {
-							full_punch_interval=1.0,
-							damage_groups={fleshy=self._damage},
-						}, self.object:get_velocity())
+						if self._in_player == false then
+							obj:punch(self.object, 1.0, {
+								full_punch_interval=1.0,
+								damage_groups={fleshy=self._damage},
+							}, self.object:get_velocity())
+							if obj:is_player() then
+								local placement = ''
+								self._placement = math.random(1, 2)
+								if self._placement == 1 then
+									placement = 'front'
+								else
+									placement = 'back'
+								end
+								self._in_player = true
+								if self._placement == 2 then
+									self._rotation_station = 90
+								else
+									self._rotation_station = -90
+								end
+								self._y_position = random_arrow_positions('y', placement)
+								self._x_position = random_arrow_positions('x', placement)
+								if self._y_position > 6 and self._x_position < 2 and self._x_position > -2 then
+									self._attach_parent = 'Head'
+									self._y_position = self._y_position - 6
+								elseif self._x_position > 2 then
+									self._attach_parent = 'Arm_Right'
+									self._y_position = self._y_position - 3
+									self._x_position = self._x_position - 2
+								elseif self._x_position < -2 then
+									self._attach_parent = 'Arm_Left'
+									self._y_position = self._y_position - 3
+									self._x_position = self._x_position + 2
+								else
+									self._attach_parent = 'Body'
+								end
+								self._z_rotation = math.random(30, -30)
+								self._y_rotation = math.random(30, -30)
+								self.object:set_attach(obj, self._attach_parent, {x=self._x_position,y=self._y_position,z=random_arrow_positions('z', placement)}, {x=0,y=self._rotation_station + self._y_rotation,z=self._z_rotation})
+								minetest.after(150, function()
+									self.object:remove()
+								end)
+							end
+						end
 					end
 
 
 					if is_player then
-						if self._shooter and self._shooter:is_player() then
+						if self._shooter and self._shooter:is_player() and self._in_player == false then
 							-- “Ding” sound for hitting another player
 							minetest.sound_play({name="mcl_bows_hit_player", gain=0.1}, {to_player=self._shooter:get_player_name()}, true)
 						end
@@ -280,10 +328,14 @@ ARROW_ENTITY.on_step = function(self, dtime)
 							end
 						end
 					end
-					minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
+					if self._in_player == false then
+						minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
+					end
 				end
 				mcl_burning.extinguish(self.object)
-				self.object:remove()
+				if not obj:is_player() then
+					self.object:remove()
+				end
 				return
 			end
 		end
@@ -410,6 +462,7 @@ ARROW_ENTITY.get_staticdata = function(self)
 end
 
 ARROW_ENTITY.on_activate = function(self, staticdata, dtime_s)
+	self._in_player = false
 	local data = minetest.deserialize(staticdata)
 	if data then
 		self._stuck = data.stuck
