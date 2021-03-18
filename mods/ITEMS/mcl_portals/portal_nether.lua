@@ -57,6 +57,13 @@ mcl_portals.get_node = function(pos)
 	end
 	return minetest.get_node(pos)
 end
+local set_node = minetest.set_node
+local registered_nodes = minetest.registered_nodes
+local is_protected = minetest.is_protected
+local find_nodes_in_area = minetest.find_nodes_in_area
+local find_nodes_in_area_under_air = minetest.find_nodes_in_area_under_air
+local log = minetest.log
+local pos_to_string = minetest.pos_to_string
 
 local limits = {
 	nether = {
@@ -90,7 +97,7 @@ local function add_exit(p)
 		end
 	end
 	e[#e] = p
-	minetest.log("action", "[mcl_portals] Exit added at " .. minetest.pos_to_string(p))
+	log("action", "[mcl_portals] Exit added at " .. pos_to_string(p))
 end
 
 -- This function removes Nether portals exits.
@@ -106,7 +113,7 @@ local function remove_exit(p)
 			local t = e[i]
 			if t.x == p.x and t.y == p.y and t.z == p.z then
 				e[i] = nil
-				minetest.log("action", "[mcl_portals] Nether portal removed from " .. minetest.pos_to_string(p))
+				log("action", "[mcl_portals] Nether portal removed from " .. pos_to_string(p))
 				return
 			end
 		end
@@ -274,44 +281,36 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 				pos.y = y
 				local frame = (x < x1) or (x > x2) or (y < y1) or (y > y2) or (z < z1) or (z > z2)
 				if frame then
-					minetest.set_node(pos, {name = OBSIDIAN})
+					set_node(pos, {name = OBSIDIAN})
 				else
-					minetest.set_node(pos, {name = PORTAL, param2 = orientation})
+					set_node(pos, {name = PORTAL, param2 = orientation})
 					add_exit(pos)
 				end
 			end
 		end
 	end
-	return {x = x1, y = y1, z = z1}
 end
 
 --Build arrival portal
 function build_nether_portal(pos, width, height, orientation, name)
-	local height = height or H_MIN - 2
-	local width = width or W_MIN - 2
-	local orientation = orientation or random(0, 1)
+	local width, height, orientation = width or W_MIN - 2, height or H_MIN - 2, orientation or random(0, 1)
 
-	if orientation == 0 then
-		minetest.load_area({x = pos.x - 3, y = pos.y - 1, z = pos.z - width * 2}, {x = pos.x + width + 2, y = pos.y + height + 2, z = pos.z + width * 2})
-	else
-		minetest.load_area({x = pos.x - width * 2, y = pos.y - 1, z = pos.z - 3}, {x = pos.x + width * 2, y = pos.y + height + 2, z = pos.z + width + 2})
-	end
-
-	pos = light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1))
+	light_frame(pos.x, pos.y, pos.z, pos.x + (1 - orientation) * (width - 1), pos.y + height - 1, pos.z + orientation * (width - 1))
 
 	local get_node = mcl_portals.get_node
+
 	-- Build obsidian platform:
 	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
 			local nn = get_node(pp).name
-			if not minetest.registered_nodes[nn].is_ground_content and not minetest.is_protected(pp, name) then
-				minetest.set_node(pp, {name = OBSIDIAN})
+			if not registered_nodes[nn].is_ground_content and not is_protected(pp, name) then
+				set_node(pp, {name = OBSIDIAN})
 			end
 		end
 	end
 
-	minetest.log("action", "[mcl_portal] Destination Nether portal generated at "..minetest.pos_to_string(pos).."!")
+	log("action", "[mcl_portal] Destination Nether portal generated at "..pos_to_string(pos).."!")
 
 	return pos
 end
@@ -336,7 +335,7 @@ local function finalize_teleport(obj, exit)
 
 	local objpos = obj:get_pos()
 	if not objpos then return end
-	minetest.log("warning", "[mcl_portal] 3")
+	log("warning", "[mcl_portal] 3")
 
 	local is_player = obj:is_player()
 	local name
@@ -359,21 +358,21 @@ local function finalize_teleport(obj, exit)
 	if is_player then
 		mcl_worlds.dimension_change(obj, dim)
 		minetest.sound_play("mcl_portals_teleport", {pos=exit, gain=0.5, max_hear_distance = 16}, true)
-		minetest.log("action", "[mcl_portal] player "..name.." teleported to Nether portal at "..minetest.pos_to_string(exit)..".")
+		log("action", "[mcl_portal] player "..name.." teleported to Nether portal at "..pos_to_string(exit)..".")
 	else
-		minetest.log("action", "[mcl_portal] entity teleported to Nether portal at "..minetest.pos_to_string(exit)..".")
+		log("action", "[mcl_portal] entity teleported to Nether portal at "..pos_to_string(exit)..".")
 	end
 end
 
 local function create_portal_2(pos1, name, obj)
 	local orientation = 0
 	local pos2 = {x = pos1.x + 3, y = pos1.y + 3, z = pos1.z + 3}
-	local nodes = minetest.find_nodes_in_area(pos1, pos2, {"air"})
+	local nodes = find_nodes_in_area(pos1, pos2, {"air"})
 	if #nodes == 64 then
 		orientation = random(2)
 	else
 		pos2.x = pos2.x - 1
-		nodes = minetest.find_nodes_in_area(pos1, pos2, {"air"})
+		nodes = find_nodes_in_area(pos1, pos2, {"air"})
 		if #nodes == 48 then
 			orientation = 1
 		end
@@ -389,7 +388,7 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	-- loop in a spiral around pos
 	local cs, x, z, dx, dz, p0x, p0z, p1x, p1y, p1z, p2x, p2y, p2z = mcl_vars.chunk_size_in_nodes, 0, 0, 0, -1, pos.x, pos.z, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z
 	local i_max = (cs*2-1) * (cs*2-1)
-	minetest.log("action", "[mcl_portal] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..minetest.pos_to_string(pos))
+	log("action", "[mcl_portal] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..pos_to_string(pos))
 
 	local backup_pos, bnc = nil, 0 -- 'better than nothing'
 
@@ -398,34 +397,34 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	for i = 1, i_max do
 		local px, pz = p0x + x, p0z + z
 		if ((i%100) == 1) then
-			minetest.log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
+			log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
 		end
 		if px >= p1x and pz >= p1z and px <= p2x and pz <= p2z then
 			p1.x, p2.x, p1.z, p2.z = px, px, pz, pz
-			local nodes = minetest.find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
-			minetest.log("action", "[mcl_portal] check " .. minetest.pos_to_string(p1) .. "-" .. minetest.pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
+			local nodes = find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
+			log("action", "[mcl_portal] check " .. pos_to_string(p1) .. "-" .. pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
 			if nodes and #nodes > 0 then
 				for j = 1, #nodes do
 					local node = nodes[j]
-					if not minetest.is_protected(node, name) then
+					if not is_protected(node, name) then
 						node.y = node.y + 2
 						local node2 = {x = node.x, y = node.y + 2, z = node.z}
-						if not minetest.is_protected(node2, name) then
-							local nodes_j = minetest.find_nodes_in_area(node, node2, {"air"})
+						if not is_protected(node2, name) then
+							local nodes_j = find_nodes_in_area(node, node2, {"air"})
 							local nc = #nodes_j
 							if nc >= 3 then
 								node2.x = node2.x + 2
 								node2.z = node2.z + 2
-								nodes_j = minetest.find_nodes_in_area(node, node2, {"air"})
+								nodes_j = find_nodes_in_area(node, node2, {"air"})
 								if #nodes_j == 36 then
-									minetest.log("action", "[mcl_portal] found space at pos "..minetest.pos_to_string(node).." - creating a portal")
+									log("action", "[mcl_portal] found space at pos "..pos_to_string(node).." - creating a portal")
 									create_portal_2(node, name, obj)
 									return
 								end
 							elseif nc > bnc then
 								bnc = nc
 								backup_pos = {x = node.x, y = node.y-2, z = node.z}
-								minetest.log("action", "[mcl_portal] set backup pos "..minetest.pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
+								log("action", "[mcl_portal] set backup pos "..pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
 							end
 						end
 					end
@@ -439,11 +438,11 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 		px, pz = p0x + x, p0z + z
 	end
 	if backup_pos then -- several nodes of air might be better than lava lake, right?
-		minetest.log("action", "[mcl_portal] using backup pos "..minetest.pos_to_string(backup_pos).." to create a portal")
+		log("action", "[mcl_portal] using backup pos "..pos_to_string(backup_pos).." to create a portal")
 		create_portal_2(backup_pos, name, obj)
 		return
 	end
-	minetest.log("action", "[mcl_portal] found no space, reverting to target pos "..minetest.pos_to_string(pos).." - creating a portal")
+	log("action", "[mcl_portal] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
 
@@ -704,7 +703,7 @@ minetest.register_abm({
 
 --[[ ITEM OVERRIDES ]]
 
-local longdesc = minetest.registered_nodes[OBSIDIAN]._doc_items_longdesc
+local longdesc = registered_nodes[OBSIDIAN]._doc_items_longdesc
 longdesc = longdesc .. "\n" .. S("Obsidian is also used as the frame of Nether portals.")
 local usagehelp = S("To open a Nether portal, place an upright frame of obsidian with a width of at least 4 blocks and a height of 5 blocks, leaving only air in the center. After placing this frame, light a fire in the obsidian frame. Nether portals only work in the Overworld and the Nether.")
 
@@ -720,7 +719,7 @@ minetest.override_item(OBSIDIAN, {
 				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
 		if portals_placed then
-			minetest.log("action", "[mcl_portal] Nether portal activated at "..minetest.pos_to_string({x=x,y=y,z=z})..".")
+			log("action", "[mcl_portal] Nether portal activated at "..pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
 				doc.mark_entry_as_revealed(user:get_player_name(), "nodes", PORTAL)
 
