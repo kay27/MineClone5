@@ -45,6 +45,9 @@ end
 
 local chatter = {}
 
+local queue = {}
+local chunks = {}
+
 local storage = minetest.get_mod_storage()
 local exits = minetest.deserialize(storage:get_string("nether_exits") or "return {}") or {}
 minetest.register_on_shutdown(function()
@@ -65,6 +68,7 @@ local find_nodes_in_area_under_air = minetest.find_nodes_in_area_under_air
 local log = minetest.log
 local pos_to_string = minetest.pos_to_string
 local is_area_protected = minetest.is_area_protected
+local get_us_time = minetest.get_us_time
 
 local limits = {
 	nether = {
@@ -380,6 +384,14 @@ local function create_portal_2(pos1, name, obj)
 	end
 	local exit = build_nether_portal(pos1, W_MIN-2, H_MIN-2, orientation, name)
 	finalize_teleport(obj, exit)
+	local cn = mcl_vars.get_chunk_number(pos1)
+	chunks[cn] = nil
+	if queue[cn] then
+		for next_obj, _ in pairs(queue[cn]) do
+			finalize_teleport(next_obj, exit)
+		end
+		queue[cn] = nil
+	end
 end
 
 local function ecb_scan_area(blockpos, action, calls_remaining, param)
@@ -489,6 +501,15 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 end
 
 local function create_portal(pos, limit1, limit2, name, obj)
+	local cn = mcl_vars.get_chunk_number(pos)
+	if chunks[cn] then
+		local q = queue[cn] or {}
+		q[obj] = true
+		queue[cn] = q
+		return
+	end
+	chunks[cn] = true
+
 	-- we need to emerge the area here, but currently (mt5.4/mcl20.71) map generation is slow
 	-- so we'll emerge single chunk only: 5x5x5 blocks, 80x80x80 nodes maximum
 
@@ -628,11 +649,11 @@ local function teleport_no_delay(obj, pos)
 end
 
 local function prevent_portal_chatter(obj)
-	local time_us = minetest.get_us_time()
+	local time_us = get_us_time()
 	local ch = chatter[obj] or 0
 	chatter[obj] = time_us
 	minetest.after(TOUCH_CHATTER_TIME, function(o)
-		if o and chatter[o] and minetest.get_us_time() - chatter[o] >= CHATTER_US then
+		if o and chatter[o] and get_us_time() - chatter[o] >= CHATTER_US then
 			chatter[o] = nil
 		end
 	end, obj)
@@ -641,7 +662,7 @@ end
 
 local function animation(player, playername)
 	local ch = chatter[player] or 0
-	if cooloff[player] or minetest.get_us_time() - ch < CHATTER_US then
+	if cooloff[player] or get_us_time() - ch < CHATTER_US then
 		local pos = player:get_pos()
 		if not pos then
 			return
