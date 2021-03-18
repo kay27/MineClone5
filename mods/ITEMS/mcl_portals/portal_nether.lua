@@ -309,8 +309,10 @@ function build_nether_portal(pos, width, height, orientation, name)
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
 			local nn = get_node(pp).name
+			log("warning", "[mcl_portals] pos=" .. pos_to_string(pp) .. " nn=" .. nn .. " for obsidian platform:")
 			if not registered_nodes[nn].is_ground_content and not is_protected(pp, name) then
 				set_node(pp, {name = OBSIDIAN})
+				minetest.log("warning", "set!")
 			end
 		end
 	end
@@ -471,11 +473,12 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 			for i=1,nc do
 				local node = nodes[i]
 				local node1 = {x=node.x,   y=node.y+2, z=node.z  }
-				local node2 = {x=node.x+3, y=node.y+4, z=node.z+3}
+				local node2 = {x=node.x+2, y=node.y+3, z=node.z+2}
 				local nodes2 = find_nodes_in_area(node1, node2, {"air"})
 				if nodes2 then
 					local nc2 = #nodes2
-					if nc2 == 48 and not is_area_protected(node, node2, name) then
+					log("action", "[mcl_portal] nc2=" .. tostring(nc2))
+					if nc2 == 18 and not is_area_protected(node, node2, name) then
 						local distance0 = dist(pos, node)
 						if distance0 < 2 then
 							log("action", "[mcl_portal] found space at pos "..pos_to_string(node).." - creating a portal")
@@ -483,6 +486,7 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 							return
 						end
 						if not distance or distance0 < distance then
+							log("action", "[mcl_portal] found distance "..tostring(distance0).." at pos "..pos_to_string(node))
 							distance = distance0
 							pos0 = {x=node.x, y=node.y, z=node.z}
 						end
@@ -523,7 +527,7 @@ local function create_portal(pos, limit1, limit2, name, obj)
 		pos2 = {x = min(max(limit2.x, pos.x), pos2.x), y = min(max(limit2.y, pos.y), pos2.y), z = min(max(limit2.z, pos.z), pos2.z)}
 	end
 
-	minetest.emerge_area(pos1, pos2, ecb_scan_area, {pos = vector.new(pos), pos1 = pos1, pos2 = pos2, name=name, obj=obj})
+	minetest.emerge_area(pos1, pos2, ecb_scan_area_2, {pos = vector.new(pos), pos1 = pos1, pos2 = pos2, name=name, obj=obj})
 end
 
 local function available_for_nether_portal(p)
