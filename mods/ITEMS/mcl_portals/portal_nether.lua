@@ -64,6 +64,7 @@ local find_nodes_in_area = minetest.find_nodes_in_area
 local find_nodes_in_area_under_air = minetest.find_nodes_in_area_under_air
 local log = minetest.log
 local pos_to_string = minetest.pos_to_string
+local is_area_protected = minetest.is_area_protected
 
 local limits = {
 	nether = {
@@ -440,6 +441,47 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	if backup_pos then -- several nodes of air might be better than lava lake, right?
 		log("action", "[mcl_portal] using backup pos "..pos_to_string(backup_pos).." to create a portal")
 		create_portal_2(backup_pos, name, obj)
+		return
+	end
+	log("action", "[mcl_portal] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
+	create_portal_2(pos, name, obj)
+end
+
+local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
+	if calls_remaining and calls_remaining > 0 then return end
+	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
+	local pos0, distance
+	local nodes = find_nodes_in_area_under_air(pos1, pos2, {"group:building_block"})
+	if nodes then
+		local nc = #nodes
+		if nc > 0 then
+			log("action", "[mcl_portal] Area for destination Nether portal emerged! Found " .. tostring(nc) .. " nodes under the air around "..pos_to_string(pos))
+			for i=1,nc do
+				local node = nodes[i]
+				local node1 = {x=node.x,   y=node.y+2, z=node.z  }
+				local node2 = {x=node.x+3, y=node.y+4, z=node.z+3}
+				local nodes2 = find_nodes_in_area(node1, node2, {"air"})
+				if nodes2 then
+					local nc2 = #nodes2
+					if nc2 == 48 and not is_area_protected(node, node2, name) then
+						local distance0 = dist(pos, node)
+						if distance0 < 2 then
+							log("action", "[mcl_portal] found space at pos "..pos_to_string(node).." - creating a portal")
+							create_portal_2(node, name, obj)
+							return
+						end
+						if not distance or distance0 < distance then
+							distance = distance0
+							pos0 = {x=node.x, y=node.y, z=node.z}
+						end
+					end
+				end
+			end
+		end
+	end
+	if distance then -- several nodes of air might be better than lava lake, right?
+		log("action", "[mcl_portal] using backup pos "..pos_to_string(pos0).." to create a portal")
+		create_portal_2(pos0, name, obj)
 		return
 	end
 	log("action", "[mcl_portal] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
