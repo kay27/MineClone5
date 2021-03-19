@@ -309,7 +309,7 @@ function build_nether_portal(pos, width, height, orientation, name)
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
 			local nn = get_node(pp).name
-			log("warning", "[mcl_portals] pos=" .. pos_to_string(pp) .. " nn=" .. nn .. " for obsidian platform:")
+			log("warning", "[mcl_portals] pos=" .. pos_to_string(pp) .. " nn=" .. nn .. " name=" .. name .. " width=" .. tostring(width) .. " height=" .. tostring(height).." orientation=" ..tostring(orientation).." for obsidian platform:")
 			if not registered_nodes[nn].is_ground_content and not is_protected(pp, name) then
 				set_node(pp, {name = OBSIDIAN})
 				minetest.log("warning", "set!")
@@ -376,7 +376,7 @@ local function create_portal_2(pos1, name, obj)
 	local pos2 = {x = pos1.x + 3, y = pos1.y + 3, z = pos1.z + 3}
 	local nodes = find_nodes_in_area(pos1, pos2, {"air"})
 	if #nodes == 64 then
-		orientation = random(2)
+		orientation = random(0,1)
 	else
 		pos2.x = pos2.x - 1
 		nodes = find_nodes_in_area(pos1, pos2, {"air"})
