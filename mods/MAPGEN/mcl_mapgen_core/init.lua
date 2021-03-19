@@ -29,7 +29,7 @@ local function add_chunk(pos)
 		end
 		prev = d
 	end
-	chunks[#chunks] = {n, n}
+	chunks[#chunks+1] = {n, n}
 end
 function mcl_mapgen_core.is_generated(pos)
 	local n = mcl_vars.get_chunk_number(pos) -- unsigned int

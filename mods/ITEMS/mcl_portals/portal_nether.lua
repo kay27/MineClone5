@@ -16,7 +16,7 @@ local sub = vector.subtract
 local W_MIN, W_MAX			= 4, 23
 local H_MIN, H_MAX			= 5, 23
 local N_MIN, N_MAX			= 6, (W_MAX-2) * (H_MAX-2)
-local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 10, 8
+local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 2, 8
 local LIM_MIN, LIM_MAX			= mcl_vars.mapgen_edge_min, mcl_vars.mapgen_edge_max
 local PLAYER_COOLOFF, MOB_COOLOFF	= 3, 14 -- for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME		= 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
@@ -49,9 +49,21 @@ local queue = {}
 local chunks = {}
 
 local storage = minetest.get_mod_storage()
-local exits = minetest.deserialize(storage:get_string("nether_exits") or "return {}") or {}
+local exits = {}
+local keys = minetest.deserialize(storage:get_string("nether_exits_keys") or "return {}") or {}
+for _, key in pairs(keys) do
+	local n = tonumber(key)
+	if n then
+		exits[key] = minetest.deserialize(storage:get_string("nether_exits_"..key) or "return {}") or {}
+	end
+end
 minetest.register_on_shutdown(function()
-	storage:set_string("nether_exits", minetest.serialize(exits))
+	local keys={}
+	for key, data in pairs(exits) do
+		storage:set_string("nether_exits_"..tostring(key), minetest.serialize(data))
+		keys[#keys+1] = key
+	end
+	storage:set_string("nether_exits_keys", minetest.serialize(keys))
 end)
 
 mcl_portals.get_node = function(pos)
@@ -101,7 +113,7 @@ local function add_exit(p)
 			return
 		end
 	end
-	e[#e] = p
+	e[#e+1] = p
 	log("action", "[mcl_portals] Exit added at " .. pos_to_string(p))
 end
 
@@ -114,9 +126,8 @@ local function remove_exit(p)
 	local p = {x = x, y = y, z = z}
 	local e = exits[k]
 	if e then
-		for i = 1, #e do
-			local t = e[i]
-			if t.x == p.x and t.y == p.y and t.z == p.z then
+		for i, t in pairs(e) do
+			if t and t.x == x and t.y == y and t.z == z then
 				e[i] = nil
 				log("action", "[mcl_portals] Nether portal removed from " .. pos_to_string(p))
 				return
@@ -142,7 +153,7 @@ local function find_exit(p, dx, dy, dz)
 		if e then
 			for i = 1, #e do
 				local t0 = e[i]
-				local d0 = dist(p, t)
+				local d0 = dist(p, t0)
 				if not d or d>d0 then
 					d = d0
 					t = t0
@@ -289,7 +300,7 @@ local function light_frame(x1, y1, z1, x2, y2, z2, name)
 					set_node(pos, {name = OBSIDIAN})
 				else
 					set_node(pos, {name = PORTAL, param2 = orientation})
-					add_exit(pos)
+					add_exit({x=pos.x, y=pos.y-1, z=pos.z})
 				end
 			end
 		end
@@ -308,18 +319,33 @@ function build_nether_portal(pos, width, height, orientation, name)
 	for x = pos.x - orientation, pos.x + orientation + (width - 1) * (1 - orientation), 1 + orientation do
 		for z = pos.z - 1 + orientation, pos.z + 1 - orientation + (width - 1) * orientation, 2 - orientation do
 			local pp = {x = x, y = pos.y - 1, z = z}
+			local pp_1 = {x = x, y = pos.y - 2, z = z}
 			local nn = get_node(pp).name
-			log("warning", "[mcl_portals] pos=" .. pos_to_string(pp) .. " nn=" .. nn .. " name=" .. name .. " width=" .. tostring(width) .. " height=" .. tostring(height).." orientation=" ..tostring(orientation).." for obsidian platform:")
-			if not registered_nodes[nn].is_ground_content and not is_protected(pp, name) then
+			local nn_1 = get_node(pp_1).name
+			log("warning", "[mcl_portals] pos=" .. pos_to_string(pp) .. " nn=" .. nn .. " name=" .. name .. " width=" .. tostring(width) .. " height=" .. tostring(height).." orientation=" ..tostring(orientation).." gc="..tostring(registered_nodes[nn].is_ground_content) .." for obsidian platform:")
+			if ((nn=="air" and nn_1 == "air") or not registered_nodes[nn].is_ground_content) and not is_protected(pp, name) then
 				set_node(pp, {name = OBSIDIAN})
 				minetest.log("warning", "set!")
 			end
 		end
 	end
 
-	log("action", "[mcl_portal] Destination Nether portal generated at "..pos_to_string(pos).."!")
+	log("action", "[mcl_portals] Destination Nether portal generated at "..pos_to_string(pos).."!")
 
 	return pos
+end
+
+function mcl_portals.spawn_nether_portal(pos, rot, pr, name)
+	if not pos then return end
+	local o = 0
+	if rot then
+		if rot == "270" or rot=="90" then
+			o = 1
+		elseif rot == "random" then
+			o = random(0,1)
+		end
+	end
+	build_nether_portal(pos, nil, nil, o, name)
 end
 
 -- Teleportation cooloff for some seconds, to prevent back-and-forth teleportation
@@ -342,7 +368,6 @@ local function finalize_teleport(obj, exit)
 
 	local objpos = obj:get_pos()
 	if not objpos then return end
-	log("warning", "[mcl_portal] 3")
 
 	local is_player = obj:is_player()
 	local name
@@ -365,9 +390,9 @@ local function finalize_teleport(obj, exit)
 	if is_player then
 		mcl_worlds.dimension_change(obj, dim)
 		minetest.sound_play("mcl_portals_teleport", {pos=exit, gain=0.5, max_hear_distance = 16}, true)
-		log("action", "[mcl_portal] player "..name.." teleported to Nether portal at "..pos_to_string(exit)..".")
+		log("action", "[mcl_portals] player "..name.." teleported to Nether portal at "..pos_to_string(exit)..".")
 	else
-		log("action", "[mcl_portal] entity teleported to Nether portal at "..pos_to_string(exit)..".")
+		log("action", "[mcl_portals] entity teleported to Nether portal at "..pos_to_string(exit)..".")
 	end
 end
 
@@ -390,7 +415,9 @@ local function create_portal_2(pos1, name, obj)
 	chunks[cn] = nil
 	if queue[cn] then
 		for next_obj, _ in pairs(queue[cn]) do
-			finalize_teleport(next_obj, exit)
+			if next_obj ~= obj then
+				finalize_teleport(next_obj, exit)
+			end
 		end
 		queue[cn] = nil
 	end
@@ -403,7 +430,7 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	-- loop in a spiral around pos
 	local cs, x, z, dx, dz, p0x, p0z, p1x, p1y, p1z, p2x, p2y, p2z = mcl_vars.chunk_size_in_nodes, 0, 0, 0, -1, pos.x, pos.z, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z
 	local i_max = (cs*2-1) * (cs*2-1)
-	log("action", "[mcl_portal] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..pos_to_string(pos))
+	log("action", "[mcl_portals] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..pos_to_string(pos))
 
 	local backup_pos, bnc = nil, 0 -- 'better than nothing'
 
@@ -412,12 +439,12 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	for i = 1, i_max do
 		local px, pz = p0x + x, p0z + z
 		if ((i%100) == 1) then
-			log("action", "[mcl_portal] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
+			log("action", "[mcl_portals] i=" ..tostring(i) .." px=" .. tostring(px) .." pz=" .. tostring(pz) .. " x:"..tostring(p1x) .."-"..tostring(p2x) .. " z:"..tostring(p1z) .."-"..tostring(p2z))
 		end
 		if px >= p1x and pz >= p1z and px <= p2x and pz <= p2z then
 			p1.x, p2.x, p1.z, p2.z = px, px, pz, pz
 			local nodes = find_nodes_in_area_under_air(p1, p2, {"group:building_block"})
-			log("action", "[mcl_portal] check " .. pos_to_string(p1) .. "-" .. pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
+			log("action", "[mcl_portals] check " .. pos_to_string(p1) .. "-" .. pos_to_string(p2) .. ": " .. tostring(nodes and #nodes))
 			if nodes and #nodes > 0 then
 				for j = 1, #nodes do
 					local node = nodes[j]
@@ -432,14 +459,14 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 								node2.z = node2.z + 2
 								nodes_j = find_nodes_in_area(node, node2, {"air"})
 								if #nodes_j == 36 then
-									log("action", "[mcl_portal] found space at pos "..pos_to_string(node).." - creating a portal")
+									log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
 									create_portal_2(node, name, obj)
 									return
 								end
 							elseif nc > bnc then
 								bnc = nc
 								backup_pos = {x = node.x, y = node.y-2, z = node.z}
-								log("action", "[mcl_portal] set backup pos "..pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
+								log("action", "[mcl_portals] set backup pos "..pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
 							end
 						end
 					end
@@ -453,11 +480,11 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 		px, pz = p0x + x, p0z + z
 	end
 	if backup_pos then -- several nodes of air might be better than lava lake, right?
-		log("action", "[mcl_portal] using backup pos "..pos_to_string(backup_pos).." to create a portal")
+		log("action", "[mcl_portals] using backup pos "..pos_to_string(backup_pos).." to create a portal")
 		create_portal_2(backup_pos, name, obj)
 		return
 	end
-	log("action", "[mcl_portal] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
+	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
 
@@ -469,24 +496,24 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 	if nodes then
 		local nc = #nodes
 		if nc > 0 then
-			log("action", "[mcl_portal] Area for destination Nether portal emerged! Found " .. tostring(nc) .. " nodes under the air around "..pos_to_string(pos))
+			log("action", "[mcl_portals] Area for destination Nether portal emerged! Found " .. tostring(nc) .. " nodes under the air around "..pos_to_string(pos))
 			for i=1,nc do
 				local node = nodes[i]
-				local node1 = {x=node.x,   y=node.y+2, z=node.z  }
+				local node1 = {x=node.x,   y=node.y+1, z=node.z  }
 				local node2 = {x=node.x+2, y=node.y+3, z=node.z+2}
 				local nodes2 = find_nodes_in_area(node1, node2, {"air"})
 				if nodes2 then
 					local nc2 = #nodes2
-					log("action", "[mcl_portal] nc2=" .. tostring(nc2))
-					if nc2 == 18 and not is_area_protected(node, node2, name) then
+					log("action", "[mcl_portals] nc2=" .. tostring(nc2))
+					if nc2 == 27 and not is_area_protected(node, node2, name) then
 						local distance0 = dist(pos, node)
 						if distance0 < 2 then
-							log("action", "[mcl_portal] found space at pos "..pos_to_string(node).." - creating a portal")
+							log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
 							create_portal_2(node, name, obj)
 							return
 						end
 						if not distance or distance0 < distance then
-							log("action", "[mcl_portal] found distance "..tostring(distance0).." at pos "..pos_to_string(node))
+							log("action", "[mcl_portals] found distance "..tostring(distance0).." at pos "..pos_to_string(node))
 							distance = distance0
 							pos0 = {x=node.x, y=node.y, z=node.z}
 						end
@@ -496,11 +523,11 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 		end
 	end
 	if distance then -- several nodes of air might be better than lava lake, right?
-		log("action", "[mcl_portal] using backup pos "..pos_to_string(pos0).." to create a portal")
+		log("action", "[mcl_portals] using backup pos "..pos_to_string(pos0).." to create a portal")
 		create_portal_2(pos0, name, obj)
 		return
 	end
-	log("action", "[mcl_portal] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
+	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
 
@@ -786,7 +813,7 @@ minetest.override_item(OBSIDIAN, {
 				mcl_portals.light_nether_portal({x = x, y = y - 1, z = z}) or mcl_portals.light_nether_portal({x = x, y = y + 1, z = z}) or
 				mcl_portals.light_nether_portal({x = x, y = y, z = z - 1}) or mcl_portals.light_nether_portal({x = x, y = y, z = z + 1})
 		if portals_placed then
-			log("action", "[mcl_portal] Nether portal activated at "..pos_to_string({x=x,y=y,z=z})..".")
+			log("action", "[mcl_portals] Nether portal activated at "..pos_to_string({x=x,y=y,z=z})..".")
 			if minetest.get_modpath("doc") then
 				doc.mark_entry_as_revealed(user:get_player_name(), "nodes", PORTAL)
 
