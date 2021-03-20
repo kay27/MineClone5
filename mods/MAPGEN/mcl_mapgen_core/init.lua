@@ -1790,6 +1790,8 @@ local generate_nether_decorations = function(minp, maxp, seed)
 		return
 	end
 
+	minetest.log("action", "[mcl_mapgen_core] Nether decorations " .. minetest.pos_to_string(minp) .. " ... " .. minetest.pos_to_string(maxp))
+
 	-- TODO: Generate everything based on Perlin noise instead of PseudoRandom
 
 	local bpos
@@ -2133,24 +2135,31 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- * Replace water with Nether lava.
 		-- * Replace stone, sand dirt in v6 so the Nether works in v6.
 		elseif minp.y <= mcl_vars.mg_nether_max and maxp.y >= mcl_vars.mg_nether_min then
-			local nodes
 			if mg_name == "v6" then
-				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
-			else
-				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source"})
-			end
-			for n=1, #nodes do
-				local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
-				if data[p_pos] == c_water then
-					data[p_pos] = c_nether_lava
-					lvm_used = true
-				elseif data[p_pos] == c_stone then
-					data[p_pos] = c_netherrack
-					lvm_used = true
-				elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
-					data[p_pos] = c_soul_sand
-					lvm_used = true
+				local nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+				for n=1, #nodes do
+					local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
+					if data[p_pos] == c_water then
+						data[p_pos] = c_nether_lava
+						lvm_used = true
+					elseif data[p_pos] == c_stone then
+						data[p_pos] = c_netherrack
+						lvm_used = true
+					elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
+						data[p_pos] = c_soul_sand
+						lvm_used = true
+					end
 				end
+			else
+				minetest.emerge_area(minp, maxp, function(blockpos, action, calls_remaining, param)
+					if calls_remaining > 0 then return end
+					local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"mcl_core:water_source"})
+					local sn=(mcl_observers and mcl_observers.swap_node) or minetest.swap_node
+					local l = {name="mcl_nether:nether_lava_source"}
+					for _, n in pairs(nodes) do
+						sn(n, l)
+					end
+				end, {minp=vector.new(minp), maxp=vector.new(maxp)})
 			end
 
 		-- End block fixes:
