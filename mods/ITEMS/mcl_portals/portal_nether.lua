@@ -16,7 +16,7 @@ local sub = vector.subtract
 local W_MIN, W_MAX			= 4, 23
 local H_MIN, H_MAX			= 5, 23
 local N_MIN, N_MAX			= 6, (W_MAX-2) * (H_MAX-2)
-local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 1.5, 8
+local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 1, 8
 local LIM_MIN, LIM_MAX			= mcl_vars.mapgen_edge_min, mcl_vars.mapgen_edge_max
 local PLAYER_COOLOFF, MOB_COOLOFF	= 3, 14 -- for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME		= 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
@@ -151,8 +151,7 @@ local function find_exit(p, dx, dy, dz)
 		local k = kz*256 + kx
 		local e = exits[k]
 		if e then
-			for i = 1, #e do
-				local t0 = e[i]
+			for _, t0 in pairs(e) do
 				local d0 = dist(p, t0)
 				if not d or d>d0 then
 					d = d0
@@ -186,7 +185,7 @@ local function get_target(p)
 			if d=="nether" then
 				x, o1 = ping_pong(x, TRAVEL_X, LIM_MIN, LIM_MAX)
 				z, o2 = ping_pong(z, TRAVEL_Z, LIM_MIN, LIM_MAX)
-				y = floor(y * TRAVEL_Y * (o1+o2) + 0.5)
+				y = floor(y * TRAVEL_Y + (o1+o2) / 16 * LIM_MAX)
 				y = min(max(y + mcl_vars.mg_overworld_min, mcl_vars.mg_overworld_min), mcl_vars.mg_overworld_max)
 			elseif d=="overworld" then
 				x, y, z = floor(x / TRAVEL_X + 0.5), floor(y / TRAVEL_Y + 0.5), floor(z / TRAVEL_Z + 0.5)
