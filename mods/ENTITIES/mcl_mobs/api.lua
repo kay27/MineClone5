@@ -1047,7 +1047,10 @@ local do_env_damage = function(self)
 		end
 	end
 
-	local sunlight = minetest.get_natural_light(pos, self.time_of_day)
+	-- Use get_node_light for Minetest version 5.3 where get_natural_light
+	-- does not exist yet.
+	local get_light = minetest.get_natural_light or minetest.get_node_light
+	local sunlight = get_light(pos, self.time_of_day)
 
 	-- bright light harms mob
 	if self.light_damage ~= 0 and (sunlight or 0) > 12 then
@@ -2823,7 +2826,7 @@ local falling = function(self, pos)
 	end
 
 	if mcl_portals ~= nil then
-		if mcl_portals.nether_portal_cooloff[self.object] then
+		if mcl_portals.nether_portal_cooloff(self.object) then
 			return false -- mob has teleported through Nether portal - it's 99% not falling
 		end
 	end
