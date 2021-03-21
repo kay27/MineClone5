@@ -2153,7 +2153,8 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 			else
 				minetest.emerge_area(minp, maxp, function(blockpos, action, calls_remaining, param)
 					if calls_remaining > 0 then return end
-					local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"mcl_core:water_source"})
+					-- local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"mcl_core:water_source"})
+					local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"group:water"})
 					local sn=(mcl_observers and mcl_observers.swap_node) or minetest.swap_node
 					local l = {name="mcl_nether:nether_lava_source"}
 					for _, n in pairs(nodes) do

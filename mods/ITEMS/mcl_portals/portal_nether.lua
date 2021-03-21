@@ -16,7 +16,7 @@ local sub = vector.subtract
 local W_MIN, W_MAX			= 4, 23
 local H_MIN, H_MAX			= 5, 23
 local N_MIN, N_MAX			= 6, (W_MAX-2) * (H_MAX-2)
-local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 2, 8
+local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 1.5, 8
 local LIM_MIN, LIM_MAX			= mcl_vars.mapgen_edge_min, mcl_vars.mapgen_edge_max
 local PLAYER_COOLOFF, MOB_COOLOFF	= 3, 14 -- for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME		= 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
@@ -172,18 +172,21 @@ end
 -- Ping-Pong the coordinate for Fast Travelling, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
 local function ping_pong(x, m, l1, l2)
 	if x < 0 then
-		return	 l1 + abs(((x*m+l1) % (l1*4)) - (l1*2))
+		return	 l1 + abs(((x*m+l1) % (l1*4)) - (l1*2)), 	floor(x*m/l1/2)  + ((ceil(x*m/l1)+1)%2) * ((x*m)%l1)/l1
 	end
-	return		 l2 - abs(((x*m+l2) % (l2*4)) - (l2*2))
+	return		 l2 - abs(((x*m+l2) % (l2*4)) - (l2*2)), 	floor(x*m/l2/2) + (floor(x*m/l2)%2) * ((x*m)%l2)/l2
 end
 
 local function get_target(p)
 	if p and p.y and p.x and p.z then
 		local x, z = p.x, p.z
 		local y, d = mcl_worlds.y_to_layer(p.y)
+		local o1, o2 -- y offset
 		if y then
 			if d=="nether" then
-				x, y, z = ping_pong(x, TRAVEL_X, LIM_MIN, LIM_MAX), y*TRAVEL_Y, ping_pong(z, TRAVEL_Z, LIM_MIN, LIM_MAX)
+				x, o1 = ping_pong(x, TRAVEL_X, LIM_MIN, LIM_MAX)
+				z, o2 = ping_pong(z, TRAVEL_Z, LIM_MIN, LIM_MAX)
+				y = floor(y * TRAVEL_Y * (o1+o2) + 0.5)
 				y = min(max(y + mcl_vars.mg_overworld_min, mcl_vars.mg_overworld_min), mcl_vars.mg_overworld_max)
 			elseif d=="overworld" then
 				x, y, z = floor(x / TRAVEL_X + 0.5), floor(y / TRAVEL_Y + 0.5), floor(z / TRAVEL_Z + 0.5)
@@ -427,6 +430,8 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	if calls_remaining and calls_remaining > 0 then return end
 	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
 
+	local ttt1 = minetest.get_us_time() -- !!debug
+
 	-- loop in a spiral around pos
 	local cs, x, z, dx, dz, p0x, p0z, p1x, p1y, p1z, p2x, p2y, p2z = mcl_vars.chunk_size_in_nodes, 0, 0, 0, -1, pos.x, pos.z, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z
 	local i_max = (cs*2-1) * (cs*2-1)
@@ -459,6 +464,9 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 								node2.z = node2.z + 2
 								nodes_j = find_nodes_in_area(node, node2, {"air"})
 								if #nodes_j == 36 then
+									local msg1 = "DEBUG message: space found using algorithm 1, elapsed time: " .. tostring(minetest.get_us_time()-ttt1) .." us" -- !!debug
+									log("warning", "[mcl_portals] " .. msg1) -- !!debug
+									minetest.chat_send_all(msg1) -- !!debug
 									log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
 									create_portal_2(node, name, obj)
 									return
@@ -480,10 +488,16 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 		px, pz = p0x + x, p0z + z
 	end
 	if backup_pos then -- several nodes of air might be better than lava lake, right?
+		local msg1 = "DEBUG message: space partially found using algorithm 1, elapsed time: " .. tostring(minetest.get_us_time()-ttt1) .." us" -- !!debug
+		log("warning", "[mcl_portals] " .. msg1) -- !!debug
+		minetest.chat_send_all(msg1) -- !!debug
 		log("action", "[mcl_portals] using backup pos "..pos_to_string(backup_pos).." to create a portal")
 		create_portal_2(backup_pos, name, obj)
 		return
 	end
+	local msg1 = "DEBUG message: space not found using algorithm 1, elapsed time: " .. tostring(minetest.get_us_time()-ttt1) .." us" -- !!debug
+	log("warning", "[mcl_portals] " .. msg1) -- !!debug
+	minetest.chat_send_all(msg1) -- !!debug
 	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
@@ -492,6 +506,9 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 	if calls_remaining and calls_remaining > 0 then return end
 	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
 	local pos0, distance
+
+	local ttt2 = minetest.get_us_time() -- !!debug
+
 	local nodes = find_nodes_in_area_under_air(pos1, pos2, {"group:building_block"})
 	if nodes then
 		local nc = #nodes
@@ -508,6 +525,9 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 					if nc2 == 27 and not is_area_protected(node, node2, name) then
 						local distance0 = dist(pos, node)
 						if distance0 < 2 then
+							local msg1 = "DEBUG message: space found using algorithm 2, elapsed time: " .. tostring(minetest.get_us_time()-ttt2) .." us" -- !!debug
+							log("warning", "[mcl_portals] " .. msg1) -- !!debug
+							minetest.chat_send_all(msg1) -- !!debug
 							log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
 							create_portal_2(node, name, obj)
 							return
@@ -523,10 +543,16 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 		end
 	end
 	if distance then -- several nodes of air might be better than lava lake, right?
+		local msg1 = "DEBUG message: space partially found using algorithm 2, elapsed time: " .. tostring(minetest.get_us_time()-ttt2) .." us" -- !!debug
+		log("warning", "[mcl_portals] " .. msg1) -- !!debug
+		minetest.chat_send_all(msg1) -- !!debug
 		log("action", "[mcl_portals] using backup pos "..pos_to_string(pos0).." to create a portal")
 		create_portal_2(pos0, name, obj)
 		return
 	end
+	local msg1 = "DEBUG message: space not found using algorithm 2, elapsed time: " .. tostring(minetest.get_us_time()-ttt2) .." us" -- !!debug
+	log("warning", "[mcl_portals] " .. msg1) -- !!debug
+	minetest.chat_send_all(msg1) -- !!debug
 	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
 	create_portal_2(pos, name, obj)
 end
@@ -554,7 +580,11 @@ local function create_portal(pos, limit1, limit2, name, obj)
 		pos2 = {x = min(max(limit2.x, pos.x), pos2.x), y = min(max(limit2.y, pos.y), pos2.y), z = min(max(limit2.z, pos.z), pos2.z)}
 	end
 
-	minetest.emerge_area(pos1, pos2, ecb_scan_area_2, {pos = vector.new(pos), pos1 = pos1, pos2 = pos2, name=name, obj=obj})
+	if random(1,2) == 2 then
+		minetest.emerge_area(pos1, pos2, ecb_scan_area_2, {pos = vector.new(pos), pos1 = pos1, pos2 = pos2, name=name, obj=obj})
+	else
+		minetest.emerge_area(pos1, pos2, ecb_scan_area, {pos = vector.new(pos), pos1 = pos1, pos2 = pos2, name=name, obj=obj})
+	end
 end
 
 local function available_for_nether_portal(p)
