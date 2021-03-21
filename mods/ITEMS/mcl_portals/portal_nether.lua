@@ -425,14 +425,22 @@ local function create_portal_2(pos1, name, obj)
 	end
 end
 
+local function get_lava_level(pos, pos1, pos2)
+	if pos.y > -1000 then
+		return max(min(mcl_vars.mg_lava_overworld_max, pos2.y-1), pos1.y+1)
+	end
+	return max(min(mcl_vars.mg_lava_nether_max, pos2.y-1), pos1.y+1)
+end
+
 local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	if calls_remaining and calls_remaining > 0 then return end
 	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
+	local lava = get_lava_level(pos, pos1, pos2)
 
 	local ttt1 = minetest.get_us_time() -- !!debug
-
 	-- loop in a spiral around pos
 	local cs, x, z, dx, dz, p0x, p0z, p1x, p1y, p1z, p2x, p2y, p2z = mcl_vars.chunk_size_in_nodes, 0, 0, 0, -1, pos.x, pos.z, pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z
+
 	local i_max = (cs*2-1) * (cs*2-1)
 	log("action", "[mcl_portals] Area for destination Nether portal emerged! We about to iterate " .. tostring(i_max) .. " positions of spiral around "..pos_to_string(pos))
 
@@ -467,12 +475,12 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 									log("warning", "[mcl_portals] " .. msg1) -- !!debug
 									minetest.chat_send_all(msg1) -- !!debug
 									log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
-									create_portal_2(node, name, obj)
+									create_portal_2({x=node.x, y=node.y+1, z=node.z}, name, obj)
 									return
 								end
-							elseif nc > bnc then
+							elseif nc > bnc or ((nc > max(bnc-2,0)) and backup_pos.y<lava and node.y > lava) then
 								bnc = nc
-								backup_pos = {x = node.x, y = node.y-2, z = node.z}
+								backup_pos = {x = node2.x, y = node2.y, z = node2.z}
 								log("action", "[mcl_portals] set backup pos "..pos_to_string(backup_pos).." with "..tostring(nc).." air node(s)")
 							end
 						end
@@ -498,6 +506,11 @@ local function ecb_scan_area(blockpos, action, calls_remaining, param)
 	log("warning", "[mcl_portals] " .. msg1) -- !!debug
 	minetest.chat_send_all(msg1) -- !!debug
 	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
+	if pos.y < lava then
+		pos.y = lava + 1
+	else
+		pos.y = pos.y + 1
+	end
 	create_portal_2(pos, name, obj)
 end
 
@@ -505,6 +518,7 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 	if calls_remaining and calls_remaining > 0 then return end
 	local pos, pos1, pos2, name, obj = param.pos, param.pos1, param.pos2, param.name or "", param.obj
 	local pos0, distance
+	local lava = get_lava_level(pos, pos1, pos2)
 
 	local ttt2 = minetest.get_us_time() -- !!debug
 
@@ -528,13 +542,13 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 							log("warning", "[mcl_portals] " .. msg1) -- !!debug
 							minetest.chat_send_all(msg1) -- !!debug
 							log("action", "[mcl_portals] found space at pos "..pos_to_string(node).." - creating a portal")
-							create_portal_2(node, name, obj)
+							create_portal_2(node1, name, obj)
 							return
 						end
-						if not distance or distance0 < distance then
+						if not distance or (distance0 < distance) or (distance0 < distance-1 and node.y > lava and pos0.y < lava) then
 							log("action", "[mcl_portals] found distance "..tostring(distance0).." at pos "..pos_to_string(node))
 							distance = distance0
-							pos0 = {x=node.x, y=node.y, z=node.z}
+							pos0 = {x=node1.x, y=node1.y, z=node1.z}
 						end
 					end
 				end
@@ -553,6 +567,11 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 	log("warning", "[mcl_portals] " .. msg1) -- !!debug
 	minetest.chat_send_all(msg1) -- !!debug
 	log("action", "[mcl_portals] found no space, reverting to target pos "..pos_to_string(pos).." - creating a portal")
+	if pos.y < lava then
+		pos.y = lava + 1
+	else
+		pos.y = pos.y + 1
+	end
 	create_portal_2(pos, name, obj)
 end
 
