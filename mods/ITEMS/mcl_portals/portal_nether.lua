@@ -780,7 +780,7 @@ local function teleport(obj, portal_pos)
 		return
 	end
 
-	minetest.after(TELEPORT_DELAY, teleport_no_delay, obj, portal_pos)
+	minetest.after(DELAY, teleport_no_delay, obj, portal_pos)
 end
 
 minetest.register_abm({
