@@ -2112,16 +2112,10 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 					end
 				end
 			else
-				minetest.emerge_area(emin, emax, function(blockpos, action, calls_remaining, param)
-					if calls_remaining > 0 then return end
-					-- local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"mcl_core:water_source"})
-					local nodes = minetest.find_nodes_in_area(param.minp, param.maxp, {"group:water"})
-					local sn=(mcl_observers and mcl_observers.swap_node) or minetest.swap_node
-					local l = {name="mcl_nether:nether_lava_source"}
-					for _, n in pairs(nodes) do
-						sn(n, l)
-					end
-				end, {minp=vector.new(emin), maxp=vector.new(emax)})
+				local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
+				for _, n in pairs(nodes) do
+					data[area:index(n.x, n.y, n.z)] = c_nether_lava
+				end
 			end
 
 		-- End block fixes:
@@ -2129,17 +2123,16 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- * Remove stone, sand, dirt in v6 so our End map generator works in v6.
 		-- * Generate spawn platform (End portal destination)
 		elseif minp.y <= mcl_vars.mg_end_max and maxp.y >= mcl_vars.mg_end_min then
-			local nodes, node
+			local nodes, n
 			if mg_name == "v6" then
-				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
 			else
-				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source"})
+				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source"})
 			end
 			if #nodes > 0 then
 				lvm_used = true
-				for n=1, #nodes do
-					node = nodes[n]
-					data[area:index(node.x, node.y, node.z)] = c_air
+				for _, n in pairs(nodes) do
+					data[area:index(n.x, n.y, n.z)] = c_air
 				end
 			end
 
