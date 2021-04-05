@@ -18,6 +18,13 @@ local S = minetest.get_translator("extra_mobs")
 --################### fox
 --###################
 
+local followitem = ""
+if minetest.get_modpath("mc_sweet_berry") then
+    followitem = "mc_sweet_berry:sweet_berry"
+else
+    followitem = nil
+end
+
 local fox = {
 	type = "monster",
 	passive = false,
@@ -64,7 +71,6 @@ local fox = {
 	runaway = true,
 	on_spawn = function(self)
 		if minetest.find_node_near(self.object:get_pos(), 4, "mcl_core:snow") ~= nil or minetest.find_node_near(self.object:get_pos(), 4, "mcl_core:dirt_with_grass_snow") ~= nil then
-			minetest.chat_send_all("true")
 			self.object:set_properties({textures={"extra_mobs_artic_fox.png", "extra_mobs_trans.png"}})
 		end
 	end,
@@ -108,9 +114,10 @@ local fox = {
 	do_punch = function(self)
 		self.state = "runaway"
 	end,
+	follow = followitem,
 	fear_height = 4,
 	view_range = 16,
-	specific_attack = { "mobs_mc:cow", "mobs_mc:sheep", "mobs_mc:chicken" },
+	specific_attack = { "mobs_mc:chicken", "extra_mobs:cod", "extra_mobs:salmon" },
 }
 
 mobs:register_mob("extra_mobs:fox", fox)
