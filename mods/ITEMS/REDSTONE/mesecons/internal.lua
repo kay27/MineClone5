@@ -49,7 +49,6 @@
 
 local equals = vector.equals
 local get_node_force = mesecon.get_node_force
-local receptor_get_rules = mesecon.receptor_get_rules
 local invertRule = mesecon.invertRule
 local copy, insert = table.copy, table.insert
 local registered_nodes = minetest.registered_nodes
@@ -135,7 +134,7 @@ function mesecon.is_receptor(nodename)
 	return false
 end
 
-function mesecon.receptor_get_rules(node)
+local function receptor_get_rules(node)
 	local receptor = mesecon.get_receptor(node.name)
 	if receptor then
 		local rules = receptor.rules
@@ -148,6 +147,7 @@ function mesecon.receptor_get_rules(node)
 
 	return mesecon.rules.default
 end
+mesecon.receptor_get_rules = receptor_get_rules
 
 -- Effectors
 -- Nodes that can be powered by mesecons
