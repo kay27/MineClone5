@@ -1,5 +1,8 @@
 local S = minetest.get_translator("mcl_playerplus")
 
+local elytra = {}
+
+local node_stand_return = ":air"
 local get_connected_players = minetest.get_connected_players
 local dir_to_yaw = minetest.dir_to_yaw
 local get_item_group = minetest.get_item_group
@@ -156,7 +159,7 @@ minetest.register_globalstep(function(dtime)
 
 	for _,player in pairs(get_connected_players()) do
 
-		c_x, c_y = unpack(player_collision(player))
+		local c_x, c_y = unpack(player_collision(player))
 
 		if player:get_velocity().x + player:get_velocity().y < .5 and c_x + c_y > 0 then
 			--minetest.chat_send_player(player:get_player_name(), "pushed at " .. c_x + c_y .. " parsecs.")
@@ -172,14 +175,14 @@ minetest.register_globalstep(function(dtime)
 
 		]]--
 
-		local controls = player:get_player_control()
+		local control = player:get_player_control()
 		local name = player:get_player_name()
 		local meta = player:get_meta()
 		local parent = player:get_attach()
 		local wielded = player:get_wielded_item()
 		local player_velocity = player:get_velocity() or player:get_player_velocity()
 
-		-- controls head bone
+		-- control head bone
 		local pitch = - degrees(player:get_look_vertical())
 		local yaw = degrees(player:get_look_horizontal())
 
@@ -190,12 +193,55 @@ minetest.register_globalstep(function(dtime)
 		player_vel_yaw = limit_vel_yaw(player_vel_yaw, yaw)
 		player_vel_yaws[name] = player_vel_yaw
 
+		if minetest.get_node_or_nil({x=player:get_pos().x, y=player:get_pos().y - 0.5, z=player:get_pos().z}) then
+			node_stand_return = minetest.get_node_or_nil({x=player:get_pos().x, y=player:get_pos().y - 0.5, z=player:get_pos().z}).name
+		else
+			minetest.log("action", "somehow player got of loaded areas")
+		end
+
+		controls.register_on_press(function(player, key)
+			if key~="jump" then return end
+			if player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra" and player_velocity.y < -6 and elytra[player] ~= true then
+				elytra[player] = true
+			end
+		end)
+
+		if elytra[player] == true and node_stand_return ~= "air" or elytra[player] == true and player:get_inventory():get_stack("armor", 3):get_name() ~= "mcl_armor:elytra" or player:get_attach() ~= nil then
+			elytra[player] = false
+		end
+--[[
+		if player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra" and player_velocity.y < -6 and elytra[player] ~= true and is_sprinting(name) then
+			elytra[player] = true
+		elseif elytra[player] == true and node_stand_return ~= "air" or elytra[player] == true and player:get_inventory():get_stack("armor", 3):get_name() ~= "mcl_armor:elytra" or player:get_attach() ~= nil then
+			elytra[player] = false
+		end]]
+
+		if elytra[player] == true then
+			mcl_player.player_set_animation(player, "fly")
+			playerphysics.add_physics_factor(player, "gravity", "mcl_playerplus:elytra", 0.1)
+			if player_velocity.y < -1.5 then
+				player:add_velocity({x=0, y=0.17, z=0})
+			end
+			if math.abs(player_velocity.x) + math.abs(player_velocity.z) < 20 then
+				local dir = minetest.yaw_to_dir(player:get_look_horizontal())
+				local pitch = 1 * player:get_look_vertical() * -.1
+				player:add_velocity({x=dir.x, y=pitch, z=dir.z})
+			end
+			if control.sneak then
+				if player_velocity.y > -5 then
+					player:add_velocity({x=0, y=-2, z=0})
+				end
+			end
+		else
+			playerphysics.remove_physics_factor(player, "gravity", "mcl_playerplus:elytra")
+		end
+
 		-- controls right and left arms pitch when shooting a bow
-		if string.find(wielded:get_name(), "mcl_bows:bow") and controls.RMB and not controls.LMB and not controls.up and not controls.down and not controls.left and not controls.right then
+		if string.find(wielded:get_name(), "mcl_bows:bow") and control.RMB and not control.LMB and not control.up and not control.down and not control.left and not control.right then
 			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch+90,-30,pitch * -1 * .35))
 			player:set_bone_position("Arm_Left_Pitch_Control", vector.new(3.5,5.785,0), vector.new(pitch+90,43,pitch * .35))
 		-- when punching
-		elseif controls.LMB and not parent then
+		elseif control.LMB and not parent then
 			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch,0,0))
 			player:set_bone_position("Arm_Left_Pitch_Control", vector.new(3,5.785,0), vector.new(0,0,0))
 		-- when holding an item.
@@ -208,28 +254,35 @@ minetest.register_globalstep(function(dtime)
 			player:set_bone_position("Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(0,0,0))
 		end
 
-		if parent then
+		if elytra[player] == true then
+			-- set head pitch and yaw when swimming
+			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch+90-degrees(dir_to_pitch(player_velocity)),player_vel_yaw - yaw,0))
+			-- sets eye height, and nametag color accordingly
+			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,0.8,0.35}, eye_height = 0.5, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
+			-- control body bone when swimming
+			player:set_bone_position("Body_Control", vector.new(0,6.3,0), vector.new(degrees(dir_to_pitch(player_velocity)) - 90,-player_vel_yaw + yaw + 180,0))
+		elseif parent then
 			local parent_yaw = degrees(parent:get_yaw())
-			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.5, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_properties({collisionbox = {-0.312,0,-0.312,0.312,1.8,0.312}, eye_height = 1.5, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch, -limit_vel_yaw(yaw, parent_yaw) + parent_yaw, 0))
 			player:set_bone_position("Body_Control", vector.new(0,6.3,0), vector.new(0,0,0))
-		elseif controls.sneak then
+		elseif control.sneak then
 			-- controls head pitch when sneaking
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch+36,0,0))
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.35, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
+			player:set_properties({collisionbox = {-0.312,0,-0.312,0.312,1.8,0.312}, eye_height = 1.35, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
 			-- sneaking body conrols
 			player:set_bone_position("Body_Control", vector.new(0,6.3,0), vector.new(0,0,0))
 		elseif get_item_group(mcl_playerinfo[name].node_head, "water") ~= 0 and is_sprinting(name) == true then
 			-- set head pitch and yaw when swimming
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch+90-degrees(dir_to_pitch(player_velocity)),player_vel_yaw - yaw,0))
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,0.8,0.35}, eye_height = 0.5, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_properties({collisionbox = {-0.312,0,-0.312,0.312,0.8,0.312}, eye_height = 0.5, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
 			-- control body bone when swimming
 			player:set_bone_position("Body_Control", vector.new(0,6.3,0), vector.new(degrees(dir_to_pitch(player_velocity)) - 90,-player_vel_yaw + yaw + 180,0))
 		else
 			-- sets eye height, and nametag color accordingly
-			player:set_properties({collisionbox = {-0.35,0,-0.35,0.35,1.8,0.35}, eye_height = 1.5, nametag_color = { r = 225, b = 225, a = 225, g = 225 }})
+			player:set_properties({collisionbox = {-0.312,0,-0.312,0.312,1.8,0.312}, eye_height = 1.5, nametag_color = { r = 225, b = 225, a = 0, g = 225 }})
 
 			player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch, player_vel_yaw - yaw, 0))
 			player:set_bone_position("Body_Control", vector.new(0,6.3,0), vector.new(0, -player_vel_yaw + yaw, 0))
@@ -242,7 +295,7 @@ minetest.register_globalstep(function(dtime)
 			mcl_playerplus_internal[name].jump_cooldown = mcl_playerplus_internal[name].jump_cooldown - dtime
 		end
 
-		if controls.jump and mcl_playerplus_internal[name].jump_cooldown <= 0 then
+		if control.jump and mcl_playerplus_internal[name].jump_cooldown <= 0 then
 
 			pos = player:get_pos()
 
