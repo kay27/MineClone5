@@ -5,21 +5,15 @@ local minetest_settings                     = minetest.settings
 -- get entity staticdata
 mobs.mob_staticdata = function(self)
 
---[[
-	-- remove mob when out of range unless tamed
-	if remove_far
-	and self.can_despawn
-	and self.remove_ok
-	and ((not self.nametag) or (self.nametag == ""))
-	and self.lifetimer <= 20 then
-
-		minetest.log("action", "Mob "..name.." despawns in mob_staticdata at "..minetest.pos_to_string(self.object.get_pos(), 1))
-		mcl_burning.extinguish(self.object)
-		self.object:remove()
-
-		return ""-- nil
+	--despawn mechanism
+	--don't despawned tamed or bred mobs
+	if not self.tamed and not self.bred then
+		if not mobs.check_for_player_within_area(self, 64) then
+			--print("removing SERIALIZED!")
+			self.object:remove()
+			return
+		end
 	end
---]]
 
 	self.remove_ok = true
 	self.attack = nil
@@ -113,12 +107,12 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 		mesh = def.gotten_mesh
 	end
 
-	-- set child objects to half size
-	if self.child == true then
+	-- set baby mobs to half size
+	if self.baby == true then
 
 		vis_size = {
-			x = self.base_size.x * .5,
-			y = self.base_size.y * .5,
+			x = self.base_size.x * self.baby_size,
+			y = self.base_size.y * self.baby_size,
 		}
 
 		if def.child_texture then
@@ -126,26 +120,34 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 		end
 
 		colbox = {
-			self.base_colbox[1] * .5,
-			self.base_colbox[2] * .5,
-			self.base_colbox[3] * .5,
-			self.base_colbox[4] * .5,
-			self.base_colbox[5] * .5,
-			self.base_colbox[6] * .5
+			self.base_colbox[1] * self.baby_size,
+			self.base_colbox[2] * self.baby_size,
+			self.base_colbox[3] * self.baby_size,
+			self.base_colbox[4] * self.baby_size,
+			self.base_colbox[5] * self.baby_size,
+			self.base_colbox[6] * self.baby_size
 		}
 		selbox = {
-			self.base_selbox[1] * .5,
-			self.base_selbox[2] * .5,
-			self.base_selbox[3] * .5,
-			self.base_selbox[4] * .5,
-			self.base_selbox[5] * .5,
-			self.base_selbox[6] * .5
+			self.base_selbox[1] * self.baby_size,
+			self.base_selbox[2] * self.baby_size,
+			self.base_selbox[3] * self.baby_size,
+			self.base_selbox[4] * self.baby_size,
+			self.base_selbox[5] * self.baby_size,
+			self.base_selbox[6] * self.baby_size
 		}
 	end
 
-	if self.health == 0 then
+	--stop mobs from reviving
+	if not self.dead and not self.health then
 		self.health = math_random (self.hp_min, self.hp_max)
 	end
+
+	
+
+	if not self.random_sound_timer then
+		self.random_sound_timer = math_random(self.random_sound_timer_min,self.random_sound_timer_max)
+	end
+
 	if self.breath == nil then
 		self.breath = self.breath_max
 	end
@@ -183,17 +185,21 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 	self.opinion_sound_cooloff = 0 -- used to prevent sound spam of particular sound types
 
 	self.texture_mods = {}
-	self.object:set_texture_mod("")
+	
 
 	self.v_start = false
 	self.timer = 0
 	self.blinktimer = 0
 	self.blinkstatus = false
 
-	-- check existing nametag
-	if not self.nametag then
-		self.nametag = def.nametag
+
+	--continue mob effect on server restart
+	if self.dead or self.health <= 0 then
+		self.object:set_texture_mod("^[colorize:red:120")
+	else
+		self.object:set_texture_mod("")
 	end
+			
 
 	-- set anything changed above
 	self.object:set_properties(self)

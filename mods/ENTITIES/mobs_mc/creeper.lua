@@ -53,6 +53,21 @@ mobs:register_mob("mobs_mc:creeper", {
 	allow_fuse_reset = true,
 	stop_to_explode = true,
 
+	--head code
+	has_head = true,
+	head_bone = "head",
+
+	swap_y_with_x = true,
+	reverse_head_yaw = true,
+
+	head_bone_pos_y = 2.4,
+	head_bone_pos_z = 0,
+
+	head_height_offset = 1.1,
+	head_direction_offset = 0,
+	head_pitch_modifier = 0,
+	--end head code
+
 	-- Force-ignite creeper with flint and steel and explode after 1.5 seconds.
 	-- TODO: Make creeper flash after doing this as well.
 	-- TODO: Test and debug this code.
@@ -133,6 +148,7 @@ mobs:register_mob("mobs_mc:creeper", {
 })
 
 mobs:register_mob("mobs_mc:creeper_charged", {
+	description = S("Creeper"),
 	type = "monster",
 	spawn_class = "hostile",
 	hp_min = 20,
@@ -145,7 +161,7 @@ mobs:register_mob("mobs_mc:creeper_charged", {
 	mesh = "mobs_mc_creeper.b3d",
 
 	--BOOM
-	
+
 	textures = {
 		{"mobs_mc_creeper.png",
 		"mobs_mc_creeper_charge.png"},
@@ -259,8 +275,8 @@ mobs:register_mob("mobs_mc:creeper_charged", {
 })
 
 mobs:spawn_specific(
-"mobs_mc:creeper", 
-"overworld", 
+"mobs_mc:creeper",
+"overworld",
 "ground",
 {
 "Mesa",
@@ -403,12 +419,12 @@ mobs:spawn_specific(
 "ExtremeHillsM_underground",
 "JungleEdgeM_underground",
 },
-0, 
-7, 
-20, 
-16500, 
-2, 
-mobs_mc.spawn_height.overworld_min, 
+0,
+7,
+20,
+16500,
+2,
+mobs_mc.spawn_height.overworld_min,
 mobs_mc.spawn_height.overworld_max)
 
 -- spawn eggs

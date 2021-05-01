@@ -10,23 +10,65 @@ local vector_new      = vector.new
 local vector_length   = vector.length
 local vector_multiply = vector.multiply
 local vector_distance = vector.distance
+local vector_normalize = vector.normalize
 
 local minetest_yaw_to_dir = minetest.yaw_to_dir
 local minetest_dir_to_yaw = minetest.dir_to_yaw
 
 local DEFAULT_JUMP_HEIGHT = 5
 local DEFAULT_FLOAT_SPEED = 4
+local DEFAULT_CLIMB_SPEED = 3
 
 
+mobs.stick_in_cobweb = function(self)
+	local current_velocity = self.object:get_velocity()
+	
+	local goal_velocity = vector_multiply(vector_normalize(current_velocity), 0.4)
+
+	goal_velocity.y = -0.5
+
+	local new_velocity_addition = vector.subtract(goal_velocity,current_velocity)
+
+	--smooths out mobs a bit
+	if vector_length(new_velocity_addition) >= 0.0001 then
+		self.object:add_velocity(new_velocity_addition)
+	end
+end
 
 --this is a generic float function
 mobs.float = function(self)
+
+	if self.object:get_acceleration().y ~= 0 then
+		self.object:set_acceleration(vector_new(0,0,0))
+	end
 
 	local current_velocity = self.object:get_velocity()
 
 	local goal_velocity = {
 		x = 0,
 		y = DEFAULT_FLOAT_SPEED,
+		z = 0,
+	}
+
+	local new_velocity_addition = vector.subtract(goal_velocity,current_velocity)
+
+	new_velocity_addition.x = 0
+	new_velocity_addition.z = 0
+
+	--smooths out mobs a bit
+	if vector_length(new_velocity_addition) >= 0.0001 then
+		self.object:add_velocity(new_velocity_addition)
+	end
+end
+
+--this is a generic climb function
+mobs.climb = function(self)
+
+	local current_velocity = self.object:get_velocity()
+
+	local goal_velocity = {
+		x = 0,
+		y = DEFAULT_CLIMB_SPEED,
 		z = 0,
 	}
 
@@ -113,8 +155,36 @@ mobs.jump = function(self, velocity)
     self.object:add_velocity(vector_new(0,velocity,0))    
 end
 
+--make mobs fall slowly
+mobs.mob_fall_slow = function(self)
+
+	local current_velocity = self.object:get_velocity()
+
+	local goal_velocity = {
+		x = 0,
+		y = -2,
+		z = 0,
+	}
 
 
+	local new_velocity_addition = vector.subtract(goal_velocity,current_velocity)
+
+	new_velocity_addition.x = 0
+	new_velocity_addition.z = 0
+
+	if vector_length(new_velocity_addition) > vector_length(goal_velocity) then
+		vector.multiply(new_velocity_addition, (vector_length(goal_velocity) / vector_length(new_velocity_addition)))
+	end
+
+	new_velocity_addition.x = 0
+	new_velocity_addition.z = 0
+
+	--smooths out mobs a bit
+	if vector_length(new_velocity_addition) >= 0.0001 then
+		self.object:add_velocity(new_velocity_addition)
+	end
+
+end
 
 
 --[[
@@ -305,5 +375,17 @@ mobs.jump_move = function(self, velocity)
 	--smooths out mobs a bit
 	if vector_length(new_velocity_addition) >= 0.0001 then
 		self.object:add_velocity(new_velocity_addition)
+	end
+end
+
+--make it so mobs do not glitch out and freak out
+--when moving around over nodes
+mobs.swap_auto_step_height_adjust = function(self)
+	local y_vel = self.object:get_velocity().y
+
+	if y_vel == 0 and self.stepheight ~= self.stepheight_backup then
+		self.stepheight = self.stepheight_backup
+	elseif y_vel ~= 0 and self.stepheight ~= 0 then
+		self.stepheight = 0
 	end
 end

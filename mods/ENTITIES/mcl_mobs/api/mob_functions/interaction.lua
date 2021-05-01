@@ -1,5 +1,15 @@
-local math_floor = math.floor
+local minetest_after      = minetest.after
+local minetest_sound_play = minetest.sound_play
+local minetest_dir_to_yaw = minetest.dir_to_yaw
+
+local math_floor  = math.floor
+local math_min    = math.min
+local math_random = math.random
+
 local vector_direction = vector.direction
+local vector_multiply  = vector.multiply
+
+local MAX_MOB_NAME_LENGTH = 30
 
 mobs.feed_tame = function(self)
     return nil
@@ -20,7 +30,7 @@ local on_rightclick_prefix = function(self, clicker)
 			end
 			self.nametag = tag
 
-			update_tag(self)
+			mobs.update_tag(self)
 
 			if not mobs.is_creative(clicker:get_player_name()) then
 				item:take_item()
@@ -36,6 +46,10 @@ end
 -- I have no idea what this does
 mobs.create_mob_on_rightclick = function(on_rightclick)
 	return function(self, clicker)
+		--don't allow rightclicking dead mobs
+		if self.health <= 0 then
+			return
+		end
 		local stop = on_rightclick_prefix(self, clicker)
 		if (not stop) and (on_rightclick) then
 			on_rightclick(self, clicker)
@@ -47,13 +61,16 @@ end
 -- deal damage and effects when mob punched
 mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 
+	--don't do anything if the mob is already dead
+	if self.health <= 0 then
+		return
+	end
+
 	--neutral passive mobs switch to neutral hostile
 	if self.neutral then
-
 		--drop in variables for attacking (stops crash)
 		self.attacking   = hitter
 		self.punch_timer = 0
-
 		self.hostile = true
 		--hostile_cooldown timer is initialized here
 		self.hostile_cooldown_timer = self.hostile_cooldown
@@ -64,38 +81,54 @@ mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 		end
 	end
 
+	--turn skittish mobs away and RUN
+	if self.skittish then
 
-	--[[
+		self.state = "run"
+
+		self.run_timer = 5 --arbitrary 5 seconds
+
+		local pos1 = self.object:get_pos()
+		pos1.y = 0
+		local pos2 = hitter:get_pos()
+		pos2.y = 0
+
+
+		local dir = vector_direction(pos2,pos1)
+
+		local yaw = minetest_dir_to_yaw(dir)
+
+		self.yaw = yaw
+	end
+
+
 	-- custom punch function
 	if self.do_punch then
-
 		-- when false skip going any further
 		if self.do_punch(self, hitter, tflp, tool_capabilities, dir) == false then
 			return
 		end
 	end
 
+	--don't do damage until pause timer resets
+	if self.pause_timer > 0 then
+		return
+	end 
+
+	
 	-- error checking when mod profiling is enabled
 	if not tool_capabilities then
-		minetest.log("warning", "[mobs] Mod profiling enabled, damage not enabled")
+		minetest.log("warning", "[mobs_mc] Mod profiling enabled, damage not enabled")
 		return
 	end
 
+
 	local is_player = hitter:is_player()
-
-	if is_player then
-		-- is mob protected?
-		if self.protected and minetest_is_protected(self.object:get_pos(), hitter:get_player_name()) then
-			return
-		end
-
-		-- set/update 'drop xp' timestamp if hitted by player
-		self.xp_timestamp = minetest_get_us_time()
-	end
 
 
 	-- punch interval
 	local weapon = hitter:get_wielded_item()
+
 	local punch_interval = 1.4
 
 	-- exhaust attacker
@@ -108,28 +141,9 @@ mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 	local armor = self.object:get_armor_groups() or {}
 	local tmp
 
-	-- quick error check incase it ends up 0 (serialize.h check test)
-	if tflp == 0 then
-		tflp = 0.2
-	end
-
-	if use_cmi then
-		damage = cmi.calculate_damage(self.object, hitter, tflp, tool_capabilities, dir)
-	else
-
-		for group,_ in pairs( (tool_capabilities.damage_groups or {}) ) do
-
-			tmp = tflp / (tool_capabilities.full_punch_interval or 1.4)
-
-			if tmp < 0 then
-				tmp = 0.0
-			elseif tmp > 1 then
-				tmp = 1.0
-			end
-
-			damage = damage + (tool_capabilities.damage_groups[group] or 0)
-				* tmp * ((armor[group] or 0) / 100.0)
-		end
+	--calculate damage groups
+	for group,_ in pairs( (tool_capabilities.damage_groups or {}) ) do
+		damage = damage + (tool_capabilities.damage_groups[group] or 0) * ((armor[group] or 0) / 100.0)
 	end
 
 	if weapon then
@@ -141,9 +155,7 @@ mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 
 	-- check for tool immunity or special damage
 	for n = 1, #self.immune_to do
-
 		if self.immune_to[n][1] == weapon:get_name() then
-
 			damage = self.immune_to[n][2] or 0
 			break
 		end
@@ -155,21 +167,14 @@ mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 		return
 	end
 
-	if use_cmi then
-
-		local cancel =  cmi.notify_punch(self.object, hitter, tflp, tool_capabilities, dir, damage)
-
-		if cancel then return end
-	end
-
 	if tool_capabilities then
 		punch_interval = tool_capabilities.full_punch_interval or 1.4
 	end
 
 	-- add weapon wear manually
 	-- Required because we have custom health handling ("health" property)
-	if minetest_is_creative_enabled("") ~= true
-	and tool_capabilities then
+	--minetest_is_creative_enabled("") ~= true --removed for now
+	if tool_capabilities then
 		if tool_capabilities.punch_attack_uses then
 			-- Without this delay, the wear does not work. Quite hacky ...
 			minetest_after(0, function(name)
@@ -186,157 +191,79 @@ mobs.mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 		end
 	end
 
-	local die = false
+
+	--if player is falling multiply damage by 1.5
+	--critical hit
+	if hitter:get_velocity().y < 0 then
+		damage = damage * 1.5
+		mobs.critical_effect(self)
+	end
+
 
 	-- only play hit sound and show blood effects if damage is 1 or over; lower to 0.1 to ensure armor works appropriately.
 	if damage >= 0.1 then
 
-		-- weapon sounds
-		if weapon:get_definition().sounds ~= nil then
-
-			local s = math_random(0, #weapon:get_definition().sounds)
-
-			minetest_sound_play(weapon:get_definition().sounds[s], {
-				object = self.object, --hitter,
-				max_hear_distance = 8
-			}, true)
-		else
-			minetest_sound_play("default_punch", {
-				object = self.object,
-				max_hear_distance = 5
-			}, true)
-		end
-
-		damage_effect(self, damage)
+		minetest_sound_play("default_punch", {
+			object = self.object,
+			max_hear_distance = 16
+		}, true)
 
 		-- do damage
 		self.health = self.health - damage
 
-		-- skip future functions if dead, except alerting others
-		if check_for_death(self, "hit", {type = "punch", puncher = hitter}) then
-			die = true
+
+		--0.4 seconds until you can hurt the mob again
+		self.pause_timer = 0.4
+
+		--don't do knockback from a rider
+		for _,obj in pairs(self.object:get_children()) do
+			if obj == hitter then
+				return
+			end
 		end
 
-		-- knock back effect (only on full punch)
-		if not die
-		and self.knock_back
-		and tflp >= punch_interval then
+		-- knock back effect
+		local velocity = self.object:get_velocity()
+		
+		--2d direction
+		local pos1 = self.object:get_pos()
+		pos1.y = 0
+		local pos2 = hitter:get_pos()
+		pos2.y = 0
 
-			local v = self.object:get_velocity()
-			local r = 1.4 - math_min(punch_interval, 1.4)
-			local kb = r * 2.0
-			local up = 2
+		local dir = vector.direction(pos2,pos1)
 
-			-- if already in air then dont go up anymore when hit
-			if v.y ~= 0
-			or self.fly then
-				up = 0
-			end
+		local up = 3
 
-			-- direction error check
-			dir = dir or {x = 0, y = 0, z = 0}
-
-			-- check if tool already has specific knockback value
-			if tool_capabilities.damage_groups["knockback"] then
-				kb = tool_capabilities.damage_groups["knockback"]
-			else
-				kb = kb * 1.5
-			end
-
-
-			local luaentity
-			if hitter then
-				luaentity = hitter:get_luaentity()
-			end
-			if hitter and is_player then
-				local wielditem = hitter:get_wielded_item()
-				kb = kb + 3 * mcl_enchanting.get_enchantment(wielditem, "knockback")
-			elseif luaentity and luaentity._knockback then
-				kb = kb + luaentity._knockback
-			end
-
-			self.object:set_velocity({
-				x = dir.x * kb,
-				y = dir.y * kb + up * 2,
-				z = dir.z * kb
-			})
-
-			self.pause_timer = 0.25
-		end
-	end -- END if damage
-
-	-- if skittish then run away
-	if not die and self.runaway == true and self.state ~= "flop" then
-
-		local lp = hitter:get_pos()
-		local s = self.object:get_pos()
-		local vec = {
-			x = lp.x - s.x,
-			y = lp.y - s.y,
-			z = lp.z - s.z
-		}
-
-		local yaw = (atan(vec.z / vec.x) + 3 * math_pi / 2) - self.rotate
-
-		if lp.x > s.x then
-			yaw = yaw + math_pi
+		-- if already in air then dont go up anymore when hit
+		if velocity.y ~= 0 then
+			up = 0
 		end
 
-		yaw = set_yaw(self, yaw, 6)
-		self.state = "runaway"
-		self.runaway_timer = 0
-		self.following = nil
+
+		--0.75 for perfect distance to not be too easy, and not be too hard
+		local multiplier = 0.75 
+
+		-- check if tool already has specific knockback value
+		local knockback_enchant = mcl_enchanting.get_enchantment(hitter:get_wielded_item(), "knockback")
+		if knockback_enchant and knockback_enchant > 0 then
+			multiplier = knockback_enchant + 1 --(starts from 1, 1 would be no change)
+		end
+
+		--do this to sure you can punch a mob back when
+		--it's coming for you
+		if self.hostile then
+			multiplier = multiplier + 2
+		end	
+
+		dir = vector_multiply(dir,multiplier)
+
+		dir.y = up
+
+		--add the velocity
+		self.object:add_velocity(dir)
+
 	end
-
-	local name = hitter:get_player_name() or ""
-
-	-- attack puncher and call other mobs for help
-	if self.passive == false
-	and self.state ~= "flop"
-	and (self.child == false or self.type == "monster")
-	and hitter:get_player_name() ~= self.owner
-	and not mobs.invis[ name ] then
-
-		if not die then
-			-- attack whoever punched mob
-			self.state = ""
-			do_attack(self, hitter)
-		end
-
-		-- alert others to the attack
-		local objs = minetest_get_objects_inside_radius(hitter:get_pos(), self.view_range)
-		local obj = nil
-
-		for n = 1, #objs do
-
-			obj = objs[n]:get_luaentity()
-
-			if obj then
-
-				-- only alert members of same mob or friends
-				if obj.group_attack
-				and obj.state ~= "attack"
-				and obj.owner ~= name then
-					if obj.name == self.name then
-						do_attack(obj, hitter)
-					elseif type(obj.group_attack) == "table" then
-						for i=1, #obj.group_attack do
-							if obj.name == obj.group_attack[i] then
-								do_attack(obj, hitter)
-								break
-							end
-						end
-					end
-				end
-
-				-- have owned mobs attack player threat
-				if obj.owner == name and obj.owner_loyal then
-					do_attack(obj, self.object)
-				end
-			end
-		end
-	end
-	]]--
 end
 
 --do internal per mob projectile calculations
@@ -355,4 +282,10 @@ mobs.shoot_projectile = function(self)
 
 	--call internal shoot_arrow function
 	self.shoot_arrow(self,pos1,dir)
+end
+
+mobs.update_tag = function(self)
+	self.object:set_properties({
+		nametag = self.nametag,
+	})
 end

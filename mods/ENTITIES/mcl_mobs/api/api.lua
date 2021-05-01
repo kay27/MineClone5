@@ -45,13 +45,14 @@ local math_floor  = math.floor
 
 -- localize vector functions
 local vector_new    = vector.new
+local vector_add    = vector.add
 local vector_length = vector.length
 local vector_direction = vector.direction
 local vector_normalize = vector.normalize
 local vector_multiply = vector.multiply
+local vector_divide  = vector.divide
 
 -- mob constants
-local MAX_MOB_NAME_LENGTH = 30
 local BREED_TIME          = 30
 local BREED_TIME_AGAIN    = 300
 local CHILD_GROW_TIME     = 60*20
@@ -120,7 +121,7 @@ end
 
 -- creative check
 function mobs.is_creative(name)
-	return minetest.is_creative_enabled(name)
+	return minetest_is_creative_enabled(name)
 end
 
 
@@ -159,6 +160,11 @@ dofile(api_path .. "movement.lua")
 dofile(api_path .. "set_up.lua")
 dofile(api_path .. "attack_type_instructions.lua")
 dofile(api_path .. "sound_handling.lua")
+dofile(api_path .. "death_logic.lua")
+dofile(api_path .. "mob_effects.lua")
+dofile(api_path .. "projectile_handling.lua")
+dofile(api_path .. "breeding.lua")
+dofile(api_path .. "head_logic.lua")
 
 
 mobs.spawning_mobs = {}
@@ -181,15 +187,6 @@ function mobs:register_mob(name, def)
 
 	mobs.spawning_mobs[name] = true
 
-	local can_despawn
-	if def.can_despawn ~= nil then
-		can_despawn = def.can_despawn
-	elseif def.spawn_class == "passive" then
-		can_despawn = false
-	else
-		can_despawn = true
-	end
-
 	local function scale_difficulty(value, default, min, special)
 		if (not value) or (value == default) or (value == special) then
 			return default
@@ -199,9 +196,10 @@ function mobs:register_mob(name, def)
 	end
 
 	minetest.register_entity(name, {
-
+		description = def.description,
 		use_texture_alpha = def.use_texture_alpha,
 		stepheight = def.stepheight or 0.6,
+		stepheight_backup = def.stepheight or 0.6,
 		name = name,
 		type = def.type,
 		attack_type = def.attack_type,
@@ -214,13 +212,11 @@ function mobs:register_mob(name, def)
 		do_custom = def.do_custom,
 		jump_height = def.jump_height or 4, -- was 6
 		rotate = def.rotate or 0, --  0=front, 90=side, 180=back, 270=side2
-		lifetimer = def.lifetimer or 57.73,
 		hp_min = scale_difficulty(def.hp_min, 5, 1),
 		hp_max = scale_difficulty(def.hp_max, 10, 1),
-		xp_min = def.xp_min or 0,
-		xp_max = def.xp_max or 3,
-		xp_timestamp = 0,
-		breath_max = def.breath_max or 15,
+		xp_min = def.xp_min or 1,
+		xp_max = def.xp_max or 5,
+		breath_max = def.breath_max or 6,
 		breathes_in_water = def.breathes_in_water or false,
 		physical = true,
 		collisionbox = collisionbox,
@@ -249,7 +245,6 @@ function mobs:register_mob(name, def)
 		shoot_interval = def.shoot_interval,
 		sounds = def.sounds or {},
 		animation = def.animation,
-		follow = def.follow,
 		jump = def.jump ~= false,
 		walk_chance = def.walk_chance or 50,
 		attacks_monsters = def.attacks_monsters or false,
@@ -269,10 +264,7 @@ function mobs:register_mob(name, def)
 		env_damage_timer = 0,
 		tamed = false,
 		pause_timer = 0,
-		horny = false,
-		hornytimer = 0,
 		gotten = false,
-		health = 0,
 		reach = def.reach or 3,
 		htimer = 0,
 		texture_list = def.textures,
@@ -302,7 +294,6 @@ function mobs:register_mob(name, def)
 		owner_loyal = def.owner_loyal,
 		facing_fence = false,
 
-
 		_cmi_is_mob = true,
 
 		pushable = def.pushable or true,
@@ -325,17 +316,102 @@ function mobs:register_mob(name, def)
 		attacking = nil,
 		visual_size_origin = def.visual_size or {x = 1, y = 1, z = 1},
 		punch_timer_cooloff = def.punch_timer_cooloff or 0.5,
-		projectile_cooldown = def.projectile_cooldown or 2,
+		death_animation_timer = 0,
+		hostile_cooldown = def.hostile_cooldown or 15,
+		tilt_fly = def.tilt_fly,
+		tilt_swim = def.tilt_swim,
+		fall_slow = def.fall_slow,
+		projectile_cooldown_min = def.projectile_cooldown_min or 2,
+		projectile_cooldown_max = def.projectile_cooldown_max or 6,
+		skittish = def.skittish,
+
+		minimum_follow_distance = def.minimum_follow_distance or 0.5, --make mobs not freak out when underneath
+
+		memory = 0, -- memory timer if chasing/following
+		fly_random_while_attack = def.fly_random_while_attack,
+
+		--for spiders
+		always_climb = def.always_climb,
+
+		--despawn mechanic variables
+		lifetimer_reset = 30, --30 seconds
+		lifetimer = 30, --30 seconds
+
+		--breeding stuff
+		breed_timer = 0,
+		breed_lookout_timer = 0,
+		breed_distance = def.breed_distance or 1.5, --how far away mobs have to be to begin actual breeding
+		breed_lookout_timer_goal = 30, --30 seconds (this timer is for how long the mob looks for a mate)
+		breed_timer_cooloff = 5*60, -- 5 minutes (this timer is for how long the mob has to wait before being bred again)
+		bred = false,
+		follow = def.follow, --this item is also used for the breeding mechanism
+		follow_distance = def.follow_distance or 2,
+		baby_size = def.baby_size or 0.5,
+		baby = false,
+		grow_up_timer = 0,
+		grow_up_goal  = 20*60, --in 20 minutes the mob grows up
+		special_breed_timer = 0, --this is used for the AHEM AHEM part of breeding
+
+		backup_visual_size = def.visual_size,
+		backup_collisionbox = collisionbox,
+		backup_selectionbox = def.selectionbox or def.collisionbox,
+
+
+		--fire timer
+		burn_timer = 0,
+
+		ignores_cobwebs = def.ignores_cobwebs,
+		breath = def.breath_max or 6,
+
+		random_sound_timer_min = 3,
+		random_sound_timer_max = 10,
+
+
+		--head code variables
+		--defaults are for the cow's default
+		--because I don't know what else to set them
+		--to :P
+
+		has_head = def.has_head or false,
+		head_bone = def.head_bone,
+
+		--you must use these to adjust the mob's head positions
+
+		--has_head is used as a logic gate (quick easy check)
+		has_head = def.has_head or false,
+		--head_bone is the actual bone in the model which the head
+		--is attached to for animation
+		head_bone = def.head_bone or "head",
+
+		--this part controls the base position of the head calculations
+		--localized to the mob's visual yaw when gotten (self.object:get_yaw())
+		--you can enable the debug in /mob_functions/head_logic.lua by uncommenting the
+		--particle spawner code
+		head_height_offset =  def.head_height_offset or 1.0525,
+		head_direction_offset = def.head_direction_offset or 0.5,
+
+		--this part controls the visual of the head
+		head_bone_pos_y = def.head_bone_pos_y or 3.6,
+		head_bone_pos_z = def.head_bone_pos_z or -0.6,
+		head_pitch_modifier = def.head_pitch_modifier or 0,
+
+		--these variables are switches in case the model
+		--moves the wrong way
+		swap_y_with_x = def.swap_y_with_x or false,
+		reverse_head_yaw = def.reverse_head_yaw or false,
+
+		--END HEAD CODE VARIABLES
+
 		--end j4i stuff
 
 		-- MCL2 extensions
-		teleport = teleport,
+		teleport = mobs.teleport,
 		do_teleport = def.do_teleport,
 		spawn_class = def.spawn_class,
 		ignores_nametag = def.ignores_nametag or false,
 		rain_damage = def.rain_damage or 0,
 		glow = def.glow,
-		can_despawn = can_despawn,
+		--can_despawn = can_despawn,
 		child = def.child or false,
 		texture_mods = {},
 		shoot_arrow = def.shoot_arrow,
@@ -349,9 +425,6 @@ function mobs:register_mob(name, def)
 		ignited_by_sunlight = def.ignited_by_sunlight or false,
 		eye_height = def.eye_height or 1.5,
 		defuse_reach = def.defuse_reach or 4,
-		hostile_cooldown = def.hostile_cooldown or 15,
-		tilt_fly = def.tilt_fly,
-		tilt_swim = def.tilt_swim,
 		-- End of MCL2 extensions
 
 		on_spawn = def.on_spawn,
@@ -469,13 +542,11 @@ function mobs:register_arrow(name, def)
 			local vel = self.object:get_velocity()
 
 			local pos = self.object:get_pos()
-			
+
 			if self.timer > 150
 			or not mobs.within_limits(pos, 0) then
 				mcl_burning.extinguish(self.object)
-				print("removing 1")
 				self.object:remove();
-
 				return
 			end
 
@@ -484,8 +555,13 @@ function mobs:register_arrow(name, def)
 			and def.tail == 1
 			and def.tail_texture then
 
+				--do this to prevent clipping through main entity sprite
+				local pos_adjustment = vector_multiply(vector_normalize(vel), -1)
+				local divider = def.tail_distance_divider or 1
+				pos_adjustment = vector_divide(pos_adjustment, divider)
+				local new_pos = vector_add(pos, pos_adjustment)
 				minetest.add_particle({
-					pos = pos,
+					pos = new_pos,
 					velocity = {x = 0, y = 0, z = 0},
 					acceleration = {x = 0, y = 0, z = 0},
 					expirationtime = def.expire or 0.25,
@@ -526,9 +602,12 @@ function mobs:register_arrow(name, def)
 					if self.hit_player
 					and player:is_player() then
 
-						mobs.arrow_hit(self, player)
+						if self.hit_player then
+							self.hit_player(self, player)
+						else
+							mobs.arrow_hit(self, player)
+						end
 
-						print("wow everything is fucked")
 						self.object:remove();
 						return
 					end
@@ -643,8 +722,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 					minetest.chat_send_player(name, S("Only peaceful mobs allowed!"))
 					return itemstack
 				end
-
-				pos.y = pos.y - 0.5
 
 				local mob = minetest_add_entity(pos, mob)
 				minetest.log("action", "Mob spawned: "..name.." at "..minetest.pos_to_string(pos))

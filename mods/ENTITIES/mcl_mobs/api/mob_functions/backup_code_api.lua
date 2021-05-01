@@ -64,7 +64,6 @@ function mobs:alias_mob(old_name, new_name)
 	})
 end
 
-
 -- Spawn a child
 function mobs:spawn_child(pos, mob_type)
 	local child = minetest_add_entity(pos, mob_type)
@@ -279,43 +278,10 @@ local falling = function(self, pos)
 		end
 	else
 
-		-- fall damage onto solid ground
-		if self.fall_damage == 1
-		and self.object:get_velocity().y == 0 then
-
-			local d = (self.old_y or 0) - self.object:get_pos().y
-
-			if d > 5 then
-
-				local add = minetest_get_item_group(self.standing_on, "fall_damage_add_percent")
-				local damage = d - 5
-				if add ~= 0 then
-					damage = damage + damage * (add/100)
-				end
-				damage = math_floor(damage)
-				if damage > 0 then
-					self.health = self.health - damage
-
-					effect(pos, 5, "mcl_particles_smoke.png", 1, 2, 2, nil)
-
-					if check_for_death(self, "fall", {type = "fall"}) then
-						return true
-					end
-				end
-			end
-
-			self.old_y = self.object:get_pos().y
-		end
 	end
 end
 
-local teleport = function(self, target)
-	if self.do_teleport then
-		if self.do_teleport(self, target) == false then
-			return
-		end
-	end
-end
+
 
 
 -- find someone to runaway from
@@ -946,109 +912,9 @@ local smart_mobs = function(self, s, p, dist, dtime)
 	end
 end
 
-local update_tag = function(self)
-	local tag
-	if mobs_debug then
-		tag = "nametag = '"..tostring(self.nametag).."'\n"..
-		"state = '"..tostring(self.state).."'\n"..
-		"order = '"..tostring(self.order).."'\n"..
-		"attack = "..tostring(self.attack).."\n"..
-		"health = "..tostring(self.health).."\n"..
-		"breath = "..tostring(self.breath).."\n"..
-		"gotten = "..tostring(self.gotten).."\n"..
-		"tamed = "..tostring(self.tamed).."\n"..
-		"horny = "..tostring(self.horny).."\n"..
-		"hornytimer = "..tostring(self.hornytimer).."\n"..
-		"runaway_timer = "..tostring(self.runaway_timer).."\n"..
-		"following = "..tostring(self.following)
-	else
-		tag = self.nametag
-	end
-	self.object:set_properties({
-		nametag = tag,
-	})
 
-	update_roll(self)
-end
 
--- drop items
-local item_drop = function(self, cooked, looting_level)
 
-	-- no drops if disabled by setting
-	if not mobs_drop_items then return end
-
-	looting_level = looting_level or 0
-
-	-- no drops for child mobs (except monster)
-	if (self.child and self.type ~= "monster") then
-		return
-	end
-
-	local obj, item, num
-	local pos = self.object:get_pos()
-
-	self.drops = self.drops or {} -- nil check
-
-	for n = 1, #self.drops do
-		local dropdef = self.drops[n]
-		local chance = 1 / dropdef.chance
-		local looting_type = dropdef.looting
-
-		if looting_level > 0 then
-			local chance_function = dropdef.looting_chance_function
-			if chance_function then
-				chance = chance_function(looting_level)
-			elseif looting_type == "rare" then
-				chance = chance + (dropdef.looting_factor or 0.01) * looting_level
-			end
-		end
-
-		local num = 0
-		local do_common_looting = (looting_level > 0 and looting_type == "common")
-		if math_random() < chance then
-			num = math_random(dropdef.min or 1, dropdef.max or 1)
-		elseif not dropdef.looting_ignore_chance then
-			do_common_looting = false
-		end
-
-		if do_common_looting then
-			num = num + math_floor(math_random(0, looting_level) + 0.5)
-		end
-
-		if num > 0 then
-			item = dropdef.name
-
-			-- cook items when true
-			if cooked then
-
-				local output = minetest_get_craft_result({
-					method = "cooking", width = 1, items = {item}})
-
-				if output and output.item and not output.item:is_empty() then
-					item = output.item:get_name()
-				end
-			end
-
-			-- add item if it exists
-			for x = 1, num do
-				obj = minetest_add_item(pos, ItemStack(item .. " " .. 1))
-			end
-
-			if obj and obj:get_luaentity() then
-
-				obj:set_velocity({
-					x = math_random(-10, 10) / 9,
-					y = 6,
-					z = math_random(-10, 10) / 9,
-				})
-			elseif obj then
-				obj:remove() -- item does not exist
-			end
-		end
-	end
-
-	self.drops = {}
-end
 
 
 -- check if mob is dead or only hurt
@@ -1461,8 +1327,14 @@ local function object_in_range(self, object)
 	end
 	local factor
 	-- Apply view range reduction for special player armor
+	if not object then
+		return false
+	end
+	local factor
+	-- Apply view range reduction for special player armor
 	if object:is_player() and mod_armor then
-		factor = armor:get_mob_view_range_factor(object, self.name)
+		local factors = mcl_armor.player_view_range_factors[object]
+		factor = factors and factors[self.name]
 	end
 	-- Distance check
 	local dist
@@ -1642,9 +1514,14 @@ local is_at_water_danger = function(self)
 	return false
 end
 
-
-
-
+local function get_light(pos, tod)
+	local ok, light = pcall(minetest.get_natural_light or minetest.get_node_light, pos, tod)
+	if ok then
+		return light
+	else
+		return 0
+	end
+end
 
 -- environmental damage (water, lava, fire, light etc.)
 local do_env_damage = function(self)
@@ -1690,7 +1567,6 @@ local do_env_damage = function(self)
 
 	-- Use get_node_light for Minetest version 5.3 where get_natural_light
 	-- does not exist yet.
-	local get_light = minetest_get_natural_light or minetest_get_node_light
 	local sunlight = get_light(pos, self.time_of_day)
 
 	-- bright light harms mob
@@ -1770,6 +1646,8 @@ local do_env_damage = function(self)
 
 			self.health = self.health - self.lava_damage
 
+			mcl_burning.set_on_fire(self.object, 15)
+
 			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 
 			if check_for_death(self, "lava", {type = "environment",
@@ -1785,6 +1663,8 @@ local do_env_damage = function(self)
 		if self.fire_damage ~= 0 then
 
 			self.health = self.health - self.fire_damage
+
+			mcl_burning.set_on_fire(self.object, 8)
 
 			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 
@@ -2279,7 +2159,7 @@ local mob_detach_child = function(self, child)
 
 end
 
-function do_states(self) 
+function do_states(self)
 
 	if self.state == "stand" then
 
@@ -2835,46 +2715,8 @@ function do_states(self)
 end
 
 
-	mobs.death_effect = function(pos, yaw, collisionbox, rotate)
-		local min, max
-		if collisionbox then
-			min = {x=collisionbox[1], y=collisionbox[2], z=collisionbox[3]}
-			max = {x=collisionbox[4], y=collisionbox[5], z=collisionbox[6]}
-		else
-			min = { x = -0.5, y = 0, z = -0.5 }
-			max = { x = 0.5, y = 0.5, z = 0.5 }
-		end
-		if rotate then
-			min = vector.rotate(min, {x=0, y=yaw, z=math_pi/2})
-			max = vector.rotate(max, {x=0, y=yaw, z=math_pi/2})
-			min, max = vector.sort(min, max)
-			min = vector.multiply(min, 0.5)
-			max = vector.multiply(max, 0.5)
-		end
-	
-		minetest_add_particlespawner({
-			amount = 50,
-			time = 0.001,
-			minpos = vector.add(pos, min),
-			maxpos = vector.add(pos, max),
-			minvel = vector.new(-5,-5,-5),
-			maxvel = vector.new(5,5,5),
-			minexptime = 1.1,
-			maxexptime = 1.5,
-			minsize = 1,
-			maxsize = 2,
-			collisiondetection = false,
-			vertical = false,
-			texture = "mcl_particles_mob_death.png^[colorize:#000000:255",
-		})
-	
-		minetest_sound_play("mcl_mobs_mob_poof", {
-			pos = pos,
-			gain = 1.0,
-			max_hear_distance = 8,
-		}, true)
-	end
-	
+
+
 -- above function exported for mount.lua
 function mobs:set_animation(self, anim)
 	set_animation(self, anim)
@@ -2991,7 +2833,7 @@ mob_step = function()
 	--end
 
 	--if not self.fire_resistant then
-	--	mcl_burning.tick(self.object, dtime)
+	--	mcl_burning.tick(self.object, dtime, self)
 	--end
 
 	--if use_cmi then
@@ -3101,7 +2943,7 @@ mob_step = function()
 	--	end
 	--end
 
-	
+
 	-- Add water flowing for mobs from mcl_item_entity
 	--[[
 	local p, node, nn, def

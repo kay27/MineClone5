@@ -13,6 +13,7 @@ local mod_bows = minetest.get_modpath("mcl_bows") ~= nil
 
 
 local skeleton = {
+	description = S("Skeleton"),
 	type = "monster",
 	spawn_class = "hostile",
 	hostile = true,
@@ -34,6 +35,22 @@ local skeleton = {
 		"mcl_bows_bow_0.png", -- bow
 		"mobs_mc_skeleton.png", -- skeleton
 	} },
+
+	--head code
+	has_head = false,
+	head_bone = "head",
+
+	swap_y_with_x = true,
+	reverse_head_yaw = true,
+
+	head_bone_pos_y = 2.4,
+	head_bone_pos_z = 0,
+
+	head_height_offset = 1.1,
+	head_direction_offset = 0,
+	head_pitch_modifier = 0,
+	--end head code
+
 	visual_size = {x=1, y=1},
 	makes_footstep_sound = true,
 	textures = {
@@ -97,7 +114,7 @@ local skeleton = {
 		if mod_bows then
 			-- 2-4 damage per arrow
 			local dmg = math.random(2,4)
-			mcl_bows.shoot_arrow("mcl_bows:arrow", pos, dir, self.object:get_yaw(), self.object, nil, dmg)
+			mobs.shoot_projectile_handling("mcl_bows:arrow", pos, dir, self.object:get_yaw(), self.object, nil, dmg)
 		end
 	end,
 	shoot_interval = 2,
@@ -115,6 +132,7 @@ mobs:register_mob("mobs_mc:skeleton", skeleton)
 --###################
 
 local stray = table.copy(skeleton)
+stray.description = S("Stray")
 stray.mesh = "mobs_mc_skeleton.b3d"
 stray.textures = {
 	{

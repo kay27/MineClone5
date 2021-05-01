@@ -1,6 +1,5 @@
 local S = minetest.get_translator("mcl_nether")
 
-local mod_death_messages = minetest.get_modpath("mcl_death_messages")
 local mod_screwdriver = minetest.get_modpath("screwdriver") ~= nil
 local on_rotate
 if mod_screwdriver then
@@ -48,6 +47,36 @@ minetest.register_node("mcl_nether:quartz_ore", {
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 3,
 	_mcl_hardness = 3,
+	_mcl_silk_touch_drop = true,
+	_mcl_fortune_drop = mcl_core.fortune_drop_ore
+})
+
+minetest.register_node("mcl_nether:ancient_debris", {
+	description = S("Ancient Debris"),
+	_doc_items_longdesc = S("Ancient debris can be found in the nether and is very very rare."),
+	stack_max = 64,
+	tiles = {"mcl_nether_ancient_debris_top.png", "mcl_nether_ancient_debris_side.png"},
+	is_ground_content = true,
+	groups = {pickaxey=4, building_block=1, material_stone=1, xp=0},
+	drop = 'mcl_nether:ancient_debris',
+	sounds = mcl_sounds.node_sound_stone_defaults(),
+	_mcl_blast_resistance = 1200,
+	_mcl_hardness = 30,
+	_mcl_silk_touch_drop = true,
+	_mcl_fortune_drop = mcl_core.fortune_drop_ore
+})
+
+minetest.register_node("mcl_nether:netheriteblock", {
+	description = S("Netherite Block"),
+	_doc_items_longdesc = S("Netherite block is very hard and can be made of 9 netherite ingots."),
+	stack_max = 64,
+	tiles = {"mcl_nether_netheriteblock.png"},
+	is_ground_content = true,
+	groups = {pickaxey=4, building_block=1, material_stone=1, xp = 0},
+	drop = 'mcl_nether:netheriteblock',
+	sounds = mcl_sounds.node_sound_stone_defaults(),
+	_mcl_blast_resistance = 1200,
+	_mcl_hardness = 50,
 	_mcl_silk_touch_drop = true,
 	_mcl_fortune_drop = mcl_core.fortune_drop_ore
 })
@@ -111,10 +140,7 @@ minetest.register_node("mcl_nether:magma", {
 		end
 		-- Hurt players standing on top of this block
 		if player:get_hp() > 0 then
-			if mod_death_messages then
-				mcl_death_messages.player_damage(player, S("@1 stood too long on a magma block.", player:get_player_name()))
-			end
-			player:set_hp(player:get_hp() - 1, { type = "punch", from = "mod" })
+			mcl_util.deal_damage(player, 1, {type = "hot_floor"})
 		end
 	end,
 	_mcl_blast_resistance = 0.5,
@@ -253,6 +279,22 @@ minetest.register_craftitem("mcl_nether:quartz", {
 	groups = { craftitem = 1 },
 })
 
+minetest.register_craftitem("mcl_nether:netherite_scrap", {
+	description = S("Netherite Scrap"),
+	_doc_items_longdesc = S("Netherite scrap is a crafting ingredient for netherite ingots."),
+	inventory_image = "mcl_nether_netherite_scrap.png",
+	stack_max = 64,
+	groups = { craftitem = 1 },
+})
+
+minetest.register_craftitem("mcl_nether:netherite_ingot", {
+	description = S("Netherite Ingot"),
+	_doc_items_longdesc = S("Netherite ingots can be used with a smithing table to upgrade items to netherite."),
+	inventory_image = "mcl_nether_netherite_ingot.png",
+	stack_max = 64,
+	groups = { craftitem = 1 },
+})
+
 minetest.register_craftitem("mcl_nether:netherbrick", {
 	description = S("Nether Brick"),
 	_doc_items_longdesc = S("Nether bricks are the main crafting ingredient for crafting nether brick blocks and nether fences."),
@@ -265,6 +307,13 @@ minetest.register_craft({
 	type = "cooking",
 	output = "mcl_nether:quartz",
 	recipe = "mcl_nether:quartz_ore",
+	cooktime = 10,
+})
+
+minetest.register_craft({
+	type = "cooking",
+	output = "mcl_nether:netherite_scrap",
+	recipe = "mcl_nether:ancient_debris",
 	cooktime = 10,
 })
 
@@ -336,6 +385,33 @@ minetest.register_craft({
 		{'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item'},
 		{'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item'},
 		{'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item', 'mcl_nether:nether_wart_item'},
+	}
+})
+
+minetest.register_craft({
+	output = "mcl_nether:netherite_ingot",
+	recipe = {
+		{'mcl_nether:netherite_scrap', 'mcl_nether:netherite_scrap', 'mcl_nether:netherite_scrap'},
+		{'mcl_nether:netherite_scrap', 'mcl_core:gold_ingot', 'mcl_core:gold_ingot'},
+		{'mcl_core:gold_ingot', 'mcl_core:gold_ingot', ''},
+	}
+})
+
+minetest.register_craft({
+	output = "mcl_nether:netheriteblock",
+	recipe = {
+		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'},
+		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'},
+		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'}
+	}
+})
+
+minetest.register_craft({
+	output = "mcl_nether:netherite_ingot 9",
+	recipe = {
+		{'mcl_nether:netheriteblock', '', ''},
+		{'', '', ''},
+		{'', '', ''}
 	}
 })
 

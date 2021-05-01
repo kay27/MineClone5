@@ -11,6 +11,7 @@ local S = minetest.get_translator("mobs_mc")
 
 
 mobs:register_mob("mobs_mc:blaze", {
+	description = S("Blaze"),
 	type = "monster",
 	spawn_class = "hostile",
 	hp_min = 20,
@@ -79,15 +80,17 @@ mobs:register_mob("mobs_mc:blaze", {
 	glow = 14,
 	fire_resistant = true,
 	eye_height = 0.75,
+	projectile_cooldown_min = 2,
+	projectile_cooldown_max = 3,
 	shoot_arrow = function(self, pos, dir)
 		-- 2-4 damage per arrow
 		local dmg = math.random(2,4)
-		mcl_bows.shoot_arrow("mobs_mc:blaze_fireball", pos, dir, self.object:get_yaw(), self.object, nil, dmg)		
+		mobs.shoot_projectile_handling("mobs_mc:blaze_fireball", pos, dir, self.object:get_yaw(), self.object, 7, dmg,nil,nil,nil,-0.4)
 	end,
 
 	do_custom = function(self)
-		if self.state == "attack" and vector.distance(self.object:get_pos(), self.attack:get_pos()) < 1.2 then
-			mcl_burning.set_on_fire(self.attack, 5)
+		if self.attacking and self.state == "attack" and vector.distance(self.object:get_pos(), self.attacking:get_pos()) < 1.2 then
+			mcl_burning.set_on_fire(self.attacking, 5)
 		end
 		local pos = self.object:get_pos()
 		minetest.add_particle({
@@ -158,16 +161,18 @@ mobs:register_arrow("mobs_mc:blaze_fireball", {
 	textures = {"mcl_fire_fire_charge.png"},
 	velocity = 15,
 	speed = 5,
+	tail = 1,
+	tail_texture = "mobs_mc_spit.png^[colorize:black:255", --repurpose spit texture
+	tail_size = 2,
+	tail_distance_divider = 3,
+	_is_fireball = true,
 
 	-- Direct hit, no fire... just plenty of pain
 	hit_player = function(self, player)
-		if rawget(_G, "armor") and armor.last_damage_types then
-			armor.last_damage_types[player:get_player_name()] = "fireball"
-		end
-		mcl_burning.set_on_fire(player, 5, "blaze")
+		mcl_burning.set_on_fire(player, 5)
 		player:punch(self.object, 1.0, {
 			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 5},
+			damage_groups = {fleshy = self._damage},
 		}, nil)
 	end,
 
@@ -175,7 +180,7 @@ mobs:register_arrow("mobs_mc:blaze_fireball", {
 		mcl_burning.set_on_fire(mob, 5)
 		mob:punch(self.object, 1.0, {
 			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 5},
+			damage_groups = {fleshy = self._damage},
 		}, nil)
 	end,
 
