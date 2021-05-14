@@ -79,6 +79,7 @@ mcl_armor.register_set({
 	},
 	toughness = 2,
 	craft_material = "mcl_core:diamond",
+	upgradable = true,
 })
 
 mcl_armor.register_set({
@@ -93,7 +94,6 @@ mcl_armor.register_set({
 		feet = 3,
 	},
 	toughness = 3,
-	craft_material = "mcl_netherite:netherite_ingot",
 })
 
 mcl_armor.register_protection_enchantment({
@@ -208,7 +208,7 @@ minetest.register_tool("mcl_armor:elytra", {
 	_doc_items_longdesc = mcl_armor.longdesc,
 	_doc_items_usagehelp = mcl_armor.usage,
 	inventory_image = "mcl_armor_inv_elytra.png",
-	groups = {armor = 1, non_combat_armor = 1, armor_torso = 1, non_combat_torso = 1, mcl_armor_uses = 10},
+	groups = {armor = 1, non_combat_armor = 1, armor_torso = 1, non_combat_torso = 1, mcl_armor_uses = 10, enchantability = 1},
 	sounds = {
 		_mcl_armor_equip = "mcl_armor_equip_leather",
 		_mcl_armor_unequip = "mcl_armor_unequip_leather",

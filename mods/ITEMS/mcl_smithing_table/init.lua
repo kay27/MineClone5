@@ -2,30 +2,6 @@
 By EliasFleckenstein03 and Code-Sploit
 ]]
 
---[[
-Netherite item / node strings
-
-Nodes:
-
-Ancient Debris							mcl_nether:ancient_debris
-Netherite Ingot 						mcl_nether:netherite_ingot
-Netherite Scrap							mcl_nether:netherite_scrap
-Netherite Block							mcl_nether:netheriteblock
-
-Items:
-
-Netherite Sword							mcl_tools:sword_netherite
-Netherite Pickaxe						mcl_tools:pick_netherite
-Netherite Axe 							mcl_tools:axe_netherite
-Netherite Shovel						mcl_tools:shovel_netherite
-Netherite Hoe   						mcl_farming:hoe_netherite
-
-Netherite Helmet						mcl_armor:helmet_netherite
-Netherite Chestplate  			mcl_armor:chestplate_netherite
-Netherite Leggings  				mcl_armor:leggings_netherite
-Netherite Boots 						mcl_armor:boots_netherite
-]]
-
 local S = minetest.get_translator("mcl_smithing_table")
 mcl_smithing_table = {}
 
@@ -41,7 +17,13 @@ function mcl_smithing_table.upgrade_item(itemstack)
 
 	local itemname = itemstack:get_name()
 
-	local upgrade_item = def._mcl_upgrade_item or itemname:gsub("diamond", "netherite")
+	local upgrade_item = def._mcl_upgrade_item
+
+	if upgrade_item and mcl_enchanting.is_enchanted(itemname) then
+		upgrade_item = upgrade_item .. "_enchanted"
+	end
+
+	upgrade_item = upgrade_item or itemname:gsub("diamond", "netherite")
 
 	if upgrade_item == itemname then
 		return
