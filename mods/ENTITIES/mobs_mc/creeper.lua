@@ -95,7 +95,8 @@ mobs:register_mob("mobs_mc:creeper", {
 		if self._forced_explosion_countdown_timer then
 			self._forced_explosion_countdown_timer = self._forced_explosion_countdown_timer - dtime
 			if self._forced_explosion_countdown_timer <= 0 then
-				mobs:boom(self, mcl_util.get_object_center(self.object), self.explosion_strength)
+				-- mobs:boom(self, mcl_util.get_object_center(self.object), self.explosion_strength)
+				mcl_explosions.explode(self.object:get_pos(), self.explosion_strength, { drop_chance = 1.0 })
 			end
 		end
 	end,

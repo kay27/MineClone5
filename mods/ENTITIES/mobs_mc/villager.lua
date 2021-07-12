@@ -388,7 +388,7 @@ end
 
 local init_trades = function(self, inv)
 	local profession = professions[self._profession]
-	local trade_tiers = profession.trades
+	local trade_tiers = profession and profession.trades
 	if trade_tiers == nil then
 		-- Empty trades
 		self._trades = false
