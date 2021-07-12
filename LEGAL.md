@@ -5,10 +5,10 @@ Copying is an act of love. Please copy and share! <3
 Here's the detailed legalese for those who need it:
 
 ## License of source code
-MineClone 2 (by kay27, EliasFleckenstein, Wuzzy, davedevils and countless others)
+MineClone 5 (by davedevils, Wuzzy, Oil_boi, EliasFleckenstein, kay27 and countless others)
 is an imitation of Minecraft.
 
-MineClone 2 is free software: you can redistribute it and/or modify
+MineClone 5 is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -22,15 +22,15 @@ details.
 In the mods you might find in the read-me or license
 text files a different license. This counts as dual-licensing.
 You can choose which license applies to you: Either the
-license of MineClone 2 (GNU GPLv3) or the mod's license.
+license of MineClone 5 (GNU GPLv3) or the mod's license.
 
-MineClone 2 is a direct continuation of the discontinued MineClone
+MineClone 5 is a direct continuation of the discontinued MineClone
 project by davedevils.
 
 Mod credits:
 See `README.txt` or `README.md` in each mod directory for information about other authors.
 For mods that do not have such a file, the license is the source code license
-of MineClone 2 and the author is Wuzzy.
+of MineClone 5 and the author is Wuzzy.
 
 ## License of media (textures and sounds)
 No non-free licenses are used anywhere.

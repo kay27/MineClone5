@@ -25,7 +25,7 @@ The basic digging time groups determine by which tools a node can be dug.
 * `handy=1`: Breakable by hand and this node gives it useful drop when dug by hand. All nodes which are breakable by pickaxe, axe, shovel, sword or shears are also automatically breakable by hand, but not neccess
 * `creative_breakable=1`: Block is breakable by hand in creative mode. This group is implied if the node belongs to any other digging group
 
-Please read <http://minecraft.gamepedia.com/Breaking> to learn how digging times work in Minecraft, as MineClone 2 is based on the same system.
+Please read <http://minecraft.gamepedia.com/Breaking> to learn how digging times work in Minecraft, as MineClone 5 is based on the same system.
 
 ### Groups for interactions
 

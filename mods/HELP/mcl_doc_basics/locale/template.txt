@@ -262,8 +262,8 @@ Quick transfer: You can quickly transfer an item stack to/from the player invent
 Online help=
 You may want to check out these online resources related to MineClone 2.=
 MineClone 2 download and forum discussion: <https://forum.minetest.net/viewtopic.php?f@=50&t@=16407>=
-Here you find the most recent version of MineClone 2 and can discuss it.=
-Bug tracker: <https://github.com/Wuzzy2/MineClone2-Bugs>=
+Here you find the most recent version of MineClone 5 and can discuss it.=
+Bug tracker: <git.minetest.land/MineClone5/MineClone5/issues>=
 Report bugs here.=
 Minetest links:=
 You may want to check out these online resources related to Minetest:=

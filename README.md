@@ -1,4 +1,4 @@
-# MineClone 2
+# MineClone 5
 An unofficial Minecraft-like game for Minetest. Forked from MineClone by davedevils.
 Developed by many people. Not developed or endorsed by Mojang AB.
 
@@ -69,44 +69,36 @@ an explanation.
 This game requires [Minetest](http://minetest.net) to run (version 5.3.0 or
 later). So you need to install Minetest first. Only stable versions of Minetest
 are officially supported.
-There is no support for running MineClone 2 in development versions of Minetest.
+There is no support for running MineClone 5 in development versions of Minetest.
 
-To install MineClone 2 (if you haven't already), move this directory into the
+To install MineClone 5 (if you haven't already), move this directory into the
 “games” directory of your Minetest data directory. Consult the help of
 Minetest to learn more.
 
 ## Useful links
-The MineClone2 repository is hosted at Mesehub. To contribute or report issues, head there.
+The MineClone 5 repository is hosted at Mesehub. To contribute or report issues, head there.
 
-* Mesehub: <https://git.minetest.land/MineClone2/MineClone2>
-* Discord: <https://discord.gg/xE4z8EEpDC>
-* YouTube <https://www.youtube.com/channel/UClI_YcsXMF3KNeJtoBfnk9A>
+* Mesehub: <https://git.minetest.land/MineClone5/MineClone5>
 * IRC: <https://web.libera.chat/#mineclone2>
 * Matrix: <https://app.element.io/#/room/#mc2:matrix.org>
 * Reddit: <https://www.reddit.com/r/MineClone2/>
 * Minetest forums: <https://forum.minetest.net/viewtopic.php?f=50&t=16407>
 
 ## Project description
-The main goal of **MineClone 2** is to be a clone of Minecraft and to be released as free software.
+The main goal of **MineClone 5** is to be a clone of Minecraft and to be released as free software.
 
-* **Target of development: Minecraft, PC Edition, version 1.12** (later known as “Java Edition”)
-* MineClone2 also includes Optifine features supported by the Minetest
+* **Target of development: Minecraft Java Edition latest version**
+* MineClone5 also includes Optifine features supported by the Minetest
 * In general, Minecraft is aimed to be cloned as good as possible
 * Cloning the gameplay has highest priority
-* MineClone 2 will use different assets, but with a similar style
+* MineClone 5 will use different assets, but with a similar style
 * Limitations found in Minetest will be documented in the course of development
 * Features of later Minecraft versions are collected in the mineclone5 branch
-
-## Using features from newer versions of Minecraft
-For > 1.12 features, checkout MineClone5. It includes features from newer Minecraft versions.
-Download it here: https://git.minetest.land/MineClone2/MineClone2/src/branch/mineclone5
 
 ## Completion status
 This game is currently in **beta** stage.
 It is playable, but not yet feature-complete.
 Backwards-compability is not entirely guaranteed, updating your world might cause small bugs.
-If you want to use the git version of MineClone2 in production, consider using the production branch.
-It is updated weekly and contains relatively stable code for servers.
 
 The following main features are available:
 
@@ -186,7 +178,7 @@ Technical differences from Minecraft:
 * Different engine (Minetest)
 * Different easter eggs
 
-… and finally, MineClone 2 is free software (“free” as in “freedom”)!
+… and finally, MineClone 5 is free software (“free” as in “freedom”)!
 
 ## Other readme files
 

@@ -12,12 +12,13 @@ mcl_credits.people = {
 	{"Creator of MineClone2", 0xFBF837, {
 		"Wuzzy",
 	}},
-	{"Maintainers", 0xFF51D5, {
+	{"Creator of MineClone5", 0xFF51D5, {
+		"The Community",
+	}},
+	{"Developers", 0xF84355, {
 		"Fleckenstein",
 		"kay27",
 		"oilboi",
-	}},
-	{"Developers", 0xF84355, {
 		"bzoss",
 		"AFCMS",
 		"epCode",

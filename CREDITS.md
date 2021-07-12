@@ -3,15 +3,15 @@
 ## Creator of MineClone
 * davedevils
 
-## Creator of MineClone2
-* Wuzzy
+## Creator of MineClone 2
+* Wuzzy and the Community
 
-## Maintainers
+## Creators of MineClone 5
+* kay27 and the Community
+
+## The Community:
 * Fleckenstein
-* kay27
 * jordan4ibanez
-
-## Developers
 * bzoss
 * AFCMS
 * epCode
@@ -23,8 +23,6 @@
 * aligator
 * Code-Sploit
 * NO11
-
-## Contributors
 * Laurent Rocher
 * HimbeerserverDE
 * TechDudie

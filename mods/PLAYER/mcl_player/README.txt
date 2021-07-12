@@ -1,4 +1,4 @@
-MineClone 2 mod: mcl_player
+MineClone 5 mod: mcl_player
 ==========================
 Adds the 3D player model, taken from Minetest Game 0.4.16.
 
