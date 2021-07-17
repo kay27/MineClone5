@@ -120,6 +120,33 @@ minetest.register_node("mcl_nether:netherrack", {
 	-- Eternal fire on top
 	after_destruct = eternal_after_destruct,
 	_on_ignite = eternal_on_ignite,
+	on_rightclick = function(pos, node, pointed_thing, player, itemstack)
+    	if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+		local ni = 0 -- stand for neigbour item
+		for x = pos.x - 1,pos.x + 1 do
+      			local node = minetest.get_node({x = x, y = pos.y, z = pos.z})
+			if ni == 0 then	
+				if node.name == "mcl_mushroom:warped_nylium" then ni = 1
+				elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
+			elseif (ni == 1) or (ni == 2) then
+				if (node.name == "mcl_mushroom:warped_nylium") or (node.name == "mcl_mushroom:crimson_nylium") then ni = 3 end
+			end
+		end
+		for z = pos.z - 1,pos.z + 1 do
+      			local node = minetest.get_node({x = pos.x, y = pos.y, z = z})
+			if ni == 0 then	
+				if node.name == "mcl_mushroom:warped_nylium" then ni = 1
+				elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
+			elseif (ni == 1) or (ni == 2) then
+				if (node.name == "mcl_mushroom:warped_nylium") or (node.name == "mcl_mushroom:crimson_nylium") then ni = 3 end
+			end
+		end
+		if ni == 3 then ni = math.random(1, 2) end
+
+		if ni == 1 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:warped_nylium"})
+		elseif ni == 2 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:crimson_nylium"}) end
+  	end
+	end,
 })
 
 minetest.register_node("mcl_nether:magma", {
