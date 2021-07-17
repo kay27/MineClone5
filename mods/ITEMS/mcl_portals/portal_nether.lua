@@ -137,19 +137,8 @@ local function find_exit(p, dx, dy, dz)
 	if not p or not p.y or not p.z or not p.x then return end
 	local dx, dy, dz = dx or DISTANCE_MAX, dy or DISTANCE_MAX, dz or DISTANCE_MAX
 	if dx < 1 or dy < 1 or dz < 1 then return false end
-
-    --y values aren't used
-	local x = floor(p.x)
-    --local y = floor(p.y)
-    local z = floor(p.z)
-
-	local x1 = x-dx+1
-    --local y1 = y-dy+1
-    local z1 = z-dz+1
-
-    local x2 = x+dx-1
-    --local y2 = y+dy-1
-    local z2 = z+dz-1
+	local x, y, z = floor(p.x), floor(p.y), floor(p.z)
+	local x1, y1, z1, x2, y2, z2 = x-dx+1, y-dy+1, z-dz+1, x+dx-1, y+dy-1, z+dz-1
 
 	local k1x, k2x = floor(x1/256), floor(x2/256)
 	local k1z, k2z = floor(z1/256), floor(z2/256)
@@ -170,11 +159,27 @@ local function find_exit(p, dx, dy, dz)
 		end
 	end end
 
-	if t and abs(t.x-p.x) <= dx and abs(t.y-p.y) <= dy and abs(t.z-p.z) <= dz then
+	if t and abs(t.x-x) <= dx and abs(t.y-y) <= dy and abs(t.z-z) <= dz then
 		return t
 	end
 end
 
+-- This functon searches Nether portal nodes whitin distance specified and checks the node
+local function find_exit_with_check(p, dx, dy, dz)
+	while true do
+		local pos = find_exit(p, dx, dy, dz)
+		if not pos then
+			-- not found:
+			return
+		end
+		if (get_node(pos).name == PORTAL) then
+			return pos
+		end
+		-- I don't know the reason why it can happen, but if we're here, let's log it, remove this record and try again:
+		log("warning", "[mcl_portals] Found faulty exit from Nether portal at " .. pos_to_string(pos) .. " - removed")
+		remove_exit(pos)
+	end
+end
 
 -- Ping-Pong the coordinate for Fast Travelling, https://git.minetest.land/Wuzzy/MineClone2/issues/795#issuecomment-11058
 local function ping_pong(x, m, l1, l2)
@@ -458,7 +463,7 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 		for _, p in pairs(portals) do
 			add_exit(p)
 		end
-		local exit = find_exit(pos)
+		local exit = find_exit_with_check(pos)
 		if exit then
 			finalize_teleport(obj, exit)
 		end
@@ -676,7 +681,7 @@ local function teleport_no_delay(obj, pos)
 		name = obj:get_player_name()
 	end
 
-	local exit = find_exit(target)
+	local exit = find_exit_with_check(target)
 	if exit then
 		finalize_teleport(obj, exit)
 	else
