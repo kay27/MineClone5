@@ -120,8 +120,9 @@ minetest.register_node("mcl_nether:netherrack", {
 	-- Eternal fire on top
 	after_destruct = eternal_after_destruct,
 	_on_ignite = eternal_on_ignite,
-	on_rightclick = function(pos, node, pointed_thing, player, itemstack)
+	on_rightclick = function(pos, node, pointed_thing, itemstack)
     	if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+		itemstack:take_item()
 		local ni = 0 -- stand for neigbour item
 		for x = pos.x - 1,pos.x + 1 do
       			local node = minetest.get_node({x = x, y = pos.y, z = pos.z})
