@@ -1,448 +1,647 @@
-local S = minetest.get_translator(minetest.get_current_modname())
+local S = minetest.get_translator("mcl_mushroom")
 
-local mod_screwdriver = minetest.get_modpath("screwdriver")
-local on_rotate
-if mod_screwdriver then
-	on_rotate = screwdriver.rotate_3way
+-- function grow()
+function grow_twisting_vines(pos, moreontop)
+	local y = pos.y + 1
+	      while not (moreontop == 0) do
+			if minetest.get_node({x = pos.x, y = y, z = pos.z}).name == "air" then
+				minetest.set_node({x = pos.x, y = y, z = pos.z}, {name="mcl_mushroom:twisting_vines"})
+				moreontop = moreontop - 1
+				y = y + 1
+			elseif minetest.get_node({x = pos.x, y = y, z = pos.z}).name == "mcl_mushroom:twisting_vines" then
+				y = y + 1
+			else
+				moreontop = 0
+			end
+	      end
 end
 
-minetest.register_node("mcl_nether:glowstone", {
-	description = S("Glowstone"),
-	_doc_items_longdesc = S("Glowstone is a naturally-glowing block which is home to the Nether."),
-	tiles = {"mcl_nether_glowstone.png"},
-	is_ground_content = true,
-	stack_max = 64,
-	groups = {handy=1,building_block=1, material_glass=1},
-	drop = {
-	max_items = 1,
-	items = {
-			{items = {"mcl_nether:glowstone_dust 4"}, rarity = 3},
-			{items = {"mcl_nether:glowstone_dust 3"}, rarity = 3},
-			{items = {"mcl_nether:glowstone_dust 2"}},
-		}
-	},
+
+-- Warped fungus
+-- Crimson fungus
+--Functions and Biomes
+
+-- WARNING: The most comments are in german. Please Translate with an translater if you don't speak good german
+
+minetest.register_node("mcl_mushroom:warped_fungus", {
+  description = S("Warped Fungus Mushroom"),
+	drawtype = "plantlike",
+	tiles = { "farming_warped_fungus.png" },
+	inventory_image = "farming_warped_fungus.png",
+	wield_image = "farming_warped_fungus.png",
+	sunlight_propagates = true,
 	paramtype = "light",
-	light_source = minetest.LIGHT_MAX,
-	sounds = mcl_sounds.node_sound_glass_defaults(),
-	_mcl_blast_resistance = 0.3,
-	_mcl_hardness = 0.3,
-	_mcl_silk_touch_drop = true,
-	_mcl_fortune_drop = {
-		discrete_uniform_distribution = true,
-		items = {"mcl_nether:glowstone_dust"},
-		min_count = 2,
-		max_count = 4,
-		cap = 4,
-	},
-	
-})
+	walkable = false,
+	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1},
 
-minetest.register_node("mcl_nether:quartz_ore", {
-	description = S("Nether Quartz Ore"),
-	_doc_items_longdesc = S("Nether quartz ore is an ore containing nether quartz. It is commonly found around netherrack in the Nether."),
-	stack_max = 64,
-	tiles = {"mcl_nether_quartz_ore.png"},
-	is_ground_content = true,
-	groups = {pickaxey=1, building_block=1, material_stone=1, xp=3},
-	drop = "mcl_nether:quartz",
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 3,
-	_mcl_hardness = 3,
-	_mcl_silk_touch_drop = true,
-	_mcl_fortune_drop = mcl_core.fortune_drop_ore
-})
-
-minetest.register_node("mcl_nether:ancient_debris", {
-	description = S("Ancient Debris"),
-	_doc_items_longdesc = S("Ancient debris can be found in the nether and is very very rare."),
-	stack_max = 64,
-	tiles = {"mcl_nether_ancient_debris_top.png", "mcl_nether_ancient_debris_side.png"},
-	is_ground_content = true,
-	groups = {pickaxey=4, building_block=1, material_stone=1, xp=0},
-	drop = 'mcl_nether:ancient_debris',
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 1200,
-	_mcl_hardness = 30,
-	_mcl_silk_touch_drop = true
-})
-
-minetest.register_node("mcl_nether:netheriteblock", {
-	description = S("Netherite Block"),
-	_doc_items_longdesc = S("Netherite block is very hard and can be made of 9 netherite ingots."),
-	stack_max = 64,
-	tiles = {"mcl_nether_netheriteblock.png"},
-	is_ground_content = true,
-	groups = {pickaxey=4, building_block=1, material_stone=1, xp = 0},
-	drop = 'mcl_nether:netheriteblock',
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 1200,
-	_mcl_hardness = 50,
-	_mcl_silk_touch_drop = true,
-	_mcl_fortune_drop = mcl_core.fortune_drop_ore
-})
-
--- For eternal fire on top of netherrack and magma blocks
--- (this code does not require a dependency on mcl_fire)
-local function eternal_after_destruct(pos, oldnode)
-	pos.y = pos.y + 1
-	if minetest.get_node(pos).name == "mcl_fire:eternal_fire" then
-		minetest.remove_node(pos)
-	end
-end
-
-local function eternal_on_ignite(player, pointed_thing)
-	local pos = pointed_thing.under
-	local flame_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
-	local fn = minetest.get_node(flame_pos)
-	local pname = player:get_player_name()
-	if minetest.is_protected(flame_pos, pname) then
-		minetest.record_protection_violation(flame_pos, pname)
-		return
-	end
-	if fn.name == "air" and pointed_thing.under.y < pointed_thing.above.y then
-		minetest.set_node(flame_pos, {name = "mcl_fire:eternal_fire"})
-		return true
-	else
-		return false
-	end
-end
-
-minetest.register_node("mcl_nether:netherrack", {
-	description = S("Netherrack"),
-	_doc_items_longdesc = S("Netherrack is a stone-like block home to the Nether. Starting a fire on this block will create an eternal fire."),
-	stack_max = 64,
-	tiles = {"mcl_nether_netherrack.png"},
-	is_ground_content = true,
-	groups = {pickaxey=1, building_block=1, material_stone=1, enderman_takable=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 0.4,
-	_mcl_hardness = 0.4,
-
-	-- Eternal fire on top
-	after_destruct = eternal_after_destruct,
-	_on_ignite = eternal_on_ignite,
-	on_rightclick = function(pos, node, pointed_thing, itemstack)
-    	if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
-		itemstack:take_item()
-		local ni = 0 -- stand for neigbour item
-		for x = pos.x - 1,pos.x + 1 do
-      			local node = minetest.get_node({x = x, y = pos.y, z = pos.z})
-			if ni == 0 then	
-				if node.name == "mcl_mushroom:warped_nylium" then ni = 1
-				elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
-			elseif (ni == 1) or (ni == 2) then
-				if (node.name == "mcl_mushroom:warped_nylium") or (node.name == "mcl_mushroom:crimson_nylium") then ni = 3 end
-			end
-		end
-		for z = pos.z - 1,pos.z + 1 do
-      			local node = minetest.get_node({x = pos.x, y = pos.y, z = z})
-			if ni == 0 then	
-				if node.name == "mcl_mushroom:warped_nylium" then ni = 1
-				elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
-			elseif (ni == 1) or (ni == 2) then
-				if (node.name == "mcl_mushroom:warped_nylium") or (node.name == "mcl_mushroom:crimson_nylium") then ni = 3 end
-			end
-		end
-		if ni == 3 then ni = math.random(1, 2) end
-
-		if ni == 1 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:warped_nylium"})
-		elseif ni == 2 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:crimson_nylium"}) end
-  	end
-	end,
-})
-
-minetest.register_node("mcl_nether:magma", {
-	description = S("Magma Block"),
-	_tt_help = minetest.colorize(mcl_colors.YELLOW, S("Burns your feet")),
-	_doc_items_longdesc = S("Magma blocks are hot solid blocks which hurt anyone standing on it, unless they have fire resistance. Starting a fire on this block will create an eternal fire."),
-	stack_max = 64,
-	tiles = {{name="mcl_nether_magma.png", animation={type="vertical_frames", aspect_w=32, aspect_h=32, length=1.5}}},
-	is_ground_content = true,
-	light_source = 3,
-	sunlight_propagates = false,
-	groups = {pickaxey=1, building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	-- From walkover mod
-	on_walk_over = function(loc, nodeiamon, player)
-		if player and player:get_player_control().sneak or minetest.global_exists("mcl_potions") and mcl_potions.player_has_effect(player, "fire_proof") then
-			return
-		end
-		-- Hurt players standing on top of this block
-		if player:get_hp() > 0 then
-			mcl_util.deal_damage(player, 1, {type = "hot_floor"})
-		end
-	end,
-	_mcl_blast_resistance = 0.5,
-	_mcl_hardness = 0.5,
-
-	-- Eternal fire on top
-	after_destruct = eternal_after_destruct,
-	_on_ignite = eternal_on_ignite,
-})
-
-minetest.register_node("mcl_nether:soul_sand", {
-	description = S("Soul Sand"),
-	_tt_help = S("Reduces walking speed"),
-	_doc_items_longdesc = S("Soul sand is a block from the Nether. One can only slowly walk on soul sand. The slowing effect is amplified when the soul sand is on top of ice, packed ice or a slime block."),
-	stack_max = 64,
-	tiles = {"mcl_nether_soul_sand.png"},
-	is_ground_content = true,
-	groups = {handy=1,shovely=1, building_block=1,soil_nether_wart=1, material_sand=1},
-	collision_box = {
+	light_source = 1,
+	selection_box = {
 		type = "fixed",
-		fixed = { -0.5, -0.5, -0.5, 0.5, 0.5 - 2/16, 0.5 },
+		fixed = { -3/16, -0.5, -3/16, 3/16, -2/16, 3/16 },
 	},
-	sounds = mcl_sounds.node_sound_sand_defaults(),
-	_mcl_blast_resistance = 0.5,
-	_mcl_hardness = 0.5,
-	-- Movement handling is done in mcl_playerplus mod
+	node_placement_prediction = "",
+	on_rightclick = function(pos, node, pointed_thing, itemstack)
+
+	if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+	      itemstack:take_item()
+	      local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+	      if nodepos.name == "mcl_mushroom:warped_nylium" or nodepos.name == "mcl_nether:netherrack" then
+	        local random = math.random(1, 5)
+	        if random == 1 then
+	          generate_warped_tree(pos)
+	        end
+	      end
+	    end
+	  end,
+  _mcl_blast_resistance = 0,
+  stack_max = 64,
 })
 
-minetest.register_node("mcl_nether:nether_brick", {
-	-- Original name: Nether Brick
-	description = S("Nether Brick Block"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	tiles = {"mcl_nether_nether_brick.png"},
-	is_ground_content = false,
-	groups = {pickaxey=1, building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 6,
-	_mcl_hardness = 2,
+minetest.register_node("mcl_mushroom:twisting_vines", {
+  description = S("Twisting Vines"),
+	drawtype = "plantlike",
+	tiles = { "twisting_vines_plant.png" },
+	inventory_image = "twisting_vines.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	walkable = false,
+	climbable = true,
+	buildable_to = true,
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1},
+	light_source = 1,
+	selection_box = {
+		type = "fixed",
+		fixed = { -3/16, -0.5, -3/16, 3/16, 0.5, 3/16 },
+	},
+	node_placement_prediction = "",
+	on_rightclick = function(pos, node, pointed_thing, itemstack)
+
+	if pointed_thing:get_wielded_item():get_name() == "mcl_mushroom:twisting_vines" then
+	      itemstack:take_item()
+	      grow_twisting_vines(pos, 1)
+	elseif pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+	      itemstack:take_item()
+	      grow_twisting_vines(pos, math.random(1, 3))
+	end
+	end,
+  _mcl_blast_resistance = 0,
+  stack_max = 64,
 })
 
-minetest.register_node("mcl_nether:red_nether_brick", {
-	-- Original name: Red Nether Brick
-	description = S("Red Nether Brick Block"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	tiles = {"mcl_nether_red_nether_brick.png"},
-	is_ground_content = false,
-	groups = {pickaxey=1, building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 6,
-	_mcl_hardness = 2,
+minetest.register_node("mcl_mushroom:warped_wart_block", {
+  description = S("Warped Wart Block"),
+  tiles = {"warped_wart_block.png"},
+  groups = {handy=1,hoe=7,swordy=1, deco_block=1, },
+  stack_max = 64,
+  _mcl_hardness = 2,
 })
 
-
-minetest.register_node("mcl_nether:nether_wart_block", {
-	description = S("Nether Wart Block"),
-	_doc_items_longdesc = S("A nether wart block is a purely decorative block made from nether wart."),
-	stack_max = 64,
-	tiles = {"mcl_nether_nether_wart_block.png"},
-	is_ground_content = false,
-	groups = {handy=1, hoey=1, building_block=1},
-	sounds = mcl_sounds.node_sound_leaves_defaults(
-		{
-			footstep={name="default_dirt_footstep", gain=0.7},
-			dug={name="default_dirt_footstep", gain=1.5},
-		}
-	),
-	_mcl_blast_resistance = 1,
-	_mcl_hardness = 1,
+minetest.register_node("mcl_mushroom:shroomlight", {
+  description = S("Shroomlight"),
+  tiles = {"shroomlight.png"},
+  groups = {handy=1,hoe=7,swordy=1, leaves=1, deco_block=1, },
+  stack_max = 64,
+  _mcl_hardness = 2,
+  -- this is 15 in Minecraft
+  light_source = 14,
 })
 
-minetest.register_node("mcl_nether:quartz_block", {
-	description = S("Block of Quartz"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	is_ground_content = false,
-	tiles = {"mcl_nether_quartz_block_top.png", "mcl_nether_quartz_block_bottom.png", "mcl_nether_quartz_block_side.png"},
-	groups = {pickaxey=1, quartz_block=1,building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 0.8,
-	_mcl_hardness = 0.8,
+minetest.register_node("mcl_mushroom:warped_hyphae", {
+  description = S("Warped Hyphae"),
+  tiles = {"warped_hyphae.png",
+           "warped_hyphae.png",
+           "warped_hyphae_side.png",
+           "warped_hyphae_side.png",
+           "warped_hyphae_side.png",
+           "warped_hyphae_side.png",
+         },
+  groups = {handy=5,axey=1, bark=1, building_block=1, material_wood=1,},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 2,
 })
 
-minetest.register_node("mcl_nether:quartz_chiseled", {
-	description = S("Chiseled Quartz Block"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	is_ground_content = false,
-	tiles = {"mcl_nether_quartz_chiseled_top.png", "mcl_nether_quartz_chiseled_top.png", "mcl_nether_quartz_chiseled_side.png"},
-	groups = {pickaxey=1, quartz_block=1,building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 0.8,
-	_mcl_hardness = 0.8,
+minetest.register_node("mcl_mushroom:warped_nylium", {
+  description = S("Warped Nylium"),
+  tiles = {"warped_nylium.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png^warped_nylium_side.png",
+           "mcl_nether_netherrack.png^warped_nylium_side.png",
+           "mcl_nether_netherrack.png^warped_nylium_side.png",
+           "mcl_nether_netherrack.png^warped_nylium_side.png",
+         },
+  groups = {pickaxey=1, building_block=1, material_stone=1},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 0.4,
+  _mcl_blast_resistance = 0.4,
+  is_ground_content = true,
+  drop = "mcl_nether:netherrack",
+  _mcl_silk_touch_drop = true,
 })
 
-minetest.register_node("mcl_nether:quartz_pillar", {
-	description = S("Pillar Quartz Block"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	paramtype2 = "facedir",
-	is_ground_content = false,
-	on_place = mcl_util.rotate_axis,
-	tiles = {"mcl_nether_quartz_pillar_top.png", "mcl_nether_quartz_pillar_top.png", "mcl_nether_quartz_pillar_side.png"},
-	groups = {pickaxey=1, quartz_block=1,building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	on_rotate = on_rotate,
-	_mcl_blast_resistance = 0.8,
-	_mcl_hardness = 0.8,
-})
-minetest.register_node("mcl_nether:quartz_smooth", {
-	description = S("Smooth Quartz"),
-	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
-	is_ground_content = false,
-	tiles = {"mcl_nether_quartz_block_bottom.png"},
-	groups = {pickaxey=1, quartz_block=1,building_block=1, material_stone=1},
-	sounds = mcl_sounds.node_sound_stone_defaults(),
-	_mcl_blast_resistance = 0.8,
-	_mcl_hardness = 0.8,
+minetest.register_node("mcl_mushroom:warped_checknode", {
+  description = S("Warped Checknode - only to check!"),
+  tiles = {"mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+         },
+  groups = {pickaxey=1, building_block=1, material_stone=1, not_in_creative_inventory=1},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 0.4,
+  _mcl_blast_resistance = 0.4,
+  is_ground_content = true,
+  drop = "mcl_nether:netherrack"
 })
 
-minetest.register_craftitem("mcl_nether:glowstone_dust", {
-	description = S("Glowstone Dust"),
-	_doc_items_longdesc = S("Glowstone dust is the dust which comes out of broken glowstones. It is mainly used in crafting."),
-	inventory_image = "mcl_nether_glowstone_dust.png",
-	stack_max = 64,
-	groups = { craftitem=1, brewitem=1 },
+minetest.register_node("mcl_mushroom:warped_hyphae_wood", {
+  description = S("Warped Hyphae Wood"),
+  tiles = {"warped_hyphae_wood.png"},
+  groups = {handy=5,axey=1, flammable=3,wood=1,building_block=1, material_wood=1, fire_encouragement=5, fire_flammability=20},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 2,
 })
 
-minetest.register_craftitem("mcl_nether:quartz", {
-	description = S("Nether Quartz"),
-	_doc_items_longdesc = S("Nether quartz is a versatile crafting ingredient."),
-	inventory_image = "mcl_nether_quartz.png",
-	stack_max = 64,
-	groups = { craftitem = 1 },
-})
+mcl_stairs.register_stair_and_slab_simple("warped_hyphae_wood", "mcl_mushroom:warped_hyphae_wood", "Warped Wood Stairs", "Warped Wood Slab", "Double Warped Wood Slab")
 
-minetest.register_craftitem("mcl_nether:netherite_scrap", {
-	description = S("Netherite Scrap"),
-	_doc_items_longdesc = S("Netherite scrap is a crafting ingredient for netherite ingots."),
-	inventory_image = "mcl_nether_netherite_scrap.png",
-	stack_max = 64,
-	groups = { craftitem = 1 },
-})
-
-minetest.register_craftitem("mcl_nether:netherite_ingot", {
-	description = S("Netherite Ingot"),
-	_doc_items_longdesc = S("Netherite ingots can be used with a smithing table to upgrade items to netherite."),
-	inventory_image = "mcl_nether_netherite_ingot.png",
-	stack_max = 64,
-	groups = { craftitem = 1 },
-})
-
-minetest.register_craftitem("mcl_nether:netherbrick", {
-	description = S("Nether Brick"),
-	_doc_items_longdesc = S("Nether bricks are the main crafting ingredient for crafting nether brick blocks and nether fences."),
-	inventory_image = "mcl_nether_netherbrick.png",
-	stack_max = 64,
-	groups = { craftitem = 1 },
+minetest.register_craft({
+  output = "mcl_mushroom:warped_hyphae_wood 4",
+  recipe = {
+    {"mcl_mushroom:warped_hyphae"},
+  }
 })
 
 minetest.register_craft({
-	type = "cooking",
-	output = "mcl_nether:quartz",
-	recipe = "mcl_nether:quartz_ore",
-	cooktime = 10,
+  output = "mcl_mushroom:warped_nylium 2",
+  recipe = {
+    {"mcl_mushroom:warped_wart_block"},
+    {"mcl_nether:netherrack"},
+  }
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:warped_fungus",
+	nodenames = {"mcl_mushroom:warped_fungus"},
+	interval = 11,
+	chance = 128,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+    if nodepos.name == "mcl_mushroom:warped_nylium" or nodepos.name == "mcl_nether:netherrack" then
+      if pos.y < -28400 then
+        generate_warped_tree(pos)
+      end
+    end
+  end
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:warped_checknode",
+	nodenames = {"mcl_mushroom:warped_checknode"},
+	interval = 0.1,
+	chance = 1,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+    if nodepos.name == "air" then
+      minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:warped_nylium" })
+      local randomg = math.random(1, 400)
+      if randomg <= 5 then
+        minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_fungus" })
+      elseif randomg > 5 and randomg <= 15 then
+        local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
+        generate_warped_tree(pos1)
+			elseif randomg > 15 and randomg <= 45 then
+				grow_twisting_vines({ x = pos.x, y = pos.y, z = pos.z } ,math.random(1, 4))
+			elseif randomg > 45 and randomg <= 50 then
+				minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
+      end
+
+    else
+      minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
+    end
+  end
+})
+
+
+--[[ FIXME mobs:spawn({
+	name = "mobs_mc:enderman",
+	nodes = {"mcl_mushroom:warped_nylium"},
+	--min_light = 14,
+	interval = 5,
+	chance = 10,
+	--min_height = 3,
+	--max_height = 200,
+})]]
+
+
+
+minetest.register_node("mcl_mushroom:crimson_fungus", {
+  description = S("Crimson Fungus Mushroom"),
+	drawtype = "plantlike",
+	tiles = { "farming_crimson_fungus.png" },
+	inventory_image = "farming_crimson_fungus.png",
+	wield_image = "farming_crimson_fungus.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	walkable = false,
+	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1},
+
+	light_source = 1,
+	selection_box = {
+		type = "fixed",
+		fixed = { -3/16, -0.5, -3/16, 3/16, -2/16, 3/16 },
+	},
+	node_placement_prediction = "",
+	on_rightclick = function(pos, node, pointed_thing, itemstack)
+    if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+      itemstack:take_item()
+      local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+      if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
+        local random = math.random(1, 5)
+        if random == 1 then
+          generate_crimson_tree(pos)
+        end
+      end
+    end
+  end,
+	_mcl_blast_resistance = 0,
+
+  stack_max = 64,
+})
+
+minetest.register_node("mcl_mushroom:crimson_hyphae", {
+  description = S("Crimson Hyphae"),
+  tiles = {"crimson_hyphae.png",
+           "crimson_hyphae.png",
+           "crimson_hyphae_side.png",
+           "crimson_hyphae_side.png",
+           "crimson_hyphae_side.png",
+           "crimson_hyphae_side.png",
+         },
+  groups = {handy=5,axey=1, bark=1, building_block=1, material_wood=1,},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 2,
+})
+
+minetest.register_node("mcl_mushroom:crimson_hyphae_wood", {
+  description = S("Crimson Hyphae Wood"),
+  tiles = {"crimson_hyphae_wood.png"},
+  groups = {handy=5,axey=1, wood=1,building_block=1, material_wood=1,},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 2,
+})
+
+minetest.register_node("mcl_mushroom:crimson_nylium", {
+  description = S("Crimson Nylium"),
+  tiles = {"crimson_nylium.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png^crimson_nylium_side.png",
+           "mcl_nether_netherrack.png^crimson_nylium_side.png",
+           "mcl_nether_netherrack.png^crimson_nylium_side.png",
+           "mcl_nether_netherrack.png^crimson_nylium_side.png",
+         },
+  groups = {pickaxey=1, building_block=1, material_stone=1},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 0.4,
+  _mcl_blast_resistance = 0.4,
+  is_ground_content = true,
+  drop = "mcl_nether:netherrack",
+  _mcl_silk_touch_drop = true,
+})
+
+minetest.register_node("mcl_mushroom:crimson_checknode", {
+  description = S("Crimson Checknode - only to check!"),
+  tiles = {"mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+           "mcl_nether_netherrack.png",
+         },
+  groups = {pickaxey=1, building_block=1, material_stone=1, not_in_creative_inventory=1},
+  paramtype2 = "facedir",
+  stack_max = 64,
+  _mcl_hardness = 0.4,
+  _mcl_blast_resistance = 0.4,
+  is_ground_content = true,
+  drop = "mcl_nether:netherrack"
 })
 
 minetest.register_craft({
-	type = "cooking",
-	output = "mcl_nether:netherite_scrap",
-	recipe = "mcl_nether:ancient_debris",
-	cooktime = 10,
+  output = "mcl_mushroom:crimson_hyphae_wood 4",
+  recipe = {
+    {"mcl_mushroom:crimson_hyphae"},
+  }
 })
 
 minetest.register_craft({
-	output = "mcl_nether:quartz_block",
-	recipe = {
-		{"mcl_nether:quartz", "mcl_nether:quartz"},
-		{"mcl_nether:quartz", "mcl_nether:quartz"},
-	}
+  output = "mcl_mushroom:crimson_nylium 2",
+  recipe = {
+    {"mcl_nether:nether_wart"},
+    {"mcl_nether:netherrack"},
+  }
 })
 
-minetest.register_craft({
-	output = "mcl_nether:quartz_pillar 2",
-	recipe = {
-		{"mcl_nether:quartz_block"},
-		{"mcl_nether:quartz_block"},
-	}
+mcl_stairs.register_stair_and_slab_simple("crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood", "Crimson Wood Stairs", "Crimson Wood Slab", "Double Crimson Wood Slab")
+
+minetest.register_abm({
+	label = "mcl_mushroom:crimson_fungus",
+	nodenames = {"mcl_mushroom:crimson_fungus"},
+	interval = 11,
+	chance = 128,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+    if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
+      if pos.y < -28400 then
+        generate_crimson_tree(pos)
+      end
+    end
+  end
 })
 
-minetest.register_craft({
-	output = "mcl_nether:glowstone",
-	recipe = {
-		{"mcl_nether:glowstone_dust", "mcl_nether:glowstone_dust"},
-		{"mcl_nether:glowstone_dust", "mcl_nether:glowstone_dust"},
-	}
+minetest.register_abm({
+	label = "mcl_mushroom:crimson_checknode",
+	nodenames = {"mcl_mushroom:crimson_checknode"},
+	interval = 0.1,
+	chance = 1,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+    if nodepos.name == "air" then
+      minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:crimson_nylium" })
+      local randomg = math.random(1, 40)
+      if randomg == 2 then
+        minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
+      elseif randomg == 7 then
+        local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
+        generate_crimson_tree(pos1)
+      end
+    else
+      minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
+    end
+  end
 })
 
-minetest.register_craft({
-	output = "mcl_nether:magma",
-	recipe = {
-		{"mcl_mobitems:magma_cream", "mcl_mobitems:magma_cream"},
-		{"mcl_mobitems:magma_cream", "mcl_mobitems:magma_cream"},
-	}
+function generate_warped_tree(pos)
+  breakgrow = false
+  breakgrow2 = false
+  -- Baumgenerator
+  -- erste und zweite Etage
+  	for x = pos.x - 2,pos.x + 2 do
+        	for y = pos.y + 3, pos.y + 4 do
+        	    for z = pos.z - 2, pos.z + 2 do
+        	        if not (minetest.get_node({x = x, y = y, z = z}).name == "air") then breakgrow = true end
+        	    end
+        	end
+    	end
+
+  	-- dritte und vierte Etage
+  	for x = pos.x - 1,pos.x + 1 do
+  	      for y = pos.y + 5, pos.y + 6 do
+  	          for z = pos.z - 1, pos.z + 1 do
+  	              if not (minetest.get_node({x = x, y = y, z = z}).name == "air") then breakgrow = true end
+  	          end
+  	      end
+  	  end
+
+ 	 -- fünfte Etage
+	if not (minetest.get_node({x = pos.x, y = pos.y + 7, z = pos.z}).name == "air") then breakgrow = true end
+
+ 	 -- Holz
+	 if not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "air") and not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "mcl_mushroom:warped_fungus") then breakgrow = true end
+ 	 for y = pos.y + 1, pos.y + 4 do
+ 	   if not (minetest.get_node({x = pos.x, y = y, z = pos.z}).name == "air") then breakgrow = true end
+ 	 end
+	 if not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "air") and not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "mcl_mushroom:warped_fungus") then breakgrow2 = true end
+  if breakgrow == false then
+	-- Warzen
+	-- erste und zweite Etage
+  	for x = pos.x - 2,pos.x + 2 do
+        	for y = pos.y + 3, pos.y + 4 do
+        	    for z = pos.z - 2, pos.z + 2 do
+        	        minetest.set_node({x = x, y = y, z = z}, { name = "mcl_mushroom:warped_wart_block" })
+        	    end
+        	end
+    	end
+
+  	-- dritte und vierte Etage
+  	for x = pos.x - 1,pos.x + 1 do
+  	      for y = pos.y + 5, pos.y + 6 do
+  	          for z = pos.z - 1, pos.z + 1 do
+  	              minetest.set_node({x = x, y = y, z = z}, { name = "mcl_mushroom:warped_wart_block" })
+  	          end
+  	      end
+  	  end
+
+ 	 -- fünfte Etage
+ 	 minetest.set_node({x = pos.x, y = pos.y + 7, z = pos.z}, { name = "mcl_mushroom:warped_wart_block" })
+
+ 	 -- Pilzlich
+ 	 local randomgenerate = math.random(1, 2)
+ 	 if randomgenerate == 1 then
+ 	   local randomx = math.random(-2, 2)
+ 	   local randomz = math.random(-2, 2)
+ 	   minetest.set_node({x = pos.x + randomx, y = pos.y + 3, z = pos.z + randomz}, { name = "mcl_mushroom:shroomlight" })
+ 	 end
+ 	 local randomgenerate = math.random(1, 8)
+ 	 if randomgenerate == 4 then
+ 	   local randomx = math.random(-2, 2)
+ 	   local randomz = math.random(-2, 2)
+ 	   minetest.set_node({x = pos.x + randomx, y = pos.y + 3, z = pos.z + randomz}, { name = "mcl_mushroom:shroomlight" })
+ 	 end
+ 	 -- Holz
+ 	 for y = pos.y, pos.y + 4 do
+ 	   minetest.set_node({x = pos.x, y = y, z = pos.z}, { name = "mcl_mushroom:warped_hyphae" })
+ 	   --print("Placed at " .. x .. " " .. y .. " " .. z)
+ 	 end
+  else
+  	if breakgrow2 == false then minetest.set_node(pos,{ name = "mcl_mushroom:warped_fungus" }) end
+  end
+end
+
+function generate_crimson_tree(pos)
+  breakgrow = false
+  breakgrow2 = false
+  -- Baumgenerator
+  -- erste und zweite Etage
+  	for x = pos.x - 2,pos.x + 2 do
+        	for y = pos.y + 3, pos.y + 4 do
+        	    for z = pos.z - 2, pos.z + 2 do
+        	        if not (minetest.get_node({x = x, y = y, z = z}).name == "air") then breakgrow = true end
+        	    end
+        	end
+    	end
+
+  	-- dritte und vierte Etage
+  	for x = pos.x - 1,pos.x + 1 do
+  	      for y = pos.y + 5, pos.y + 6 do
+  	          for z = pos.z - 1, pos.z + 1 do
+  	              if not (minetest.get_node({x = x, y = y, z = z}).name == "air") then breakgrow = true end
+  	          end
+  	      end
+  	  end
+
+ 	 -- fünfte Etage
+	if not (minetest.get_node({x = pos.x, y = pos.y + 7, z = pos.z}).name == "air") then breakgrow = true end
+
+ 	 -- Holz
+	 if not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "air") and not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "mcl_mushroom:crimson_fungus") then breakgrow = true end
+ 	 for y = pos.y + 1, pos.y + 4 do
+ 	   if not (minetest.get_node({x = pos.x, y = y, z = pos.z}).name == "air") then breakgrow = true end
+ 	 end
+	 if not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "air") and not (minetest.get_node({x = pos.x, y = pos.y, z = pos.z}).name == "mcl_mushroom:crimson_fungus") then breakgrow2 = true end
+  if breakgrow == false then
+	-- Warzen
+	-- erste und zweite Etage
+  	for x = pos.x - 2,pos.x + 2 do
+        	for y = pos.y + 3, pos.y + 4 do
+        	    for z = pos.z - 2, pos.z + 2 do
+        	        minetest.set_node({x = x, y = y, z = z}, { name = "mcl_nether:nether_wart_block" })
+        	    end
+        	end
+    	end
+
+  	-- dritte und vierte Etage
+  	for x = pos.x - 1,pos.x + 1 do
+  	      for y = pos.y + 5, pos.y + 6 do
+  	          for z = pos.z - 1, pos.z + 1 do
+  	              minetest.set_node({x = x, y = y, z = z}, { name = "mcl_nether:nether_wart_block" })
+  	          end
+  	      end
+  	  end
+
+ 	 -- fünfte Etage
+ 	 minetest.set_node({x = pos.x, y = pos.y + 7, z = pos.z}, { name = "mcl_nether:nether_wart_block" })
+
+ 	 -- Pilzlich
+ 	 local randomgenerate = math.random(1, 2)
+ 	 if randomgenerate == 1 then
+ 	   local randomx = math.random(-2, 2)
+ 	   local randomz = math.random(-2, 2)
+ 	   minetest.set_node({x = pos.x + randomx, y = pos.y + 3, z = pos.z + randomz}, { name = "mcl_mushroom:shroomlight" })
+ 	 end
+ 	 local randomgenerate = math.random(1, 8)
+ 	 if randomgenerate == 4 then
+ 	   local randomx = math.random(-2, 2)
+ 	   local randomz = math.random(-2, 2)
+ 	   minetest.set_node({x = pos.x + randomx, y = pos.y + 3, z = pos.z + randomz}, { name = "mcl_mushroom:shroomlight" })
+ 	 end
+ 	 -- Holz
+ 	 for y = pos.y, pos.y + 4 do
+ 	   minetest.set_node({x = pos.x, y = y, z = pos.z}, { name = "mcl_mushroom:crimson_hyphae" })
+ 	   --print("Placed at " .. x .. " " .. y .. " " .. z)
+ 	 end
+  else
+  	if breakgrow2 == false then minetest.set_node(pos,{ name = "mcl_mushroom:crimson_fungus" }) end
+  end
+end
+
+
+--[[
+FIXME: Biomes are to rare
+FIXME: Decoration don't do generate
+WARNING: Outdatet, the biomes gernerate now different, with Ores
+-- biomes in test!
+minetest.register_biome({
+  name = "WarpedForest",
+  node_filler = "mcl_nether:netherrack",
+  node_stone = "mcl_nether:netherrack",
+  node_top = "mcl_mushroom:warped_nylium",
+  node_water = "air",
+  node_river_water = "air",
+  y_min = -29065,
+  y_max = -28940,
+  heat_point = 100,
+  humidity_point = 0,
+  _mcl_biome_type = "hot",
+  _mcl_palette_index = 19,
+})
+minetest.register_decoration({
+  deco_type = "simple",
+  place_on = {"mcl_mushroom:warped_nylium"},
+  sidelen = 16,
+  noise_params = {
+    offset = 0.01,
+    scale = 0.0022,
+    spread = {x = 250, y = 250, z = 250},
+    seed = 2,
+    octaves = 3,
+    persist = 0.66
+  },
+  biomes = {"WarpedForest"},
+  y_min = -29065,
+  y_max = -28940 + 80,
+  decoration = "mcl_mushroom:warped_fungus",
+})
+]]
+minetest.register_ore({
+  ore_type        = "sheet",
+  ore             = "mcl_mushroom:warped_checknode",
+  -- Note: Stone is included only for v6 mapgen support. Netherrack is not generated naturally
+  -- in v6, but instead set with the on_generated function in mcl_mapgen_core.
+  wherein         = {"mcl_nether:netherrack", "mcl_core:stone"},
+  clust_scarcity  = 14 * 14 * 14,
+  clust_size      = 10,
+  y_min           = -29065,
+  y_max           = -28940,
+  noise_threshold = 0.0,
+  noise_params    = {
+    offset = 0.5,
+    scale = 0.1,
+    spread = {x = 8, y = 8, z = 8},
+    seed = 4996,
+    octaves = 1,
+    persist = 0.0
+  },
 })
 
-minetest.register_craft({
-	type = "cooking",
-	output = "mcl_nether:netherbrick",
-	recipe = "mcl_nether:netherrack",
-	cooktime = 10,
+minetest.register_ore({
+  ore_type        = "sheet",
+  ore             = "mcl_mushroom:crimson_checknode",
+  -- Note: Stone is included only for v6 mapgen support. Netherrack is not generated naturally
+  -- in v6, but instead set with the on_generated function in mcl_mapgen_core.
+  wherein         = {"mcl_nether:netherrack", "mcl_core:stone"},
+  clust_scarcity  = 10 * 10 * 10,
+  clust_size      = 10,
+  y_min           = -29065,
+  y_max           = -28940,
+  noise_threshold = 0.0,
+  noise_params    = {
+    offset = 1,
+    scale = 0.5,
+    spread = {x = 12, y = 12, z = 12},
+    seed = 12948,
+    octaves = 1,
+    persist = 0.0
+  },
 })
 
-minetest.register_craft({
-	output = "mcl_nether:nether_brick",
-	recipe = {
-		{"mcl_nether:netherbrick", "mcl_nether:netherbrick"},
-		{"mcl_nether:netherbrick", "mcl_nether:netherbrick"},
-	}
+
+minetest.register_decoration({
+    deco_type = "simple",
+    place_on = {"mcl_mushroom:warped_nylium"},
+    sidelen = 16,
+    fill_ratio = 0.1,
+    biomes = {"Nether"},
+    y_max = -28940,
+    y_min = -29065,
+    decoration = "mcl_mushroom:warped_fungus",
 })
 
-minetest.register_craft({
-	output = "mcl_nether:red_nether_brick",
-	recipe = {
-		{"mcl_nether:nether_wart_item", "mcl_nether:netherbrick"},
-		{"mcl_nether:netherbrick", "mcl_nether:nether_wart_item"},
-	}
-})
-minetest.register_craft({
-	output = "mcl_nether:red_nether_brick",
-	recipe = {
-		{"mcl_nether:netherbrick", "mcl_nether:nether_wart_item"},
-		{"mcl_nether:nether_wart_item", "mcl_nether:netherbrick"},
-	}
-})
 
-minetest.register_craft({
-	output = "mcl_nether:nether_wart_block",
-	recipe = {
-		{"mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item"},
-		{"mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item"},
-		{"mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item", "mcl_nether:nether_wart_item"},
-	}
+minetest.register_decoration({
+    deco_type = "simple",
+    place_on = {"mcl_mushroom:crimson_nylium"},
+    sidelen = 16,
+    fill_ratio = 0.1,
+    biomes = {"Nether"},
+    y_max = -28940,
+    y_min = -29065,
+    decoration = "mcl_mushroom:crimson_fungus",
 })
-
-minetest.register_craft({
-	output = "mcl_nether:netherite_ingot",
-	recipe = {
-		{'mcl_nether:netherite_scrap', 'mcl_nether:netherite_scrap', 'mcl_nether:netherite_scrap'},
-		{'mcl_nether:netherite_scrap', 'mcl_core:gold_ingot', 'mcl_core:gold_ingot'},
-		{'mcl_core:gold_ingot', 'mcl_core:gold_ingot', ''},
-	}
-})
-
-minetest.register_craft({
-	output = "mcl_nether:netheriteblock",
-	recipe = {
-		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'},
-		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'},
-		{'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot', 'mcl_nether:netherite_ingot'}
-	}
-})
-
-minetest.register_craft({
-	output = "mcl_nether:netherite_ingot 9",
-	recipe = {
-		{'mcl_nether:netheriteblock', '', ''},
-		{'', '', ''},
-		{'', '', ''}
-	}
-})
-
-dofile(minetest.get_modpath(minetest.get_current_modname()).."/nether_wart.lua")
-dofile(minetest.get_modpath(minetest.get_current_modname()).."/lava.lua")
