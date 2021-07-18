@@ -33,7 +33,8 @@ minetest.register_node("mcl_nether:glowstone", {
 		min_count = 2,
 		max_count = 4,
 		cap = 4,
-	}
+	},
+
 })
 
 minetest.register_node("mcl_nether:quartz_ore", {
@@ -147,8 +148,8 @@ minetest.register_node("mcl_nether:netherrack", {
 		if ni == 1 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:warped_nylium"})
 		elseif ni == 2 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:crimson_nylium"}) end
 	else
+		--player:get_wielded_item():get_definition().on_place(itemstack, player, node)
 		if not (pointed_thing == nil) and pointed_thing.type == "node" then
-			--print(minetest.is_creative(player))
 			minetest.place_node(minetest.get_pointed_thing_position(pointed_thing, true), {name = player:get_wielded_item():get_name()})
 			if not (minetest.check_player_privs(player, {creative=true})) and not (minetest.settings:get_bool("creative_mode")) then
 				itemstack:take_item()
