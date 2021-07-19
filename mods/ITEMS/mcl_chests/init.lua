@@ -327,7 +327,9 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 	local function limit_put(stack, inv1, inv2)
 		local leftover = ItemStack(stack)
 		leftover = limit_put_list(leftover, inv1:get_list("main"))
-		leftover = limit_put_list(leftover, inv2:get_list("main"))
+		if inv2 then
+			leftover = limit_put_list(leftover, inv2:get_list("main"))
+		end
 		return stack:get_count() - leftover:get_count()
 	end
 
