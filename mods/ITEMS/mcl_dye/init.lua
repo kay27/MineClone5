@@ -351,7 +351,46 @@ function mcl_dye.apply_bone_meal(pointed_thing)
 			minetest.set_node(toppos, { name = "mcl_flowers:double_fern_top", param2 = n.param2 })
 			return true
 		end
-	end
+	elseif n.name == "mcl_nether:netherrack" then
+		local ni = 0 -- stand for neigbour item
+		for x = pos.x - 1,pos.x + 1 do
+			local node = minetest.get_node({x = x, y = pos.y, z = pos.z})
+			if ni == 0 then
+				if node.name == "mcl_mushroom:warped_nylium" then ni = 1
+				elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
+			elseif ni == 1 and node.name == "mcl_mushroom:crimson_nylium" then ni = 3
+			elseif ni == 2 and node.name == "mcl_mushroom:warped_nylium" then ni = 3 end
+		end
+		for z = pos.z - 1,pos.z + 1 do
+					local node = minetest.get_node({x = pos.x, y = pos.y, z = z})
+					if ni == 0 then
+						if node.name == "mcl_mushroom:warped_nylium" then ni = 1
+						elseif node.name == "mcl_mushroom:crimson_nylium" then ni = 2 end
+					elseif ni == 1 and node.name == "mcl_mushroom:crimson_nylium" then ni = 3
+					elseif ni == 2 and node.name == "mcl_mushroom:warped_nylium" then ni = 3 end
+					end
+					if ni == 3 then ni = math.random(1, 2) end
+
+					if ni == 1 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:warped_nylium"})
+					elseif ni == 2 then minetest.set_node({x = pos.x, y = pos.y, z = pos.z}, {name="mcl_mushroom:crimson_nylium"}) end
+		elseif n.name == "mcl_mushroom:warped_nylium" then
+			for x = pos.x - 2, pos.x + 2 do
+				for z = pos.z - 2, pos.z + 2 do
+					if minetest.get_node({x = x, y = pos.y + 1, z = z}).name == "air" and minetest.get_node({x = x, y = pos.y, z = z}).name == "mcl_mushroom:warped_nylium" then
+						local randomg = math.random(1, 35)
+						if randomg <= 5 then
+			        minetest.set_node({ x = x, y = pos.y + 1, z = z }, { name = "mcl_mushroom:warped_fungus" })
+						elseif randomg > 5 and randomg <= 10 then
+							grow_twisting_vines({ x = x, y = pos.y, z = z }, math.random(1, 4))
+						elseif randomg > 10 and randomg <= 20 then
+							minetest.set_node({ x = x, y = pos.y + 1, z = z }, { name = "mcl_mushroom:nether_sprouts" })
+						elseif randomg > 20 and randomg <= 30 then
+							minetest.set_node({ x = x, y = pos.y + 1, z = z }, { name = "mcl_mushroom:warped_roots" })
+			      end
+					end
+				end
+			end
+		end
 
 	return false
 end
@@ -545,5 +584,3 @@ minetest.register_craft({
 	output = "mcl_dye:white 3",
 	recipe = {{"mcl_mobitems:bone"}},
 })
-
-
