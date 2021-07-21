@@ -1,8 +1,12 @@
 # MineClone 5
-An unofficial Minecraft-like game for Minetest. Forked from MineClone by davedevils.
-Developed by many people. Not developed or endorsed by Mojang AB.
-
 Version: 0.71.5
+
+MineClone 5 is a fork of MineClone 2 with different workflow:
+* No Minecraft version limitation, target version is Latest Java Edition
+* Rapid delivery - small frequent releases with no milestones
+* Merge by one approval - one other dev must approve the PR
+
+Survive, gather, hunt, mine for ores, build houses, explore, and do much more.
 
 ### Gameplay
 You start in a randomly-generated world made entirely of cubes. You can explore
@@ -66,7 +70,7 @@ Use the `/giveme` chat command to obtain them. See the in-game help for
 an explanation.
 
 ## Installation
-This game requires [Minetest](http://minetest.net) to run (version 5.3.0 or
+This game requires [Minetest](http://minetest.net) to run (version 5.4.1 or
 later). So you need to install Minetest first. Only stable versions of Minetest
 are officially supported.
 There is no support for running MineClone 5 in development versions of Minetest.
@@ -88,7 +92,7 @@ The MineClone 5 repository is hosted at Mesehub. To contribute or report issues,
 The main goal of **MineClone 5** is to be a clone of Minecraft and to be released as free software.
 
 * **Target of development: Minecraft Java Edition latest version**
-* MineClone5 also includes Optifine features supported by the Minetest
+* MineClone 5 also includes Optifine features supported by the Minetest
 * In general, Minecraft is aimed to be cloned as good as possible
 * Cloning the gameplay has highest priority
 * MineClone 5 will use different assets, but with a similar style
