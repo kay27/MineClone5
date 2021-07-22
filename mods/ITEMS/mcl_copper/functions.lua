@@ -169,8 +169,8 @@ for _, s in pairs(stair_oxidation) do
 	register_oxidation_abm("Copper oxidation", "mcl_stairs:"..s[1].."_copper_"..s[2], "mcl_stairs:"..s[1].."_copper_"..s[3])
 end
 local axes = {"wood", "stone", "iron", "gold", "diamond"}
---[[
+
 for _, axe in pairs(axes) do
 	register_axe_override(axe)
 end
-]]
+
