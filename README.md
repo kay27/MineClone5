@@ -1,5 +1,5 @@
 # MineClone 5
-Version: 0.71.5
+Version: 0.71.6
 
 MineClone 5 is a fork of MineClone 2 with different workflow:
 * No Minecraft version limitation, target version is Latest Java Edition
