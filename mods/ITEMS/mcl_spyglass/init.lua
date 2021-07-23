@@ -43,6 +43,7 @@ local function remove_scope(player)
         player:hud_remove(spyglass_scope[player])
         spyglass_scope[player] = nil
         player:hud_set_flags({wielditem = true})
+        player:set_fov(86.1)
     end
 end
 
