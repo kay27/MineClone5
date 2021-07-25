@@ -92,7 +92,7 @@ The MineClone 5 repository is hosted at Mesehub. To contribute or report issues,
 The main goal of **MineClone 5** is to be a clone of Minecraft and to be released as free software.
 
 * **Target of development: Minecraft Java Edition latest version**
-* MineClone 5 also includes Optifine features supported by the Minetest
+* MineClone 5 also includes Optifine features supported by the Minetest engine
 * In general, Minecraft is aimed to be cloned as good as possible
 * Cloning the gameplay has highest priority
 * MineClone 5 will use different assets, but with a similar style
