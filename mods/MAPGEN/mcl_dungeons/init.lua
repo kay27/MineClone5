@@ -2,10 +2,8 @@
 
 mcl_dungeons = {}
 
-local mg_name = minetest.get_mapgen_setting("mg_name")
-
 -- Are dungeons disabled?
-if mcl_vars.mg_dungeons == false or mg_name == "singlenode" then
+if mcl_mapgen.dungeons == false or mcl_mapgen.singlenode == true then
 	return
 end
 
@@ -16,7 +14,6 @@ local swap_node        = minetest.swap_node
 local set_node         = minetest.set_node
 local dir_to_facedir   = minetest.dir_to_facedir
 local get_meta         = minetest.get_meta
-local emerge_area      = minetest.emerge_area
 
 --vector
 local vector_add       = vector.add
@@ -32,15 +29,15 @@ local math_max         = math.max
 local math_ceil        = math.ceil
 
 --custom mcl_vars
-local get_node = mcl_vars.get_node
+local get_node = mcl_mapgen.get_far_node
 
 
-local min_y = math_max(mcl_vars.mg_overworld_min, mcl_vars.mg_bedrock_overworld_max) + 1
-local max_y = mcl_vars.mg_overworld_max - 1
+local min_y = math_max(mcl_mapgen.overworld.min, mcl_mapgen.overworld.bedrock_max) + 1
+local max_y = mcl_mapgen.overworld.max - 1
 -- Calculate the number of dungeon spawn attempts
 -- In Minecraft, there 8 dungeon spawn attempts Minecraft chunk (16*256*16 = 65536 blocks).
 -- Minetest chunks don't have this size, so scale the number accordingly.
-local attempts = math_ceil(((mcl_vars.chunksize * mcl_vars.MAP_BLOCKSIZE) ^ 3) / 8192) -- 63 = 80*80*80/8192
+local attempts = math_ceil((mcl_mapgen.CS_NODES ^ 3) / 8192) -- 63 = 80*80*80/8192
 
 local dungeonsizes = {
 	{ x=5, y=4, z=5},
@@ -63,12 +60,14 @@ local surround_vectors = {
 	{ x=0, y=0, z=1 },
 }
 
-local function ecb_spawn_dungeon(blockpos, action, calls_remaining, param)
-	if calls_remaining >= 1 then return end
+--local function ecb_spawn_dungeon(blockpos, action, calls_remaining, param)
+--	if calls_remaining >= 1 then return end
+--	local p1, _, dim, pr = param.p1, param.p2, param.dim, param.pr
+--	local check = not (param.dontcheck or false)
+local function spawn_dungeon(p1, p2, dim, pr, dontcheck)
 
-	local p1, _, dim, pr = param.p1, param.p2, param.dim, param.pr
 	local x, y, z = p1.x, p1.y, p1.z
-	local check = not (param.dontcheck or false)
+	local check = not (dontcheck or false)
 
 	-- Check floor and ceiling: Must be *completely* solid
 	local y_floor = y
@@ -358,7 +357,7 @@ local function ecb_spawn_dungeon(blockpos, action, calls_remaining, param)
 		}
 
 		-- Bonus loot for v6 mapgen: Otherwise unobtainable saplings.
-		if mg_name == "v6" then
+		if mcl_mapgen.v6 then
 			table_insert(loottable, {
 				stacks_min = 1,
 				stacks_max = 3,
@@ -403,8 +402,7 @@ local function dungeons_nodes(minp, maxp, blockseed)
 		local z = pr:next(minp.z, maxp.z-dim.z-1)
 		local p1 = {x=x,y=y,z=z}
 		local p2 = {x = x+dim.x+1, y = y+dim.y+1, z = z+dim.z+1}
-		minetest.log("verbose","[mcl_dungeons] size=" ..minetest.pos_to_string(dim) .. ", emerge from "..minetest.pos_to_string(p1) .. " to " .. minetest.pos_to_string(p2))
-		emerge_area(p1, p2, ecb_spawn_dungeon, {p1=p1, p2=p2, dim=dim, pr=pr})
+		spawn_dungeon(p1, p2, dim, pr)
 	end
 end
 
@@ -412,8 +410,7 @@ function mcl_dungeons.spawn_dungeon(p1, _, pr)
 	if not p1 or not pr or not p1.x or not p1.y or not p1.z then return end
 	local dim = dungeonsizes[pr:next(1, #dungeonsizes)]
 	local p2 = {x = p1.x+dim.x+1, y = p1.y+dim.y+1, z = p1.z+dim.z+1}
-	minetest.log("verbose","[mcl_dungeons] size=" ..minetest.pos_to_string(dim) .. ", emerge from "..minetest.pos_to_string(p1) .. " to " .. minetest.pos_to_string(p2))
-	emerge_area(p1, p2, ecb_spawn_dungeon, {p1=p1, p2=p2, dim=dim, pr=pr, dontcheck=true})
+	spawn_dungeon(p1, p2, dim, pr, true)
 end
 
-mcl_mapgen_core.register_generator("dungeons", nil, dungeons_nodes, 999999)
+mcl_mapgen.register_chunk_generator(dungeons_nodes, mcl_mapgen.priorities.DUNGEONS)

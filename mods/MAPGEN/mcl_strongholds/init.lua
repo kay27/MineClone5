@@ -18,8 +18,7 @@ local stronghold_rings = {
 local strongholds = {}
 local strongholds_inited = false
 
-local mg_name = minetest.get_mapgen_setting("mg_name")
-local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
+local superflat = mcl_mapgen.superflat
 
 -- Determine the stronghold positions and store them into the strongholds table.
 -- The stronghold positions are based on the world seed.
@@ -30,7 +29,7 @@ local function init_strongholds()
 		return
 	end
 	-- Don't generate strongholds in singlenode
-	if mg_name == "singlenode" then
+	if mcl_mapgen.singlenode then
 		strongholds_inited = true
 		return
 	end
@@ -47,9 +46,9 @@ local function init_strongholds()
 			local dist = pr:next(ring.min, ring.max)
 			local y
 			if superflat then
-				y = mcl_vars.mg_bedrock_overworld_max + 3
+				y = mcl_mapgen.overworld.bedrock_max + 3
 			else
-				y = pr:next(mcl_vars.mg_bedrock_overworld_max+1, mcl_vars.mg_overworld_min+48)
+				y = pr:next(mcl_mapgen.overworld.bedrock_max+1, mcl_mapgen.overworld.bedrock_min+48)
 			end
 			local pos = { x = math.cos(angle) * dist, y = y, z = math.sin(angle) * dist }
 			pos = vector.round(pos)
@@ -66,8 +65,10 @@ local function init_strongholds()
 	strongholds_inited = true
 end
 
+init_strongholds()
+
 -- Stronghold generation for register_on_generated.
-local function generate_strongholds(minp, maxp, blockseed)
+mcl_mapgen.register_chunk_generator(function(minp, maxp, blockseed)
 	local pr = PseudoRandom(blockseed)
 	for s=1, #strongholds do
 		if not strongholds[s].generated then
@@ -99,8 +100,4 @@ local function generate_strongholds(minp, maxp, blockseed)
 			end
 		end
 	end
-end
-
-init_strongholds()
-
-mcl_mapgen_core.register_generator("strongholds", nil, generate_strongholds, 999999)
+end, mcl_mapgen.priorities.STRONGHOLDS)

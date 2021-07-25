@@ -38,7 +38,9 @@ function mcl_structures.place_schematic(pos, schematic, rotation, replacements, 
 		local p2 = {x=pos.x+x-1, y=pos.y+s.size.y-1, z=pos.z+z-1}
 		minetest.log("verbose", "[mcl_structures] size=" ..minetest.pos_to_string(s.size) .. ", rotation=" .. tostring(rotation) .. ", emerge from "..minetest.pos_to_string(p1) .. " to " .. minetest.pos_to_string(p2))
 		local param = {pos=vector.new(pos), schematic=s, rotation=rotation, replacements=replacements, force_placement=force_placement, flags=flags, p1=p1, p2=p2, after_placement_callback = after_placement_callback, size=vector.new(s.size), pr=pr, callback_param=callback_param}
-		minetest.emerge_area(p1, p2, ecb_place, param)
+		-- minetest.emerge_area(p1, p2, ecb_place, param)
+		-- TODO: Make it better
+		ecb_place(0, 0, 0, param)
 	end
 end
 
@@ -115,14 +117,14 @@ function mcl_structures.generate_igloo(pos, rotation, pr)
 	if r == 1 then
 		-- Select basement depth
 		local dim = mcl_worlds.pos_to_dimension(pos)
-		--local buffer = pos.y - (mcl_vars.mg_lava_overworld_max + 10)
+		--local buffer = pos.y - (mcl_mapgen.overworld.lava_max + 10)
 		local buffer
 		if dim == "nether" then
 			buffer = pos.y - (mcl_vars.mg_lava_nether_max + 10)
 		elseif dim == "end" then
 			buffer = pos.y - (mcl_vars.mg_end_min + 1)
 		elseif dim == "overworld" then
-			buffer = pos.y - (mcl_vars.mg_lava_overworld_max + 10)
+			buffer = pos.y - (mcl_mapgen.overworld.lava_max + 10)
 		else
 			return success
 		end
@@ -284,7 +286,7 @@ local function hut_placement_callback(p1, p2, size, orientation, pr)
 	if not p1 or not p2 then return end
 	local legs = minetest.find_nodes_in_area(p1, p2, "mcl_core:tree")
 	for i = 1, #legs do
-		while minetest.get_item_group(mcl_vars.get_node({x=legs[i].x, y=legs[i].y-1, z=legs[i].z}, true, 333333).name, "water") ~= 0 do
+		while minetest.get_item_group(mcl_mapgen.get_far_node({x=legs[i].x, y=legs[i].y-1, z=legs[i].z}, true, 333333).name, "water") ~= 0 do
 			legs[i].y = legs[i].y - 1
 			minetest.swap_node(legs[i], {name = "mcl_core:tree", param2 = 2})
 		end
