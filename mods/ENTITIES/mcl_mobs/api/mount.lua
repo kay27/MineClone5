@@ -227,8 +227,12 @@ function mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 		end
 
 		-- mob rotation
-		entity.object:set_yaw(entity.driver:get_look_horizontal() - entity.rotate)
-		entity.yaw = entity.driver:get_look_horizontal() - entity.rotate
+		local rotate = entity.rotate
+		if rotate then
+			local yaw = entity.driver:get_look_horizontal() - rotate
+			entity.yaw = yaw
+			entity.object:set_yaw(yaw)
+		end
 
 		--[[
 		if can_fly then
