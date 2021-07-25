@@ -11,8 +11,10 @@ local facedir = {
   vector.new(-1, 0, 0),
 }
 
+local min, max = mcl_mapgen.nether.min, mcl_mapgen.nether.max
+
 minetest.register_on_generated(function(minp, maxp)
-  if maxp.y < mcl_vars.mg_nether_min or minp.y > mcl_vars.mg_nether_max then
+  if maxp.y < min or minp.y > max then
     return
   end
 
@@ -20,7 +22,7 @@ minetest.register_on_generated(function(minp, maxp)
   local data = vm:get_data()
   local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 
-  for idx in area:iter(minp.x, math.max(minp.y, mcl_vars.mg_nether_min), minp.z, maxp.x, math.min(maxp.y, mcl_vars.mg_nether_max), maxp.z) do
+  for idx in area:iter(minp.x, math.max(minp.y, min), minp.z, maxp.x, math.min(maxp.y, max), maxp.z) do
     if data[idx] == c_debris then
       local pos = area:position(idx)
       local exposed = false
@@ -41,4 +43,3 @@ minetest.register_on_generated(function(minp, maxp)
   vm:update_liquids()
   vm:write_to_map()
 end)
-
