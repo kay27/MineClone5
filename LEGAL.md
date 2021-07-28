@@ -24,8 +24,7 @@ text files a different license. This counts as dual-licensing.
 You can choose which license applies to you: Either the
 license of MineClone 5 (GNU GPLv3) or the mod's license.
 
-MineClone 5 is a direct continuation of the discontinued MineClone
-project by davedevils.
+MineClone5 is a fork of MineClone2 that uses a different workflow to includes features after Minecaft 1.12.
 
 Mod credits:
 See `README.txt` or `README.md` in each mod directory for information about other authors.
