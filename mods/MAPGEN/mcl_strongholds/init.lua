@@ -68,7 +68,7 @@ end
 init_strongholds()
 
 -- Stronghold generation for register_on_generated.
-mcl_mapgen.register_chunk_generator(function(minp, maxp, blockseed)
+mcl_mapgen.register_mapgen(function(minp, maxp, blockseed)
 	local pr = PseudoRandom(blockseed)
 	for s=1, #strongholds do
 		if not strongholds[s].generated then
@@ -100,4 +100,4 @@ mcl_mapgen.register_chunk_generator(function(minp, maxp, blockseed)
 			end
 		end
 	end
-end, mcl_mapgen.priorities.STRONGHOLDS)
+end, mcl_mapgen.order.STRONGHOLDS)

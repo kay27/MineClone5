@@ -1,6 +1,6 @@
 mcl_mapgen = {}
 
-local priorities = { -- mcl_mapgen.priorities...
+local order = { -- mcl_mapgen.order...
 	DEFAULT		=    5000,
 	CHORUS		=  100000,
 	BUILDINGS	=  200000,
@@ -43,12 +43,13 @@ local numcmax = math_max(math_floor((mapgen_limit_max - ccfmax) / mcl_mapgen.CS_
 mcl_mapgen.EDGE_MIN = central_chunk_min_pos - numcmin * mcl_mapgen.CS_NODES
 mcl_mapgen.EDGE_MAX = central_chunk_max_pos + numcmax * mcl_mapgen.CS_NODES
 
-minetest_log("action", "[mcl_mapgen] World edges are: mcl_mapgen.EDGE_MIN = " .. tostring(mcl_mapgen.EDGE_MIN) .. ", mcl_mapgen.EDGE_MAX = " .. tostring(mcl_mapgen.EDGE_MAX))
+minetest_log("action", "[mcl_mapgen] World edges: mcl_mapgen.EDGE_MIN = " .. tostring(mcl_mapgen.EDGE_MIN) .. ", mcl_mapgen.EDGE_MAX = " .. tostring(mcl_mapgen.EDGE_MAX))
 ------------------------------------------
 
 -- Mapgen variables
 local overworld, end_, nether = {}, {}, {}
-mcl_mapgen.seed = minetest.get_mapgen_setting("seed")
+local seed = minetest.get_mapgen_setting("seed")
+mcl_mapgen.seed = seed
 mcl_mapgen.name = minetest.get_mapgen_setting("mg_name")
 mcl_mapgen.v6 = mcl_mapgen.name == "v6"
 mcl_mapgen.superflat = mcl_mapgen.name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
@@ -59,9 +60,8 @@ local superflat, singlenode, normal = mcl_mapgen.superflat, mcl_mapgen.singlenod
 minetest_log("action", "[mcl_mapgen] Mapgen mode: " .. (normal and "normal" or (superflat and "superflat" or "singlenode")))
 ------------------------------------------
 
-local lvm_block_queue, lvm_chunk_queue, node_block_queue, node_chunk_queue = {}, {}, {}, {} -- Generators' queues
-local lvm, block, lvm_block, lvm_chunk, param2, nodes_block, nodes_chunk, safe_functions = 0, 0, 0, 0, 0, 0, 0, 0 -- Requirements: 0 means none; greater than 0 means 'required'
-local lvm_buffer, lvm_param2_buffer = {}, {} -- Static buffer pointers
+local queue_unsafe, queue_blocks_lvm, queue_lvm, queue_blocks, queue = {}, {}, {}, {}, {} -- Generators' queues
+local lvm, block, queue_blocks_lvm_counter, lvm_chunk, param2, nodes_block, nodes_chunk, safe_functions = 0, 0, 0, 0, 0, 0, 0, 0 -- Requirements: 0 means none; greater than 0 means 'required'
 local BS, CS = mcl_mapgen.BS, mcl_mapgen.CS -- Mapblock size (in nodes), Mapchunk size (in blocks)
 local LAST_BLOCK, LAST_NODE = CS - 1, BS - 1 -- First mapblock in chunk (node in mapblock) has number 0, last has THIS number. It's for runtime optimization
 local offset = mcl_mapgen.OFFSET -- Central mapchunk offset (in blocks)
@@ -69,59 +69,39 @@ local CS_NODES = mcl_mapgen.CS_NODES -- 80
 
 local CS_3D = CS * CS * CS
 
-local DEFAULT_PRIORITY = priorities.DEFAULT
+local DEFAULT_ORDER = order.DEFAULT
 
-function mcl_mapgen.register_chunk_generator(callback_function, priority)
+function mcl_mapgen.register_on_generated(callback_function, order)
+	queue_unsafe[#queue_unsafe+1] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_lvm, function(a, b) return (a.i <= b.i) end)
+end
+function mcl_mapgen.register_mapgen(callback_function, order)
 	nodes_chunk = nodes_chunk + 1
 	safe_functions = safe_functions + 1
-	node_chunk_queue[nodes_chunk] = {i = priority or DEFAULT_PRIORITY, f = callback_function}
-	table.sort(node_chunk_queue, function(a, b) return (a.i <= b.i) end)
+	queue[nodes_chunk] = {i = order or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue, function(a, b) return (a.i <= b.i) end)
 end
-function mcl_mapgen.register_chunk_generator_lvm(callback_function, priority)
+function mcl_mapgen.register_mapgen_lvm(callback_function, order)
 	lvm = lvm + 1
-	lvm_chunk_queue[lvm_chunk] = {i = priority or DEFAULT_PRIORITY, f = callback_function}
-	table.sort(lvm_chunk_queue, function(a, b) return (a.i <= b.i) end)
+	lvm_chunk = lvm_chunk + 1
+	safe_functions = safe_functions + 1
+	queue_lvm[lvm_chunk] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_lvm, function(a, b) return (a.i <= b.i) end)
 end
-function mcl_mapgen.register_block_generator(callback_function, priority)
+function mcl_mapgen.register_mapgen_block(callback_function, priority)
 	block = block + 1
 	nodes_block = nodes_block + 1
 	safe_functions = safe_functions + 1
-	node_block_queue[nodes_block] = {i = priority or DEFAULT_PRIORITY, f = callback_function}
-	table.sort(node_block_queue, function(a, b) return (a.i <= b.i) end)
+	queue_blocks[nodes_block] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_blocks, function(a, b) return (a.i <= b.i) end)
 end
-function mcl_mapgen.register_block_generator_lvm(callback_function, priority)
+function mcl_mapgen.register_mapgen_block_lvm(callback_function, order)
 	block = block + 1
 	lvm = lvm + 1
-	lvm_block = lvm_block + 1
-	lvm_block_queue[lvm_block] = {i = priority or DEFAULT_PRIORITY, f = callback_function}
-	table.sort(lvm_block_queue, function(a, b) return (a.i <= b.i) end)
-end
-
-function mcl_mapgen.get_block_seed(pos, seed)
-	local p = pos
-	local x, y, z = p.x, p.y, p.z
-	if x<0 then x = 4294967296+x end
-	if y<0 then y = 4294967296+y end
-	if z<0 then z = 4294967296+z end
-	local seed = (seed or mcl_mapgen.seed or 0) % 4294967296
-	return (seed  +  (z*38134234)%4294967296 + (y*42123)%4294967296 + (x*23)%4294967296) % 4294967296
-end
-
-function mcl_mapgen.get_block_seed_2(pos, seed)
-	local p = pos
-	local seed = seed or mcl_mapgen.seed or 0
-	local x, y, z = p.x, p.y, p.z
-	if x<0 then x = 4294967296+x end
-	if y<0 then y = 4294967296+y end
-	if z<0 then z = 4294967296+z end
-	local n = ((1619*x)%4294967296 + (31337*y)%4294967296 + (52591*z)%4294967296 + (1013*seed)%4294967296) % 4294967296
---	n = (math_floor(n / 8192) ^ n) % 4294967296
-
-	local m = (n*n) % 4294967296
-	m = (m*60493) % 4294967296
-	m = (m+19990303) % 4294967296
-
-	return (n * m + 1376312589) % 4294967296
+	queue_blocks_lvm_counter =queue_blocks_lvm_counter + 1
+	safe_functions = safe_functions + 1
+	queue_blocks_lvm[queue_blocks_lvm_counter] = {order = order or DEFAULT_ORDER, callback_function = callback_function}
+	table.sort(queue_blocks_lvm, function(a, b) return (a.order <= b.order) end)
 end
 
 local storage = minetest.get_mod_storage()
@@ -132,37 +112,44 @@ minetest.register_on_shutdown(function()
 	storage:set_string("mapgen_blocks", minetest.serialize(blocks))
 end)
 
-local vm_context-- here will be many references and flags, like: param2, light_data, heightmap, biomemap, heatmap, humiditymap, gennotify, write_lvm, write_param2, shadow
+local vm_context -- here will be many references and flags, like: param2, light_data, heightmap, biomemap, heatmap, humiditymap, gennotify, write_lvm, write_param2, shadow
 local data, data2, area
 local current_blocks = {}
 local current_chunks = {}
+local lvm_buffer, lvm_param2_buffer = {}, {} -- Static buffer pointers
 
-minetest.register_on_generated(function(minp, maxp, blockseed)
-	local minp, maxp, blockseed = minp, maxp, blockseed
+minetest.register_on_generated(function(minp, maxp, chunkseed)
+	local minp, maxp, chunkseed = minp, maxp, chunkseed
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	minetest_log("warning", "[mcl_mapgen] New_chunk=" .. minetest_pos_to_string(minp) .. "..." .. minetest_pos_to_string(maxp) .. ", shell=" .. minetest_pos_to_string(emin) .. "..." .. minetest_pos_to_string(emax) .. ", blockseed=" .. tostring(blockseed) .. ", seed1=" .. mcl_mapgen.get_block_seed(minp) .. ", seed2=" .. mcl_mapgen.get_block_seed_2(minp))
+	minetest_log("warning", "[mcl_mapgen] New_chunk=" .. minetest_pos_to_string(minp) .. "..." .. minetest_pos_to_string(maxp) .. ", shell=" .. minetest_pos_to_string(emin) .. "..." .. minetest_pos_to_string(emax) .. ", chunkseed=" .. tostring(chunkseed))
 
-	if lvm > 0 then
-		vm_context = {lvm_param2_buffer = lvm_param2_buffer, vm = vm, emin = emin, emax = emax, minp = minp, maxp = maxp, blockseed = blockseed}
-		data = vm:get_data(lvm_buffer)
-		vm_context.data = data
-		area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
-		vm_context.area = area
-	end
+	data = vm:get_data(lvm_buffer)
+	area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	vm_context = {
+		data = data,
+		area = area,
+		lvm_param2_buffer = lvm_param2_buffer,
+		vm = vm,
+		emin = emin,
+		emax = emax,
+		minp = minp,
+		maxp = maxp,
+		chunkseed = chunkseed
+	}
 
 	if safe_functions > 0 then
 		local x0, y0, z0 = minp.x, minp.y, minp.z
 		local bx0, by0, bz0 = math_floor(x0/BS), math_floor(y0/BS), math_floor(z0/BS)
 		local bx1, by1, bz1 = bx0 + LAST_BLOCK, by0 + LAST_BLOCK, bz0 + LAST_BLOCK -- only for entire chunk check
 
-		-- Keep `blockseed` in `chunks[cx][cy][cz].seed` for further safe usage:
+		-- Keep `chunkseed` in `chunks[cx][cy][cz].seed` for further safe usage:
 		local cx0, cy0, cz0 = math_floor((bx0-offset)/CS), math_floor((by0-offset)/CS), math_floor((bz0-offset)/CS)
 		if not chunks[cx0] then chunks[cx0] = {} end
 		if not chunks[cx0][cy0] then chunks[cx0][cy0] = {} end
 		if not chunks[cx0][cy0][cz0] then
-			chunks[cx0][cy0][cz0] = {seed = blockseed, counter = 0}
+			chunks[cx0][cy0][cz0] = {seed = chunkseed, counter = 0}
 		else
-			chunks[cx0][cy0][cz0].seed = blockseed
+			chunks[cx0][cy0][cz0].seed = chunkseed
 		end
 
 		local x1, y1, z1, x2, y2, z2 = emin.x, emin.y, emin.z, emax.x, emax.y, emax.z
@@ -233,15 +220,16 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 								if next(chunks[cx]) == nil then chunks[cx] = nil end
 							end
 						end
-						vm_context.seed = blockseed + box * 7 + boy * 243 + boz * 11931
-						if lvm_block > 0 then
-							vm_context.minp, vm_content.maxp = {x=x, y=y, z=z}, {x=x+LAST_NODE, y=y+LAST_NODE, z=z+LAST_NODE}
-							for _, v in pairs(lvm_block_queue) do
-								vm_context = v.f(vm_context)
+						local blockseed = seed + bx * 7 + by * 243 + bz * 11931
+						if queue_blocks_lvm_counter > 0 then
+							vm_context.blockseed = blockseed
+							vm_context.minp, vm_context.maxp = {x=x, y=y, z=z}, {x=x+LAST_NODE, y=y+LAST_NODE, z=z+LAST_NODE}
+							for _, v in pairs(queue_blocks_lvm) do
+								vm_context = v.callback_function(vm_context)
 							end
 						end
 						if nodes_block > 0 then
-							current_blocks[#current_blocks+1] = { minp = {x=x, y=y, z=z}, maxp = {x=pos.x+LAST_NODE, y=pos.y+LAST_NODE, z=pos.z+LAST_NODE}, seed = seed }
+							current_blocks[#current_blocks+1] = { minp = {x=x, y=y, z=z}, maxp = {x=x+LAST_NODE, y=y+LAST_NODE, z=z+LAST_NODE}, seed = blockseed }
 						end
 					else
 						blocks[bx][by][bz] = current_mapgen_block_writes
@@ -259,7 +247,7 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 	end
 
 	if lvm > 0 then
-		for _, v in pairs(lvm_chunk_queue) do
+		for _, v in pairs(queue_lvm) do
 			vm_context = v.f(vm_context)
 		end
 		if vm_context.write then
@@ -279,14 +267,14 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 		local x, y, z = bx * BS, by * BS, bz * BS
 		local minp = {x = x, y = y, z = z}
 		local maxp = {x = x + CS_NODES - 1, y = y + CS_NODES - 1, z = z + CS_NODES - 1}
-		for _, v in pairs(node_chunk_queue) do
+		for _, v in pairs(queue) do
 			v.f(minp, maxp, seed)
 		end
 		current_chunks[i] = nil
 	end
 
 	for i, b in pairs(current_blocks) do
-		for _, v in pairs(node_block_queue) do
+		for _, v in pairs(queue_blocks) do
 			v.f(b.minp, b.maxp, b.seed)
 		end
 		current_blocks[i] = nil
@@ -386,11 +374,11 @@ else
 end
 if mcl_mapgen.name == "flat" then
 	if superflat then
-		nether.flat_nether_floor = nether.bedrock_bottom_max + 4
-		nether.flat_nether_ceiling = nether.bedrock_bottom_max + 52
+		nether.flat_floor = nether.bedrock_bottom_max + 4
+		nether.flat_ceiling = nether.bedrock_bottom_max + 52
 	else
-		nether.flat_nether_floor = nether.lava_max + 4
-		nether.flat_nether_ceiling = nether.lava_max + 52
+		nether.flat_floor = nether.lava_max + 4
+		nether.flat_ceiling = nether.lava_max + 52
 	end
 end
 
@@ -410,4 +398,4 @@ mcl_mapgen.overworld = overworld
 mcl_mapgen.end_ = end_
 mcl_mapgen.nether = nether
 
-mcl_mapgen.priorities = priorities
+mcl_mapgen.order = order

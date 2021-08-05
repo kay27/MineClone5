@@ -1092,7 +1092,7 @@ local function create_corridor_system(main_cave_coords)
 end
 
 -- The rail corridor algorithm starts here
-mcl_mapgen.register_chunk_generator(function(minp, maxp, blockseed, _pr)
+mcl_mapgen.register_mapgen(function(minp, maxp, blockseed)
 	-- We re-init the randomizer for every mapchunk as we start generating in the middle of each mapchunk.
 	-- We can't use the mapgen seed as this would make the algorithm depending on the order the mapchunk generate.
 	InitRandomizer(blockseed)

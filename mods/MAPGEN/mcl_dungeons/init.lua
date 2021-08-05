@@ -9,6 +9,7 @@ end
 
 --lua locals
 --minetest
+local minetest_find_nodes_in_area = minetest.find_nodes_in_area
 local registered_nodes = minetest.registered_nodes
 local swap_node        = minetest.swap_node
 local set_node         = minetest.set_node
@@ -64,6 +65,7 @@ local surround_vectors = {
 --	if calls_remaining >= 1 then return end
 --	local p1, _, dim, pr = param.p1, param.p2, param.dim, param.pr
 --	local check = not (param.dontcheck or false)
+local m1, m2 = 0, 0
 local function spawn_dungeon(p1, p2, dim, pr, dontcheck)
 
 	local x, y, z = p1.x, p1.y, p1.z
@@ -72,10 +74,40 @@ local function spawn_dungeon(p1, p2, dim, pr, dontcheck)
 	-- Check floor and ceiling: Must be *completely* solid
 	local y_floor = y
 	local y_ceiling = y + dim.y + 1
-	if check then for tx = x+1, x+dim.x do for tz = z+1, z+dim.z do
-		if not registered_nodes[get_node({x = tx, y = y_floor  , z = tz}).name].walkable
-		or not registered_nodes[get_node({x = tx, y = y_ceiling, z = tz}).name].walkable then return false end
-	end end end
+
+	if check then
+		local result1, result2 = true, true
+		local dim_x, dim_z = dim.x, dim.z
+		local size = dim_z*dim_x
+		local time1 = minetest.get_us_time()
+		for i=1,100 do
+			for tx = x+1, x+dim_x do
+				for tz = z+1, z+dim_z do
+					if not registered_nodes[get_node({x = tx, y = y_floor  , z = tz}).name].walkable
+					or not registered_nodes[get_node({x = tx, y = y_ceiling, z = tz}).name].walkable then
+						result1 = false
+					end
+				end
+			end
+		end
+		local time2 = minetest.get_us_time()
+		for i=1,100 do
+			if #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size
+			or #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size then
+				result2 = false
+			end
+		end
+		local time3 = minetest.get_us_time()
+		if result1 == result2 then
+			local d1, d2 = time2-time1, time3-time2
+			local m1 = m1 + d1
+			local m2 = m2 + d2
+			minetest.chat_send_all("m1 = " .. tostring(m1))
+			minetest.chat_send_all("m2 = " .. tostring(m2))
+		else
+			minetest.log("warning", "results mismatch")
+		end
+	end
 
 	-- Check for air openings (2 stacked air at ground level) in wall positions
 	local openings_counter = 0
@@ -413,4 +445,4 @@ function mcl_dungeons.spawn_dungeon(p1, _, pr)
 	spawn_dungeon(p1, p2, dim, pr, true)
 end
 
-mcl_mapgen.register_chunk_generator(dungeons_nodes, mcl_mapgen.priorities.DUNGEONS)
+mcl_mapgen.register_mapgen(dungeons_nodes, mcl_mapgen.order.DUNGEONS)

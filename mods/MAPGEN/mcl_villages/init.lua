@@ -75,7 +75,7 @@ end
 -- Disable natural generation in singlenode.
 local mg_name = minetest.get_mapgen_setting("mg_name")
 if mg_name ~= "singlenode" then
-	mcl_mapgen.register_chunk_generator(function(minp, maxp, blockseed)
+	mcl_mapgen.register_mapgen(function(minp, maxp, blockseed)
 		-- local str1 = (maxp.y >= 0 and blockseed % 77 == 17) and "YES" or "no"
 		-- minetest.log("action","[mcl_villages] " .. str1 .. ": minp=" .. minetest.pos_to_string(minp) .. ", maxp=" .. minetest.pos_to_string(maxp) .. ", blockseed=" .. tostring(blockseed))
 		-- don't build settlement underground
@@ -103,7 +103,7 @@ if mg_name ~= "singlenode" then
 		if height_difference > max_height_difference then return end
 
 		build_a_settlement(minp, maxp, blockseed)
-	end, mcl_mapgen.priorities.VILLAGES)
+	end, mcl_mapgen.order.VILLAGES)
 end
 -- manually place villages
 if minetest.is_creative_enabled("") then

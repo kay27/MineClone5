@@ -39,7 +39,7 @@ end
 local y_wanted = mcl_mapgen.OFFSET_NODES -- supposed to be -32
 local y_bottom = mcl_mapgen.overworld.min -- -62
 
-mcl_mapgen.register_chunk_generator(function(minp, maxp, seed)
+mcl_mapgen.register_mapgen(function(minp, maxp, seed)
 	local minp = minp
 	local y = minp.y
 	if y ~= y_wanted then return end
@@ -94,4 +94,4 @@ mcl_mapgen.register_chunk_generator(function(minp, maxp, seed)
 
 	minetest_log("action", "[mcl_ocean_monument] Placed at " .. minetest_pos_to_string(minp) .. ", " .. rotation_str .. " deg.")
 
-end, mcl_mapgen.priorities.OCEAN_MONUMENT)
+end, mcl_mapgen.order.OCEAN_MONUMENT)

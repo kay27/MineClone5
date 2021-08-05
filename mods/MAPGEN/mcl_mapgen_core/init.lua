@@ -784,7 +784,7 @@ local function register_mgv6_decorations()
 				persist = 0.62,
 			},
 			y_min = 1,
-			y_max = mcl_vars.overworld_max,
+			y_max = mcl_mapgen.overworld.max,
 			flags = "",
 		})
 	end
@@ -837,7 +837,7 @@ local function register_mgv6_decorations()
 			persist = 0.666
 		},
 		y_min = 1,
-		y_max = mcl_vars.overworld_max,
+		y_max = mcl_mapgen.overworld.max,
 	})
 
 	-- Melon
@@ -875,7 +875,7 @@ local function register_mgv6_decorations()
 			persist = 0.6
 		},
 		y_min = 1,
-		y_max = mcl_vars.overworld_max,
+		y_max = mcl_mapgen.overworld.max,
 		decoration = "mcl_flowers:tallgrass",
 	})
 	minetest.register_decoration({
@@ -891,7 +891,7 @@ local function register_mgv6_decorations()
 			persist = 0.6
 		},
 		y_min = 1,
-		y_max = mcl_vars.overworld_max,
+		y_max = mcl_mapgen.overworld.max,
 		decoration = "mcl_flowers:tallgrass",
 	})
 
@@ -916,7 +916,7 @@ local function register_mgv6_decorations()
 			},
 			flags = "force_placement",
 			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
+			y_min = mcl_mapgen.overworld.min,
 			y_max = 0,
 			decoration = "mcl_ocean:seagrass_"..mat,
 		})
@@ -936,7 +936,7 @@ local function register_mgv6_decorations()
 			},
 			flags = "force_placement",
 			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
+			y_min = mcl_mapgen.overworld.min,
 			y_max = -5,
 			decoration = "mcl_ocean:seagrass_"..mat,
 		})
@@ -957,7 +957,7 @@ local function register_mgv6_decorations()
 			},
 			flags = "force_placement",
 			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
+			y_min = mcl_mapgen.overworld.min,
 			y_max = -6,
 			decoration = "mcl_ocean:kelp_"..mat,
 			param2 = 16,
@@ -979,7 +979,7 @@ local function register_mgv6_decorations()
 			},
 			flags = "force_placement",
 			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
+			y_min = mcl_mapgen.overworld.min,
 			y_max = -15,
 			decoration = "mcl_ocean:kelp_"..mat,
 			param2 = 32,
@@ -1017,7 +1017,7 @@ local function register_mgv6_decorations()
 		sidelen = 8,
 		fill_ratio = 0.004,
 		y_min = 1,
-		y_max = mcl_vars.overworld_max,
+		y_max = mcl_mapgen.overworld.max,
 		decoration = "mcl_flowers:tallgrass",
 	})
 
@@ -1120,7 +1120,7 @@ end
 local mg_flags = minetest.settings:get_flags("mg_flags")
 
 -- Inform other mods of dungeon setting for MCL2-style dungeons
-mcl_vars.mg_dungeons = mg_flags.dungeons and not superflat
+mcl_vars.mg_dungeons = mcl_mapgen.dungeons
 
 -- Disable builtin dungeons, we provide our own dungeons
 mg_flags.dungeons = false
@@ -1191,8 +1191,8 @@ local perlin_vines, perlin_vines_fine, perlin_vines_upwards, perlin_vines_length
 local perlin_clay
 
 -- Generate Clay
-mcl_mapgen.register_chunk_generator_lvm(function(c)
-	local minp, maxp, blockseed, voxelmanip_data, voxelmanip_area, lvm_used = c.minp, c.maxp, c.blockseed, c.data, c.area, c.write or false
+mcl_mapgen.register_mapgen_lvm(function(c)
+	local minp, maxp, blockseed, voxelmanip_data, voxelmanip_area, lvm_used = c.minp, c.maxp, c.chunkseed, c.data, c.area, c.write or false
 	-- TODO: Make clay generation reproducible for same seed.
 	if maxp.y < -5 or minp.y > 0 then
 		return c
@@ -1799,7 +1799,7 @@ local function generate_nether_decorations(minp, maxp, seed)
 	-- Note: Spawned *after* the fire because of light level checks
 	special_deco(rack, function(bpos)
 		local l = minetest.get_node_light(bpos, 0.5)
-		if bpos.y > mcl_vars.mg_lava_nether_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
+		if bpos.y > mcl_mapgen.nether.lava_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
 			-- TODO: Make mushrooms appear in groups, use Perlin noise
 			if pr_nether:next(1,2) == 1 then
 				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
@@ -1823,15 +1823,15 @@ end
 -- Also perform some basic node replacements.
 
 local bedrock_check
-if mcl_vars.mg_bedrock_is_rough then
+if mcl_mapgen.bedrock_is_rough then
 	function bedrock_check(pos, _, pr)
 		local y = pos.y
 		-- Bedrock layers with increasing levels of roughness, until a perfecly flat bedrock later at the bottom layer
 		-- This code assumes a bedrock height of 5 layers.
 
-		local diff = mcl_vars.mg_bedrock_overworld_max - y -- Overworld bedrock
-		local ndiff1 = mcl_vars.mg_bedrock_nether_bottom_max - y -- Nether bedrock, bottom
-		local ndiff2 = mcl_vars.mg_bedrock_nether_top_max - y -- Nether bedrock, ceiling
+		local diff = mcl_mapgen.overworld.bedrock_max - y -- Overworld bedrock
+		local ndiff1 = mcl_mapgen.nether.bedrock_bottom_max - y -- Nether bedrock, bottom
+		local ndiff2 = mcl_mapgen.nether.bedrock_top_max - y -- Nether bedrock, ceiling
 
 		local top
 		if diff == 0 or ndiff1 == 0 or ndiff2 == 4 then
@@ -1895,10 +1895,10 @@ local function set_layers(data, area, content_id, check, min, max, minp, maxp, l
 end
 
 -- Below the bedrock, generate air/void
-local function basic(c)
-	local vm, data, emin, emax, area, minp, maxp, blockseed = c.vm, c.data, c.emin, c.emax, c.area, c.minp, c.maxp, c.blockseed
-	c.data2 = c.data2 or vm:get_data_param2(lvm_buffer_param2)
-	local data2 = c.data2
+local function basic_safe(vm_context)
+	local vm, data, emin, emax, area, minp, maxp, chunkseed, blockseed = vm_context.vm, vm_context.data, vm_context.emin, vm_context.emax, vm_context.area, vm_context.minp, vm_context.maxp, vm_context.chunkseed, vm_context.blockseed
+	vm_context.data2 = vm_context.data2 or vm:get_param2_data(lvm_param2_buffer)
+	local data2 = vm_context.data2
 
 	local lvm_used = false
 	local pr = PseudoRandom(blockseed)
@@ -1916,34 +1916,35 @@ local function basic(c)
 	-- [[ THE END:						mcl_mapgen.end_.min			       mcl_mapgen.end_.max							]]
 
 	-- The Void above the End below the Realm barrier:
-	lvm_used = set_layers(data, area, c_void         , nil, mcl_mapgen.end_.max                        +1, mcl_vars.mg_realm_barrier_overworld_end_min-1, minp, maxp, lvm_used, pr)
+	lvm_used = set_layers(data, area, c_void         , nil, mcl_mapgen.end_.max                        +1, mcl_mapgen.realm_barrier_overworld_end_min-1, minp, maxp, lvm_used, pr)
 	-- Realm barrier between the Overworld void and the End
-	lvm_used = set_layers(data, area, c_realm_barrier, nil, mcl_vars.mg_realm_barrier_overworld_end_min  , mcl_vars.mg_realm_barrier_overworld_end_max  , minp, maxp, lvm_used, pr)
+	lvm_used = set_layers(data, area, c_realm_barrier, nil, mcl_mapgen.realm_barrier_overworld_end_min  , mcl_mapgen.realm_barrier_overworld_end_max  , minp, maxp, lvm_used, pr)
 	-- The Void above Realm barrier below the Overworld:
-	lvm_used = set_layers(data, area, c_void         , nil, mcl_vars.mg_realm_barrier_overworld_end_max+1, mcl_mapgen.overworld.min                  -1, minp, maxp, lvm_used, pr)
+	lvm_used = set_layers(data, area, c_void         , nil, mcl_mapgen.realm_barrier_overworld_end_max+1, mcl_mapgen.overworld.min                  -1, minp, maxp, lvm_used, pr)
 
 
 	if mg_name ~= "singlenode" then
 		-- Bedrock
-		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_vars.mg_bedrock_overworld_min, mcl_vars.mg_bedrock_overworld_max, minp, maxp, lvm_used, pr)
-		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_vars.mg_bedrock_nether_bottom_min, mcl_vars.mg_bedrock_nether_bottom_max, minp, maxp, lvm_used, pr)
-		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_vars.mg_bedrock_nether_top_min, mcl_vars.mg_bedrock_nether_top_max, minp, maxp, lvm_used, pr)
+		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_mapgen.overworld.bedrock_min, mcl_mapgen.overworld.bedrock_max, minp, maxp, lvm_used, pr)
+		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_mapgen.nether.bedrock_bottom_min, mcl_mapgen.nether.bedrock_bottom_max, minp, maxp, lvm_used, pr)
+		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_mapgen.nether.bedrock_top_min, mcl_mapgen.nether.bedrock_top_max, minp, maxp, lvm_used, pr)
 
 		-- Flat Nether
 		if mg_name == "flat" then
-			lvm_used = set_layers(data, area, c_air, nil, mcl_vars.mg_flat_nether_floor, mcl_vars.mg_flat_nether_ceiling, minp, maxp, lvm_used, pr)
+			lvm_used = set_layers(data, area, c_air, nil, mcl_mapgen.nether.flat_floor, mcl_mapgen.nether.flat_ceiling, minp, maxp, lvm_used, pr)
 		end
 
 		-- Big lava seas by replacing air below a certain height
-		if mcl_vars.mg_lava then
+		if mcl_mapgen.lava then
 			lvm_used = set_layers(data, area, c_lava, c_air, mcl_mapgen.overworld.min, mcl_mapgen.overworld.lava_max, minp, maxp, lvm_used, pr)
-			lvm_used = set_layers(data, area, c_nether_lava, c_air, mcl_mapgen.nether.min, mcl_vars.mg_lava_nether_max, minp, maxp, lvm_used, pr)
+			lvm_used = set_layers(data, area, c_nether_lava, c_air, mcl_mapgen.nether.min, mcl_mapgen.nether.lava_max, minp, maxp, lvm_used, pr)
 		end
 
 		-- Clay, vines, cocoas
-		lvm_used = generate_clay(minp, maxp, blockseed, data, area, lvm_used)
+		-- lvm_used = generate_clay(minp, maxp, chunkseed, data, area, lvm_used)
 
-		c.biomemap = c.biomemap or minetest.get_mapgen_object("biomemap")
+		vm_context.biomemap = vm_context.biomemap or minetest.get_mapgen_object("biomemap")
+		local biomemap = vm_context.biomemap
 
 		lvm_used = generate_tree_decorations(minp, maxp, blockseed, data, data2, area, biomemap, lvm_used, pr)
 
@@ -2061,18 +2062,18 @@ local function basic(c)
 			end
 
 			-- Obsidian spawn platform
-			if minp.y <= mcl_vars.mg_end_platform_pos.y and maxp.y >= mcl_vars.mg_end_platform_pos.y and
-				minp.x <= mcl_vars.mg_end_platform_pos.x and maxp.x >= mcl_vars.mg_end_platform_pos.z and
-				minp.z <= mcl_vars.mg_end_platform_pos.z and maxp.z >= mcl_vars.mg_end_platform_pos.z then
+			if minp.y <= mcl_mapgen.end_.platform_pos.y and maxp.y >= mcl_mapgen.end_.platform_pos.y and
+				minp.x <= mcl_mapgen.end_.platform_pos.x and maxp.x >= mcl_mapgen.end_.platform_pos.z and
+				minp.z <= mcl_mapgen.end_.platform_pos.z and maxp.z >= mcl_mapgen.end_.platform_pos.z then
 
-				--local pos1 = {x = math.max(minp.x, mcl_vars.mg_end_platform_pos.x-2), y = math.max(minp.y, mcl_vars.mg_end_platform_pos.y),   z = math.max(minp.z, mcl_vars.mg_end_platform_pos.z-2)}
-				--local pos2 = {x = math.min(maxp.x, mcl_vars.mg_end_platform_pos.x+2), y = math.min(maxp.y, mcl_vars.mg_end_platform_pos.y+2), z = math.min(maxp.z, mcl_vars.mg_end_platform_pos.z+2)}
+				--local pos1 = {x = math.max(minp.x, mcl_mapgen.end_.platform_pos.x-2), y = math.max(minp.y, mcl_mapgen.end_.platform_pos.y),   z = math.max(minp.z, mcl_mapgen.end_.platform_pos.z-2)}
+				--local pos2 = {x = math.min(maxp.x, mcl_mapgen.end_.platform_pos.x+2), y = math.min(maxp.y, mcl_mapgen.end_.platform_pos.y+2), z = math.min(maxp.z, mcl_mapgen.end_.platform_pos.z+2)}
 
-				for x=math.max(minp.x, mcl_vars.mg_end_platform_pos.x-2), math.min(maxp.x, mcl_vars.mg_end_platform_pos.x+2) do
-				for z=math.max(minp.z, mcl_vars.mg_end_platform_pos.z-2), math.min(maxp.z, mcl_vars.mg_end_platform_pos.z+2) do
-				for y=math.max(minp.y, mcl_vars.mg_end_platform_pos.y), math.min(maxp.y, mcl_vars.mg_end_platform_pos.y+2) do
+				for x=math.max(minp.x, mcl_mapgen.end_.platform_pos.x-2), math.min(maxp.x, mcl_mapgen.end_.platform_pos.x+2) do
+				for z=math.max(minp.z, mcl_mapgen.end_.platform_pos.z-2), math.min(maxp.z, mcl_mapgen.end_.platform_pos.z+2) do
+				for y=math.max(minp.y, mcl_mapgen.end_.platform_pos.y), math.min(maxp.y, mcl_mapgen.end_.platform_pos.y+2) do
 					local p_pos = area:index(x, y, z)
-					if y == mcl_vars.mg_end_platform_pos.y then
+					if y == mcl_mapgen.end_.platform_pos.y then
 						data[p_pos] = c_obsidian
 					else
 						data[p_pos] = c_air
@@ -2104,8 +2105,7 @@ local function basic(c)
 		generate_structures(minp, maxp, blockseed, biomemap)
 	end
 
-	return lvm_used, shadow
+	return vm_context --, lvm_used, shadow
 end
 
-mcl_mapgen.register_chunk_generator_lvm(basic, 1)
-
+mcl_mapgen.register_mapgen_block_lvm(basic_safe, 1)
