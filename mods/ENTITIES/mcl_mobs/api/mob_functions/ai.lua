@@ -821,9 +821,8 @@ function mobs.mob_step(self, dtime)
 		self.lifetimer = self.lifetimer - dtime
 		if self.lifetimer <= 0 then
 			self.lifetimer = self.lifetimer_reset
-			if not mobs.check_for_player_within_area(self, 64) then
-				--print("removing in MAIN LOGIC!")
-				self.object:remove()
+			if mobs.can_despawn(self) then
+				self.object:remove()				
 				return
 			end
 		end
