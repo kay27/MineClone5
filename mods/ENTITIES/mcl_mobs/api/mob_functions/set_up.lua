@@ -5,16 +5,18 @@ local minetest_settings = minetest.settings
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
 
+mobs.can_despawn = function(self)
+	return (not self.tamed and not self.bred and not self.nametag and
+	not mobs.check_for_player_within_area(self, 64));
+end
+
 -- get entity staticdata
 mobs.mob_staticdata = function(self)
 	--despawn mechanism
 	--don't despawned tamed or bred mobs
-	if not self.tamed and not self.bred then
-		if not mobs.check_for_player_within_area(self, 64) then
-			--print("removing SERIALIZED!")
-			self.object:remove()
-			return
-		end
+	if mobs.can_despawn(self) then
+		self.object:remove()		
+		return
 	end
 
 	self.remove_ok = true
