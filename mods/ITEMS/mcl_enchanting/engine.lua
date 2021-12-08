@@ -270,8 +270,14 @@ function mcl_enchanting.initialize()
 			new_def.groups.not_in_creative_inventory = 1
 			new_def.groups.not_in_craft_guide = 1
 			new_def.groups.enchanted = 1
-			new_def._mcl_armor_texture = new_def._mcl_armor_texture and new_def._mcl_armor_texture .. mcl_enchanting.overlay
-			new_def._mcl_armor_preview = new_def._mcl_armor_preview and new_def._mcl_armor_preview .. mcl_enchanting.overlay
+
+			if new_def._mcl_armor_texture and not type(new_def._mcl_armor_texture) == "function" then
+				new_def._mcl_armor_texture = new_def._mcl_armor_texture .. mcl_enchanting.overlay
+			end
+			if new_def._mcl_armor_preview and not type(new_def._mcl_armor_preview) == "function" then
+				new_def._mcl_armor_preview = new_def._mcl_armor_preview .. mcl_enchanting.overlay
+			end
+
 			new_def._mcl_enchanting_enchanted_tool = new_name
 			new_def.after_use = get_after_use_callback(itemdef)
 			local register_list = register_item_list
@@ -493,7 +499,7 @@ function mcl_enchanting.show_enchanting_formspec(player)
 		.. "real_coordinates[true]"
 		.. "image[3.15,0.6;7.6,4.1;mcl_enchanting_button_background.png]"
 	local itemstack = inv:get_stack("enchanting_item", 1)
-	local player_levels = mcl_experience.get_player_xp_level(player)
+	local player_levels = mcl_experience.get_level(player)
 	local y = 0.65
 	local any_enchantment = false
 	local table_slots = mcl_enchanting.get_table_slots(player, itemstack, num_bookshelves)
@@ -543,11 +549,11 @@ function mcl_enchanting.handle_formspec_fields(player, formname, fields)
 		if not slot then
 			return
 		end
-		local player_level = mcl_experience.get_player_xp_level(player)
+		local player_level = mcl_experience.get_level(player)
 		if player_level < slot.level_requirement then
 			return
 		end
-		mcl_experience.set_player_xp_level(player, player_level - button_pressed)
+		mcl_experience.set_level(player, player_level - button_pressed)
 		inv:remove_item("enchanting_lapis", cost)
 		mcl_enchanting.set_enchanted_itemstring(itemstack)
 		mcl_enchanting.set_enchantments(itemstack, slot.enchantments)
