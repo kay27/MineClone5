@@ -213,11 +213,11 @@ lightning.register_on_strike(function(pos, pos2, objects)
 				for i=1,3 do
 					posadd = { x=math.cos(angle),y=0,z=math.sin(angle) }
 					posadd = vector.normalize(posadd)
-					local mob = add_entity(vector.add(pos2, posadd), "mobs_mc:skeleton")
+					local mob = minetest.add_entity(vector.add(pos2, posadd), "mobs_mc:skeleton")
 					if mob then
 						mob:set_yaw(angle-math.pi/2)
+						angle = angle + (math.pi*2) / 3
 					end
-					angle = angle + (math.pi*2) / 3
 				end
 
 			-- Cause a fire
