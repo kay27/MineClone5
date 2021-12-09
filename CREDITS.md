@@ -9,52 +9,62 @@
 ## Creators of MineClone 5
 * kay27 and the Community
 
-## The Community:
-* Fleckenstein
-* jordan4ibanez
-* bzoss
+## The Community (alphabetically):
 * AFCMS
-* epCode
-* ryvnf
-* iliekprogrammar
-* MysticTempest
-* Rootyjr
-* Nicu
-* aligator
-* Code-Sploit
-* NO11
-* Laurent Rocher
-* HimbeerserverDE
-* TechDudie
 * Alexander Minges
 * ArTee3
-* ZeDique la Ruleta
-* pitchum
-* wuniversales
-* Bu-Gee
-* David McMackins II
-* Nicholas Niro
-* Wouters Dorian
-* Blue Blancmange
-* Jared Moody
-* Li0n
-* Midgard
-* Saku Laesvuori
-* Yukitty
-* ZedekThePD
 * aldum
-* dBeans
-* nickolas360
-* yutyo
-* ztianyang
-* j45
-
-## MineClone5
-* kay27
+* aligator
+* Benjamin Schötz
+* Blue Blancmange
+* Bu-Gee
+* bzoss
+* Code-Sploit
+* cora
+* David McMackins II
 * Debiankaios
+* Dieter44
+* Doloment
+* dBeans
+* E
+* Emily2255
+* Emojigit
 * epCode
-* NO11
+* erlehmann
+* FinishedFragment
+* Fleckenstein
+* HimbeerserverDE
+* iliekprogrammar
+* Jared Moody
 * j45
+* jordan4ibanez
+* kay27
+* Laurent Rocher
+* Li0n
+* Marcin Serwin
+* Midgard
+* MysticTempest
+* Nicholas Niro
+* Nicu
+* nickolas360
+* NO11
+* pitchum
+* Rootyjr
+* ryvnf
+* Saku Laesvuori
+* SmallJoker
+* Sven792
+* Sydney Gems
+* sfan5
+* TechDudie
+* Tianyang Zhang
+* talamh
+* Wouters Dorian
+* wuniversales
+* Yukitty
+* yutyo
+* ZeDique la Ruleta
+* ZedekThePD
 
 ## Original Mod Authors
 * Wuzzy
@@ -72,7 +82,6 @@
 * Rochambeau
 * rubenwardy
 * stu
-* jordan4ibanez
 * 4aiman
 * Kahrl
 * Krock
@@ -101,6 +110,7 @@
 * xMrVizzy
 * yutyo
 * NO11
+* kay27
 
 ## Translations
 * Wuzzy
@@ -108,6 +118,11 @@
 * wuniversales
 * kay27
 * pitchum
+* todoporlalibertad
+* Marcin Serwin
+
+## Funders
+* 40W
 
 ## Special thanks
 * celeron55 for creating Minetest
