@@ -19,6 +19,7 @@ local set_node = minetest.set_node
 local sound_play = minetest.sound_play
 local add_particlespawner = minetest.add_particlespawner
 local after = minetest.after
+local add_entity = minetest.add_entity
 local get_objects_inside_radius = minetest.get_objects_inside_radius
 local get_item_group = minetest.get_item_group
 
@@ -206,7 +207,7 @@ lightning.register_on_strike(function(pos, pos2, objects)
 		if get_node(pos2).name == "air" then
 			-- Low chance for a lightning to spawn skeleton horse + skeletons
 			if skeleton_lightning then
-				minetest.add_entity(pos2, "mobs_mc:skeleton_horse")
+				add_entity(pos2, "mobs_mc:skeleton_horse")
 
 				local angle, posadd
 				angle = math.random(0, math.pi*2)
