@@ -1,369 +1,195 @@
-local S = minetest.get_translator("mcl_bubble_column")
+mcl_bubble_column = {}
 
-local WATER_ALPHA = 179
-local WATER_VISC = 1
-local LAVA_VISC = 7
-local LIGHT_LAVA = minetest.LIGHT_MAX
-local USE_TEXTURE_ALPHA
-if minetest.features.use_texture_alpha_string_modes then
-	USE_TEXTURE_ALPHA = "blend"
-	WATER_ALPHA = nil
+minetest.register_abm{
+	label = "bubbleColumnUpStop",
+	nodenames = {"group:water"},
+	interval = 0.05,
+	chance = 1,
+	action = function(pos)
+        local meta = minetest.get_meta(pos)
+        if meta:get_int("bubbly") == 1 then--bubble column
+        	--check down if current needs to be deleted
+        	local downpos = vector.add(pos, {x = 0, y = -1, z = 0})
+			local downposnode = minetest.get_node(downpos)
+			local downmeta = minetest.get_meta(downpos)
+			if (downmeta:get_int("bubbly") ~= 1 and downposnode.name ~= "mcl_nether:soul_sand") then
+				meta:set_int("bubbly", 0)
+			end
+        	--check up to see if needs to go up
+        	local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
+        	local upposnode = minetest.get_node(uppos)
+        	local upmeta = minetest.get_meta(uppos)
+			if (minetest.get_item_group(upposnode.name, "water") == 3 and upmeta:get_int("bubbly") ~= 1) then
+        	    upmeta:set_int("bubbly", 1)
+			end
+		elseif meta:get_int("whirly") == 1 then--whirlpool
+        	--check down if current needs to be deleted
+        	local downpos = vector.add(pos, {x = 0, y = -1, z = 0})
+			local downposnode = minetest.get_node(downpos)
+			local downmeta = minetest.get_meta(downpos)
+			if (downmeta:get_int("whirly") ~= 1 and downposnode.name ~= "mcl_nether:magma") then
+				meta:set_int("whirly", 0)
+			end
+        	--check up to see if needs to go up
+        	local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
+        	local upposnode = minetest.get_node(uppos)
+        	local upmeta = minetest.get_meta(uppos)
+			if (minetest.get_item_group(upposnode.name, "water") == 3 and upmeta:get_int("whirly") ~= 1) then
+        	    upmeta:set_int("whirly", 1)
+			end
+		end
+	end,
+}
+
+minetest.register_abm{
+    label = "startBubbleColumn",
+    nodenames = {"mcl_nether:soul_sand"},
+    interval = 0.05,
+    chance = 1,
+    action = function(pos)
+        local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
+        local upposnode = minetest.get_node(uppos)
+        local upmeta = minetest.get_meta(uppos)
+        if (minetest.get_item_group(upposnode.name, "water") == 3 and upmeta:get_int("bubbly") ~= 1) then
+            upmeta:set_int("bubbly", 1)
+        end
+    end,
+}
+
+minetest.register_abm{
+    label = "startWhirlpool",
+    nodenames = {"mcl_nether:magma"},
+    interval = 0.05,
+    chance = 1,
+    action = function(pos)
+        local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
+        local upposnode = minetest.get_node(uppos)
+        local upmeta = minetest.get_meta(uppos)
+        if (minetest.get_item_group(upposnode.name, "water") == 3 and upmeta:get_int("whirly") ~= 1) then
+            upmeta:set_int("whirly", 1)
+        end
+    end,
+}
+
+
+mcl_bubble_column.on_enter_bubble_column = function(self)
+	local velocity = self:get_velocity()
+	--[[if down.name == "mcl_nether:soul_sand" then
+		self:add_velocity({x = 0, y = math.min(10, math.abs(velocity.y)+9.4), z = 0})
+	else]]
+	self:add_velocity({x = 0, y = math.min(3.6, math.abs(velocity.y)+3), z = 0})
+	--end
 end
 
-minetest.register_node("mcl_bubble_column:water_flowing_up", {
-	description = S("Bubble Column Flowing Water (up)"),
-	_doc_items_create_entry = false,
-	wield_image = "default_water_flowing_animated.png^[verticalframe:64:0",
-	drawtype = "flowingliquid",
-	tiles = {"default_water_flowing_animated.png^[verticalframe:64:0"},
-	special_tiles = {
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=4.0}
-		},
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=4.0}
-		},
-	},
-	sounds = mcl_sounds.node_sound_water_defaults(),
-	is_ground_content = false,
-	alpha = WATER_ALPHA,
-	use_texture_alpha = USE_TEXTURE_ALPHA,
-	paramtype = "light",
-	paramtype2 = "flowingliquid",
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	buildable_to = true,
-	drop = "",
-	drowning = 4,
-	liquidtype = "flowing",
-	liquid_alternative_flowing = "mcl_bubble_column:water_flowing_up",
-	liquid_alternative_source = "mcl_bubble_column:water_source_up",
-	liquid_viscosity = WATER_VISC,
-	liquid_range = 7,
-	post_effect_color = {a=209, r=0x03, g=0x3C, b=0x5C},
-	groups = { water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, freezes=1, melt_around=1, dig_by_piston=1},
-	_mcl_blast_resistance = 100,
-	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
-	_mcl_hardness = -1,
-})
+mcl_bubble_column.on_enter_whirlpool = function(self)
+	local velocity = self:get_velocity()
+	--self:add_velocity({x = 0, y = math.max(-3, (-math.abs(velocity.y))-2), z = 0})
+	self:add_velocity({x = 0, y = math.max(-0.3, (-math.abs(velocity.y))-0.03), z = 0})
+end
 
-minetest.register_node("mcl_bubble_column:water_source_up", {
-	description = S("Bubble Column Water Source"),
-	_doc_items_entry_name = S("Water"),
-	_doc_items_longdesc = S("Boosts you up"),
-	_doc_items_hidden = false,
-	drawtype = "liquid",
-	tiles = {
-		{name="default_water_source_animated.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=5.0}}
-	},
-	special_tiles = {
-		-- New-style water source material (mostly unused)
-		{
-			name="default_water_source_animated.png",
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=5.0},
-			backface_culling = false,
-		}
-	},
-	sounds = mcl_sounds.node_sound_water_defaults(),
-	is_ground_content = false,
-	alpha = WATER_ALPHA,
-	use_texture_alpha = USE_TEXTURE_ALPHA,
-	paramtype = "light",
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	buildable_to = true,
-	drop = "",
-	drowning = 4,
-	liquidtype = "source",
-	liquid_alternative_flowing = "mcl_bubble_column:water_flowing_up",
-	liquid_alternative_source = "mcl_bubble_column:water_source_up",
-	liquid_viscosity = WATER_VISC,
-	liquid_range = 7,
-	post_effect_color = {a=209, r=0x03, g=0x3C, b=0x5C},
-	stack_max = 64,
-	groups = { water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, dig_by_piston=1},
-	_mcl_blast_resistance = 100,
-	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
-	_mcl_hardness = -1,
-})
+mcl_bubble_column.on_enter_bubble_column_with_air_above = function(self)
+	local velocity = self:get_velocity()
+	--[[if down.name == "mcl_nether:soul_sand" then
+		self:add_velocity({x = 0, y = math.min(4.3, math.abs(velocity.y)+2.8), z = 0})
+	else]]
+	self:add_velocity({x = 0, y = math.min(2.6, math.abs(velocity.y)+2), z = 0})
+	--end
+end
+
+mcl_bubble_column.on_enter_whirlpool_with_air_above = function(self)
+	local velocity = self:get_velocity()
+	--self:add_velocity({x = 0, y = math.max(-3.5, (-math.abs(velocity.y))-2), z = 0})
+	self:add_velocity({x = 0, y = math.max(-0.9, (-math.abs(velocity.y))-0.03), z = 0})
+end
+
+minetest.register_abm{
+	label = "entGo",
+	nodenames = {"group:water"},
+	interval = 0.05,
+	chance = 1,
+	action = function(pos)
+		--if not bubble column block return
+		local meta = minetest.get_meta(pos)
+		if meta:get_int("bubbly") == 1 then
+			local up = minetest.get_node(vector.add(pos, {x = 0, y = 1, z = 0}))
+			for _,entity in pairs(minetest.get_objects_inside_radius(pos, 0.75)) do
+				if up.name == "air" then
+					mcl_bubble_column.on_enter_bubble_column_with_air_above(entity)
+				else
+					mcl_bubble_column.on_enter_bubble_column(entity)
+				end
+			end
+		elseif meta:get_int("whirly") == 1 then
+			local up = minetest.get_node(vector.add(pos, {x = 0, y = 1, z = 0}))
+			for _,entity in pairs(minetest.get_objects_inside_radius(pos, 0.75)) do
+				if up.name == "air" then
+					mcl_bubble_column.on_enter_whirlpool_with_air_above(entity)
+				else
+					mcl_bubble_column.on_enter_whirlpool(entity)
+				end
+			end
+		end
+	end,
+}
 
 minetest.register_globalstep(function()
     for _,player in ipairs(minetest.get_connected_players()) do
-        local name = player:get_player_name()
-        local pos = player:get_pos()
-        local node = minetest.get_node(pos)
-        if node.name == "mcl_bubble_column:water_source_up" then
-            local velocity = player:get_player_velocity()
-            local velocityadd = {x = 0, y = 3, z = 0}
-            player:add_player_velocity(velocityadd)
-        end
-    end
+		local ppos = player:get_pos()
+		local eyepos = {x = ppos.x, y = ppos.y + player:get_properties().eye_height, z = ppos.z}
+		local node = minetest.get_node(ppos)
+		local eyenode = minetest.get_node(eyepos)
+		local meta = minetest.get_meta(ppos)
+		local eyemeta = minetest.get_meta(eyepos)
+		
+		local eyemeta = minetest.get_meta(ppos)
+		--if minetest.get_item_group(node.name, "water") == 3 and minetest.get_item_group(eyenode.name, "water") == 3 then return end
+		if meta:get_int("bubbly") == 1 or eyemeta:get_int("bubbly") == 1 then
+			local up = minetest.get_node(vector.add(eyepos, {x = 0, y = 1, z = 0}))
+			if up.name == "air" then
+				mcl_bubble_column.on_enter_bubble_column_with_air_above(player)
+			else
+				mcl_bubble_column.on_enter_bubble_column(player)
+			end
+		elseif meta:get_int("whirly") == 1 or eyemeta:get_int("whirly") == 1 then
+			local up = minetest.get_node(vector.add(ppos, {x = 0, y = 1, z = 0}))
+			if up.name == "air" then
+				mcl_bubble_column.on_enter_whirlpool_with_air_above(player)
+			else
+				mcl_bubble_column.on_enter_whirlpool(player)
+			end
+		end
+	end
 end)
 
+--abms to remove and replace old bubble columns/whirlpools
 minetest.register_abm{
-    label = "entities go up",
+    label = "removeOldFlowingColumns",
+    nodenames = {"mcl_bubble_column:water_flowing_up", "mcl_bubble_column:water_flowing_down"},
+    interval = 1,--reduce lag
+    chance = 1,
+    action = function(pos)
+        minetest.set_node(pos, {name = "air"})
+    end,
+}
+minetest.register_abm{
+    label = "replaceBubbleColumns",
     nodenames = {"mcl_bubble_column:water_source_up"},
-    interval = 0.05,
+    interval = 1,--reduce lag
     chance = 1,
     action = function(pos)
-        for _,entity in pairs(minetest.get_objects_inside_radius(pos, 1.5)) do
-        	local pos = entity:get_pos()
-            local velocity = entity:get_velocity()
-            local velocityadd = {x = 0, y = 2, z = 0}
-            entity:add_velocity(velocityadd)
-    	end
-    end,
-}
-
-minetest.register_abm{
-    label = "bubbles go up",
-    nodenames = {"mcl_bubble_column:water_source_up"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
-        local upposnode = minetest.get_node(uppos)
-        if upposnode.name == "mcl_core:water_source" then
-            minetest.set_node(uppos, {name = "mcl_bubble_column:water_source_up"})
-        end
-    end,
-}
-
-minetest.register_abm{
-    label = "start bubble column",
-    nodenames = {"mcl_nether:soul_sand"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local downpos = vector.add(pos, {x = 0, y = 1, z = 0})
-        local downposnode = minetest.get_node(downpos)
-        if downposnode.name == "mcl_core:water_source" then
-            minetest.set_node(downpos, {name = "mcl_bubble_column:water_source_up"})
-        end
-    end,
-}
-
-minetest.register_abm{
-    label = "stop bubble column",
-    nodenames = {"mcl_bubble_column:water_source_up"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local downpos = vector.add(pos, {x = 0, y = -1, z = 0})
-        local downposnode = minetest.get_node(downpos)
-        if downposnode.name == "mcl_core:water_source" then
-            minetest.set_node(pos, {name = "mcl_core:water_source"})
-        end
+        minetest.set_node(pos, {name = "mcl_core:water_source"})
+		local meta = minetest.get_meta(pos)
+		meta:set_int("bubbly", 1)
     end,
 }
 minetest.register_abm{
-    label = "bubbles up",
-    nodenames = {"mcl_bubble_column:water_source_up"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        minetest.add_particlespawner({
-			amount = 10,
-			time = 0.15,
-			minpos = vector.add(pos, { x = -0.25, y = 0, z = -0.25 }),
-			maxpos = vector.add(pos, { x = 0.25, y = 0, z = 0.75 }),
-			attached = player,
-			minvel = {x = -0.2, y = 0, z = -0.2},
-			maxvel = {x = 0.5, y = 0, z = 0.5},
-			minacc = {x = -0.4, y = 4, z = -0.4},
-			maxacc = {x = 0.5, y = 1, z = 0.5},
-			minexptime = 0.3,
-			maxexptime = 0.8,
-			minsize = 0.7,
-			maxsize = 2.4,
-			texture = "mcl_particles_bubble.png"
-		})
-    end,
-}
---whirlpools(take you down)
-
-
-minetest.register_node("mcl_bubble_column:water_flowing_down", {
-	description = S("Bubble Column Flowing Water(down)"),
-	_doc_items_create_entry = false,
-	wield_image = "default_water_flowing_animated.png^[verticalframe:64:0",
-	drawtype = "flowingliquid",
-	tiles = {"default_water_flowing_animated.png^[verticalframe:64:0"},
-	special_tiles = {
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=4.0}
-		},
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=4.0}
-		},
-	},
-	sounds = mcl_sounds.node_sound_water_defaults(),
-	is_ground_content = false,
-	alpha = WATER_ALPHA,
-	use_texture_alpha = USE_TEXTURE_ALPHA,
-	paramtype = "light",
-	paramtype2 = "flowingliquid",
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	buildable_to = true,
-	drop = "",
-	drowning = 4,
-	liquidtype = "flowing",
-	liquid_alternative_flowing = "mcl_bubble_column:water_flowing_down",
-	liquid_alternative_source = "mcl_bubble_column:water_source_down",
-	liquid_viscosity = WATER_VISC,
-	liquid_range = 7,
-	post_effect_color = {a=209, r=0x03, g=0x3C, b=0x5C},
-	groups = { water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, freezes=1, melt_around=1, dig_by_piston=1},
-	_mcl_blast_resistance = 100,
-	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
-	_mcl_hardness = -1,
-})
-
-minetest.register_node("mcl_bubble_column:water_source_down", {
-	description = S("Whirlpool Water Source"),
-	_doc_items_entry_name = S("Water"),
-	_doc_items_longdesc = S("Takes you down!"),
-	_doc_items_hidden = false,
-	drawtype = "liquid",
-	tiles = {
-		{name="default_water_source_animated.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=5.0}}
-	},
-	special_tiles = {
-		-- New-style water source material (mostly unused)
-		{
-			name="default_water_source_animated.png",
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=5.0},
-			backface_culling = false,
-		}
-	},
-	sounds = mcl_sounds.node_sound_water_defaults(),
-	is_ground_content = false,
-	alpha = WATER_ALPHA,
-	use_texture_alpha = USE_TEXTURE_ALPHA,
-	paramtype = "light",
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	buildable_to = true,
-	drop = "",
-	drowning = 4,
-	liquidtype = "source",
-	liquid_alternative_flowing = "mcl_bubble_column:water_flowing_down",
-	liquid_alternative_source = "mcl_bubble_column:water_source_down",
-	liquid_viscosity = WATER_VISC,
-	liquid_range = 7,
-	post_effect_color = {a=209, r=0x03, g=0x3C, b=0x5C},
-	stack_max = 64,
-	groups = { water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, dig_by_piston=1},
-	_mcl_blast_resistance = 100,
-	-- Hardness intentionally set to infinite instead of 100 (Minecraft value) to avoid problems in creative mode
-	_mcl_hardness = -1,
-})
-
-
-minetest.register_globalstep(function()
-    for _,player in ipairs(minetest.get_connected_players()) do
-        local name = player:get_player_name()
-        local pos = player:get_pos()
-        local node = minetest.get_node(pos)
-        if node.name == "mcl_bubble_column:water_source_down" then
-            local velocity = player:get_player_velocity()
-            local velocityadd = {x = 0, y = -0.5, z = 0}
-            player:add_player_velocity(velocityadd)
-        end
-    end
-end)
-
-
-minetest.register_abm{
-    label = "entities go down",
-    nodenames = {"mcl_bubble_column:water_source_down"},
-    interval = 0.05,
-    chance = 1,
-    action = function(pos)
-        for _,entity in pairs(minetest.get_objects_inside_radius(pos, 1.5)) do
-        	local pos = entity:get_pos()
-            local velocity = entity:get_velocity()
-            local velocityadd = {x = 0, y = -3, z = 0}
-            entity:add_velocity(velocityadd)
-    	end
-    end,
-}
-
-minetest.register_abm{
-    label = "whirlpools go up",
-    nodenames = {"mcl_bubble_column:water_source_down"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local uppos = vector.add(pos, {x = 0, y = 1, z = 0})
-        local upposnode = minetest.get_node(uppos)
-        if upposnode.name == "mcl_core:water_source" then
-            minetest.set_node(uppos, {name = "mcl_bubble_column:water_source_down"})
-        end
-    end,
-}
-
-minetest.register_abm{
-    label = "start whirlpool",
-    nodenames = {"mcl_nether:magma"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local downpos = vector.add(pos, {x = 0, y = 1, z = 0})
-        local downposnode = minetest.get_node(downpos)
-        if downposnode.name == "mcl_core:water_source" then
-            minetest.set_node(downpos, {name = "mcl_bubble_column:water_source_down"})
-        end
-    end,
-}
-
-minetest.register_abm{
-    label = "stop whirlpool",
-    nodenames = {"mcl_bubble_column:water_source_down"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        local downpos = vector.add(pos, {x = 0, y = -1, z = 0})
-        local downposnode = minetest.get_node(downpos)
-        if downposnode.name == "mcl_core:water_source" then
-            minetest.set_node(pos, {name = "mcl_core:water_source"})
-        end
-    end,
-}
-minetest.register_abm{
-    label = "bubbles down",
-    nodenames = {"mcl_bubble_column:water_source_down"},
-    interval = 1,
-    chance = 1,
-    action = function(pos)
-        minetest.add_particlespawner({
-			amount = 10,
-			time = 0.15,
-			minpos = vector.add(pos, { x = -0.25, y = 0, z = -0.25 }),
-			maxpos = vector.add(pos, { x = 0.25, y = 0, z = 0.75 }),
-			attached = player,
-			minvel = {x = -0.2, y = 0, z = -0.2},
-			maxvel = {x = 0.5, y = 0, z = 0.5},
-			minacc = {x = -0.4, y = -4, z = -0.4},
-			maxacc = {x = 0.5, y = -1, z = 0.5},
-			minexptime = 0.3,
-			maxexptime = 0.8,
-			minsize = 0.7,
-			maxsize = 2.4,
-			texture = "mcl_particles_bubble.png"
-		})
-    end,
+	label = "replaceWhirlpools",
+	nodenames = {"mcl_bubble_column:water_source_down"},
+	interval = 1,--reduce lag
+	chance = 1,
+	action = function(pos)
+		minetest.set_node(pos, {name = "mcl_core:water_source"})
+		local meta = minetest.get_meta(pos)
+		meta:set_int("whirly", 1)
+	end,
 }
