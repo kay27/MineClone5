@@ -157,13 +157,6 @@ fix_doubleplants (Mcimport double plant fixes) bool true
 # Allow players to create Minecraft-like maps.
 enable_real_maps (Enable Real Maps) bool true
 
-# Minimum emissive light level below which the block is made to emit said light level. Defaults to 1 (looks like in MC).
-# WARNING! You may have to run fixlight on loaded areas after you remove it or change the light level.
-# Will work on all blocks including under ground.
-# For debugging mods or exploring underground worlds in creative mod author recommends 9.
-# Min 0 and Max 14.
-light_min (Minimum light level) int 1
-
 [Debugging]
 # If enabled, this will show the itemstring of an item in the description.
 mcl_item_id_debug (Item ID Debug) bool false
