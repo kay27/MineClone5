@@ -1,5 +1,5 @@
 local flights_kick_threshold = 10
-local suffocations_threshold = 1
+local suffocations_kick_threshold = 1
 
 local after                     = minetest.after
 local get_connected_players     = minetest.get_connected_players
@@ -140,9 +140,9 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 			player_head_pos.y = player_head_pos.y + 1.5
 			local player_head_distance = distance(pos, player_head_pos)
 			if player_head_distance < 0.7 then
-				after(0.05, function()
-					set_node(pos, oldnode)
-				end)
+				after(0.05, function(node)
+					set_node(pos, node)
+				end, oldnode)
 				is_choker = true
 				break
 			end
@@ -154,15 +154,16 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 	local data = joined_players[name]
 	if not data then
 		joined_players[name].suffocations = 1
+		data = joined_players[name]
 	else
 		if not data.suffocations then
 			data.suffocations = 1
 		else
 			data.suffocations = data.suffocations + 1
-			if data.suffocations >= suffocations_threshold then
-				kick_player(name, "choker")
-			end
 		end
+	end
+	if data.suffocations >= suffocations_kick_threshold then
+		kick_player(name, "choker")
 	end
 end)
 
