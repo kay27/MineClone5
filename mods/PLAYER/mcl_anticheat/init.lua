@@ -1,15 +1,19 @@
 local flights_kick_threshold = 10
+local suffocations_threshold = 1
 
-local after                 = minetest.after
-local get_connected_players = minetest.get_connected_players
-local get_node              = minetest.get_node
-local get_player_by_name    = minetest.get_player_by_name
-local is_creative_enabled   = minetest.is_creative_enabled
-local kick_player           = minetest.kick_player
-local pos_to_string         = minetest.pos_to_string
+local after                     = minetest.after
+local get_connected_players     = minetest.get_connected_players
+local get_node                  = minetest.get_node
+local get_objects_inside_radius = minetest.get_objects_inside_radius
+local get_player_by_name        = minetest.get_player_by_name
+local is_creative_enabled       = minetest.is_creative_enabled
+local kick_player               = minetest.kick_player
+local set_node                  = minetest.set_node
 
 local ceil  = math.ceil
 local floor = math.floor
+
+local distance = vector.distance
 
 local window_size = 10
 local detection_interval = 1.7
@@ -120,6 +124,47 @@ local function step()
 	end
 	after(step_seconds, step)
 end
+
+minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
+	if not oldnode then return end
+	if not placer then return end
+	if oldnode.name ~= "air" then return end
+	if not placer:is_player() then return end
+	local placer_pos = placer:get_pos()
+	local placer_distance = distance(pos, placer_pos)
+	if placer_distance < 13 then return end
+	local is_choker = false
+	for _, object in pairs(get_objects_inside_radius(pos, 2)) do
+		if object and object:is_player() then
+			local player_head_pos = object:get_pos()
+			player_head_pos.y = player_head_pos.y + 1.5
+			local player_head_distance = distance(pos, player_head_pos)
+			if player_head_distance < 0.7 then
+				after(0.05, function()
+					set_node(pos, oldnode)
+				end)
+				is_choker = true
+				break
+			end
+		end
+	end
+	if not is_choker then return end
+	-- cheater choked the player from distance greater than 12:
+	local name = placer:get_player_name()
+	local data = joined_players[name]
+	if not data then
+		joined_players[name].suffocations = 1
+	else
+		if not data.suffocations then
+			data.suffocations = 1
+		else
+			data.suffocations = data.suffocations + 1
+			if data.suffocations >= suffocations_threshold then
+				kick_player(name, "choker")
+			end
+		end
+	end
+end)
 
 minetest.register_on_joinplayer(update_player)
 
