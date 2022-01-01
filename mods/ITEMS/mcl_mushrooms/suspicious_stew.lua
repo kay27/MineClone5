@@ -53,7 +53,7 @@ minetest.register_craftitem("mcl_mushrooms:poison_stew",{
     inventory_image = "suspicious_stew.png",
     stack_max = 1, 
     on_place = poison,
-    groups = { food = 2, eatable = 4, not_in_creative_inventory=0,},
+    groups = { food = 2, eatable = 4, not_in_creative_inventory=1,},
     _mcl_saturation = 7.2,
 })
 
@@ -62,7 +62,7 @@ minetest.register_craftitem("mcl_mushrooms:hunger_stew",{
     inventory_image = "suspicious_stew.png",
     stack_max = 1,
     on_place = hunger,
-    groups = { food = 2, eatable = 4, not_in_creative_inventory=0,},
+    groups = { food = 2, eatable = 4, not_in_creative_inventory=1,},
     _mcl_saturation = 7.2,
 })
 
@@ -71,7 +71,7 @@ minetest.register_craftitem("mcl_mushrooms:jump_boost_stew",{
     inventory_image = "suspicious_stew.png", 
     stack_max = 1, 
     on_place = jump_boost,
-    groups = { food = 2, eatable = 4, not_in_creative_inventory=0,},
+    groups = { food = 2, eatable = 4, not_in_creative_inventory=1,},
     _mcl_saturation = 7.2,
 })
 
@@ -80,7 +80,7 @@ minetest.register_craftitem("mcl_mushrooms:regneration_stew",{
     inventory_image = "suspicious_stew.png", 
     stack_max = 1, 
     on_place = regeneration,
-    groups = { food = 2, eatable = 4, not_in_creative_inventory=0,},
+    groups = { food = 2, eatable = 4, not_in_creative_inventory=1,},
     _mcl_saturation = 7.2,
 })
 
@@ -89,7 +89,7 @@ minetest.register_craftitem("mcl_mushrooms:night_vision_stew",{
     inventory_image = "suspicious_stew.png", 
     stack_max = 1, 
     on_place = night_vision,
-    groups = { food = 2, eatable = 4, not_in_creative_inventory=0,},
+    groups = { food = 2, eatable = 4, not_in_creative_inventory=1,},
     _mcl_saturation = 7.2,
 })
 
