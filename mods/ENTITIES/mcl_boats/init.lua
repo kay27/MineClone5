@@ -46,7 +46,11 @@ local function get_visual_size(obj)
 	end
 	local luaentity = obj:get_luaentity()
 	if luaentity then
-		return luaentity._old_visual_size
+		if luaentity._old_visual_size then
+			return luaentity._old_visual_size
+		else
+			return boat_visual_size
+		end
 	end
 	return obj:get_properties().visual_size
 end
