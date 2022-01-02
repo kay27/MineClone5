@@ -26,10 +26,10 @@ end
 -- function minetest_rotate_and_place. It rotates 
 -- a block based on where it thinks the player is facing
 -- at the moment. This is typically called by pillar-like nodes.
+
 function mcl_util.rotate_axis(itemstack, placer, pointed_thing)
 	minetest.rotate_and_place(itemstack, placer, pointed_thing,
 		minetest.is_creative_enabled(placer:get_player_name()))
-		--placer:get_player_control().sneak)
 	return itemstack
 end
 
