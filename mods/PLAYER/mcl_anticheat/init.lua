@@ -6,7 +6,6 @@ local get_connected_players     = minetest.get_connected_players
 local get_node                  = minetest.get_node
 local get_objects_inside_radius = minetest.get_objects_inside_radius
 local get_player_by_name        = minetest.get_player_by_name
-local is_creative_enabled       = minetest.is_creative_enabled
 local kick_player               = minetest.kick_player
 local set_node                  = minetest.set_node
 
@@ -63,7 +62,7 @@ local function update_player(player_object)
 end
 
 local function check_player(name)
-	if is_creative_enabled(name) then return end
+	if minetest.is_creative_enabled(name) then return end
 	local data = joined_players[name]
 	if not data then return end
 	if not data[0] then return end

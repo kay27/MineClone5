@@ -10,7 +10,7 @@ minetest.register_chatcommand("say", {
 	privs = {announce=true},
 	func = function(name, param)
 		if not param then
-			return false, S("Invalid usage, see /help say.")
+			return false, S("Invalid usage, see /help @1.", "say")
 		end
 		minetest.chat_send_all(("["..name.."] "..param))
 		return true
