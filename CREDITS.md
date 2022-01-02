@@ -105,6 +105,7 @@
 
 ## Textures
 * XSSheep
+* Nova_Wostra
 * Wuzzy
 * kingoscargames
 * leorockway
