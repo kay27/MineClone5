@@ -207,7 +207,7 @@ minetest.register_abm({
 		local light = minetest.get_node_light(pos, nil)
 		local time = minetest.get_us_time()
 
-		if light < 14 and time > 18000 then 
+		if light < 14 and time > 18000 then
 			minetest.set_node(pos, {name="mesecons_solarpanel:solar_panel_inverted_on", param2=node.param2})
 			mesecon.receptor_on(pos, mesecon.rules.pplate)
 		end
