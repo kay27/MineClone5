@@ -181,7 +181,7 @@ S("The speed and damage of the arrow increases the longer you charge. The regula
 		itemstack:get_meta():set_string("active", "true")
 		return itemstack
 	end,
-	groups = {weapon=1,weapon_ranged=1,crossbow=1,enchantability=1},
+	groups = {not_in_creative_inventory=1,weapon=1,weapon_ranged=1,crossbow=1,enchantability=1},
 	_mcl_uses = 326,
 })
 

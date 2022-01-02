@@ -1,5 +1,6 @@
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 
+dofile(modpath.."/gamemode.lua")
 dofile(modpath.."/kill.lua")
 dofile(modpath.."/setblock.lua")
 dofile(modpath.."/seed.lua")

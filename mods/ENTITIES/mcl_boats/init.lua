@@ -41,7 +41,18 @@ local function check_object(obj)
 end
 
 local function get_visual_size(obj)
-	return obj:is_player() and {x = 1, y = 1, z = 1} or obj:get_luaentity()._old_visual_size or obj:get_properties().visual_size
+	if not obj or obj:is_player() then
+		return boat_visual_size
+	end
+	local luaentity = obj:get_luaentity()
+	if luaentity then
+		if luaentity._old_visual_size then
+			return luaentity._old_visual_size
+		else
+			return boat_visual_size
+		end
+	end
+	return obj:get_properties().visual_size
 end
 
 local function set_attach(boat)

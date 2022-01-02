@@ -177,7 +177,5 @@ minetest.register_on_joinplayer(function(player)
 	return_fields(player, "enchanting_lapis")
 end)
 
-if minetest.is_creative_enabled("") then
-	dofile(minetest.get_modpath(minetest.get_current_modname()).."/creative.lua")
-end
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/creative.lua")
 
