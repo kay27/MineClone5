@@ -96,6 +96,8 @@ minetest.register_node("mcl_blackstone:nether_gold", {
 	_mcl_silk_touch_drop = true,
 	_mcl_fortune_drop = mcl_core.fortune_drop_ore,
 })
+-- Compatibility with Nether Gold mod by NO11:
+minetest.register_alias("mcl_nether_gold:nether_gold_ore", "mcl_blackstone:nether_gold")
 
 minetest.register_node("mcl_blackstone:basalt_polished", {
 	description = S("Polished Basalt"),

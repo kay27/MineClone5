@@ -27,6 +27,8 @@ mobs:register_mob("mobs_mc:snowman", {
 	passive = true,
 	hp_min = 4,
 	hp_max = 4,
+	xp_min = 0,
+	xp_max = 0,
 	pathfinding = 1,
 	view_range = 10,
 	fall_damage = 0,
