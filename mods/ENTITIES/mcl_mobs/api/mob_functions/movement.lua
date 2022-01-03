@@ -43,6 +43,11 @@ mobs.float = function(self)
 		self.object:set_acceleration({x=0, y=0, z=0})
 	end
 
+	if self.jump_only then
+		self.object:set_acceleration({x=acceleration.x, y=-5, z=acceleration.z})
+		return
+	end
+
 	local current_velocity = self.object:get_velocity()
 
 	local new_velocity_addition = DEFAULT_FLOAT_SPEED - current_velocity.y
