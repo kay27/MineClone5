@@ -71,7 +71,7 @@ local function init_node_construct(pos)
 end
 
 -- The call of Struct
-function mcl_structures.call_struct(pos, struct_style, rotation, pr)
+function mcl_structures.call_struct(pos, struct_style, rotation, pr, callback)
 	minetest.log("action","[mcl_structures] call_struct " .. struct_style.." at "..minetest.pos_to_string(pos))
 	if not rotation then
 		rotation = "random"
@@ -93,13 +93,31 @@ function mcl_structures.call_struct(pos, struct_style, rotation, pr)
 	elseif struct_style == "fossil" then
 		return mcl_structures.generate_fossil(pos, rotation, pr)
 	elseif struct_style == "end_exit_portal" then
-		return mcl_structures.generate_end_exit_portal(pos, rotation)
+		return mcl_structures.generate_end_exit_portal(pos, rotation, pr, callback)
 	elseif struct_style == "end_exit_portal_open" then
 		return mcl_structures.generate_end_exit_portal_open(pos, rotation)
 	elseif struct_style == "end_gateway_portal" then
 		return mcl_structures.generate_end_gateway_portal(pos, rotation)
 	elseif struct_style == "end_portal_shrine" then
 		return mcl_structures.generate_end_portal_shrine(pos, rotation, pr)
+	elseif struct_style == "end_portal" then
+		return mcl_structures.generate_end_portal(pos, rotation, pr)
+	end
+end
+
+function mcl_structures.generate_end_portal(pos, rotation, pr)
+	-- todo: proper facedir
+	local x0, y0, z0 = pos.x - 2, pos.y, pos.z - 2
+	for x = 0, 4 do
+		for z = 0, 4 do
+			if x % 4 == 0 or z % 4 == 0 then
+				if x % 4 ~= 0 or z % 4 ~= 0 then
+					minetest.swap_node({x = x0 + x, y = y0, z = z0 + z}, {name = "mcl_portals:end_portal_frame_eye"})
+				end
+			else
+				minetest.swap_node({x = x0 + x, y = y0, z = z0 + z}, {name = "mcl_portals:portal_end"})
+			end
+		end
 	end
 end
 
@@ -326,9 +344,9 @@ function mcl_structures.generate_fossil(pos, rotation, pr)
 	return mcl_structures.place_schematic(newpos, path, rotation or "random", nil, true)
 end
 
-function mcl_structures.generate_end_exit_portal(pos, rot)
+function mcl_structures.generate_end_exit_portal(pos, rot, pr, callback)
 	local path = modpath.."/schematics/mcl_structures_end_exit_portal.mts"
-	return mcl_structures.place_schematic(pos, path, rot or "0", {["mcl_portals:portal_end"] = "air"}, true)
+	return mcl_structures.place_schematic(pos, path, rot or "0", {["mcl_portals:portal_end"] = "air"}, true, nil, callback)
 end
 
 function mcl_structures.generate_end_exit_portal_open(pos, rot)
@@ -558,7 +576,7 @@ end
 
 -- Debug command
 minetest.register_chatcommand("spawnstruct", {
-	params = "desert_temple | desert_well | igloo | witch_hut | boulder | ice_spike_small | ice_spike_large | fossil | end_exit_portal | end_exit_portal_open | end_gateway_portal | end_portal_shrine | nether_portal | dungeon",
+	params = "desert_temple | desert_well | igloo | witch_hut | boulder | ice_spike_small | ice_spike_large | fossil | end_exit_portal | end_exit_portal_open | end_gateway_portal | end_portal_shrine | end_portal | nether_portal | dungeon",
 	description = S("Generate a pre-defined structure near your position."),
 	privs = {debug = true},
 	func = function(name, param)
@@ -598,6 +616,8 @@ minetest.register_chatcommand("spawnstruct", {
 			mcl_structures.generate_end_portal_shrine(pos, rot, pr)
 		elseif param == "dungeon" and mcl_dungeons and mcl_dungeons.spawn_dungeon then
 			mcl_dungeons.spawn_dungeon(pos, rot, pr)
+		elseif param == "end_portal" then
+			mcl_structures.generate_end_portal(pos, rot, pr)
 		elseif param == "nether_portal" and mcl_portals and mcl_portals.spawn_nether_portal then
 			mcl_portals.spawn_nether_portal(pos, rot, pr, name)
 		elseif param == "" then
