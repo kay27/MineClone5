@@ -144,6 +144,7 @@ dofile(api_path .. "mob_effects.lua")
 dofile(api_path .. "projectile_handling.lua")
 dofile(api_path .. "breeding.lua")
 dofile(api_path .. "head_logic.lua")
+dofile(api_path .. "monster_light.lua")
 
 
 mobs.spawning_mobs = {}
@@ -610,9 +611,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 					--Changes the mob spawner type with the egg that you used to click on it
 					--determining monster spawn lvl
-					local monster_lightlvl = {
-						zombie = 0
-					}
 
 					local hold_light = 15 
 					local mon_name
@@ -622,12 +620,16 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 							mon_name = name:gsub(":", "")
 					end
 
+					--For every monster in the monster_lightlvl table check if
+					--it matches the spawn egg you're holding
 					for name, lightlvl in pairs(monster_lightlvl) do
 						print(mon_name == name)
 						if name == mon_name then
 							hold_light = lightlvl
 						end
 					end
+
+					--Switch out the mob spawner to spawn mobs from the egg that you're holding
 					mcl_mobspawners.setup_spawner(pointed_thing.under, itemstack:get_name(), 0, hold_light)
 
 					if not mobs.is_creative(name) then
