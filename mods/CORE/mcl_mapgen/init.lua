@@ -44,7 +44,7 @@ mcl_mapgen.EDGE_MIN = central_chunk_min_pos - numcmin * mcl_mapgen.CS_NODES
 mcl_mapgen.EDGE_MAX = central_chunk_max_pos + numcmax * mcl_mapgen.CS_NODES
 
 minetest_log("action", "[mcl_mapgen] World edges: mcl_mapgen.EDGE_MIN = " .. tostring(mcl_mapgen.EDGE_MIN) .. ", mcl_mapgen.EDGE_MAX = " .. tostring(mcl_mapgen.EDGE_MAX))
-------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- Mapgen variables
 local overworld, end_, nether = {}, {}, {}
@@ -58,10 +58,24 @@ mcl_mapgen.normal = not mcl_mapgen.superflat and not mcl_mapgen.singlenode
 local superflat, singlenode, normal = mcl_mapgen.superflat, mcl_mapgen.singlenode, mcl_mapgen.normal
 
 minetest_log("action", "[mcl_mapgen] Mapgen mode: " .. (normal and "normal" or (superflat and "superflat" or "singlenode")))
-------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
 
-local queue_unsafe, queue_blocks_lvm, queue_lvm, queue_blocks, queue = {}, {}, {}, {}, {} -- Generators' queues
-local lvm, block, queue_blocks_lvm_counter, lvm_chunk, param2, nodes_block, nodes_chunk, safe_functions = 0, 0, 0, 0, 0, 0, 0, 0 -- Requirements: 0 means none; greater than 0 means 'required'
+-- Generator queues
+local queue_unsafe_engine = {}
+local queue_chunks_nodes  = {}
+local queue_chunks_lvm    = {}
+local queue_blocks_nodes  = {}
+local queue_blocks_lvm    = {}
+
+-- Requirements. 0 means 'none', greater than 0 means 'required'
+local block                    = 0
+local queue_blocks_lvm_counter = 0
+local lvm_chunk                = 0
+local param2                   = 0
+local nodes_block              = 0
+local nodes_chunk              = 0
+local safe_functions           = 0
+
 local BS, CS = mcl_mapgen.BS, mcl_mapgen.CS -- Mapblock size (in nodes), Mapchunk size (in blocks)
 local LAST_BLOCK, LAST_NODE = CS - 1, BS - 1 -- First mapblock in chunk (node in mapblock) has number 0, last has THIS number. It's for runtime optimization
 local offset = mcl_mapgen.OFFSET -- Central mapchunk offset (in blocks)
@@ -72,33 +86,31 @@ local CS_3D = CS * CS * CS
 local DEFAULT_ORDER = order.DEFAULT
 
 function mcl_mapgen.register_on_generated(callback_function, order)
-	queue_unsafe[#queue_unsafe+1] = {i = priority or DEFAULT_ORDER, f = callback_function}
-	table.sort(queue_lvm, function(a, b) return (a.i <= b.i) end)
+	queue_unsafe_engine[#queue_unsafe_engine+1] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_unsafe_engine, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen(callback_function, order)
 	nodes_chunk = nodes_chunk + 1
 	safe_functions = safe_functions + 1
-	queue[nodes_chunk] = {i = order or DEFAULT_ORDER, f = callback_function}
-	table.sort(queue, function(a, b) return (a.i <= b.i) end)
+	queue_chunks_nodes[nodes_chunk] = {i = order or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_chunks_nodes, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen_lvm(callback_function, order)
-	lvm = lvm + 1
 	lvm_chunk = lvm_chunk + 1
 	safe_functions = safe_functions + 1
-	queue_lvm[lvm_chunk] = {i = priority or DEFAULT_ORDER, f = callback_function}
-	table.sort(queue_lvm, function(a, b) return (a.i <= b.i) end)
+	queue_chunks_lvm[lvm_chunk] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_chunks_lvm, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen_block(callback_function, priority)
 	block = block + 1
 	nodes_block = nodes_block + 1
 	safe_functions = safe_functions + 1
-	queue_blocks[nodes_block] = {i = priority or DEFAULT_ORDER, f = callback_function}
-	table.sort(queue_blocks, function(a, b) return (a.i <= b.i) end)
+	queue_blocks_nodes[nodes_block] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	table.sort(queue_blocks_nodes, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen_block_lvm(callback_function, order)
 	block = block + 1
-	lvm = lvm + 1
-	queue_blocks_lvm_counter =queue_blocks_lvm_counter + 1
+	queue_blocks_lvm_counter = queue_blocks_lvm_counter + 1
 	safe_functions = safe_functions + 1
 	queue_blocks_lvm[queue_blocks_lvm_counter] = {order = order or DEFAULT_ORDER, callback_function = callback_function}
 	table.sort(queue_blocks_lvm, function(a, b) return (a.order <= b.order) end)
@@ -113,10 +125,10 @@ minetest.register_on_shutdown(function()
 end)
 
 local vm_context -- here will be many references and flags, like: param2, light_data, heightmap, biomemap, heatmap, humiditymap, gennotify, write_lvm, write_param2, shadow
-local data, data2, area
+local data, data2, light, area
 local current_blocks = {}
 local current_chunks = {}
-local lvm_buffer, lvm_param2_buffer = {}, {} -- Static buffer pointers
+local lvm_buffer, lvm_param2_buffer, lvm_light_buffer = {}, {}, {} -- Static buffer pointers
 
 minetest.register_on_generated(function(minp, maxp, chunkseed)
 	local minp, maxp, chunkseed = minp, maxp, chunkseed
@@ -126,15 +138,19 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	data = vm:get_data(lvm_buffer)
 	area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
 	vm_context = {
-		data = data,
-		area = area,
+		data              = data,
+		data2             = data2,
+                light             = light,
+		area              = area,
+		lvm_buffer        = lvm_buffer,
 		lvm_param2_buffer = lvm_param2_buffer,
-		vm = vm,
-		emin = emin,
-		emax = emax,
-		minp = minp,
-		maxp = maxp,
-		chunkseed = chunkseed
+		lvm_light_buffer  = lvm_light_buffer,
+		vm                = vm,
+		emin              = emin,
+		emax              = emax,
+		minp              = minp,
+		maxp              = maxp,
+		chunkseed         = chunkseed,
 	}
 
 	if safe_functions > 0 then
@@ -163,7 +179,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			box = block_pos_offset_removed % CS
 			if not blocks[bx] then blocks[bx]={} end
 
-			-- We don't know how many calls, including this one, will overwrite this block's content!
+			-- We don't know how many calls, including this one, will overwrite this block content!
 			-- Start calculating it with `total_mapgen_block_writes_through_x` variable.
 			-- It can be `8 or less`, if we (speaking of `x` axis) are on chunk edge now,
 			-- or it can be `4 or less` - if we are in the middle of the chunk by `x` axis:
@@ -197,7 +213,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 
 					local total_mapgen_block_writes = (boz > 0 and boz < LAST_BLOCK) and math_floor(total_mapgen_block_writes_through_y / 2) or total_mapgen_block_writes_through_y
 
-					-- Get current number of writes from the table, or just set it to 1, if accessed first time:
+					-- Get current number of writes from the table, or just set it to 1, if accessing first time:
 
 					local current_mapgen_block_writes = blocks[bx][by][bz] and (blocks[bx][by][bz] + 1) or 1
 
@@ -246,8 +262,8 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		end
 	end
 
-	if lvm > 0 then
-		for _, v in pairs(queue_lvm) do
+	if #queue_unsafe_engine > 0 then
+		for _, v in pairs(queue_unsafe_engine) do
 			vm_context = v.f(vm_context)
 		end
 		if vm_context.write then
@@ -256,9 +272,14 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		if vm_context.write_param2 then
 			vm:set_param2_data(data2)
 		end
-		vm:calc_lighting(minp, maxp, vm_context.shadow or true) -- TODO: check boundaries
-		vm:write_to_map()
-		vm:update_liquids()
+		if vm_context.write_light then
+			vm:set_light_data(light)
+		end
+		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
+			vm:calc_lighting(minp, maxp, vm_context.shadow or true) -- TODO: check boundaries
+			vm:write_to_map()
+			vm:update_liquids()
+		end
 	end
 
 	for i, b in pairs(current_chunks) do
@@ -267,14 +288,46 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		local x, y, z = bx * BS, by * BS, bz * BS
 		local minp = {x = x, y = y, z = z}
 		local maxp = {x = x + CS_NODES - 1, y = y + CS_NODES - 1, z = z + CS_NODES - 1}
-		for _, v in pairs(queue) do
-			v.f(minp, maxp, seed)
+		area = VoxelArea:new({MinEdge=minp, MaxEdge=maxp})
+		vm_context = {
+			data              = data,
+			data2             = data2,
+	                light             = light,
+			area              = area,
+			lvm_buffer        = lvm_buffer,
+			lvm_param2_buffer = lvm_param2_buffer,
+			lvm_light_buffer  = lvm_light_buffer,
+			emin              = minp,
+			emax              = maxp,
+			minp              = minp,
+			maxp              = maxp,
+			chunkseed         = seed,
+		}
+		for _, v in pairs(queue_chunks_lvm) do
+			v.f(vm_context)
+		end
+		for _, v in pairs(queue_chunks_nodes) do
+			v.f(minp, maxp, seed, vm_context)
+		end
+		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
+			if vm_context.write then
+				vm:set_data(data)
+			end
+			if vm_context.write_param2 then
+				vm:set_param2_data(data2)
+			end
+			if vm_context.write_light then
+				vm:set_light_data(light)
+			end
+			vm:calc_lighting(minp, maxp, vm_context.shadow or true)
+			vm:write_to_map()
+			vm:update_liquids()
 		end
 		current_chunks[i] = nil
 	end
 
 	for i, b in pairs(current_blocks) do
-		for _, v in pairs(queue_blocks) do
+		for _, v in pairs(queue_blocks_nodes) do
 			v.f(b.minp, b.maxp, b.seed)
 		end
 		current_blocks[i] = nil
@@ -399,3 +452,13 @@ mcl_mapgen.end_ = end_
 mcl_mapgen.nether = nether
 
 mcl_mapgen.order = order
+
+function mcl_mapgen.get_voxel_manip(vm_context)
+	if vm_context.vm then
+		return vm
+	end
+	vm_context.vm = minetest.get_voxel_manip(vm_context.emin, vm_context.emax)
+	vm_context.emin, vm_context.emax = vm_context.vm:read_from_map(vm_context.emin, vm_context.emax)
+	vm_context.area = VoxelArea:new({MinEdge=vm_context.emin, MaxEdge=vm_context.emax})
+	return vm_context.vm
+end

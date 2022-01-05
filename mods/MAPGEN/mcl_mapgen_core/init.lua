@@ -988,28 +988,6 @@ local function register_mgv6_decorations()
 
 	end
 
-	-- Wet Sponge
-	-- TODO: Remove this when we got ocean monuments
-	minetest.register_decoration({
-		deco_type = "simple",
-		decoration = "mcl_sponges:sponge_wet",
-		spawn_by = {"group:water"},
-		num_spawn_by = 1,
-		place_on = {"mcl_core:dirt","mcl_core:sand"},
-		sidelen = 16,
-		noise_params = {
-			offset = 0.00295,
-			scale = 0.006,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 999,
-			octaves = 3,
-			persist = 0.666
-		},
-		flags = "force_placement",
-		y_min = mcl_mapgen.overworld.lava_max + 5,
-		y_max = -20,
-	})
-
 	-- Add a small amount of tall grass everywhere to avoid areas completely empty devoid of tall grass
 	minetest.register_decoration({
 		deco_type = "simple",
@@ -1197,6 +1175,8 @@ mcl_mapgen.register_mapgen_lvm(function(c)
 	if maxp.y < -5 or minp.y > 0 then
 		return c
 	end
+	c.vm = c.vm or mcl_mapgen.get_voxel_manip(c)
+
 	minetest.log("warning", "CLAY!")
 
 	local pr = PseudoRandom(blockseed)

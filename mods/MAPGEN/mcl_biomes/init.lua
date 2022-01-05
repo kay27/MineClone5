@@ -3995,7 +3995,8 @@ if not mcl_mapgen.singlenode then
 			local gennotify = vm_context.gennotify
 			for _, pos in pairs(gennotify["decoration#"..deco_id_chorus_plant] or {}) do
 				local realpos = { x = pos.x, y = pos.y + 1, z = pos.z }
-				minetest.after(1, mcl_end.grow_chorus_plant, realpos)
+				local pr = PseudoRandom(vm_context.blockseed)
+				minetest.after(1, mcl_end.grow_chorus_plant, realpos, false, pr)
 			end
 			return vm_context
 		end, mcl_mapgen.order.CHORUS)
