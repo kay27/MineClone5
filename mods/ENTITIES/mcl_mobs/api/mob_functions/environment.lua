@@ -214,6 +214,7 @@ end
 --a function used for despawning mobs
 mobs.check_for_player_within_area = function(self, radius)
 	local pos1 = self.object:get_pos()
+	if not pos1 then return end
 	--get players in radius
 	for _,player in pairs(minetest_get_connected_players()) do
 		if player and player:get_hp() > 0 then
