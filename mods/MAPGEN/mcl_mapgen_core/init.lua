@@ -80,11 +80,17 @@ local c_clay = minetest.get_content_id("mcl_core:clay")
 local c_leaves = minetest.get_content_id("mcl_core:leaves")
 local c_jungleleaves = minetest.get_content_id("mcl_core:jungleleaves")
 --local c_jungletree = minetest.get_content_id("mcl_core:jungletree")
-local c_cocoa_1 = minetest.get_content_id("mcl_cocoas:cocoa_1")
-local c_cocoa_2 = minetest.get_content_id("mcl_cocoas:cocoa_2")
-local c_cocoa_3 = minetest.get_content_id("mcl_cocoas:cocoa_3")
 local c_vine = minetest.get_content_id("mcl_core:vine")
 local c_air = minetest.CONTENT_AIR
+
+local cocoa = nil
+if minetest.get_modpath("mcl_cocoas") then
+	cocoa = {
+		minetest.get_content_id("mcl_cocoas:cocoa_1"),
+		minetest.get_content_id("mcl_cocoas:cocoa_2"),
+		minetest.get_content_id("mcl_cocoas:cocoa_3")
+	}
+end
 
 --
 -- Ore generation
@@ -1569,49 +1575,44 @@ local function generate_tree_decorations(minp, maxp, seed, data, param2_data, ar
 
 	local pos, treepos, dir
 
-	local cocoachance = 40
-	if dense_vegetation then
-		cocoachance = 32
-	end
+	if cocoa ~= nil then
+		local cocoachance = 40
+		if dense_vegetation then
+			cocoachance = 32
+		end
 
-	-- Pass 1: Generate cocoas at jungle trees
-	for n = 1, #jungletree do
+		-- Pass 1: Generate cocoas at jungle trees
+		for n = 1, #jungletree do
 
-		pos = table.copy(jungletree[n])
-		treepos = table.copy(pos)
+			pos = table.copy(jungletree[n])
+			treepos = table.copy(pos)
 
-		if minetest.find_node_near(pos, 1, {"mcl_core:jungleleaves"}) then
+			if minetest.find_node_near(pos, 1, {"mcl_core:jungleleaves"}) then
 
-			dir = pr:next(1, cocoachance)
+				dir = pr:next(1, cocoachance)
 
-			if dir == 1 then
-				pos.z = pos.z + 1
-			elseif dir == 2 then
-				pos.z = pos.z - 1
-			elseif dir == 3 then
-				pos.x = pos.x + 1
-			elseif dir == 4 then
-				pos.x = pos.x -1
-			end
-
-			local p_pos = area:index(pos.x, pos.y, pos.z)
-			local l = minetest.get_node_light(pos)
-
-			if dir < 5
-			and data[p_pos] == c_air
-			and l and l > 12 then
-				local c = pr:next(1, 3)
-				if c == 1 then
-					data[p_pos] = c_cocoa_1
-				elseif c == 2 then
-					data[p_pos] = c_cocoa_2
-				else
-					data[p_pos] = c_cocoa_3
+				if dir == 1 then
+					pos.z = pos.z + 1
+				elseif dir == 2 then
+					pos.z = pos.z - 1
+				elseif dir == 3 then
+					pos.x = pos.x + 1
+				elseif dir == 4 then
+					pos.x = pos.x -1
 				end
-				param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
-				lvm_used = true
-			end
 
+				local p_pos = area:index(pos.x, pos.y, pos.z)
+				local l = minetest.get_node_light(pos)
+
+				if dir < 5
+				and data[p_pos] == c_air
+				and l and l > 12 then
+					local c = pr:next(1, 3)
+					data[p_pos] = cocoa[c]
+					param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
+					lvm_used = true
+				end
+			end
 		end
 	end
 
