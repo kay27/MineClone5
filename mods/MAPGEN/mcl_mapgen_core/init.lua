@@ -95,9 +95,9 @@ local c_jungleleaves = minetest.get_content_id("mcl_core:jungleleaves")
 local c_vine = minetest.get_content_id("mcl_core:vine")
 local c_air = minetest.CONTENT_AIR
 
-local cocoa = nil
+local c_cocoas = nil
 if minetest.get_modpath("mcl_cocoas") then
-	cocoa = {
+	c_cocoas = {
 		minetest.get_content_id("mcl_cocoas:cocoa_1"),
 		minetest.get_content_id("mcl_cocoas:cocoa_2"),
 		minetest.get_content_id("mcl_cocoas:cocoa_3")
@@ -1614,7 +1614,7 @@ local function generate_tree_decorations(minp, maxp, seed, data, param2_data, ar
 
 	local pos, treepos, dir
 
-	if cocoa ~= nil then
+	if c_cocoas ~= nil then
 		local cocoachance = 40
 		if dense_vegetation then
 			cocoachance = 32
@@ -1647,7 +1647,7 @@ local function generate_tree_decorations(minp, maxp, seed, data, param2_data, ar
 				and data[p_pos] == c_air
 				and l and l > 12 then
 					local c = pr:next(1, 3)
-					data[p_pos] = cocoa[c]
+					data[p_pos] = c_cocoas[c]
 					param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
 					lvm_used = true
 				end
