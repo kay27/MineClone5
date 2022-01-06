@@ -74,9 +74,16 @@ local c_sand = minetest.get_content_id("mcl_core:sand")
 local c_void = minetest.get_content_id("mcl_core:void")
 local c_lava = minetest.get_content_id("mcl_core:lava_source")
 local c_water = minetest.get_content_id("mcl_core:water_source")
-local c_soul_sand = minetest.get_content_id("mcl_nether:soul_sand")
-local c_netherrack = minetest.get_content_id("mcl_nether:netherrack")
-local c_nether_lava = minetest.get_content_id("mcl_nether:nether_lava_source")
+
+local c_nether = nil
+if minetest.get_modpath("mcl_nether") then
+	c_nether = {
+		soul_sand = minetest.get_content_id("mcl_nether:soul_sand"),
+		netherrack = minetest.get_content_id("mcl_nether:netherrack"),
+		lava = minetest.get_content_id("mcl_nether:nether_lava_source")
+	}
+end
+
 --local c_end_stone = minetest.get_content_id("mcl_end:end_stone")
 local c_realm_barrier = minetest.get_content_id("mcl_core:realm_barrier")
 local c_top_snow = minetest.get_content_id("mcl_core:snow")
@@ -1792,6 +1799,10 @@ end
 -- Generate Nether decorations manually: Eternal fire, mushrooms, nether wart
 -- Minetest's API does not support decorations in caves yet. :-(
 local function generate_nether_decorations(minp, maxp, seed)
+	if c_nether == nil then
+		return
+	end
+
 	local pr_nether = PseudoRandom(seed+667)
 
 	if minp.y > mcl_vars.mg_nether_max or maxp.y < mcl_vars.mg_nether_min then
@@ -2059,7 +2070,9 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- Big lava seas by replacing air below a certain height
 		if mcl_vars.mg_lava then
 			lvm_used = set_layers(data, area, c_lava, c_air, mcl_vars.mg_overworld_min, mcl_vars.mg_lava_overworld_max, emin, emax, lvm_used, pr)
-			lvm_used = set_layers(data, area, c_nether_lava, c_air, mcl_vars.mg_nether_min, mcl_vars.mg_lava_nether_max, emin, emax, lvm_used, pr)
+			if c_nether then
+				lvm_used = set_layers(data, area, c_nether.lava, c_air, mcl_vars.mg_nether_min, mcl_vars.mg_lava_nether_max, emin, emax, lvm_used, pr)
+			end
 		end
 
 		-- Clay, vines, cocoas
@@ -2141,25 +2154,27 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- * Replace water with Nether lava.
 		-- * Replace stone, sand dirt in v6 so the Nether works in v6.
 		elseif emin.y <= mcl_vars.mg_nether_max and emax.y >= mcl_vars.mg_nether_min then
-			if mg_name == "v6" then
-				local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
-				for n=1, #nodes do
-					local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
-					if data[p_pos] == c_water then
-						data[p_pos] = c_nether_lava
-						lvm_used = true
-					elseif data[p_pos] == c_stone then
-						data[p_pos] = c_netherrack
-						lvm_used = true
-					elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
-						data[p_pos] = c_soul_sand
-						lvm_used = true
+			if c_nether then
+				if mg_name == "v6" then
+					local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+					for n=1, #nodes do
+						local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
+						if data[p_pos] == c_water then
+							data[p_pos] = c_nether.lava
+							lvm_used = true
+						elseif data[p_pos] == c_stone then
+							data[p_pos] = c_nether.netherrack
+							lvm_used = true
+						elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
+							data[p_pos] = c_nether.soul_sand
+							lvm_used = true
+						end
 					end
-				end
-			else
-				local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
-				for _, n in pairs(nodes) do
-					data[area:index(n.x, n.y, n.z)] = c_nether_lava
+				else
+					local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
+					for _, n in pairs(nodes) do
+						data[area:index(n.x, n.y, n.z)] = c_nether.lava
+					end
 				end
 			end
 
