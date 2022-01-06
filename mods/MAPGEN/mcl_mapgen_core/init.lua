@@ -843,46 +843,48 @@ local function register_mgv6_decorations()
 		})
 	end
 
-	-- Pumpkin
-	minetest.register_decoration({
-		deco_type = "simple",
-		decoration = "mcl_farming:pumpkin_face",
-		param2 = 0,
-		param2_max = 3,
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 16,
-		noise_params = {
-			offset = -0.008,
-			scale = 0.00666,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 666,
-			octaves = 6,
-			persist = 0.666
-		},
-		y_min = 1,
-		y_max = mcl_vars.overworld_max,
-	})
+	if minetest.get_modpath("mcl_farming") then
+		-- Pumpkin
+		minetest.register_decoration({
+			deco_type = "simple",
+			decoration = "mcl_farming:pumpkin_face",
+			param2 = 0,
+			param2_max = 3,
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 16,
+			noise_params = {
+				offset = -0.008,
+				scale = 0.00666,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 666,
+				octaves = 6,
+				persist = 0.666
+			},
+			y_min = 1,
+			y_max = mcl_vars.overworld_max,
+		})
 
-	-- Melon
-	minetest.register_decoration({
-		deco_type = "simple",
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 16,
-		noise_params = {
-			offset = 0.002,
-			scale = 0.006,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 333,
-			octaves = 3,
-			persist = 0.6
-		},
-		-- Small trick to make sure melon spawn in jungles
-		spawn_by = spawn_by_in_jungle,
-		num_spawn_by = 1,
-		y_min = 1,
-		y_max = 40,
-		decoration = "mcl_farming:melon",
-	})
+		-- Melon
+		minetest.register_decoration({
+			deco_type = "simple",
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 16,
+			noise_params = {
+				offset = 0.002,
+				scale = 0.006,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 333,
+				octaves = 3,
+				persist = 0.6
+			},
+			-- Small trick to make sure melon spawn in jungles
+			spawn_by = spawn_by_in_jungle,
+			num_spawn_by = 1,
+			y_min = 1,
+			y_max = 40,
+			decoration = "mcl_farming:melon",
+		})
+	end
 
 	-- Tall grass
 	if minetest.get_modpath("mcl_flowers") then
