@@ -1268,11 +1268,17 @@ local function generate_end_exit_portal(pos)
 	else
 		minetest.log("error", "[mcl_mapgen_core] ERROR! Ender dragon doesn't want to spawn")
 	end
-	mcl_structures.call_struct(pos, "end_exit_portal")
+	if mcl_structures ~= nil then
+		mcl_structures.call_struct(pos, "end_exit_portal")
+	end
 end
 
 -- TODO: Try to use more efficient structure generating code
 local function generate_structures(minp, maxp, blockseed, biomemap)
+	if mcl_structures == nil then
+		return
+	end
+
 	local chunk_has_desert_well = false
 	local chunk_has_desert_temple = false
 	local chunk_has_igloo = false
