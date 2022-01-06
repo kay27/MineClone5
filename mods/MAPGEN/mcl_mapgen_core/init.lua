@@ -1053,28 +1053,30 @@ local function register_mgv6_decorations()
 		})
 	end
 
-	local mushrooms = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"}
-	local mseeds = { 7133, 8244 }
-	for m=1, #mushrooms do
-		-- Mushrooms next to trees
-		minetest.register_decoration({
-			deco_type = "simple",
-			place_on = {"group:grass_block_no_snow", "mcl_core:dirt", "mcl_core:podzol", "mcl_core:mycelium", "mcl_core:stone", "mcl_core:andesite", "mcl_core:diorite", "mcl_core:granite"},
-			sidelen = 16,
-			noise_params = {
-				offset = 0.04,
-				scale = 0.04,
-				spread = {x = 100, y = 100, z = 100},
-				seed = mseeds[m],
-				octaves = 3,
-				persist = 0.6
-			},
-			y_min = 1,
-			y_max = mcl_vars.mg_overworld_max,
-			decoration = mushrooms[m],
-			spawn_by = { "mcl_core:tree", "mcl_core:sprucetree", "mcl_core:darktree", "mcl_core:birchtree", },
-			num_spawn_by = 1,
-		})
+	if minetest.get_modpath("mcl_mushrooms") then
+		local mushrooms = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"}
+		local mseeds = { 7133, 8244 }
+		for m=1, #mushrooms do
+			-- Mushrooms next to trees
+			minetest.register_decoration({
+				deco_type = "simple",
+				place_on = {"group:grass_block_no_snow", "mcl_core:dirt", "mcl_core:podzol", "mcl_core:mycelium", "mcl_core:stone", "mcl_core:andesite", "mcl_core:diorite", "mcl_core:granite"},
+				sidelen = 16,
+				noise_params = {
+					offset = 0.04,
+					scale = 0.04,
+					spread = {x = 100, y = 100, z = 100},
+					seed = mseeds[m],
+					octaves = 3,
+					persist = 0.6
+				},
+				y_min = 1,
+				y_max = mcl_vars.mg_overworld_max,
+				decoration = mushrooms[m],
+				spawn_by = { "mcl_core:tree", "mcl_core:sprucetree", "mcl_core:darktree", "mcl_core:birchtree", },
+				num_spawn_by = 1,
+			})
+		end
 	end
 
 	-- Dead bushes
@@ -1752,6 +1754,10 @@ end
 -- Generate mushrooms in caves manually.
 -- Minetest's API does not support decorations in caves yet. :-(
 local function generate_underground_mushrooms(minp, maxp, seed)
+	if not minetest.get_modpath("mcl_mushrooms") then
+		return
+	end
+
 	local pr_shroom = PseudoRandom(seed-24359)
 	-- Generate rare underground mushrooms
 	-- TODO: Make them appear in groups, use Perlin noise
@@ -1828,17 +1834,19 @@ local function generate_nether_decorations(minp, maxp, seed)
 
 	-- Mushrooms on netherrack
 	-- Note: Spawned *after* the fire because of light level checks
-	special_deco(rack, function(bpos)
-		local l = minetest.get_node_light(bpos, 0.5)
-		if bpos.y > mcl_vars.mg_lava_nether_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
-			-- TODO: Make mushrooms appear in groups, use Perlin noise
-			if pr_nether:next(1,2) == 1 then
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
-			else
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
+	if minetest.get_modpath("mcl_mushrooms") then
+		special_deco(rack, function(bpos)
+			local l = minetest.get_node_light(bpos, 0.5)
+			if bpos.y > mcl_vars.mg_lava_nether_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
+				-- TODO: Make mushrooms appear in groups, use Perlin noise
+				if pr_nether:next(1,2) == 1 then
+					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
+				else
+					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
+				end
 			end
-		end
-	end)
+		end)
+	end
 
 	-- Nether wart on soul sand
 	-- TODO: Spawn in Nether fortresses
