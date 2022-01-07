@@ -5,14 +5,14 @@ It also queues your generators to run them in proper order:
 
 ### mcl_mapgen.register_on_generated(lvm_callback_function, order_number)
 =========================================================================
-Replacement of engine API function `minetest.register_on_generated(function(minp, maxp, blockseed))`
+Replacement of engine API function `minetest.register_on_generated(function(vm_context))`
 It is still unsafe. Cavegen part can and will overwrite outer 1-block layer of the chunk which is expected to be generated.
 Nodes marked as `is_ground_content` could be overwritten. Air and water are usually 'ground content' too.
 For Minetest 5.4 it doesn't recommended to place blocks within lvm callback function.
 See https://git.minetest.land/MineClone2/MineClone2/issues/1395
 	`lvm_callback_function`: chunk callback LVM function definition:
 		`function(vm_context)`:
-			Function MUST RETURN `vm_context` back anyway! It will passed into next lvm callback function from the queue.
+			`vm_context` will pass into next lvm callback function from the queue!
 			`vm_context`: a table which already contains some LVM data as the fields, and some of them can be added in your lvm callback function:
 				`vm`: curent voxel manipulator object itself;
 				`blockseed`: seed of this mapchunk;
@@ -50,7 +50,7 @@ See https://git.minetest.land/MineClone2/MineClone2/issues/1395
 ### mcl_mapgen.register_mapgen_block_lvm(lvm_callback_function, order_number)
 =============================================================================
 Registers lvm callback function to be called when current block (usually 16x16x16 nodes) generation is REALLY 100% finished.
-`vm_context` passes into lvm callback function and should always be returned back.
+`vm_context` passes into lvm callback function.
 	`lvm_callback_function`: the block callback LVM function definition - same as for chunks - see definition example above;
 	`order_number` (optional): the less, the earlier,
 		e.g. `mcl_mapgen.order.BUILDINGS` or `mcl_mapgen.order.LARGE_BUILDINGS`
@@ -85,7 +85,7 @@ Set
 Registers lvm callback function to be called when current chunk generation is REALLY 100% finished.
 It's the most frustrating function from this mod. It can't provide you access to mapgen objects. They are probably gone long ago.
 Don't use it for accessing mapgen objects please.
-`vm_context` passes into lvm callback function and should always be returned back.
+`vm_context` passes into lvm callback function.
 	`lvm_callback_function`: the block callback LVM function definition - same as above;
 	`order_number` (optional): the less, the earlier.
 

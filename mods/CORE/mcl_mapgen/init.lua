@@ -241,7 +241,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 							vm_context.blockseed = blockseed
 							vm_context.minp, vm_context.maxp = {x=x, y=y, z=z}, {x=x+LAST_NODE, y=y+LAST_NODE, z=z+LAST_NODE}
 							for _, v in pairs(queue_blocks_lvm) do
-								vm_context = v.callback_function(vm_context)
+								v.callback_function(vm_context)
 							end
 						end
 						if nodes_block > 0 then
@@ -264,7 +264,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 
 	if #queue_unsafe_engine > 0 then
 		for _, v in pairs(queue_unsafe_engine) do
-			vm_context = v.f(vm_context)
+			v.f(vm_context)
 		end
 		if vm_context.write then
 			vm:set_data(data)
@@ -304,7 +304,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			chunkseed         = seed,
 		}
 		for _, v in pairs(queue_chunks_lvm) do
-			v.f(vm_context)
+			vm_context = v.f(vm_context)
 		end
 		for _, v in pairs(queue_chunks_nodes) do
 			v.f(minp, maxp, seed, vm_context)

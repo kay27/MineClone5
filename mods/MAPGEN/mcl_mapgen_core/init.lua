@@ -45,13 +45,10 @@ minetest.register_alias("mapgen_stair_sandstonebrick", "mcl_stairs:stair_sandsto
 minetest.register_alias("mapgen_stair_sandstone_block", "mcl_stairs:stair_sandstone")
 minetest.register_alias("mapgen_stair_desert_stone", "mcl_stairs:stair_sandstone")
 
-local mg_name = minetest.get_mapgen_setting("mg_name")
-local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
-
-local WITCH_HUT_HEIGHT = 3 -- Exact Y level to spawn witch huts at. This height refers to the height of the floor
-
--- End exit portal position
-local END_EXIT_PORTAL_POS = vector.new(-3, -27003, -3)
+local mg_name = mcl_mapgen.name
+local superflat = mcl_mapgen.superflat
+local v6 = mcl_mapgen.v6
+local singlenode = mcl_mapgen.singlenode
 
 -- Content IDs
 local c_bedrock = minetest.get_content_id("mcl_core:bedrock")
@@ -451,7 +448,7 @@ if minetest.settings:get_bool("mcl_generate_ores", true) then
 	-- Emerald
 	--
 
-	if mg_name == "v6" then
+	if v6 then
 		-- Generate everywhere in v6, but rarely.
 
 		-- Common spawn
@@ -1104,7 +1101,7 @@ mcl_vars.mg_dungeons = mcl_mapgen.dungeons
 mg_flags.dungeons = false
 
 -- Apply mapgen-specific mapgen code
-if mg_name == "v6" then
+if v6 then
 	register_mgv6_decorations()
 elseif superflat then
 	-- Enforce superflat-like mapgen: no caves, decor, lakes and hills
@@ -1125,20 +1122,6 @@ if string.len(mg_flags_str) > 0 then
 end
 minetest.set_mapgen_setting("mg_flags", mg_flags_str, true)
 
--- Helper function for converting a MC probability to MT, with
--- regards to MapBlocks.
--- Some MC generated structures are generated on per-chunk
--- probability.
--- The MC probability is 1/x per Minecraft chunk (16×16).
-
--- x: The MC probability is 1/x.
--- minp, maxp: MapBlock limits
--- returns: Probability (1/return_value) for a single MT mapblock
-local function minecraft_chunk_probability(x, minp, maxp)
-	-- 256 is the MC chunk height
-	return x * (((maxp.x-minp.x+1)*(maxp.z-minp.z+1)) / 256)
-end
-
 -- Takes an index of a biomemap table (from minetest.get_mapgen_object),
 -- minp and maxp (from an on_generated callback) and returns the real world coordinates
 -- as X, Z.
@@ -1151,81 +1134,10 @@ end
 	return x, z
 end]]
 
--- Takes x and z coordinates and minp and maxp of a generated chunk
--- (in on_generated callback) and returns a biomemap index)
--- Inverse function of biomemap_to_xz
-local function xz_to_biomemap_index(x, z, minp, maxp)
-	local xwidth = maxp.x - minp.x + 1
-	local zwidth = maxp.z - minp.z + 1
-	local minix = x % xwidth
-	local miniz = z % zwidth
-
-	return (minix + miniz * zwidth) + 1
-end
-
 -- Perlin noise objects
 local perlin_structures
 local perlin_vines, perlin_vines_fine, perlin_vines_upwards, perlin_vines_length, perlin_vines_density
 local perlin_clay
-
--- Generate Clay
-mcl_mapgen.register_mapgen_lvm(function(c)
-	local minp, maxp, blockseed, voxelmanip_data, voxelmanip_area, lvm_used = c.minp, c.maxp, c.chunkseed, c.data, c.area, c.write or false
-	-- TODO: Make clay generation reproducible for same seed.
-	if maxp.y < -5 or minp.y > 0 then
-		return c
-	end
-	c.vm = c.vm or mcl_mapgen.get_voxel_manip(c)
-
-	minetest.log("warning", "CLAY!")
-
-	local pr = PseudoRandom(blockseed)
-
-	perlin_clay = perlin_clay or minetest.get_perlin({
-		offset = 0.5,
-		scale = 0.2,
-		spread = {x = 5, y = 5, z = 5},
-		seed = -316,
-		octaves = 1,
-		persist = 0.0
-	})
-
-	for y=math.max(minp.y, 0), math.min(maxp.y, -8), -1 do
-		-- Assume X and Z lengths are equal
-		local divlen = 4
-		local divs = (maxp.x-minp.x)/divlen+1;
-		for divx=0+1,divs-2 do
-		for divz=0+1,divs-2 do
-			-- Get position and shift it a bit randomly so the clay do not obviously appear in a grid
-			local cx = minp.x + math.floor((divx+0.5)*divlen) + pr:next(-1,1)
-			local cz = minp.z + math.floor((divz+0.5)*divlen) + pr:next(-1,1)
-
-			local water_pos = voxelmanip_area:index(cx, y+1, cz)
-			local waternode = voxelmanip_data[water_pos]
-			local surface_pos = voxelmanip_area:index(cx, y, cz)
-			local surfacenode = voxelmanip_data[surface_pos]
-
-			local genrnd = pr:next(1, 20)
-			if genrnd == 1 and perlin_clay:get_3d({x=cx,y=y,z=cz}) > 0 and waternode == c_water and
-					(surfacenode == c_dirt or minetest.get_item_group(minetest.get_name_from_content_id(surfacenode), "sand") == 1) then
-				local diamondsize = pr:next(1, 3)
-				for x1 = -diamondsize, diamondsize do
-				for z1 = -(diamondsize - math.abs(x1)), diamondsize - math.abs(x1) do
-					local ccpos = voxelmanip_area:index(cx+x1, y, cz+z1)
-					local claycandidate = voxelmanip_data[ccpos]
-					if voxelmanip_data[ccpos] == c_dirt or minetest.get_item_group(minetest.get_name_from_content_id(claycandidate), "sand") == 1 then
-						voxelmanip_data[ccpos] = c_clay
-						lvm_used = true
-					end
-				end
-				end
-			end
-		end
-		end
-	end
-	c.write = lvm_used
-	return c
-end)
 
 local dragon_spawn_pos = false
 local dragon_spawned, portal_generated = false, false
@@ -1252,7 +1164,7 @@ if portal_generated and not dragon_spawned then
 	minetest.after(10, try_to_spawn_ender_dragon)
 end
 
-local function generate_end_exit_portal(pos)
+function mcl_mapgen_core.generate_end_exit_portal(pos)
 	if dragon_spawn_pos then return false end
 	dragon_spawn_pos = vector.add(pos, vector.new(3, 11, 3))
 	mcl_structures.call_struct(pos, "end_exit_portal", nil, nil, function()
@@ -1266,252 +1178,6 @@ local function generate_end_exit_portal(pos)
 	portal_generated = true
 end
 
--- TODO: Try to use more efficient structure generating code
-local function generate_structures(minp, maxp, blockseed, biomemap)
-	local chunk_has_desert_well = false
-	local chunk_has_desert_temple = false
-	local chunk_has_igloo = false
-	local struct_min, struct_max = -3, 111 --64
-
-	if maxp.y >= struct_min and minp.y <= struct_max then
-		-- Generate structures
-		local pr = PcgRandom(blockseed)
-		perlin_structures = perlin_structures or minetest.get_perlin(329, 3, 0.6, 100)
-		-- Assume X and Z lengths are equal
-		local divlen = 5
-		for x0 = minp.x, maxp.x, divlen do for z0 = minp.z, maxp.z, divlen do
-			-- Determine amount from perlin noise
-			local amount = math.floor(perlin_structures:get_2d({x=x0, y=z0}) * 9)
-			-- Find random positions based on this random
-			local p, ground_y
-			for i=0, amount do
-				p = {x = pr:next(x0, x0+divlen-1), y = 0, z = pr:next(z0, z0+divlen-1)}
-				-- Find ground level
-				ground_y = nil
-				local nn
-				for y = struct_max, struct_min, -1 do
-					p.y = y
-					local checknode = minetest.get_node(p)
-					if checknode then
-						nn = checknode.name
-						local def = minetest.registered_nodes[nn]
-						if def and def.walkable then
-							ground_y = y
-							break
-						end
-					end
-				end
-
-				if ground_y then
-					p.y = ground_y+1
-					local nn0 = minetest.get_node(p).name
-					-- Check if the node can be replaced
-					if minetest.registered_nodes[nn0] and minetest.registered_nodes[nn0].buildable_to then
-						-- Desert temples and desert wells
-						if nn == "mcl_core:sand" or (nn == "mcl_core:sandstone") then
-							if not chunk_has_desert_temple and not chunk_has_desert_well and ground_y > 3 then
-								-- Spawn desert temple
-								-- TODO: Check surface
-								if pr:next(1,12000) == 1 then
-									mcl_structures.call_struct(p, "desert_temple", nil, pr)
-									chunk_has_desert_temple = true
-								end
-							end
-							if not chunk_has_desert_temple and not chunk_has_desert_well and ground_y > 3 then
-								local desert_well_prob = minecraft_chunk_probability(1000, minp, maxp)
-
-								-- Spawn desert well
-								if pr:next(1, desert_well_prob) == 1 then
-									-- Check surface
-									local surface = minetest.find_nodes_in_area({x=p.x,y=p.y-1,z=p.z}, {x=p.x+5, y=p.y-1, z=p.z+5}, "mcl_core:sand")
-									if #surface >= 25 then
-										mcl_structures.call_struct(p, "desert_well", nil, pr)
-										chunk_has_desert_well = true
-									end
-								end
-							end
-
-						-- Igloos
-						elseif not chunk_has_igloo and (nn == "mcl_core:snowblock" or nn == "mcl_core:snow" or (minetest.get_item_group(nn, "grass_block_snow") == 1)) then
-							if pr:next(1, 4400) == 1 then
-								-- Check surface
-								local floor = {x=p.x+9, y=p.y-1, z=p.z+9}
-								local surface = minetest.find_nodes_in_area({x=p.x,y=p.y-1,z=p.z}, floor, "mcl_core:snowblock")
-								local surface2 = minetest.find_nodes_in_area({x=p.x,y=p.y-1,z=p.z}, floor, "mcl_core:dirt_with_grass_snow")
-								if #surface + #surface2 >= 63 then
-									mcl_structures.call_struct(p, "igloo", nil, pr)
-									chunk_has_igloo = true
-								end
-							end
-						end
-
-						-- Fossil
-						if nn == "mcl_core:sandstone" or nn == "mcl_core:sand" and not chunk_has_desert_temple and ground_y > 3 then
-							local fossil_prob = minecraft_chunk_probability(64, minp, maxp)
-
-							if pr:next(1, fossil_prob) == 1 then
-								-- Spawn fossil below desert surface between layers 40 and 49
-								local p1 = {x=p.x, y=pr:next(mcl_worlds.layer_to_y(40), mcl_worlds.layer_to_y(49)), z=p.z}
-								-- Very rough check of the environment (we expect to have enough stonelike nodes).
-								-- Fossils may still appear partially exposed in caves, but this is O.K.
-								local p2 = vector.add(p1, 4)
-								local nodes = minetest.find_nodes_in_area(p1, p2, {"mcl_core:sandstone", "mcl_core:stone", "mcl_core:diorite", "mcl_core:andesite", "mcl_core:granite", "mcl_core:stone_with_coal", "mcl_core:dirt", "mcl_core:gravel"})
-
-								if #nodes >= 100 then -- >= 80%
-									mcl_structures.call_struct(p1, "fossil", nil, pr)
-								end
-							end
-						end
-
-						-- Witch hut
-						if ground_y <= 0 and nn == "mcl_core:dirt" then
-						local prob = minecraft_chunk_probability(48, minp, maxp)
-						if pr:next(1, prob) == 1 then
-
-							local swampland = minetest.get_biome_id("Swampland")
-							local swampland_shore = minetest.get_biome_id("Swampland_shore")
-
-							-- Where do witches live?
-
-							local here_be_witches = false
-							if mg_name == "v6" then
-								-- v6: In Normal biome
-								if biomeinfo.get_v6_biome(p) == "Normal" then
-									here_be_witches = true
-								end
-							else
-								-- Other mapgens: In swampland biome
-								local bi = xz_to_biomemap_index(p.x, p.z, minp, maxp)
-								if biomemap[bi] == swampland or biomemap[bi] == swampland_shore then
-									here_be_witches = true
-								end
-							end
-
-							if here_be_witches then
-								local r = tostring(pr:next(0, 3) * 90) -- "0", "90", "180" or 270"
-								local p1 = {x=p.x-1, y=WITCH_HUT_HEIGHT+2, z=p.z-1}
-								local size
-								if r == "0" or r == "180" then
-									size = {x=10, y=4, z=8}
-								else
-									size = {x=8, y=4, z=10}
-								end
-								local p2 = vector.add(p1, size)
-
-								-- This checks free space at the “body” of the hut and a bit around.
-								-- ALL nodes must be free for the placement to succeed.
-								local free_nodes = minetest.find_nodes_in_area(p1, p2, {"air", "mcl_core:water_source", "mcl_flowers:waterlily"})
-								if #free_nodes >= ((size.x+1)*(size.y+1)*(size.z+1)) then
-									local place = {x=p.x, y=WITCH_HUT_HEIGHT-1, z=p.z}
-
-									-- FIXME: For some mysterious reason (black magic?) this
-									-- function does sometimes NOT spawn the witch hut. One can only see the
-									-- oak wood nodes in the water, but no hut. :-/
-									mcl_structures.call_struct(place, "witch_hut", r, pr)
-
-									-- TODO: Spawn witch in or around hut when the mob sucks less.
-
-									local function place_tree_if_free(pos, prev_result)
-										local nn = minetest.get_node(pos).name
-										if nn == "mcl_flowers:waterlily" or nn == "mcl_core:water_source" or nn == "mcl_core:water_flowing" or nn == "air" then
-											minetest.set_node(pos, {name="mcl_core:tree", param2=0})
-											return prev_result
-										else
-											return false
-										end
-									end
-									local offsets
-									if r == "0" then
-										offsets = {
-											{x=1, y=0, z=1},
-											{x=1, y=0, z=5},
-											{x=6, y=0, z=1},
-											{x=6, y=0, z=5},
-										}
-									elseif r == "180" then
-										offsets = {
-											{x=2, y=0, z=1},
-											{x=2, y=0, z=5},
-											{x=7, y=0, z=1},
-											{x=7, y=0, z=5},
-										}
-									elseif r == "270" then
-										offsets = {
-											{x=1, y=0, z=1},
-											{x=5, y=0, z=1},
-											{x=1, y=0, z=6},
-											{x=5, y=0, z=6},
-										}
-									elseif r == "90" then
-										offsets = {
-											{x=1, y=0, z=2},
-											{x=5, y=0, z=2},
-											{x=1, y=0, z=7},
-											{x=5, y=0, z=7},
-										}
-									end
-									for o=1, #offsets do
-										local ok = true
-										for y=place.y-1, place.y-64, -1 do
-											local tpos = vector.add(place, offsets[o])
-											tpos.y = y
-											ok = place_tree_if_free(tpos, ok)
-											if not ok then
-												break
-											end
-										end
-									end
-								end
-							end
-						end
-						end
-
-						-- Ice spikes in v6
-						-- In other mapgens, ice spikes are generated as decorations.
-						if mg_name == "v6" and not chunk_has_igloo and nn == "mcl_core:snowblock" then
-							local spike = pr:next(1,58000)
-							if spike < 3 then
-								-- Check surface
-								local floor = {x=p.x+4, y=p.y-1, z=p.z+4}
-								local surface = minetest.find_nodes_in_area({x=p.x+1,y=p.y-1,z=p.z+1}, floor, {"mcl_core:snowblock"})
-								-- Check for collision with spruce
-								local spruce_collisions = minetest.find_nodes_in_area({x=p.x+1,y=p.y+2,z=p.z+1}, {x=p.x+4, y=p.y+6, z=p.z+4}, {"mcl_core:sprucetree", "mcl_core:spruceleaves"})
-
-								if #surface >= 9 and #spruce_collisions == 0 then
-									mcl_structures.call_struct(p, "ice_spike_large", nil, pr)
-								end
-							elseif spike < 100 then
-								-- Check surface
-								local floor = {x=p.x+6, y=p.y-1, z=p.z+6}
-								local surface = minetest.find_nodes_in_area({x=p.x+1,y=p.y-1,z=p.z+1}, floor, {"mcl_core:snowblock", "mcl_core:dirt_with_grass_snow"})
-
-								-- Check for collision with spruce
-								local spruce_collisions = minetest.find_nodes_in_area({x=p.x+1,y=p.y+1,z=p.z+1}, {x=p.x+6, y=p.y+6, z=p.z+6}, {"mcl_core:sprucetree", "mcl_core:spruceleaves"})
-
-								if #surface >= 25 and #spruce_collisions == 0 then
-									mcl_structures.call_struct(p, "ice_spike_small", nil, pr)
-								end
-							end
-						end
-					end
-				end
-
-			end
-		end end
-	-- End exit portal
-	elseif	minp.y <= END_EXIT_PORTAL_POS.y and maxp.y >= END_EXIT_PORTAL_POS.y and
-		minp.x <= END_EXIT_PORTAL_POS.x and maxp.x >= END_EXIT_PORTAL_POS.x and
-		minp.z <= END_EXIT_PORTAL_POS.z and maxp.z >= END_EXIT_PORTAL_POS.z then
-		for y=maxp.y, minp.y, -1 do
-			local p = {x=END_EXIT_PORTAL_POS.x, y=y, z=END_EXIT_PORTAL_POS.z}
-			if minetest.get_node(p).name == "mcl_end:end_stone" then
-				generate_end_exit_portal(p)
-				return
-			end
-		end
-		generate_end_exit_portal(END_EXIT_PORTAL_POS)
-	end
-end
 
 -- Buffers for LuaVoxelManip
 -- local lvm_buffer = {}
@@ -1754,7 +1420,7 @@ local function generate_underground_mushrooms(minp, maxp, seed)
 end
 
 local nether_wart_chance
-if mg_name == "v6" then
+if v6 then
 	nether_wart_chance = 85
 else
 	nether_wart_chance = 170
@@ -1930,7 +1596,7 @@ local function basic_safe(vm_context)
 	lvm_used = set_layers(data, area, c_void         , nil, mcl_mapgen.realm_barrier_overworld_end_max+1, mcl_mapgen.overworld.min                  -1, minp, maxp, lvm_used, pr)
 
 
-	if mg_name ~= "singlenode" then
+	if not singlenode then
 		-- Bedrock
 		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_mapgen.overworld.bedrock_min, mcl_mapgen.overworld.bedrock_max, minp, maxp, lvm_used, pr)
 		lvm_used = set_layers(data, area, c_bedrock, bedrock_check, mcl_mapgen.nether.bedrock_bottom_min, mcl_mapgen.nether.bedrock_bottom_max, minp, maxp, lvm_used, pr)
@@ -1963,7 +1629,7 @@ local function basic_safe(vm_context)
 		-- A snowy grass block must be below a top snow or snow block at all times.
 		if minp.y <= mcl_mapgen.overworld.max and maxp.y >= mcl_mapgen.overworld.min then
 			-- v6 mapgen:
-			if mg_name == "v6" then
+			if v6 then
 
 				--[[ Remove broken double plants caused by v6 weirdness.
 				v6 might break the bottom part of double plants because of how it works.
@@ -2028,7 +1694,7 @@ local function basic_safe(vm_context)
 		-- * Replace water with Nether lava.
 		-- * Replace stone, sand dirt in v6 so the Nether works in v6.
 		elseif emin.y <= mcl_mapgen.nether.max and emax.y >= mcl_mapgen.nether.min then
-			if mg_name == "v6" then
+			if v6 then
 				local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
 				for n=1, #nodes do
 					local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
@@ -2056,7 +1722,7 @@ local function basic_safe(vm_context)
 		-- * Generate spawn platform (End portal destination)
 		elseif minp.y <= mcl_mapgen.end_.max and maxp.y >= mcl_mapgen.end_.min then
 			local nodes
-			if mg_name == "v6" then
+			if v6 then
 				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
 			else
 				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source"})
@@ -2105,14 +1771,17 @@ local function basic_safe(vm_context)
 		lvm_used = true
 	end
 
-	if mg_name ~= "singlenode" then
+	if not singlenode then
 		-- Generate special decorations
 		generate_underground_mushrooms(minp, maxp, blockseed)
 		generate_nether_decorations(minp, maxp, blockseed)
-		generate_structures(minp, maxp, blockseed, biomemap)
 	end
 
 	return vm_context --, lvm_used, shadow
 end
 
 mcl_mapgen.register_mapgen_block_lvm(basic_safe, 1)
+
+local modpath = minetest.get_modpath(minetest.get_current_modname())
+dofile(modpath .. "/clay.lua")
+dofile(modpath .. "/structures.lua")

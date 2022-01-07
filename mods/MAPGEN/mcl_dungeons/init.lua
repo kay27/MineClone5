@@ -110,7 +110,7 @@ local loottable =
 }
 
 -- Bonus loot for v6 mapgen: Otherwise unobtainable saplings.
-if mg_name == "v6" then
+if mcl_mapgen.v6 then
 	table.insert(loottable, {
 		stacks_min = 1,
 		stacks_max = 3,
@@ -137,36 +137,11 @@ local function spawn_dungeon(p1, p2, dim, pr, dontcheck)
 	local y_ceiling = y + dim.y + 1
 
 	if check then
-		local result1, result2 = true, true
 		local dim_x, dim_z = dim.x, dim.z
 		local size = dim_z*dim_x
-		local time1 = minetest.get_us_time()
-		for i=1,100 do
-			for tx = x+1, x+dim_x do
-				for tz = z+1, z+dim_z do
-					if not registered_nodes[get_node({x = tx, y = y_floor  , z = tz}).name].walkable
-					or not registered_nodes[get_node({x = tx, y = y_ceiling, z = tz}).name].walkable then
-						result1 = false
-					end
-				end
-			end
-		end
-		local time2 = minetest.get_us_time()
-		for i=1,100 do
-			if #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size
-			or #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size then
-				result2 = false
-			end
-		end
-		local time3 = minetest.get_us_time()
-		if result1 == result2 then
-			local d1, d2 = time2-time1, time3-time2
-			local m1 = m1 + d1
-			local m2 = m2 + d2
-			minetest.chat_send_all("m1 = " .. tostring(m1))
-			minetest.chat_send_all("m2 = " .. tostring(m2))
-		else
-			minetest.log("warning", "results mismatch")
+		if #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size
+		or #minetest_find_nodes_in_area({x=x+1,y=y_floor,z=z+1}, {x=x+dim_z,y=y_floor,z=z+dim_z}, "group:walkabke") < size then
+			return
 		end
 	end
 
