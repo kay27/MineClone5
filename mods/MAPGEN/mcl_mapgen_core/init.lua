@@ -1731,10 +1731,12 @@ local function basic_safe(vm_context)
 		-- Nether block fixes:
 		-- * Replace water with Nether lava.
 		-- * Replace stone, sand dirt in v6 so the Nether works in v6.
-		elseif emin.y <= mcl_mapgen.nether.max and emax.y >= mcl_mapgen.nether.min then
+		elseif minp.y <= mcl_mapgen.nether.max and maxp.y >= mcl_mapgen.nether.min then
+		-- elseif emin.y <= mcl_mapgen.nether.max and emax.y >= mcl_mapgen.nether.min then
 			if c_nether then
 				if v6 then
-					local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+					-- local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+					local nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
 					for n=1, #nodes do
 						local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
 						if data[p_pos] == c_water then
@@ -1749,7 +1751,8 @@ local function basic_safe(vm_context)
 						end
 					end
 				else
-					local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
+					-- local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
+					local nodes = minetest.find_nodes_in_area(minp, maxp, {"group:water"})
 					for _, n in pairs(nodes) do
 						data[area:index(n.x, n.y, n.z)] = c_nether.lava
 					end
@@ -1763,9 +1766,11 @@ local function basic_safe(vm_context)
 		elseif minp.y <= mcl_mapgen.end_.max and maxp.y >= mcl_mapgen.end_.min then
 			local nodes
 			if v6 then
-				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+				-- nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
 			else
-				nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source"})
+				nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source"})
+				-- nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source"})
 			end
 			if #nodes > 0 then
 				lvm_used = true
@@ -1816,6 +1821,8 @@ local function basic_safe(vm_context)
 		generate_underground_mushrooms(minp, maxp, blockseed)
 		generate_nether_decorations(minp, maxp, blockseed)
 	end
+
+	vm_context.write = vm_context.write or lvm_used
 
 	return vm_context --, lvm_used, shadow
 end
