@@ -1168,9 +1168,7 @@ minetest.set_mapgen_setting("mg_flags", mg_flags_str, true)
 end]]
 
 -- Perlin noise objects
-local perlin_structures
 local perlin_vines, perlin_vines_fine, perlin_vines_upwards, perlin_vines_length, perlin_vines_density
-local perlin_clay
 
 local dragon_spawn_pos = false
 local dragon_spawned, portal_generated = false, false
@@ -1606,7 +1604,7 @@ end
 -- Below the bedrock, generate air/void
 local function basic_safe(vm_context)
 	local vm, data, emin, emax, area, minp, maxp, chunkseed, blockseed = vm_context.vm, vm_context.data, vm_context.emin, vm_context.emax, vm_context.area, vm_context.minp, vm_context.maxp, vm_context.chunkseed, vm_context.blockseed
-	vm_context.data2 = vm_context.data2 or vm:get_param2_data(lvm_param2_buffer)
+	vm_context.data2 = vm_context.data2 or vm:get_param2_data(vm_context.lvm_param2_buffer)
 	local data2 = vm_context.data2
 
 	local lvm_used = false
@@ -1647,7 +1645,7 @@ local function basic_safe(vm_context)
 		if mcl_mapgen.lava then
 			lvm_used = set_layers(data, area, c_lava, c_air, mcl_mapgen.overworld.min, mcl_mapgen.overworld.lava_max, minp, maxp, lvm_used, pr)
 			if c_nether then
-				lvm_used = set_layers(data, area, c_nether_lava, c_air, mcl_mapgen.nether.min, mcl_mapgen.nether.lava_max, minp, maxp, lvm_used, pr)
+				lvm_used = set_layers(data, area, c_nether.lava, c_air, mcl_mapgen.nether.min, mcl_mapgen.nether.lava_max, minp, maxp, lvm_used, pr)
 			end
 		end
 
@@ -1740,7 +1738,7 @@ local function basic_safe(vm_context)
 					for n=1, #nodes do
 						local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
 						if data[p_pos] == c_water then
-							data[p_pos] = c_nether_lava
+							data[p_pos] = c_nether.lava
 							lvm_used = true
 						elseif data[p_pos] == c_stone then
 							data[p_pos] = c_netherrack

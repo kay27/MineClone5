@@ -1,3 +1,4 @@
+
 local END_EXIT_PORTAL_POS = vector.new(-3, -27003, -3) -- End exit portal position
 local WITCH_HUT_HEIGHT = 3 -- Exact Y level to spawn witch huts at. This height refers to the height of the floor
 local OVERWORLD_STRUCT_MIN, OVERWORLD_STRUCT_MAX = mcl_mapgen.overworld.min, mcl_mapgen.overworld.max
@@ -11,7 +12,7 @@ local minetest_get_node = minetest.get_node
 local minetest_get_mapgen_object = minetest.get_mapgen_object
 local minetest_find_nodes_in_area = minetest.find_nodes_in_area
 
--- TODO: Try to use more efficient structure generating code
+local perlin_structures
 
 local function determine_ground_level(p, vm_context)
 	local emax = vm_context.emax
@@ -257,7 +258,7 @@ local function generate_structures(vm_context)
 		-- Determine amount from perlin noise
 		local amount = math_floor(perlin_structures:get_2d({x=x0, y=z0}) * 9)
 		-- Find random positions based on this random
-		local p, ground_y
+		local p, ground_y, nn
 		for i=0, amount do
 			p = {x = pr:next(x0, x0 + DIVLEN - 1), y = 0, z = pr:next(z0, z0 + DIVLEN - 1)}
 			p, ground_y, nn = determine_ground_level(p, vm_context)

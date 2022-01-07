@@ -86,7 +86,7 @@ local CS_3D = CS * CS * CS
 local DEFAULT_ORDER = order.DEFAULT
 
 function mcl_mapgen.register_on_generated(callback_function, order)
-	queue_unsafe_engine[#queue_unsafe_engine+1] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	queue_unsafe_engine[#queue_unsafe_engine+1] = {i = order or DEFAULT_ORDER, f = callback_function}
 	table.sort(queue_unsafe_engine, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen(callback_function, order)
@@ -98,14 +98,14 @@ end
 function mcl_mapgen.register_mapgen_lvm(callback_function, order)
 	lvm_chunk = lvm_chunk + 1
 	safe_functions = safe_functions + 1
-	queue_chunks_lvm[lvm_chunk] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	queue_chunks_lvm[lvm_chunk] = {i = order or DEFAULT_ORDER, f = callback_function}
 	table.sort(queue_chunks_lvm, function(a, b) return (a.i <= b.i) end)
 end
-function mcl_mapgen.register_mapgen_block(callback_function, priority)
+function mcl_mapgen.register_mapgen_block(callback_function, order)
 	block = block + 1
 	nodes_block = nodes_block + 1
 	safe_functions = safe_functions + 1
-	queue_blocks_nodes[nodes_block] = {i = priority or DEFAULT_ORDER, f = callback_function}
+	queue_blocks_nodes[nodes_block] = {i = order or DEFAULT_ORDER, f = callback_function}
 	table.sort(queue_blocks_nodes, function(a, b) return (a.i <= b.i) end)
 end
 function mcl_mapgen.register_mapgen_block_lvm(callback_function, order)
@@ -319,7 +319,8 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			if vm_context.write_light then
 				vm:set_light_data(light)
 			end
-			vm:calc_lighting(minp, maxp, vm_context.shadow or true)
+			-- caused error from torches (?)
+			-- vm:calc_lighting(minp, maxp, vm_context.shadow or true)
 			vm:write_to_map()
 			vm:update_liquids()
 		end

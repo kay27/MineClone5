@@ -1,4 +1,9 @@
--- Generate Clay
+local c_water = minetest.get_content_id("mcl_core:water_source")
+local c_dirt = minetest.get_content_id("mcl_core:dirt")
+local c_clay = minetest.get_content_id("mcl_core:clay")
+
+local perlin_clay
+
 mcl_mapgen.register_mapgen_lvm(function(c)
 	local minp, maxp, blockseed, voxelmanip_data, voxelmanip_area, lvm_used = c.minp, c.maxp, c.chunkseed, c.data, c.area, c.write or false
 	-- TODO: Make clay generation reproducible for same seed.
@@ -45,6 +50,7 @@ mcl_mapgen.register_mapgen_lvm(function(c)
 					local claycandidate = voxelmanip_data[ccpos]
 					if voxelmanip_data[ccpos] == c_dirt or minetest.get_item_group(minetest.get_name_from_content_id(claycandidate), "sand") == 1 then
 						voxelmanip_data[ccpos] = c_clay
+						minetest.log("warning", "CLAY! "..minetest.pos_to_string({x=cx+x1,y=y,z=cz+z1}))
 						lvm_used = true
 					end
 				end
