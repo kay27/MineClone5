@@ -28,7 +28,9 @@ minetest.register_alias("mapgen_clay", "mcl_core:clay")
 minetest.register_alias("mapgen_lava_source", "air") -- Built-in lava generator is too unpredictable, we generate lava on our own
 minetest.register_alias("mapgen_cobble", "mcl_core:cobble")
 minetest.register_alias("mapgen_mossycobble", "mcl_core:mossycobble")
-minetest.register_alias("mapgen_junglegrass", "mcl_flowers:fern")
+if minetest.get_modpath("mcl_flowers") then
+	minetest.register_alias("mapgen_junglegrass", "mcl_flowers:fern")
+end
 minetest.register_alias("mapgen_stone_with_coal", "mcl_core:stone_with_coal")
 minetest.register_alias("mapgen_stone_with_iron", "mcl_core:stone_with_iron")
 minetest.register_alias("mapgen_desert_sand", "mcl_core:sand")
@@ -43,11 +45,14 @@ minetest.register_alias("mapgen_snow", "mcl_core:snow")
 minetest.register_alias("mapgen_snowblock", "mcl_core:snowblock")
 minetest.register_alias("mapgen_ice", "mcl_core:ice")
 
-minetest.register_alias("mapgen_stair_cobble", "mcl_stairs:stair_cobble")
 minetest.register_alias("mapgen_sandstonebrick", "mcl_core:sandstonesmooth")
-minetest.register_alias("mapgen_stair_sandstonebrick", "mcl_stairs:stair_sandstone")
-minetest.register_alias("mapgen_stair_sandstone_block", "mcl_stairs:stair_sandstone")
-minetest.register_alias("mapgen_stair_desert_stone", "mcl_stairs:stair_sandstone")
+
+if minetest.get_modpath("mcl_stairs") then
+	minetest.register_alias("mapgen_stair_cobble", "mcl_stairs:stair_cobble")
+	minetest.register_alias("mapgen_stair_sandstonebrick", "mcl_stairs:stair_sandstone")
+	minetest.register_alias("mapgen_stair_sandstone_block", "mcl_stairs:stair_sandstone")
+	minetest.register_alias("mapgen_stair_desert_stone", "mcl_stairs:stair_sandstone")
+end
 
 local mg_name = minetest.get_mapgen_setting("mg_name")
 local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
@@ -69,9 +74,16 @@ local c_sand = minetest.get_content_id("mcl_core:sand")
 local c_void = minetest.get_content_id("mcl_core:void")
 local c_lava = minetest.get_content_id("mcl_core:lava_source")
 local c_water = minetest.get_content_id("mcl_core:water_source")
-local c_soul_sand = minetest.get_content_id("mcl_nether:soul_sand")
-local c_netherrack = minetest.get_content_id("mcl_nether:netherrack")
-local c_nether_lava = minetest.get_content_id("mcl_nether:nether_lava_source")
+
+local c_nether = nil
+if minetest.get_modpath("mcl_nether") then
+	c_nether = {
+		soul_sand = minetest.get_content_id("mcl_nether:soul_sand"),
+		netherrack = minetest.get_content_id("mcl_nether:netherrack"),
+		lava = minetest.get_content_id("mcl_nether:nether_lava_source")
+	}
+end
+
 --local c_end_stone = minetest.get_content_id("mcl_end:end_stone")
 local c_realm_barrier = minetest.get_content_id("mcl_core:realm_barrier")
 local c_top_snow = minetest.get_content_id("mcl_core:snow")
@@ -80,11 +92,17 @@ local c_clay = minetest.get_content_id("mcl_core:clay")
 local c_leaves = minetest.get_content_id("mcl_core:leaves")
 local c_jungleleaves = minetest.get_content_id("mcl_core:jungleleaves")
 --local c_jungletree = minetest.get_content_id("mcl_core:jungletree")
-local c_cocoa_1 = minetest.get_content_id("mcl_cocoas:cocoa_1")
-local c_cocoa_2 = minetest.get_content_id("mcl_cocoas:cocoa_2")
-local c_cocoa_3 = minetest.get_content_id("mcl_cocoas:cocoa_3")
 local c_vine = minetest.get_content_id("mcl_core:vine")
 local c_air = minetest.CONTENT_AIR
+
+local c_cocoas = nil
+if minetest.get_modpath("mcl_cocoas") then
+	c_cocoas = {
+		minetest.get_content_id("mcl_cocoas:cocoa_1"),
+		minetest.get_content_id("mcl_cocoas:cocoa_2"),
+		minetest.get_content_id("mcl_cocoas:cocoa_3")
+	}
+end
 
 --
 -- Ore generation
@@ -710,343 +728,362 @@ local function register_mgv6_decorations()
 		num_spawn_by = 1,
 	})
 
-	-- Doubletall grass
-	minetest.register_decoration({
-		deco_type = "schematic",
-		schematic = {
-			size = { x=1, y=3, z=1 },
-			data = {
-				{ name = "air", prob = 0 },
-				{ name = "mcl_flowers:double_grass", param1 = 255, },
-				{ name = "mcl_flowers:double_grass_top", param1 = 255, },
-			},
-		},
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 8,
-		noise_params = {
-			offset = -0.0025,
-			scale = 0.03,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 420,
-			octaves = 3,
-			persist = 0.0,
-		},
-		y_min = 1,
-		y_max = mcl_vars.mg_overworld_max,
-	})
+	-- Hack to make sure certain items only spawn in jungles
+	local spawn_by_in_jungle = { "mcl_core:jungletree" }
+	if minetest.get_modpath("mcl_flowers") then
+		table.insert(spawn_by_in_jungle, "mcl_flowers:fern")
+	end
 
-	-- Large ferns
-	minetest.register_decoration({
-		deco_type = "schematic",
-		schematic = {
-			size = { x=1, y=3, z=1 },
-			data = {
-				{ name = "air", prob = 0 },
-				{ name = "mcl_flowers:double_fern", param1=255, },
-				{ name = "mcl_flowers:double_fern_top", param1=255, },
-			},
-		},
-		-- v6 hack: This makes sure large ferns only appear in jungles
-		spawn_by = { "mcl_core:jungletree", "mcl_flowers:fern" },
-		num_spawn_by = 1,
-		place_on = {"group:grass_block_no_snow"},
-
-		sidelen = 16,
-		noise_params = {
-			offset = 0,
-			scale = 0.01,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 333,
-			octaves = 2,
-			persist = 0.66,
-		},
-		y_min = 1,
-		y_max = mcl_vars.mg_overworld_max,
-	})
-
-	-- Large flowers
-	local function register_large_flower(name, seed, offset)
+	if minetest.get_modpath("mcl_flowers") then
+		-- Doubletall grass
 		minetest.register_decoration({
 			deco_type = "schematic",
 			schematic = {
 				size = { x=1, y=3, z=1 },
 				data = {
 					{ name = "air", prob = 0 },
-					{ name = "mcl_flowers:"..name, param1=255, },
-					{ name = "mcl_flowers:"..name.."_top", param1=255, },
+					{ name = "mcl_flowers:double_grass", param1 = 255, },
+					{ name = "mcl_flowers:double_grass_top", param1 = 255, },
 				},
 			},
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 8,
+			noise_params = {
+				offset = -0.0025,
+				scale = 0.03,
+				spread = {x = 100, y = 100, z = 100},
+				seed = 420,
+				octaves = 3,
+				persist = 0.0,
+			},
+			y_min = 1,
+			y_max = mcl_vars.mg_overworld_max,
+		})
+
+		-- Large ferns
+		minetest.register_decoration({
+			deco_type = "schematic",
+			schematic = {
+				size = { x=1, y=3, z=1 },
+				data = {
+					{ name = "air", prob = 0 },
+					{ name = "mcl_flowers:double_fern", param1=255, },
+					{ name = "mcl_flowers:double_fern_top", param1=255, },
+				},
+			},
+			-- v6 hack: This makes sure large ferns only appear in jungles
+			spawn_by = spawn_by_in_jungle,
+			num_spawn_by = 1,
 			place_on = {"group:grass_block_no_snow"},
 
 			sidelen = 16,
 			noise_params = {
-				offset = offset,
+				offset = 0,
 				scale = 0.01,
-				spread = {x = 300, y = 300, z = 300},
-				seed = seed,
-				octaves = 5,
-				persist = 0.62,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 333,
+				octaves = 2,
+				persist = 0.66,
 			},
 			y_min = 1,
-			y_max = mcl_vars.overworld_max,
-			flags = "",
+			y_max = mcl_vars.mg_overworld_max,
+		})
+
+		-- Large flowers
+		local function register_large_flower(name, seed, offset)
+			minetest.register_decoration({
+				deco_type = "schematic",
+				schematic = {
+					size = { x=1, y=3, z=1 },
+					data = {
+						{ name = "air", prob = 0 },
+						{ name = "mcl_flowers:"..name, param1=255, },
+						{ name = "mcl_flowers:"..name.."_top", param1=255, },
+					},
+				},
+				place_on = {"group:grass_block_no_snow"},
+
+				sidelen = 16,
+				noise_params = {
+					offset = offset,
+					scale = 0.01,
+					spread = {x = 300, y = 300, z = 300},
+					seed = seed,
+					octaves = 5,
+					persist = 0.62,
+				},
+				y_min = 1,
+				y_max = mcl_vars.overworld_max,
+				flags = "",
+			})
+		end
+
+		register_large_flower("rose_bush", 9350, -0.008)
+		register_large_flower("peony", 10450, -0.008)
+		register_large_flower("lilac", 10600, -0.007)
+		register_large_flower("sunflower", 2940, -0.005)
+
+		-- Lily pad
+		minetest.register_decoration({
+			deco_type = "schematic",
+			schematic = {
+				size = { x=1, y=3, z=1 },
+				data = {
+					{ name = "mcl_core:water_source", prob = 0 },
+					{ name = "mcl_core:water_source" },
+					{ name = "mcl_flowers:waterlily", param1 = 255 },
+				},
+			},
+			place_on = "mcl_core:dirt",
+			sidelen = 16,
+			noise_params = {
+				offset = -0.12,
+				scale = 0.3,
+				spread = {x = 200, y = 200, z = 200},
+				seed = 503,
+				octaves = 6,
+				persist = 0.7,
+			},
+			y_min = 0,
+			y_max = 0,
+			rotation = "random",
 		})
 	end
 
-	register_large_flower("rose_bush", 9350, -0.008)
-	register_large_flower("peony", 10450, -0.008)
-	register_large_flower("lilac", 10600, -0.007)
-	register_large_flower("sunflower", 2940, -0.005)
-
-	-- Lily pad
-	minetest.register_decoration({
-		deco_type = "schematic",
-		schematic = {
-			size = { x=1, y=3, z=1 },
-			data = {
-				{ name = "mcl_core:water_source", prob = 0 },
-				{ name = "mcl_core:water_source" },
-				{ name = "mcl_flowers:waterlily", param1 = 255 },
-			},
-		},
-		place_on = "mcl_core:dirt",
-		sidelen = 16,
-		noise_params = {
-			offset = -0.12,
-			scale = 0.3,
-			spread = {x = 200, y = 200, z = 200},
-			seed = 503,
-			octaves = 6,
-			persist = 0.7,
-		},
-		y_min = 0,
-		y_max = 0,
-		rotation = "random",
-	})
-
-	-- Pumpkin
-	minetest.register_decoration({
-		deco_type = "simple",
-		decoration = "mcl_farming:pumpkin_face",
-		param2 = 0,
-		param2_max = 3,
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 16,
-		noise_params = {
-			offset = -0.008,
-			scale = 0.00666,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 666,
-			octaves = 6,
-			persist = 0.666
-		},
-		y_min = 1,
-		y_max = mcl_vars.overworld_max,
-	})
-
-	-- Melon
-	minetest.register_decoration({
-		deco_type = "simple",
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 16,
-		noise_params = {
-			offset = 0.002,
-			scale = 0.006,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 333,
-			octaves = 3,
-			persist = 0.6
-		},
-		-- Small trick to make sure melon spawn in jungles
-		spawn_by = { "mcl_core:jungletree", "mcl_flowers:fern" },
-		num_spawn_by = 1,
-		y_min = 1,
-		y_max = 40,
-		decoration = "mcl_farming:melon",
-	})
-
-	-- Tall grass
-	minetest.register_decoration({
-		deco_type = "simple",
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 8,
-		noise_params = {
-			offset = 0.01,
-			scale = 0.3,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 420,
-			octaves = 3,
-			persist = 0.6
-		},
-		y_min = 1,
-		y_max = mcl_vars.overworld_max,
-		decoration = "mcl_flowers:tallgrass",
-	})
-	minetest.register_decoration({
-		deco_type = "simple",
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 8,
-		noise_params = {
-			offset = 0.04,
-			scale = 0.03,
-			spread = {x = 100, y = 100, z = 100},
-			seed = 420,
-			octaves = 3,
-			persist = 0.6
-		},
-		y_min = 1,
-		y_max = mcl_vars.overworld_max,
-		decoration = "mcl_flowers:tallgrass",
-	})
-
-	-- Seagrass and kelp
-	local materials = {"dirt","sand"}
-	for i=1, #materials do
-		local mat = materials[i]
-
+	if minetest.get_modpath("mcl_farming") then
+		-- Pumpkin
 		minetest.register_decoration({
 			deco_type = "simple",
-			spawn_by = {"group:water"},
+			decoration = "mcl_farming:pumpkin_face",
+			param2 = 0,
+			param2_max = 3,
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 16,
+			noise_params = {
+				offset = -0.008,
+				scale = 0.00666,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 666,
+				octaves = 6,
+				persist = 0.666
+			},
+			y_min = 1,
+			y_max = mcl_vars.overworld_max,
+		})
+
+		-- Melon
+		minetest.register_decoration({
+			deco_type = "simple",
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 16,
+			noise_params = {
+				offset = 0.002,
+				scale = 0.006,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 333,
+				octaves = 3,
+				persist = 0.6
+			},
+			-- Small trick to make sure melon spawn in jungles
+			spawn_by = spawn_by_in_jungle,
 			num_spawn_by = 1,
-			place_on = {"mcl_core:"..mat},
+			y_min = 1,
+			y_max = 40,
+			decoration = "mcl_farming:melon",
+		})
+	end
+
+	-- Tall grass
+	if minetest.get_modpath("mcl_flowers") then
+		minetest.register_decoration({
+			deco_type = "simple",
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 8,
+			noise_params = {
+				offset = 0.01,
+				scale = 0.3,
+				spread = {x = 100, y = 100, z = 100},
+				seed = 420,
+				octaves = 3,
+				persist = 0.6
+			},
+			y_min = 1,
+			y_max = mcl_vars.overworld_max,
+			decoration = "mcl_flowers:tallgrass",
+		})
+		minetest.register_decoration({
+			deco_type = "simple",
+			place_on = {"group:grass_block_no_snow"},
 			sidelen = 8,
 			noise_params = {
 				offset = 0.04,
-				scale = 0.3,
-				spread = {x = 100, y = 100, z = 100},
-				seed = 421,
-				octaves = 3,
-				persist = 0.6
-			},
-			flags = "force_placement",
-			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
-			y_max = 0,
-			decoration = "mcl_ocean:seagrass_"..mat,
-		})
-		minetest.register_decoration({
-			deco_type = "simple",
-			spawn_by = {"group:water"},
-			num_spawn_by = 1,
-			place_on = {"mcl_core:mat"},
-			sidelen = 8,
-			noise_params = {
-				offset = 0.08,
 				scale = 0.03,
 				spread = {x = 100, y = 100, z = 100},
-				seed = 421,
+				seed = 420,
 				octaves = 3,
 				persist = 0.6
 			},
-			flags = "force_placement",
-			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
-			y_max = -5,
-			decoration = "mcl_ocean:seagrass_"..mat,
+			y_min = 1,
+			y_max = mcl_vars.overworld_max,
+			decoration = "mcl_flowers:tallgrass",
 		})
+	end
 
-		minetest.register_decoration({
-			deco_type = "simple",
-			spawn_by = {"group:water"},
-			num_spawn_by = 1,
-			place_on = {"mcl_core:"..mat},
-			sidelen = 16,
-			noise_params = {
-				offset = 0.01,
-				scale = 0.01,
-				spread = {x = 300, y = 300, z = 300},
-				seed = 505,
-				octaves = 5,
-				persist = 0.62,
-			},
-			flags = "force_placement",
-			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
-			y_max = -6,
-			decoration = "mcl_ocean:kelp_"..mat,
-			param2 = 16,
-			param2_max = 96,
-		})
-		minetest.register_decoration({
-			deco_type = "simple",
-			spawn_by = {"group:water"},
-			num_spawn_by = 1,
-			place_on = {"mcl_core:"..mat},
-			sidelen = 16,
-			noise_params = {
-				offset = 0.01,
-				scale = 0.01,
-				spread = {x = 100, y = 100, z = 100},
-				seed = 506,
-				octaves = 5,
-				persist = 0.62,
-			},
-			flags = "force_placement",
-			place_offset_y = -1,
-			y_min = mcl_vars.overworld_min,
-			y_max = -15,
-			decoration = "mcl_ocean:kelp_"..mat,
-			param2 = 32,
-			param2_max = 160,
-		})
+	-- Seagrass and kelp
+	if minetest.get_modpath("mcl_ocean") then
+		local materials = {"dirt","sand"}
+		for i=1, #materials do
+			local mat = materials[i]
 
+			minetest.register_decoration({
+				deco_type = "simple",
+				spawn_by = {"group:water"},
+				num_spawn_by = 1,
+				place_on = {"mcl_core:"..mat},
+				sidelen = 8,
+				noise_params = {
+					offset = 0.04,
+					scale = 0.3,
+					spread = {x = 100, y = 100, z = 100},
+					seed = 421,
+					octaves = 3,
+					persist = 0.6
+				},
+				flags = "force_placement",
+				place_offset_y = -1,
+				y_min = mcl_vars.overworld_min,
+				y_max = 0,
+				decoration = "mcl_ocean:seagrass_"..mat,
+			})
+			minetest.register_decoration({
+				deco_type = "simple",
+				spawn_by = {"group:water"},
+				num_spawn_by = 1,
+				place_on = {"mcl_core:mat"},
+				sidelen = 8,
+				noise_params = {
+					offset = 0.08,
+					scale = 0.03,
+					spread = {x = 100, y = 100, z = 100},
+					seed = 421,
+					octaves = 3,
+					persist = 0.6
+				},
+				flags = "force_placement",
+				place_offset_y = -1,
+				y_min = mcl_vars.overworld_min,
+				y_max = -5,
+				decoration = "mcl_ocean:seagrass_"..mat,
+			})
+
+			minetest.register_decoration({
+				deco_type = "simple",
+				spawn_by = {"group:water"},
+				num_spawn_by = 1,
+				place_on = {"mcl_core:"..mat},
+				sidelen = 16,
+				noise_params = {
+					offset = 0.01,
+					scale = 0.01,
+					spread = {x = 300, y = 300, z = 300},
+					seed = 505,
+					octaves = 5,
+					persist = 0.62,
+				},
+				flags = "force_placement",
+				place_offset_y = -1,
+				y_min = mcl_vars.overworld_min,
+				y_max = -6,
+				decoration = "mcl_ocean:kelp_"..mat,
+				param2 = 16,
+				param2_max = 96,
+			})
+			minetest.register_decoration({
+				deco_type = "simple",
+				spawn_by = {"group:water"},
+				num_spawn_by = 1,
+				place_on = {"mcl_core:"..mat},
+				sidelen = 16,
+				noise_params = {
+					offset = 0.01,
+					scale = 0.01,
+					spread = {x = 100, y = 100, z = 100},
+					seed = 506,
+					octaves = 5,
+					persist = 0.62,
+				},
+				flags = "force_placement",
+				place_offset_y = -1,
+				y_min = mcl_vars.overworld_min,
+				y_max = -15,
+				decoration = "mcl_ocean:kelp_"..mat,
+				param2 = 32,
+				param2_max = 160,
+			})
+		end
 	end
 
 	-- Wet Sponge
 	-- TODO: Remove this when we got ocean monuments
-	minetest.register_decoration({
-		deco_type = "simple",
-		decoration = "mcl_sponges:sponge_wet",
-		spawn_by = {"group:water"},
-		num_spawn_by = 1,
-		place_on = {"mcl_core:dirt","mcl_core:sand"},
-		sidelen = 16,
-		noise_params = {
-			offset = 0.00295,
-			scale = 0.006,
-			spread = {x = 250, y = 250, z = 250},
-			seed = 999,
-			octaves = 3,
-			persist = 0.666
-		},
-		flags = "force_placement",
-		y_min = mcl_vars.mg_lava_overworld_max + 5,
-		y_max = -20,
-	})
-
-	-- Add a small amount of tall grass everywhere to avoid areas completely empty devoid of tall grass
-	minetest.register_decoration({
-		deco_type = "simple",
-		place_on = {"group:grass_block_no_snow"},
-		sidelen = 8,
-		fill_ratio = 0.004,
-		y_min = 1,
-		y_max = mcl_vars.overworld_max,
-		decoration = "mcl_flowers:tallgrass",
-	})
-
-	local mushrooms = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"}
-	local mseeds = { 7133, 8244 }
-	for m=1, #mushrooms do
-		-- Mushrooms next to trees
+	if minetest.get_modpath("mcl_sponges") then
 		minetest.register_decoration({
 			deco_type = "simple",
-			place_on = {"group:grass_block_no_snow", "mcl_core:dirt", "mcl_core:podzol", "mcl_core:mycelium", "mcl_core:stone", "mcl_core:andesite", "mcl_core:diorite", "mcl_core:granite"},
+			decoration = "mcl_sponges:sponge_wet",
+			spawn_by = {"group:water"},
+			num_spawn_by = 1,
+			place_on = {"mcl_core:dirt","mcl_core:sand"},
 			sidelen = 16,
 			noise_params = {
-				offset = 0.04,
-				scale = 0.04,
-				spread = {x = 100, y = 100, z = 100},
-				seed = mseeds[m],
+				offset = 0.00295,
+				scale = 0.006,
+				spread = {x = 250, y = 250, z = 250},
+				seed = 999,
 				octaves = 3,
-				persist = 0.6
+				persist = 0.666
 			},
-			y_min = 1,
-			y_max = mcl_vars.mg_overworld_max,
-			decoration = mushrooms[m],
-			spawn_by = { "mcl_core:tree", "mcl_core:sprucetree", "mcl_core:darktree", "mcl_core:birchtree", },
-			num_spawn_by = 1,
+			flags = "force_placement",
+			y_min = mcl_vars.mg_lava_overworld_max + 5,
+			y_max = -20,
 		})
+	end
+
+	-- Add a small amount of tall grass everywhere to avoid areas completely empty devoid of tall grass
+	if minetest.get_modpath("mcl_flowers") then
+		minetest.register_decoration({
+			deco_type = "simple",
+			place_on = {"group:grass_block_no_snow"},
+			sidelen = 8,
+			fill_ratio = 0.004,
+			y_min = 1,
+			y_max = mcl_vars.overworld_max,
+			decoration = "mcl_flowers:tallgrass",
+		})
+	end
+
+	if minetest.get_modpath("mcl_mushrooms") then
+		local mushrooms = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown"}
+		local mseeds = { 7133, 8244 }
+		for m=1, #mushrooms do
+			-- Mushrooms next to trees
+			minetest.register_decoration({
+				deco_type = "simple",
+				place_on = {"group:grass_block_no_snow", "mcl_core:dirt", "mcl_core:podzol", "mcl_core:mycelium", "mcl_core:stone", "mcl_core:andesite", "mcl_core:diorite", "mcl_core:granite"},
+				sidelen = 16,
+				noise_params = {
+					offset = 0.04,
+					scale = 0.04,
+					spread = {x = 100, y = 100, z = 100},
+					seed = mseeds[m],
+					octaves = 3,
+					persist = 0.6
+				},
+				y_min = 1,
+				y_max = mcl_vars.mg_overworld_max,
+				decoration = mushrooms[m],
+				spawn_by = { "mcl_core:tree", "mcl_core:sprucetree", "mcl_core:darktree", "mcl_core:birchtree", },
+				num_spawn_by = 1,
+			})
+		end
 	end
 
 	-- Dead bushes
@@ -1067,46 +1104,48 @@ local function register_mgv6_decorations()
 		decoration = "mcl_core:deadbush",
 	})
 
-	local function register_mgv6_flower(name, seed, offset, y_max)
-		if offset == nil then
-			offset = 0
+	if minetest.get_modpath("mcl_flowers") then
+		local function register_mgv6_flower(name, seed, offset, y_max)
+			if offset == nil then
+				offset = 0
+			end
+			if y_max == nil then
+				y_max = mcl_vars.mg_overworld_max
+			end
+			minetest.register_decoration({
+				deco_type = "simple",
+				place_on = {"group:grass_block_no_snow"},
+				sidelen = 16,
+				noise_params = {
+					offset = offset,
+					scale = 0.006,
+					spread = {x = 100, y = 100, z = 100},
+					seed = seed,
+					octaves = 3,
+					persist = 0.6
+				},
+				y_min = 1,
+				y_max = y_max,
+				decoration = "mcl_flowers:"..name,
+			})
 		end
-		if y_max == nil then
-			y_max = mcl_vars.mg_overworld_max
-		end
-		minetest.register_decoration({
-			deco_type = "simple",
-			place_on = {"group:grass_block_no_snow"},
-			sidelen = 16,
-			noise_params = {
-				offset = offset,
-				scale = 0.006,
-				spread = {x = 100, y = 100, z = 100},
-				seed = seed,
-				octaves = 3,
-				persist = 0.6
-			},
-			y_min = 1,
-			y_max = y_max,
-			decoration = "mcl_flowers:"..name,
-		})
-	end
 
-	register_mgv6_flower("tulip_red",  436)
-	register_mgv6_flower("tulip_orange", 536)
-	register_mgv6_flower("tulip_pink", 636)
-	register_mgv6_flower("tulip_white", 736)
-	register_mgv6_flower("azure_bluet", 800)
-	register_mgv6_flower("dandelion", 8)
-	-- Allium is supposed to only appear in flower forest in MC. There are no flower forests in v6.
-	-- We compensate by making it slightly rarer in v6.
-	register_mgv6_flower("allium", 0, -0.001)
-	--[[ Blue orchid is supposed to appear in swamplands. There are no swamplands in v6.
-	We emulate swamplands by limiting the height to 5 levels above sea level,
-	which should be close to the water. ]]
-	register_mgv6_flower("blue_orchid", 64500, nil, mcl_worlds.layer_to_y(67))
-	register_mgv6_flower("oxeye_daisy", 3490)
-	register_mgv6_flower("poppy", 9439)
+		register_mgv6_flower("tulip_red",  436)
+		register_mgv6_flower("tulip_orange", 536)
+		register_mgv6_flower("tulip_pink", 636)
+		register_mgv6_flower("tulip_white", 736)
+		register_mgv6_flower("azure_bluet", 800)
+		register_mgv6_flower("dandelion", 8)
+		-- Allium is supposed to only appear in flower forest in MC. There are no flower forests in v6.
+		-- We compensate by making it slightly rarer in v6.
+		register_mgv6_flower("allium", 0, -0.001)
+		--[[ Blue orchid is supposed to appear in swamplands. There are no swamplands in v6.
+		We emulate swamplands by limiting the height to 5 levels above sea level,
+		which should be close to the water. ]]
+		register_mgv6_flower("blue_orchid", 64500, nil, mcl_worlds.layer_to_y(67))
+		register_mgv6_flower("oxeye_daisy", 3490)
+		register_mgv6_flower("poppy", 9439)
+	end
 
 	-- Put top snow on snowy grass blocks. The v6 mapgen does not generate the top snow on its own.
 	minetest.register_decoration({
@@ -1288,6 +1327,10 @@ end
 
 -- TODO: Try to use more efficient structure generating code
 local function generate_structures(minp, maxp, blockseed, biomemap)
+	if mcl_structures == nil then
+		return
+	end
+
 	local chunk_has_desert_well = false
 	local chunk_has_desert_temple = false
 	local chunk_has_igloo = false
@@ -1596,49 +1639,44 @@ local function generate_tree_decorations(minp, maxp, seed, data, param2_data, ar
 
 	local pos, treepos, dir
 
-	local cocoachance = 40
-	if dense_vegetation then
-		cocoachance = 32
-	end
+	if c_cocoas ~= nil then
+		local cocoachance = 40
+		if dense_vegetation then
+			cocoachance = 32
+		end
 
-	-- Pass 1: Generate cocoas at jungle trees
-	for n = 1, #jungletree do
+		-- Pass 1: Generate cocoas at jungle trees
+		for n = 1, #jungletree do
 
-		pos = table.copy(jungletree[n])
-		treepos = table.copy(pos)
+			pos = table.copy(jungletree[n])
+			treepos = table.copy(pos)
 
-		if minetest.find_node_near(pos, 1, {"mcl_core:jungleleaves"}) then
+			if minetest.find_node_near(pos, 1, {"mcl_core:jungleleaves"}) then
 
-			dir = pr:next(1, cocoachance)
+				dir = pr:next(1, cocoachance)
 
-			if dir == 1 then
-				pos.z = pos.z + 1
-			elseif dir == 2 then
-				pos.z = pos.z - 1
-			elseif dir == 3 then
-				pos.x = pos.x + 1
-			elseif dir == 4 then
-				pos.x = pos.x -1
-			end
-
-			local p_pos = area:index(pos.x, pos.y, pos.z)
-			local l = minetest.get_node_light(pos)
-
-			if dir < 5
-			and data[p_pos] == c_air
-			and l and l > 12 then
-				local c = pr:next(1, 3)
-				if c == 1 then
-					data[p_pos] = c_cocoa_1
-				elseif c == 2 then
-					data[p_pos] = c_cocoa_2
-				else
-					data[p_pos] = c_cocoa_3
+				if dir == 1 then
+					pos.z = pos.z + 1
+				elseif dir == 2 then
+					pos.z = pos.z - 1
+				elseif dir == 3 then
+					pos.x = pos.x + 1
+				elseif dir == 4 then
+					pos.x = pos.x -1
 				end
-				param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
-				lvm_used = true
-			end
 
+				local p_pos = area:index(pos.x, pos.y, pos.z)
+				local l = minetest.get_node_light(pos)
+
+				if dir < 5
+				and data[p_pos] == c_air
+				and l and l > 12 then
+					local c = pr:next(1, 3)
+					data[p_pos] = c_cocoas[c]
+					param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
+					lvm_used = true
+				end
+			end
 		end
 	end
 
@@ -1748,6 +1786,10 @@ end
 -- Generate mushrooms in caves manually.
 -- Minetest's API does not support decorations in caves yet. :-(
 local function generate_underground_mushrooms(minp, maxp, seed)
+	if not minetest.get_modpath("mcl_mushrooms") then
+		return
+	end
+
 	local pr_shroom = PseudoRandom(seed-24359)
 	-- Generate rare underground mushrooms
 	-- TODO: Make them appear in groups, use Perlin noise
@@ -1782,6 +1824,10 @@ end
 -- Generate Nether decorations manually: Eternal fire, mushrooms, nether wart
 -- Minetest's API does not support decorations in caves yet. :-(
 local function generate_nether_decorations(minp, maxp, seed)
+	if c_nether == nil then
+		return
+	end
+
 	local pr_nether = PseudoRandom(seed+667)
 
 	if minp.y > mcl_vars.mg_nether_max or maxp.y < mcl_vars.mg_nether_min then
@@ -1824,17 +1870,19 @@ local function generate_nether_decorations(minp, maxp, seed)
 
 	-- Mushrooms on netherrack
 	-- Note: Spawned *after* the fire because of light level checks
-	special_deco(rack, function(bpos)
-		local l = minetest.get_node_light(bpos, 0.5)
-		if bpos.y > mcl_vars.mg_lava_nether_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
-			-- TODO: Make mushrooms appear in groups, use Perlin noise
-			if pr_nether:next(1,2) == 1 then
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
-			else
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
+	if minetest.get_modpath("mcl_mushrooms") then
+		special_deco(rack, function(bpos)
+			local l = minetest.get_node_light(bpos, 0.5)
+			if bpos.y > mcl_vars.mg_lava_nether_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
+				-- TODO: Make mushrooms appear in groups, use Perlin noise
+				if pr_nether:next(1,2) == 1 then
+					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
+				else
+					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
+				end
 			end
-		end
-	end)
+		end)
+	end
 
 	-- Nether wart on soul sand
 	-- TODO: Spawn in Nether fortresses
@@ -2047,7 +2095,9 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- Big lava seas by replacing air below a certain height
 		if mcl_vars.mg_lava then
 			lvm_used = set_layers(data, area, c_lava, c_air, mcl_vars.mg_overworld_min, mcl_vars.mg_lava_overworld_max, emin, emax, lvm_used, pr)
-			lvm_used = set_layers(data, area, c_nether_lava, c_air, mcl_vars.mg_nether_min, mcl_vars.mg_lava_nether_max, emin, emax, lvm_used, pr)
+			if c_nether then
+				lvm_used = set_layers(data, area, c_nether.lava, c_air, mcl_vars.mg_nether_min, mcl_vars.mg_lava_nether_max, emin, emax, lvm_used, pr)
+			end
 		end
 
 		-- Clay, vines, cocoas
@@ -2129,25 +2179,27 @@ local function basic(vm, data, data2, emin, emax, area, minp, maxp, blockseed)
 		-- * Replace water with Nether lava.
 		-- * Replace stone, sand dirt in v6 so the Nether works in v6.
 		elseif emin.y <= mcl_vars.mg_nether_max and emax.y >= mcl_vars.mg_nether_min then
-			if mg_name == "v6" then
-				local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
-				for n=1, #nodes do
-					local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
-					if data[p_pos] == c_water then
-						data[p_pos] = c_nether_lava
-						lvm_used = true
-					elseif data[p_pos] == c_stone then
-						data[p_pos] = c_netherrack
-						lvm_used = true
-					elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
-						data[p_pos] = c_soul_sand
-						lvm_used = true
+			if c_nether then
+				if mg_name == "v6" then
+					local nodes = minetest.find_nodes_in_area(emin, emax, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+					for n=1, #nodes do
+						local p_pos = area:index(nodes[n].x, nodes[n].y, nodes[n].z)
+						if data[p_pos] == c_water then
+							data[p_pos] = c_nether.lava
+							lvm_used = true
+						elseif data[p_pos] == c_stone then
+							data[p_pos] = c_nether.netherrack
+							lvm_used = true
+						elseif data[p_pos] == c_sand or data[p_pos] == c_dirt then
+							data[p_pos] = c_nether.soul_sand
+							lvm_used = true
+						end
 					end
-				end
-			else
-				local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
-				for _, n in pairs(nodes) do
-					data[area:index(n.x, n.y, n.z)] = c_nether_lava
+				else
+					local nodes = minetest.find_nodes_in_area(emin, emax, {"group:water"})
+					for _, n in pairs(nodes) do
+						data[area:index(n.x, n.y, n.z)] = c_nether.lava
+					end
 				end
 			end
 
