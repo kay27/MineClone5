@@ -11,37 +11,106 @@ local rotations = {
 	"270"
 }
 
-local function ecb_place(blockpos, action, calls_remaining, param)
-	if calls_remaining >= 1 then return end
-	minetest.place_schematic(param.pos, param.schematic, param.rotation, param.replacements, param.force_placement, param.flags)
-	if param.after_placement_callback and param.p1 and param.p2 then
-		param.after_placement_callback(param.p1, param.p2, param.size, param.rotation, param.pr, param.callback_param)
+local registered_structures = {}
+
+function mcl_structures.register_structure(def)
+	local name = def.name
+	if not name then
+		minetest.log('warning', 'Structure name is not passed for registering - ignoring')
+		return
 	end
+	if registered_structures[name] then
+		minetest.log('warning', 'Structure '..name..' is already registered - owerwriting')
+	end
+	registered_structures[name] = {
+		on_place       = def.on_place,
+		decoration     = def.decoration,
+		on_mapgen_prep = def.on_mapgen_prep,
+		on_generated   = def.on_generated,
+	}
 end
 
-function mcl_structures.place_schematic(pos, schematic, rotation, replacements, force_placement, flags, after_placement_callback, pr, callback_param)
-	local s = loadstring(minetest.serialize_schematic(schematic, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic")()
-	if s and s.size then
-		local x, z = s.size.x, s.size.z
-		if rotation then
-			if rotation == "random" and pr then
-				rotation = rotations[pr:next(1,#rotations)]
-			end
-			if rotation == "random" then
-				x = math.max(x, z)
-				z = x
-			elseif rotation == "90" or rotation == "270" then
-				x, z = z, x
-			end
-		end
-		local p1 = {x=pos.x    , y=pos.y           , z=pos.z    }
-		local p2 = {x=pos.x+x-1, y=pos.y+s.size.y-1, z=pos.z+z-1}
-		minetest.log("verbose", "[mcl_structures] size=" ..minetest.pos_to_string(s.size) .. ", rotation=" .. tostring(rotation) .. ", emerge from "..minetest.pos_to_string(p1) .. " to " .. minetest.pos_to_string(p2))
-		local param = {pos=vector.new(pos), schematic=s, rotation=rotation, replacements=replacements, force_placement=force_placement, flags=flags, p1=p1, p2=p2, after_placement_callback = after_placement_callback, size=vector.new(s.size), pr=pr, callback_param=callback_param}
-		-- minetest.emerge_area(p1, p2, ecb_place, param)
-		-- TODO: Make it better
-		ecb_place(0, 0, 0, param)
+function mcl_structures.unregister_structure(name)
+	if not registered_structures[name] then
+		minetest.log('warning','Structure '..name..' is not registered - skipping')
+		return
 	end
+	registered_structures[name] = nil
+end
+
+local function ecb_place(blockpos, action, calls_remaining, param)
+	if calls_remaining >= 1 then return end
+	local pos = param.pos
+	local rotation = param.rotation
+	minetest.place_schematic(pos, param.schematic, rotation, param.replacements, param.force_placement, param.flags)
+	local after_place = param.after_place
+	if not after_place then
+		return
+	end
+	after_place(pos, rotation, param.pr, param.param, param.size)
+end
+
+function mcl_structures.place_schematic(def)
+	local pos       = def.pos
+	local schematic = def.schematic
+	local rotation  = def.rotation
+	local pr        = def.pr
+	if not pos then
+		minetest.log('warning', '[mcl_structures] No pos. specified to place schematic')
+		return
+	end
+	if not schematic then
+		minetest.log('warning', '[mcl_structures] No schematic specified to place at ' .. minetest.pos_to_string(pos))
+		return
+	end
+	if not rotation or rotation == 'random' then
+		if pr then
+			rotation = rotations[pr:next(1,#rotations)]
+		else
+			rotation = rotations[math.random(1,#rotations)]
+		end
+	end
+	if not def.emerge then
+		minetest.place_schematic(pos, schematic, rotation, def.replacements, def.force_placement, def.flags)
+		if not def.after_place then
+			return
+		end
+		def.after_place(pos, rotation, pr, def.after_place_param)
+		return
+	end
+
+	local loaded_schematic = loadstring(minetest.serialize_schematic(schematic, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic")()
+	if not loaded_schematic then
+		minetest.log('warning', '[mcl_structures] Schematic ' .. schematic .. ' load serialized string problem at ' .. minetest.pos_to_string(pos))
+		return
+	end
+	local size = loaded_schematic.size
+	if not size then
+		minetest.log('warning', '[mcl_structures] Schematic ' .. schematic .. ' has no size at ' .. minetest.pos_to_string(pos))
+		return
+	end
+	local size_x, size_y, size_z = size.x, size.y, size.z
+	if rotation == "90" or rotation == "270" then
+		size_x, size_z = size_z, size_x
+	end
+	local x, y, z = pos.x, pos.y, pos.z
+	local p1 = {x = x, y = y, z = z}
+	local p2 = {x = x + size_x - 1, y = y + size_y - 1, z = size_z - 1}
+	minetest.log("verbose", "[mcl_structures] Emerge area " .. minetest.pos_to_string(p1) .. " - " .. minetest.pos_to_string(p2)
+		.. " of size " ..minetest.pos_to_string(size) .. " to place " .. schematic .. ", rotation " .. tostring(rotation))
+	local ecb_param = {
+		pos             = vector.new(pos),
+		schematic       = loaded_schematic,
+		rotation        = rotation,
+		replacements    = replacements,
+		force_placement = force_placement,
+		flags           = flags,
+		after_place     = after_place,
+		size            = vector.new(size),
+		pr              = pr,
+		param           = param,
+	}
+	minetest.emerge_area(p1, p2, ecb_place, ecb_param)
 end
 
 function mcl_structures.get_struct(file)
@@ -124,7 +193,12 @@ end
 function mcl_structures.generate_desert_well(pos, rot)
 	local newpos = {x=pos.x,y=pos.y-2,z=pos.z}
 	local path = modpath.."/schematics/mcl_structures_desert_well.mts"
-	return mcl_structures.place_schematic(newpos, path, rot or "0", nil, true)
+	return mcl_structures.place_schematic({
+		pos = newpos,
+		schematic = path,
+		rotation = rot or "0",
+		force_placement = true
+	})
 end
 
 function mcl_structures.generate_igloo(pos, rotation, pr)
@@ -227,7 +301,7 @@ end
 
 function mcl_structures.generate_igloo_top(pos, pr)
 	-- FIXME: This spawns bookshelf instead of furnace. Fix this!
-	-- Furnace does ot work atm because apparently meta is not set. :-(
+	-- Furnace does not work atm because apparently meta is not set. :-(
 	local newpos = {x=pos.x,y=pos.y-1,z=pos.z}
 	local path = modpath.."/schematics/mcl_structures_igloo_top.mts"
 	local rotation = tostring(pr:next(0,3)*90)

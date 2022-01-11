@@ -71,7 +71,7 @@ Registers callback function to be called when current chunk generation is REALLY
 For LVM it's the most frustrating function from this mod.
 It can't provide you access to mapgen objects. They are probably gone long ago.
 Don't use it for accessing mapgen objects please.
-To use VM you have to run `vm_context.vm = minetest.get_voxel_manip(vm_context.emin, vm_context.emax)`.
+To use VM you have to run `vm_context.vm = mcl_mapgen.get_voxel_manip(vm_context.emin, vm_context.emax)`.
 Set 
 	`callback_function`: callback function definition:
 		`function(minp, maxp, seed, vm_context)`:

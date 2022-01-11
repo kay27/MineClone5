@@ -268,15 +268,13 @@ function settlements.place_schematics(settlement_info, pr)
 		local schematic = loadstring(schem_lua)()
 		-- build foundation for the building an make room above
 		-- place schematic
-		mcl_structures.place_schematic(
-			pos,
-			schematic,
-			rotation,
-			nil,
-			true,
-			nil,
-			init_nodes,
-			pr
-		)
+		mcl_structures.place_schematic({
+			pos = pos,
+			schematic = schematic,
+			rotation = rotation,
+			force_placement = true,
+			on_place = init_nodes,
+			pr = pr,
+		})
 	end
 end
