@@ -25,7 +25,7 @@ See https://git.minetest.land/MineClone2/MineClone2/issues/1395
 					`vm_context.data2 = vm_context.data2 or vm_context.vm.get_param2_data(vm_context.lvm_param2_buffer)`
 				`write_param2`: set it to true in your lvm callback function, if you used `data2` and want to write it;
 				`light`: LVM buffer data array of light, !NO ANY DATA LOADS INTO IT BEFORE THE CALLBACKS! - you load it yourself:
-					`vm_context.light = vm_context.light or vm_context.vm.get_light2_data(vm_context.lvm_light_buffer)`
+					`vm_context.light = vm_context.light or vm_context.vm.get_light_data(vm_context.lvm_light_buffer)`
 				`write_light`: set it to true in your lvm callback function, if you used `light` and want to write it;
 				`lvm_param2_buffer`: static `param2` buffer pointer, used to load `data2` array;
 				`shadow`: set it to false to disable shadow propagation;
