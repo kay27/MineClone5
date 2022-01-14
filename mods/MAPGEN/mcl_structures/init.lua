@@ -3,33 +3,119 @@ local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 mcl_structures = {}
-
 local rotations = {
 	"0",
 	"90",
 	"180",
 	"270"
 }
-
 local registered_structures = {}
+local use_process_mapgen_block_lvm = false
+local use_process_mapgen_chunk = false
+local lvm_callbacks = {}
+local chunk_callbacks = {}
 
+function process_mapgen_block_lvm(vm_context)
+	local nodes = minetest.find_nodes_in_area(vm_context.minp, vm_context.maxp, {"group:struct"}, true)
+	-- if #nodes == 0 then return end
+	for node_name, pos_list in pairs(nodes) do
+		local lvm_callback = lvm_callbacks[node_name]
+		if lvm_callback then
+			lvm_callback(vm_context, pos_list)
+		end
+	end
+end
+
+function process_mapgen_chunk(minp, maxp, seed, vm_context)
+	local nodes = minetest.find_nodes_in_area(minp, maxp, {"group:struct"}, true)
+	minetest.log("warning", "found " .. tostring(#nodes))
+	-- if #nodes == 0 then return end
+	for node_name, pos_list in pairs(nodes) do
+		local chunk_callback = chunk_callbacks[node_name]
+		if chunk_callback then
+			chunk_callback(minp, maxp, seed, vm_context, pos_list)
+		end
+	end
+end
+
+--------------------------------------------------------------------------------------
+-- mcl_structures.register_structure(struct_def)
+-- struct_def:
+--	name		- name like 'desert_temple'
+--	decoration	- decoration definition if needed
+--	on_mapgen_prep	- callback if needed
+--	on_generated	- next callback if needed
+--	on_place	- placer function(pos, rotation, pr)
+--	order_number	- (optional)
 function mcl_structures.register_structure(def)
-	local name = def.name
+	local name           = "mcl_structures:" .. def.name
+	local decoration     = def.decoration
+	local on_mapgen_prep = def.on_mapgen_prep
+	local on_generated   = def.on_generated
 	if not name then
-		minetest.log('warning', 'Structure name is not passed for registering - ignoring')
+		minetest.log('warning', 'Structure name is not passed for registration - ignoring')
 		return
 	end
 	if registered_structures[name] then
 		minetest.log('warning', 'Structure '..name..' is already registered - owerwriting')
 	end
+	local decoration_id
+	if decoration then
+		minetest.register_node(':' .. name, {
+			-- drawtype="airlike",
+			groups = {
+				struct                    = 1,
+				not_in_creative_inventory = 1,
+			},
+		})
+		decoration_id = minetest.register_decoration({
+			deco_type      = decoration.deco_type,
+			place_on       = decoration.place_on,
+			sidelen        = decoration.sidelen,
+			fill_ratio     = decoration.fill_ratio,
+			noise_params   = decoration.noise_params,
+			biomes         = decoration.biomes,
+			y_min          = decoration.y_min,
+			y_max          = decoration.y_max,
+			spawn_by       = decoration.spawn_by,
+			num_spawn_by   = decoration.num_spawn_by,
+			flags          = decoration.flags,
+			decoration     = name,
+			height         = decoration.height,
+			height_max     = decoration.height_max,
+			param2         = decoration.param2,
+			param2_max     = decoration.param2_max,
+			place_offset_y = decoration.place_offset_y,
+			schematic      = decoration.schematic,
+			replacements   = decoration.replacements,
+			flags          = decoration.flags,
+			rotation       = decoration.rotation,
+		})
+	end
 	registered_structures[name] = {
 		on_place       = def.on_place,
-		decoration     = def.decoration,
-		on_mapgen_prep = def.on_mapgen_prep,
-		on_generated   = def.on_generated,
+		on_mapgen_prep = on_mapgen_prep,
+		on_generated   = on_generated,
+		decoration_id  = decoration_id,
 	}
+	if on_mapgen_prep then
+		lvm_callbacks[name] = on_mapgen_prep
+		if not use_process_mapgen_block_lvm then
+			use_process_mapgen_block_lvm = true
+			mcl_mapgen.register_mapgen_block_lvm(process_mapgen_block_lvm, mcl_mapgen.order.BUILDINGS)
+		end
+	end
+	if on_generated then
+		minetest.log("warning", "GERISTERED!!!")
+		chunk_callbacks[name] = on_generated
+		if not use_process_mapgen_chunk then
+			use_process_mapgen_chunk = true
+			mcl_mapgen.register_mapgen(process_mapgen_chunk, mcl_mapgen.order.BUILDINGS)
+		end
+	end
 end
 
+-- It doesN'T remove registered node and decoration!
 function mcl_structures.unregister_structure(name)
 	if not registered_structures[name] then
 		minetest.log('warning','Structure '..name..' is not registered - skipping')
@@ -599,12 +685,13 @@ end
 function mcl_structures.generate_desert_temple(pos, rotation, pr)
 	-- No Generating for the temple ... Why using it ? No Change
 	local path = modpath.."/schematics/mcl_structures_desert_temple.mts"
-	local newpos = {x=pos.x,y=pos.y-12,z=pos.z}
+	--local newpos = {x=pos.x,y=pos.y-12,z=pos.z}
 	--local size = {x=22, y=24, z=22}
-	if newpos == nil then
-		return
-	end
-	mcl_structures.place_schematic(newpos, path, rotation or "random", nil, true, nil, temple_placement_callback, pr)
+	--if newpos == nil then
+	--	return
+	-- end
+	pos.y = pos.y - 12
+	mcl_structures.place_schematic({pos = pos, schematic = path, rotation = rotation or "random", pr = pr, emerge = true})
 end
 
 local registered_structures = {}

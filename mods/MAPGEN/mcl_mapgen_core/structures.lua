@@ -67,16 +67,61 @@ end
 --local chunk_has_desert_temple
 --local chunk_has_igloo
 
-
-
-
-minetest.register_node("mcl_mapgen_core:desert_temple", {
-	-- drawtype="airlike",
-	tiles = {"mcl_core_stonebrick_carved.png"},
-	groups = {
-		struct                    = 1,
-		not_in_creative_inventory = 1,
+mcl_structures.register_structure({
+	name = "desert_temple",
+	decoration = {
+		deco_type = "simple",
+		place_on = {"mcl_core:sand", "mcl_core:sandstone"},
+		flags = "all_floors",
+		fill_ratio = 0.001,
+		y_min = 5,
+		y_max = mcl_mapgen.overworld.max,
+		height = 1,
+		biomes = {
+			"ColdTaiga_beach",
+			"ColdTaiga_beach_water",
+			"Desert",
+			"Desert_ocean",
+			"ExtremeHills_beach",
+			"FlowerForest_beach",
+			"Forest_beach",
+			"MesaBryce_sandlevel",
+			"MesaPlateauF_sandlevel",
+			"MesaPlateauFM_sandlevel",
+			"Savanna",
+			"Savanna_beach",
+			"StoneBeach",
+			"StoneBeach_ocean",
+			"Taiga_beach",
+		},
 	},
+	on_generated = function(minp, maxp, seed, vm_context, pos_list)
+		local aaa = ''
+		for _, p in pairs(pos_list) do
+			if aaa ~= '' then
+				aaa = aaa .. ', '
+			end
+			aaa = aaa .. minetest.pos_to_string(p)
+		end
+		minetest.chat_send_all('generated ' .. minetest.pos_to_string(minp) .. " ... " .. minetest.pos_to_string(maxp) .. ", pos_list = " .. aaa)
+		local y = 0
+		local temple_pos
+		for _, pos in pairs(pos_list) do
+			if pos.y > y then
+				if temple_pos then
+					minetest.swap_node(temple_pos, {name = 'mcl_core:deadbush'})
+				end
+				temple_pos = pos
+				y = pos.y
+			else
+				minetest.swap_node(pos, {name = 'mcl_core:deadbush'})
+			end
+		end
+		minetest.chat_send_all('here: ' .. minetest.pos_to_string(temple_pos))
+		if not temple_pos then return end
+		-- if pr:next(1,12000) ~= 1 then return end
+		mcl_structures.call_struct(temple_pos, "desert_temple", nil, PseudoRandom(vm_context.chunkseed))
+	end,
 })
 	
 local octaves = 3
@@ -88,72 +133,8 @@ for i = 1, octaves do
 	local noise = 1 * (persistence ^ (i - 1))
 	max_noise = max_noise + noise
 end
-
 max_noise = max_noise * octaves
-
 max_noise = offset + scale * max_noise
-
---[[function structures.register_structure(
-	name,		-- "desert_temple"
-	place_on,	-- {"mcl_core:sand", "mcl_core:sandstone"}
-	flags,		-- "all_floors"
-]]
-
-
-minetest.register_decoration({
-	decoration = "mcl_mapgen_core:desert_temple",
-	deco_type = "simple",
-	place_on = {"mcl_core:sand", "mcl_core:sandstone"},
-	flags = "all_floors",
---[[	noise_params = {
-		offset = offset,
-		scale  = scale,
-		spread = {
-			x = 1,
-			y = 1,
-			z = 1,
-		},
-		seed        = 329,
-		octaves     = octaves,
-		persistence = persistence,
-		lacunarity  = 2.0,
-		flags       = "eased",
-	},
-	noise_threshold = 1000,-- * 0.9,
-]]
-	fill_ratio = 0.001,
-	y_min = 5,
-	y_max = mcl_mapgen.overworld.max,
-	height = 1,
-	biomes = {
-		"ColdTaiga_beach",
-		"ColdTaiga_beach_water",
-		"Desert",
-		"Desert_ocean",
-		"ExtremeHills_beach",
-		"FlowerForest_beach",
-		"Forest_beach",
-		"MesaBryce_sandlevel",
-		"MesaPlateauF_sandlevel",
-		"MesaPlateauFM_sandlevel",
-		"Savanna",
-		"Savanna_beach",
-		"StoneBeach",
-		"StoneBeach_ocean",
-		"Taiga_beach",
-	},
-})
-
---minetest.register_lbm(
---	name = "mcl_mapgen_core:process_struct_seed",
---	nodenames = {
---		"group:struct",
---	}
---	run_at_everly_load = true,
---	action = function(pos, node)
---	end,
---)
-
 
 local function spawn_desert_temple(p, nn, pr, vm_context)
 	if p.y < 5 then return end
@@ -381,19 +362,15 @@ local levels = {
 		local noise = perlin_structures:get_2d({x=x0, y=z0})
 		local amount
 		if noise < 0 then
-			amount = math_ceil(noise * 9)
+			amount = math_max(math_ceil(noise * 9), -9)
 		else
-			amount = math_floor(noise * 9)
+			amount = math_min(math_floor(noise * 9), 9)
 		end
 		-- local amount = math_floor(perlin_structures:get_2d({x=x0, y=z0}) * 9)
 
 		local y1 = maxp.y - 9 + amount
 		for x1 = x0, x0 + DIVLEN - 1, 1 do for z1 = z0, z0 + DIVLEN - 1, 1 do
-			if not levels[amount] then
-				minetest.log("ERROR",tostring(amount))
-			else
-				minetest.set_node({x=x1, y=y1, z=z1}, {name = "mcl_core:glass_"..levels[amount]})
-			end
+			minetest.set_node({x=x1, y=y1, z=z1}, {name = "mcl_core:glass_"..levels[amount]})
 		end end
 
 		-- Find random positions based on this random
