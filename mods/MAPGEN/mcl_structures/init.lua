@@ -68,7 +68,7 @@ function mcl_structures.register_structure(def)
 	local decoration_id
 	if decoration then
 		minetest.register_node(':' .. name, {
-			-- drawtype="airlike",
+			drawtype="airlike",
 			groups = {
 				struct                    = 1,
 				not_in_creative_inventory = 1,
@@ -810,3 +810,5 @@ minetest.register_chatcommand("spawnstruct", {
 		end
 	end
 })
+
+dofile(modpath .. "/structures.lua")
