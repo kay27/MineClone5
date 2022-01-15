@@ -17,7 +17,6 @@ local chunk_callbacks = {}
 
 function process_mapgen_block_lvm(vm_context)
 	local nodes = minetest.find_nodes_in_area(vm_context.minp, vm_context.maxp, {"group:struct"}, true)
-	-- if #nodes == 0 then return end
 	for node_name, pos_list in pairs(nodes) do
 		local lvm_callback = lvm_callbacks[node_name]
 		if lvm_callback then
@@ -29,11 +28,18 @@ end
 function process_mapgen_chunk(minp, maxp, seed, vm_context)
 	local nodes = minetest.find_nodes_in_area(minp, maxp, {"group:struct"}, true)
 	minetest.log("warning", "found " .. tostring(#nodes))
-	-- if #nodes == 0 then return end
 	for node_name, pos_list in pairs(nodes) do
 		local chunk_callback = chunk_callbacks[node_name]
 		if chunk_callback then
 			chunk_callback(minp, maxp, seed, vm_context, pos_list)
+		end
+	end
+	for node_name, pos_list in pairs(nodes) do
+		for _, pos in pairs(pos_list) do
+			local node = minetest.get_node(pos)
+			if string.sub(node.name, 1, 15) == 'mcl_structures:' then
+				minetest.swap_node(pos, {name = 'air'})
+			end
 		end
 	end
 end
@@ -106,7 +112,6 @@ function mcl_structures.register_structure(def)
 		end
 	end
 	if on_generated then
-		minetest.log("warning", "GERISTERED!!!")
 		chunk_callbacks[name] = on_generated
 		if not use_process_mapgen_chunk then
 			use_process_mapgen_chunk = true
@@ -137,10 +142,12 @@ local function ecb_place(blockpos, action, calls_remaining, param)
 end
 
 function mcl_structures.place_schematic(def)
-	local pos       = def.pos
-	local schematic = def.schematic
-	local rotation  = def.rotation
-	local pr        = def.pr
+	local pos                 = def.pos
+	local schematic           = def.schematic
+	local rotation            = def.rotation
+	local pr                  = def.pr
+	local on_schematic_loaded = def.on_schematic_loaded
+	local emerge              = def.emerge
 	if not pos then
 		minetest.log('warning', '[mcl_structures] No pos. specified to place schematic')
 		return
@@ -156,7 +163,8 @@ function mcl_structures.place_schematic(def)
 			rotation = rotations[math.random(1,#rotations)]
 		end
 	end
-	if not def.emerge then
+
+	if not emerge and not on_schematic_loaded then
 		minetest.place_schematic(pos, schematic, rotation, def.replacements, def.force_placement, def.flags)
 		if not def.after_place then
 			return
@@ -165,7 +173,11 @@ function mcl_structures.place_schematic(def)
 		return
 	end
 
-	local loaded_schematic = loadstring(minetest.serialize_schematic(schematic, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic")()
+	local serialized_schematic = minetest.serialize_schematic(schematic, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic"
+	if on_schematic_loaded then
+		serialized_schematic = on_schematic_loaded(serialized_schematic)
+	end
+	local loaded_schematic = loadstring(serialized_schematic)()
 	if not loaded_schematic then
 		minetest.log('warning', '[mcl_structures] Schematic ' .. schematic .. ' load serialized string problem at ' .. minetest.pos_to_string(pos))
 		return
@@ -196,6 +208,10 @@ function mcl_structures.place_schematic(def)
 		pr              = pr,
 		param           = param,
 	}
+	if not emerge then
+		ecb_place(p1, nil, 0, ecb_param)
+		return
+	end
 	minetest.emerge_area(p1, p2, ecb_place, ecb_param)
 end
 

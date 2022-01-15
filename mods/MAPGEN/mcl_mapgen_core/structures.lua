@@ -15,6 +15,8 @@ local minetest_get_item_group = minetest.get_item_group
 
 local perlin_structures
 
+local schematic_path = minetest.get_modpath('mcl_structures')
+
 local function determine_ground_level(p, vm_context)
 	local maxp = vm_context.maxp
 	local maxp_y = maxp.y
@@ -121,6 +123,62 @@ mcl_structures.register_structure({
 		if not temple_pos then return end
 		-- if pr:next(1,12000) ~= 1 then return end
 		mcl_structures.call_struct(temple_pos, "desert_temple", nil, PseudoRandom(vm_context.chunkseed))
+	end,
+})
+
+local red_temple_schematic_file = schematic_path .. "/schematics/mcl_structures_desert_temple.mts"
+local red_temple_schematic_lua = minetest.serialize_schematic(red_temple_schematic_file, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic"
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_colorblocks:hardened_clay_orange", "mcl_colorblocks:hardened_clay_red")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_core:sand_stone", "mcl_colorblocks:hardened_clay_orange")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_core:redsand", "mcl_core:granit")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_core:sand", "mcl_core:redsand")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_stairs:stair_sandstone", "mcl_stairs:stair_redsandstone")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_stairs:slab_sandstone", "mcl_stairs:slab_redsandstone")
+red_temple_schematic_lua = red_temple_schematic_lua:gsub("mcl_colorblocks:hardened_clay_yellow", "mcl_colorblocks:hardened_clay_pink")
+local red_temple_schematic = loadstring(red_temple_schematic_lua)()
+mcl_structures.register_structure({
+	name = "red_desert_temple",
+	decoration = {
+		deco_type = "simple",
+		place_on = {"mcl_core:redsand", "mcl_colorblocks:hardened_clay_orange"},
+		flags = "all_floors",
+		fill_ratio = 0.001,
+		y_min = 3,
+		y_max = mcl_mapgen.overworld.max,
+		height = 1,
+		biomes = {
+			"ColdTaiga_beach",
+			"ColdTaiga_beach_water",
+			"Desert",
+			"Desert_ocean",
+			"ExtremeHills_beach",
+			"FlowerForest_beach",
+			"Forest_beach",
+			"MesaBryce_sandlevel",
+			"MesaPlateauF_sandlevel",
+			"MesaPlateauFM_sandlevel",
+			"Savanna",
+			"Savanna_beach",
+			"StoneBeach",
+			"StoneBeach_ocean",
+			"Taiga_beach",
+		},
+	},
+	on_generated = function(minp, maxp, seed, vm_context, pos_list)
+		local y = 0
+		local temple_pos
+		for _, pos in pairs(pos_list) do
+			if pos.y > y then
+				temple_pos = pos
+				y = pos.y
+			end
+		end
+		minetest.chat_send_all('here2: ' .. minetest.pos_to_string(temple_pos))
+		if not temple_pos then return end
+		-- if pr:next(1,12000) ~= 1 then return end
+		minetest.swap_node(temple_pos, {name="air"})
+		temple_pos.y = temple_pos.y - 12
+		mcl_structures.place_schematic({pos = temple_pos, schematic = red_temple_schematic, pr = PseudoRandom(vm_context.chunkseed)})
 	end,
 })
 	
