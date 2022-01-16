@@ -17,6 +17,8 @@ local use_process_mapgen_chunk = false
 local on_finished_block_callbacks = {}
 local on_finished_chunk_callbacks = {}
 
+mcl_structures.perlin_noise = minetest.get_perlin(329, 3, 0.6, 100)
+
 function process_mapgen_block_lvm(vm_context)
 	local nodes = minetest.find_nodes_in_area(vm_context.minp, vm_context.maxp, {"group:struct"}, true)
 	for node_name, pos_list in pairs(nodes) do
@@ -70,7 +72,7 @@ function mcl_structures.register_structure(def)
 	local decoration_id
 	if decoration then
 		minetest.register_node(':' .. name, {
-			drawtype            = "airlike",
+			-- drawtype            = "airlike",
 			sunlight_propagates = true,
 			pointable           = false,
 			walkable            = false,

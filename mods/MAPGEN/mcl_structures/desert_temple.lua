@@ -121,11 +121,12 @@ mcl_structures.register_structure({
 		deco_type = "simple",
 		place_on = node_list,
 		flags = "all_floors",
-		fill_ratio = 0.00003,
+		--fill_ratio = 0.00003,
+		fill_ratio = 0.003,
 		y_min = 3,
 		y_max = mcl_mapgen.overworld.max,
 		height = 1,
-		biomes = {
+		biomes = not mcl_mapgen.v6 and {
 			"ColdTaiga_beach",
 			"ColdTaiga_beach_water",
 			"Desert",
@@ -146,6 +147,7 @@ mcl_structures.register_structure({
 	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
 		local a = seed % 14
 		local b = (math.floor(seed / 39) + 4) % 12
+		minetest.chat_send_all("seed=" .. tostring(seed) .. ", a=" .. tostring(a) .. ", b=" ..tostring(b))
 		if a ~= b then return end
 		local pos = pos_list[1]
 		if #pos_list > 1 then

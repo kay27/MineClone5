@@ -268,30 +268,6 @@ local function spawn_spikes_in_v6(p, nn, pr)
 end
 
 local function generate_structures(vm_context)
-
-local levels = {
-	[-9] = "black",
-	[-8] = "brown",
-	[-7] = "brown",
-	[-6] = "gray",
-	[-5] = "gray",
-	[-4] = "red",
-	[-3] = "orange",
-	[-2] = "purple",
-	[-1] = "magenta",
-	[0] = "pink",
-	[1] = "yellow",
-	[2] = "green",
-	[3] = "lime",
-	[4] = "blue",
-	[5] = "cyan",
-	[6] = "light_blue",
-	[7] = "silver",
-	[8] = "silver",
-	[9] = "white",
-	}
-
-	-- local pr = PcgRandom(vm_context.blockseed)
 	local pr = PcgRandom(vm_context.chunkseed)
 	-- chunk_has_desert_struct = false
 	-- chunk_has_desert_temple = false
@@ -304,20 +280,6 @@ local levels = {
 	local DIVLEN = 5
 	for x0 = minp.x, maxp.x, DIVLEN do for z0 = minp.z, maxp.z, DIVLEN do
 		-- Determine amount from perlin noise
-		local noise = perlin_structures:get_2d({x=x0, y=z0})
-		local amount
-		if noise < 0 then
-			amount = math_max(math_ceil(noise * 9), -9)
-		else
-			amount = math_min(math_floor(noise * 9), 9)
-		end
-		-- local amount = math_floor(perlin_structures:get_2d({x=x0, y=z0}) * 9)
-
-		local y1 = maxp.y - 9 + amount
-		for x1 = x0, x0 + DIVLEN - 1, 1 do for z1 = z0, z0 + DIVLEN - 1, 1 do
-			minetest.set_node({x=x1, y=y1, z=z1}, {name = "mcl_core:glass_"..levels[amount]})
-		end end
-
 		-- Find random positions based on this random
 		local p, ground_y, nn
 		for i = 0, 24 do
