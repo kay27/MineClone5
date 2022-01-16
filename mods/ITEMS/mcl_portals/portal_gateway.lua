@@ -34,7 +34,7 @@ local function spawn_gateway_portal(pos, dest_str)
 		schematic = path_gateway_portal,
 		rotation = "0",
 		force_placement = true,
-		after_place = dest_str and function()
+		on_placed = dest_str and function()
 			minetest.get_meta(pos):set_string("mcl_portals:gateway_destination", dest_str)
 		end,
 	})

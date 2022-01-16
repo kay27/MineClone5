@@ -38,7 +38,6 @@ local function place(pos, rotation, pr)
 		rotation  = rotation or "0",
 		pr        = pr,
 	})
-	minetest.chat_send_all("place! pos=" .. minetest.pos_to_string(p1) .. ", " .. minetest.pos_to_string(p2) .. ", " .. minetest.pos_to_string(size) .. ", " .. minetest.pos_to_string(offset))
 	-- Find and setup spawner with silverfish
 	local spawners = minetest.find_nodes_in_area(p1, p2, "mcl_mobspawners:spawner")
 	for s=1, #spawners do

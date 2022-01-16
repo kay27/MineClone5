@@ -29,7 +29,6 @@ end
 
 function process_mapgen_chunk(minp, maxp, seed, vm_context)
 	local nodes = minetest.find_nodes_in_area(minp, maxp, {"group:struct"}, true)
-	minetest.log("warning", "found " .. tostring(#nodes))
 	for node_name, pos_list in pairs(nodes) do
 		local chunk_callback = on_finished_chunk_callbacks[node_name]
 		if chunk_callback then
@@ -49,12 +48,12 @@ end
 --------------------------------------------------------------------------------------
 -- mcl_structures.register_structure(struct_def)
 -- struct_def:
---	name              - name like 'desert_temple'
---	decoration        - decoration definition if needed
---	on_finished_block - callback if needed
---	on_finished_chunk - next callback if needed
---	place_function    - placer function(pos, rotation, pr)
---	order_number      - (optional)
+--	name              - name, like 'desert_temple'
+--	decoration        - decoration definition, to use as structure seed (thanks cora for the idea)
+--	on_finished_block - callback, if needed, to use with decorations: funcion(vm_context, pos_list)
+--	on_finished_chunk - next callback if needed: funcion(minp, maxp, seed, vm_context, pos_list)
+--	place_function    - callback to place schematic by /spawnstruct debug command: function(pos, rotation, pr)
+--	on_placed         - useful when you want to process the area after placement: function(pos, rotation, pr, size)
 function mcl_structures.register_structure(def)
 	local short_name         = def.name
 	local name               = "mcl_structures:" .. short_name
@@ -71,8 +70,13 @@ function mcl_structures.register_structure(def)
 	local decoration_id
 	if decoration then
 		minetest.register_node(':' .. name, {
-			drawtype="airlike",
-			groups = {
+			drawtype            = "airlike",
+			sunlight_propagates = true,
+			pointable           = false,
+			walkable            = false,
+			diggable            = false,
+			buildable_to        = true,
+			groups              = {
 				struct                    = 1,
 				not_in_creative_inventory = 1,
 			},
@@ -138,20 +142,20 @@ local function ecb_place(blockpos, action, calls_remaining, param)
 	local pos = param.pos
 	local rotation = param.rotation
 	minetest.place_schematic(pos, param.schematic, rotation, param.replacements, param.force_placement, param.flags)
-	local after_place = param.after_place
-	if not after_place then
+	local on_placed = param.on_placed
+	if not on_placed then
 		return
 	end
-	after_place(pos, rotation, param.pr, param.param, param.size)
+	on_placed(pos, rotation, param.pr, param.size)
 end
 
 function mcl_structures.place_schematic(def)
-	local pos                 = def.pos
-	local schematic           = def.schematic
-	local rotation            = def.rotation
-	local pr                  = def.pr
-	local on_schematic_loaded = def.on_schematic_loaded
-	local emerge              = def.emerge
+	local pos       = def.pos
+	local schematic = def.schematic
+	local rotation  = def.rotation
+	local pr        = def.pr
+	local on_placed = def.on_placed -- on_placed(pos, rotation, pr, size)
+	local emerge    = def.emerge
 	if not pos then
 		minetest.log('warning', '[mcl_structures] No pos. specified to place schematic')
 		return
@@ -168,19 +172,12 @@ function mcl_structures.place_schematic(def)
 		end
 	end
 
-	if not emerge and not on_schematic_loaded then
+	if not emerge and not on_placed then
 		minetest.place_schematic(pos, schematic, rotation, def.replacements, def.force_placement, def.flags)
-		if not def.after_place then
-			return
-		end
-		def.after_place(pos, rotation, pr, def.after_place_param)
 		return
 	end
 
 	local serialized_schematic = minetest.serialize_schematic(schematic, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic"
-	if on_schematic_loaded then
-		serialized_schematic = on_schematic_loaded(serialized_schematic)
-	end
 	local loaded_schematic = loadstring(serialized_schematic)()
 	if not loaded_schematic then
 		minetest.log('warning', '[mcl_structures] Schematic ' .. schematic .. ' load serialized string problem at ' .. minetest.pos_to_string(pos))
@@ -198,8 +195,6 @@ function mcl_structures.place_schematic(def)
 	local x, y, z = pos.x, pos.y, pos.z
 	local p1 = {x = x, y = y, z = z}
 	local p2 = {x = x + size_x - 1, y = y + size_y - 1, z = size_z - 1}
-	minetest.log("verbose", "[mcl_structures] Emerge area " .. minetest.pos_to_string(p1) .. " - " .. minetest.pos_to_string(p2)
-		.. " of size " ..minetest.pos_to_string(size) .. " to place " .. schematic .. ", rotation " .. tostring(rotation))
 	local ecb_param = {
 		pos             = vector.new(pos),
 		schematic       = loaded_schematic,
@@ -207,15 +202,16 @@ function mcl_structures.place_schematic(def)
 		replacements    = replacements,
 		force_placement = force_placement,
 		flags           = flags,
-		after_place     = after_place,
 		size            = vector.new(size),
 		pr              = pr,
-		param           = param,
+		on_placed       = on_placed,
 	}
 	if not emerge then
 		ecb_place(p1, nil, 0, ecb_param)
 		return
 	end
+	minetest.log("verbose", "[mcl_structures] Emerge area " .. minetest.pos_to_string(p1) .. " - " .. minetest.pos_to_string(p2)
+		.. " of size " ..minetest.pos_to_string(size) .. " to place " .. schematic .. ", rotation " .. tostring(rotation))
 	minetest.emerge_area(p1, p2, ecb_place, ecb_param)
 end
 
@@ -235,7 +231,7 @@ end
 
 -- Call on_construct on pos.
 -- Useful to init chests from formspec.
-local function init_node_construct(pos)
+function mcl_structures.init_node_construct(pos)
 	local node = minetest.get_node(pos)
 	local def = minetest.registered_nodes[node.name]
 	if def and def.on_construct then
@@ -251,9 +247,7 @@ function mcl_structures.call_struct(pos, struct_style, rotation, pr, callback)
 	if not rotation then
 		rotation = "random"
 	end
-	if struct_style == "desert_temple" then
-		return mcl_structures.generate_desert_temple(pos, rotation, pr)
-	elseif struct_style == "desert_well" then
+	if struct_style == "desert_well" then
 		return mcl_structures.generate_desert_well(pos, rotation)
 	elseif struct_style == "igloo" then
 		return mcl_structures.generate_igloo(pos, rotation, pr)
@@ -451,7 +445,7 @@ local function igloo_placement_callback(p1, p2, size, orientation, pr)
 	}}, pr)
 
 	local chest_pos = vector.add(p1, chest_offset)
-	init_node_construct(chest_pos)
+	mcl_structures.init_node_construct(chest_pos)
 	local meta = minetest.get_meta(chest_pos)
 	local inv = meta:get_inventory()
 	mcl_loot.fill_inventory(inv, "main", lootitems, pr)
@@ -539,123 +533,6 @@ function mcl_structures.generate_end_gateway_portal(pos, rot)
 	return mcl_structures.place_schematic(pos, path, rot or "0", nil, true)
 end
 
-local function temple_placement_callback(p1, p2, size, rotation, pr)
-
-	-- Delete cacti leftovers:
-	local cactus_nodes = minetest.find_nodes_in_area_under_air(p1, p2, "mcl_core:cactus")
-	if cactus_nodes and #cactus_nodes > 0 then
-		for _, pos in pairs(cactus_nodes) do
-			local node_below = minetest.get_node({x=pos.x, y=pos.y-1, z=pos.z})
-			if node_below and node_below.name == "mcl_core:sandstone" then
-				minetest.swap_node(pos, {name="air"})
-			end
-		end
-	end
-
-	-- Find chests.
-	-- FIXME: Searching this large area just for the chets is not efficient. Need a better way to find the chests;
-	-- probably let's just infer it from newpos because the schematic always the same.
-	local chests = minetest.find_nodes_in_area(p1, p2, "mcl_chests:chest")
-
-	-- Add desert temple loot into chests
-	for c=1, #chests do
-		local lootitems = mcl_loot.get_multi_loot({
-		{
-			stacks_min = 2,
-			stacks_max = 4,
-			items = {
-				{ itemstring = "mcl_mobitems:bone", weight = 25, amount_min = 4, amount_max=6 },
-				{ itemstring = "mcl_mobitems:rotten_flesh", weight = 25, amount_min = 3, amount_max=7 },
-				{ itemstring = "mcl_mobitems:spider_eye", weight = 25, amount_min = 1, amount_max=3 },
-				{ itemstring = "mcl_books:book", weight = 20, func = function(stack, pr)
-					mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr)
-				end },
-				{ itemstring = "mcl_mobitems:saddle", weight = 20, },
-				{ itemstring = "mcl_core:apple_gold", weight = 20, },
-				{ itemstring = "mcl_core:gold_ingot", weight = 15, amount_min = 2, amount_max = 7 },
-				{ itemstring = "mcl_core:iron_ingot", weight = 15, amount_min = 1, amount_max = 5 },
-				{ itemstring = "mcl_core:emerald", weight = 15, amount_min = 1, amount_max = 3 },
-				{ itemstring = "", weight = 15, },
-				{ itemstring = "mobs_mc:iron_horse_armor", weight = 15, },
-				{ itemstring = "mobs_mc:gold_horse_armor", weight = 10, },
-				{ itemstring = "mobs_mc:diamond_horse_armor", weight = 5, },
-				{ itemstring = "mcl_core:diamond", weight = 5, amount_min = 1, amount_max = 3 },
-				{ itemstring = "mcl_core:apple_gold_enchanted", weight = 2, },
-			}
-		},
-		{
-			stacks_min = 4,
-			stacks_max = 4,
-			items = {
-				{ itemstring = "mcl_mobitems:bone", weight = 10, amount_min = 1, amount_max = 8 },
-				{ itemstring = "mcl_mobitems:rotten_flesh", weight = 10, amount_min = 1, amount_max = 8 },
-				{ itemstring = "mcl_mobitems:gunpowder", weight = 10, amount_min = 1, amount_max = 8 },
-				{ itemstring = "mcl_core:sand", weight = 10, amount_min = 1, amount_max = 8 },
-				{ itemstring = "mcl_mobitems:string", weight = 10, amount_min = 1, amount_max = 8 },
-			}
-		}}, pr)
-		init_node_construct(chests[c])
-		local meta = minetest.get_meta(chests[c])
-		local inv = meta:get_inventory()
-		mcl_loot.fill_inventory(inv, "main", lootitems, pr)
-	end
-
-	-- Initialize pressure plates and randomly remove up to 5 plates
-	local pplates = minetest.find_nodes_in_area(p1, p2, "mesecons_pressureplates:pressure_plate_stone_off")
-	local pplates_remove = 5
-	for p=1, #pplates do
-		if pplates_remove > 0 and pr:next(1, 100) >= 50 then
-			-- Remove plate
-			minetest.remove_node(pplates[p])
-			pplates_remove = pplates_remove - 1
-		else
-			-- Initialize plate
-			minetest.registered_nodes["mesecons_pressureplates:pressure_plate_stone_off"].on_construct(pplates[p])
-		end
-	end
-end
-
-function mcl_structures.generate_desert_temple(pos, rotation, pr)
-	-- No Generating for the temple ... Why using it ? No Change
-	local path = modpath.."/schematics/mcl_structures_desert_temple.mts"
-	--local newpos = {x=pos.x,y=pos.y-12,z=pos.z}
-	--local size = {x=22, y=24, z=22}
-	--if newpos == nil then
-	--	return
-	-- end
-	pos.y = pos.y - 12
-	mcl_structures.place_schematic({pos = pos, schematic = path, rotation = rotation or "random", pr = pr, emerge = true})
-end
-
---local registered_structures = {}
-
---[[ Returns a table of structure of the specified type.
-Currently the only valid parameter is "stronghold".
-Format of return value:
-{
-	{ pos = <position>, generated=<true/false> }, -- first structure
-	{ pos = <position>, generated=<true/false> }, -- second structure
-	-- and so on
-}
-
-TODO: Implement this function for all other structure types as well.
-]]
---[[
-function mcl_structures.get_registered_structures(structure_type)
-	if registered_structures[structure_type] then
-		return table.copy(registered_structures[structure_type])
-	else
-		return {}
-	end
-end
-]]
--- Register a structures table for the given type. The table format is the same as for
--- mcl_structures.get_registered_structures.
---[[
-function mcl_structures.register_structures(structure_type, structures)
-	registered_structures[structure_type] = structures
-end
-]]
 local function dir_to_rotation(dir)
 	local ax, az = math.abs(dir.x), math.abs(dir.z)
 	if ax > az then
@@ -669,7 +546,6 @@ local function dir_to_rotation(dir)
 	end
 	return "0"
 end
-
 
 dofile(modpath .. "/structures.lua")
 
