@@ -66,7 +66,7 @@ mcl_structures.register_structure({
 			"Taiga_beach",
 		},
 	},
-	on_generated = function(minp, maxp, seed, vm_context, pos_list)
+	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
 		local pos = pos_list[1]
 		if #pos_list > 1 then
 			local count = node_counter(pos)
@@ -82,5 +82,5 @@ mcl_structures.register_structure({
 		local pr = PseudoRandom(vm_context.chunkseed)
 		place(pos, nil, pr)
 	end,
-	on_place = place,
+	place_function = place,
 })

@@ -463,3 +463,18 @@ function mcl_mapgen.get_voxel_manip(vm_context)
 	vm_context.area = VoxelArea:new({MinEdge=vm_context.emin, MaxEdge=vm_context.emax})
 	return vm_context.vm
 end
+
+local CS_NODES = mcl_mapgen.CS_NODES
+function mcl_mapgen.clamp_to_chunk(x, size)
+	if size > CS_NODES then
+		minetest.log("warning", "[mcl_mapgen] Couldn't clamp " .. tostring(x) .. " - given size " .. tostring(size) .. " greater than chunk size " .. tostring(mcl_mapgen.CS_NODES))
+		return x
+	end
+	local offset_in_chunk = (x + central_chunk_min_pos) % CS_NODES
+	local x2_in_chunk = offset_in_chunk + size
+	if x2_in_chunk <= CS_NODES then
+		return x
+	end
+	local overflow = x2_in_chunk - CS_NODES
+	return x - overflow
+end
