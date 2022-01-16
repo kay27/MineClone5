@@ -125,7 +125,7 @@ minetest.register_on_shutdown(function()
 end)
 
 local vm_context -- here will be many references and flags, like: param2, light_data, heightmap, biomemap, heatmap, humiditymap, gennotify, write_lvm, write_param2, shadow
-local data, data2, light, area
+local data, param2_data, light, area
 local current_blocks = {}
 local current_chunks = {}
 local lvm_buffer, lvm_param2_buffer, lvm_light_buffer = {}, {}, {} -- Static buffer pointers
@@ -139,7 +139,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
 	vm_context = {
 		data              = data,
-		data2             = data2,
+		param2_data       = param2_data,
                 light             = light,
 		area              = area,
 		lvm_buffer        = lvm_buffer,
@@ -270,7 +270,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			vm:set_data(data)
 		end
 		if vm_context.write_param2 then
-			vm:set_param2_data(data2)
+			vm:set_param2_data(vm_context.param2_data)
 		end
 		if vm_context.write_light then
 			vm:set_light_data(light)
@@ -291,7 +291,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		area = VoxelArea:new({MinEdge=minp, MaxEdge=maxp})
 		vm_context = {
 			data              = data,
-			data2             = data2,
+			param2_data       = param2_data,
 	                light             = light,
 			area              = area,
 			lvm_buffer        = lvm_buffer,
@@ -314,7 +314,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 				vm:set_data(data)
 			end
 			if vm_context.write_param2 then
-				vm:set_param2_data(data2)
+				vm:set_param2_data(param2_data)
 			end
 			if vm_context.write_light then
 				vm:set_light_data(light)

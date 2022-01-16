@@ -84,20 +84,8 @@ local c_realm_barrier = minetest.get_content_id("mcl_core:realm_barrier")
 local c_top_snow = minetest.get_content_id("mcl_core:snow")
 local c_snow_block = minetest.get_content_id("mcl_core:snowblock")
 local c_clay = minetest.get_content_id("mcl_core:clay")
-local c_leaves = minetest.get_content_id("mcl_core:leaves")
-local c_jungleleaves = minetest.get_content_id("mcl_core:jungleleaves")
 --local c_jungletree = minetest.get_content_id("mcl_core:jungletree")
-local c_vine = minetest.get_content_id("mcl_core:vine")
 local c_air = minetest.CONTENT_AIR
-
-local c_cocoas = nil
-if minetest.get_modpath("mcl_cocoas") then
-	c_cocoas = {
-		minetest.get_content_id("mcl_cocoas:cocoa_1"),
-		minetest.get_content_id("mcl_cocoas:cocoa_2"),
-		minetest.get_content_id("mcl_cocoas:cocoa_3")
-	}
-end
 
 --
 -- Ore generation
@@ -1167,9 +1155,6 @@ minetest.set_mapgen_setting("mg_flags", mg_flags_str, true)
 	return x, z
 end]]
 
--- Perlin noise objects
-local perlin_vines, perlin_vines_fine, perlin_vines_upwards, perlin_vines_length, perlin_vines_density
-
 local dragon_spawn_pos = false
 local dragon_spawned, portal_generated = false, false
 
@@ -1207,214 +1192,6 @@ function mcl_mapgen_core.generate_end_exit_portal(pos)
 		end)
 	end)
 	portal_generated = true
-end
-
-
--- Buffers for LuaVoxelManip
--- local lvm_buffer = {}
--- local lvm_buffer_param2 = {}
-
--- Generate tree decorations in the bounding box. This adds:
--- * Cocoa at jungle trees
--- * Jungle tree vines
--- * Oak vines in swamplands
-local function generate_tree_decorations(minp, maxp, seed, data, param2_data, area, biomemap, lvm_used, pr)
-	if maxp.y < 0 then
-		return lvm_used
-	end
-
-	local oaktree, oakleaves, jungletree, jungleleaves = {}, {}, {}, {}
-	local swampland = minetest.get_biome_id("Swampland")
-	local swampland_shore = minetest.get_biome_id("Swampland_shore")
-	local jungle = minetest.get_biome_id("Jungle")
-	local jungle_shore = minetest.get_biome_id("Jungle_shore")
-	local jungle_m = minetest.get_biome_id("JungleM")
-	local jungle_m_shore = minetest.get_biome_id("JungleM_shore")
-	local jungle_edge = minetest.get_biome_id("JungleEdge")
-	local jungle_edge_shore = minetest.get_biome_id("JungleEdge_shore")
-	local jungle_edge_m = minetest.get_biome_id("JungleEdgeM")
-	local jungle_edge_m_shore = minetest.get_biome_id("JungleEdgeM_shore")
-
-	-- Modifier for Jungle M biome: More vines and cocoas
-	local dense_vegetation = false
-
-	if biomemap then
-		-- Biome map available: Check if the required biome (jungle or swampland)
-		-- is in this mapchunk. We are only interested in trees in the correct biome.
-		-- The nodes are added if the correct biome is *anywhere* in the mapchunk.
-		-- TODO: Strictly generate vines in the correct biomes only.
-		local swamp_biome_found, jungle_biome_found = false, false
-		for b=1, #biomemap do
-			local id = biomemap[b]
-
-			if not swamp_biome_found and (id == swampland or id == swampland_shore) then
-				oaktree = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:tree"})
-				oakleaves = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:leaves"})
-				swamp_biome_found = true
-			end
-			if not jungle_biome_found and (id == jungle or id == jungle_shore or id == jungle_m or id == jungle_m_shore or id == jungle_edge or id == jungle_edge_shore or id == jungle_edge_m or id == jungle_edge_m_shore) then
-				jungletree = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:jungletree"})
-				jungleleaves = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:jungleleaves"})
-				jungle_biome_found = true
-			end
-			if not dense_vegetation and (id == jungle_m or id == jungle_m_shore) then
-				dense_vegetation = true
-			end
-			if swamp_biome_found and jungle_biome_found and dense_vegetation then
-				break
-			end
-		end
-	else
-		-- If there is no biome map, we just count all jungle things we can find.
-		-- Oak vines will not be generated.
-		jungletree = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:jungletree"})
-		jungleleaves = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:jungleleaves"})
-	end
-
-	local pos, treepos, dir
-
-	if c_cocoas ~= nil then
-		local cocoachance = 40
-		if dense_vegetation then
-			cocoachance = 32
-		end
-
-		-- Pass 1: Generate cocoas at jungle trees
-		for n = 1, #jungletree do
-
-			pos = table.copy(jungletree[n])
-			treepos = table.copy(pos)
-
-			if minetest.find_node_near(pos, 1, {"mcl_core:jungleleaves"}) then
-
-				dir = pr:next(1, cocoachance)
-
-				if dir == 1 then
-					pos.z = pos.z + 1
-				elseif dir == 2 then
-					pos.z = pos.z - 1
-				elseif dir == 3 then
-					pos.x = pos.x + 1
-				elseif dir == 4 then
-					pos.x = pos.x -1
-				end
-
-				local p_pos = area:index(pos.x, pos.y, pos.z)
-				local l = minetest.get_node_light(pos)
-
-				if dir < 5
-				and data[p_pos] == c_air
-				and l and l > 12 then
-					local c = pr:next(1, 3)
-					data[p_pos] = c_cocoas[c]
-					param2_data[p_pos] = minetest.dir_to_facedir(vector.subtract(treepos, pos))
-					lvm_used = true
-				end
-			end
-		end
-	end
-
-	-- Pass 2: Generate vines at jungle wood, jungle leaves in jungle and oak wood, oak leaves in swampland
-	perlin_vines = perlin_vines or minetest.get_perlin(555, 4, 0.6, 500)
-	perlin_vines_fine = perlin_vines_fine or minetest.get_perlin(43000, 3, 0.6, 1)
-	perlin_vines_length = perlin_vines_length or minetest.get_perlin(435, 4, 0.6, 75)
-	perlin_vines_upwards = perlin_vines_upwards or minetest.get_perlin(436, 3, 0.6, 10)
-	perlin_vines_density = perlin_vines_density or minetest.get_perlin(436, 3, 0.6, 500)
-
-	-- Extra long vines in Jungle M
-	local maxvinelength = 7
-	if dense_vegetation then
-		maxvinelength = 14
-	end
-	local treething
-	for i=1, 4 do
-		if i==1 then
-			treething = jungletree
-		elseif i == 2 then
-			treething = jungleleaves
-		elseif i == 3 then
-			treething = oaktree
-		elseif i == 4 then
-			treething = oakleaves
-		end
-
-		for n = 1, #treething do
-			pos = treething[n]
-
-			treepos = table.copy(pos)
-
-			local dirs = {
-				{x=1,y=0,z=0},
-				{x=-1,y=0,z=0},
-				{x=0,y=0,z=1},
-				{x=0,y=0,z=-1},
-			}
-
-			for d = 1, #dirs do
-			local pos = vector.add(pos, dirs[d])
-			local p_pos = area:index(pos.x, pos.y, pos.z)
-
-			local vine_threshold = math.max(0.33333, perlin_vines_density:get_2d(pos))
-			if dense_vegetation then
-				vine_threshold = vine_threshold * (2/3)
-			end
-
-			if perlin_vines:get_2d(pos) > -1.0 and perlin_vines_fine:get_3d(pos) > vine_threshold and data[p_pos] == c_air then
-
-				local rdir = {}
-				rdir.x = -dirs[d].x
-				rdir.y = dirs[d].y
-				rdir.z = -dirs[d].z
-				local param2 = minetest.dir_to_wallmounted(rdir)
-
-				-- Determine growth direction
-				local grow_upwards = false
-				-- Only possible on the wood, not on the leaves
-				if i == 1 then
-					grow_upwards = perlin_vines_upwards:get_3d(pos) > 0.8
-				end
-				if grow_upwards then
-					-- Grow vines up 1-4 nodes, even through jungleleaves.
-					-- This may give climbing access all the way to the top of the tree :-)
-					-- But this will be fairly rare.
-					local length = math.ceil(math.abs(perlin_vines_length:get_3d(pos)) * 4)
-					for l=0, length-1 do
-						local t_pos = area:index(treepos.x, treepos.y, treepos.z)
-
-						if (data[p_pos] == c_air or data[p_pos] == c_jungleleaves or data[p_pos] == c_leaves) and mcl_core.supports_vines(minetest.get_name_from_content_id(data[t_pos])) then
-							data[p_pos] = c_vine
-							param2_data[p_pos] = param2
-							lvm_used = true
-
-						else
-							break
-						end
-						pos.y = pos.y + 1
-						p_pos = area:index(pos.x, pos.y, pos.z)
-						treepos.y = treepos.y + 1
-					end
-				else
-					-- Grow vines down, length between 1 and maxvinelength
-					local length = math.ceil(math.abs(perlin_vines_length:get_3d(pos)) * maxvinelength)
-					for l=0, length-1 do
-						if data[p_pos] == c_air then
-							data[p_pos] = c_vine
-							param2_data[p_pos] = param2
-							lvm_used = true
-
-						else
-							break
-						end
-						pos.y = pos.y - 1
-						p_pos = area:index(pos.x, pos.y, pos.z)
-					end
-				end
-			end
-			end
-
-		end
-	end
-	return lvm_used
 end
 
 -- Generate mushrooms in caves manually.
@@ -1604,8 +1381,8 @@ end
 -- Below the bedrock, generate air/void
 local function basic_safe(vm_context)
 	local vm, data, emin, emax, area, minp, maxp, chunkseed, blockseed = vm_context.vm, vm_context.data, vm_context.emin, vm_context.emax, vm_context.area, vm_context.minp, vm_context.maxp, vm_context.chunkseed, vm_context.blockseed
-	vm_context.data2 = vm_context.data2 or vm:get_param2_data(vm_context.lvm_param2_buffer)
-	local data2 = vm_context.data2
+	vm_context.param2_data = vm_context.param2_data or vm:get_param2_data(vm_context.lvm_param2_buffer)
+	local param2_data = vm_context.param2_data
 
 	local lvm_used = false
 	local pr = PseudoRandom(blockseed)
@@ -1649,13 +1426,8 @@ local function basic_safe(vm_context)
 			end
 		end
 
-		-- Clay, vines, cocoas
-		-- lvm_used = generate_clay(minp, maxp, chunkseed, data, area, lvm_used)
-
 		vm_context.biomemap = vm_context.biomemap or minetest.get_mapgen_object("biomemap")
 		local biomemap = vm_context.biomemap
-
-		lvm_used = generate_tree_decorations(minp, maxp, blockseed, data, data2, area, biomemap, lvm_used, pr)
 
 		----- Interactive block fixing section -----
 		----- The section to perform basic block overrides of the core mapgen generated world. -----
@@ -1714,8 +1486,8 @@ local function basic_safe(vm_context)
 					if bn then
 						local biome = minetest.registered_biomes[bn]
 						if biome and biome._mcl_biome_type then
-							data2[p_pos] = biome._mcl_palette_index
-							lvm_used = true
+							param2_data[p_pos] = biome._mcl_palette_index
+							vm_context.write_param2 = true
 						end
 					end
 					if data[p_pos] == c_dirt_with_grass_snow and p_pos_above and data[p_pos_above] ~= c_top_snow and data[p_pos_above] ~= c_snow_block then
@@ -1829,6 +1601,7 @@ mcl_mapgen.register_mapgen_block_lvm(basic_safe, 1)
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(modpath .. "/clay.lua")
+dofile(modpath .. "/tree_decoration.lua")
 if minetest.get_modpath("mcl_structures") then
 	dofile(modpath .. "/structures.lua")
 end

@@ -163,16 +163,9 @@ local function spawn_witch_hut(p, nn, pr, vm_context)
 			vm_context.biomemap = minetest_get_mapgen_object('biomemap')
 			biomemap = vm_context.biomemap
 		end
-		-- minetest.chat_send_all(minetest.serialize(biomemap))
 		local swampland = minetest.get_biome_id("Swampland")
 		local swampland_shore = minetest.get_biome_id("Swampland_shore")
 		local bi = xz_to_biomemap_index(p.x, p.z, vm_context.minp, vm_context.maxp)
-		if (biomemap[bi] == swampland) then
-			minetest.chat_send_all('swampland')
-		end
-		if (biomemap[bi] == swampland_shore) then
-			minetest.chat_send_all('swampland_shore')
-		end
 		-- if biomemap[bi] ~= swampland and biomemap[bi] ~= swampland_shore then return end
 	end
 
