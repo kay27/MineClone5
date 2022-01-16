@@ -476,5 +476,11 @@ function mcl_mapgen.clamp_to_chunk(x, size)
 		return x
 	end
 	local overflow = x2_in_chunk - CS_NODES
+	if overflow > size / 2 then
+		local next_x = x + (size - overflow)
+		if next_x < mcl_mapgen.EDGE_MAX then
+			return next_x
+		end
+	end
 	return x - overflow
 end
