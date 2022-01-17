@@ -121,8 +121,7 @@ mcl_structures.register_structure({
 		deco_type = "simple",
 		place_on = node_list,
 		flags = "all_floors",
-		--fill_ratio = 0.00003,
-		fill_ratio = 0.003,
+		fill_ratio = 0.00003,
 		y_min = 3,
 		y_max = mcl_mapgen.overworld.max,
 		height = 1,
@@ -149,6 +148,9 @@ mcl_structures.register_structure({
 		local b = (math.floor(seed / 39) + 4) % 12
 		minetest.chat_send_all("seed=" .. tostring(seed) .. ", a=" .. tostring(a) .. ", b=" ..tostring(b))
 		if a ~= b then return end
+		mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
+		local current_noise_level = mcl_structures.perlin_noise:get_3d(minp)
+		if current_noise_level > -0.3 then return end
 		local pos = pos_list[1]
 		if #pos_list > 1 then
 			local count = get_place_rank(pos)

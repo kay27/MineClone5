@@ -26,9 +26,10 @@ local math_floor, math_ceil = math.floor, math.ceil
 mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
 	mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
 	local perlin_noise = mcl_structures.perlin_noise
+	local y0 = minp.y
 	for x0 = minp.x, maxp.x do
 		for z0 = minp.z, maxp.z do
-			local current_noise_level = perlin_noise:get_2d({x=x0, y=z0})
+			local current_noise_level = perlin_noise:get_3d({x=x0, y=y0, z=z0})
 			local amount
 			if current_noise_level < 0 then
 				amount = math_max(math_ceil(current_noise_level * 9), -9)
