@@ -466,6 +466,10 @@ end
 
 local CS_NODES = mcl_mapgen.CS_NODES
 function mcl_mapgen.clamp_to_chunk(x, size)
+	if not size then
+		minetest.log("warning", "[mcl_mapgen] Couldn't clamp " .. tostring(x) .. " - missing size")
+		return x
+	end
 	if size > CS_NODES then
 		minetest.log("warning", "[mcl_mapgen] Couldn't clamp " .. tostring(x) .. " - given size " .. tostring(size) .. " greater than chunk size " .. tostring(mcl_mapgen.CS_NODES))
 		return x

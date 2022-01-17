@@ -8,11 +8,22 @@ local schematic_file = modpath .. "/schematics/mcl_structures_jungle_temple.mts"
 local temple_schematic_lua = minetest.serialize_schematic(schematic_file, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic"
 local temple_schematic = loadstring(temple_schematic_lua)()
 local size = temple_schematic.size
+local sx = size.x
+local sy = size.y
+local sz = size.z
 local offset = vector.round(vector.divide(size, 2))
 offset.y = 5
 
+local ox = offset.x
+local oy = offset.y
+local oz = offset.z
+local corner_x = sx - 3
+local corner_z = sz - 3
+local air_offset_x = ox - 6
+local air_offset_z = oz - 6
+
 local function on_placed(p1, rotation, pr, size)
-	local p2 = {x = p1.x + size.x - 1, y = p1.y + size.y - 1, z = p1.z + size.z - 1}
+	local p2 = {x = p1.x + sx - 1, y = p1.y + sy - 1, z = p1.z + sz - 1}
 
 	-- Find chests.
 	local chests = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, "mcl_chests:chest")
@@ -63,18 +74,45 @@ local function on_placed(p1, rotation, pr, size)
 end
 
 local function place(pos, rotation, pr)
-	mcl_structures.place_schematic({pos = vector.subtract(pos, offset), schematic = temple_schematic, pr = pr, on_placed = on_placed})
+	mcl_structures.place_schematic({pos = pos, schematic = temple_schematic, pr = pr, on_placed = on_placed})
+end
+
+local mcl_mapgen_clamp_to_chunk = mcl_mapgen.clamp_to_chunk
+local function process_pos(pos)
+	minetest.log('warning', minetest.pos_to_string(pos))
+	return {
+		x = mcl_mapgen_clamp_to_chunk(pos.x - ox, sx),
+		y = mcl_mapgen_clamp_to_chunk(pos.y - oy, sy),
+		z = mcl_mapgen_clamp_to_chunk(pos.z - oz, sz),
+	}
+end
+
+local function is_air(pos)
+	local node = minetest.get_node(pos)
+	return node.name == "air"
 end
 
 local function get_place_rank(pos)
-	local x, y, z = pos.x, pos.y, pos.z
-	local p1 = {x = x - 6, y = y, z = z - 6}
-	local p2 = {x = x + 6, y = y, z = z + 6}
-	local pos_list_air = minetest.find_nodes_in_area(p1, p2, {"air", "group:buildable_to", "group:deco_block", "group:water"}, false)
-	p1.y = y - 1
-	p2.y = y - 1
-	local pos_list_ground = minetest.find_nodes_in_area(p1, p2, node_list, false)
-	return #pos_list_ground + #pos_list_air
+	local x1 = pos.x + 1
+	local x2 = x1 + corner_x
+	local z1 = pos.z + 1
+	local z2 = z1 + corner_z
+	local y2 = pos.y + 1
+	local y1 = y2 - 2
+	if is_air({x = x1, y = y1, z = z1}) then return -1 end
+	if is_air({x = x2, y = y1, z = z1}) then return -1 end
+	if is_air({x = x1, y = y1, z = z2}) then return -1 end
+	if is_air({x = x2, y = y1, z = z2}) then return -1 end
+
+	local p1 = {x = x1 + air_offset_x, y = y2, z = z1 + air_offset_z}
+	local p2 = {x = x2 - air_offset_x, y = y2, z = z2 + air_offset_z}
+	local pos_counter_air = #minetest.find_nodes_in_area(p1, p2, {"air", "group:buildable_to", "group:deco_block"}, false)
+	local pos_counter_air = pos_counter_air - #minetest.find_nodes_in_area(p1, p2, {"group:tree"}, false)
+
+	local p1 = {x = x1 + 1, y = y1, z = z1 + 1}
+	local p2 = {x = x2 - 1, y = y1, z = z2 - 1}
+	local pos_counter_ground = #minetest.find_nodes_in_area(p1, p2, node_list, false)
+	return pos_counter_ground + pos_counter_air
 end
 
 mcl_structures.register_structure({
@@ -109,18 +147,17 @@ mcl_structures.register_structure({
 --		local b = (math.floor(seed / 39) + 4) % 12
 --		minetest.chat_send_all("seed=" .. tostring(seed) .. ", a=" .. tostring(a) .. ", b=" ..tostring(b))
 --		if a ~= b then return end
-		local pos = pos_list[1]
-		if #pos_list > 1 then
-			local count = get_place_rank(pos)
-			for i = 2, #pos_list do
-				local pos_i = pos_list[i]
-				local count_i = get_place_rank(pos_i)
-				if count_i > count then
-					count = count_i
-					pos = pos_i
-				end
+		local pos
+		local count = -1
+		for i = 1, #pos_list do
+			local pos_i = process_pos(pos_list[i])
+			local count_i = get_place_rank(pos_i)
+			if count_i > count then
+				count = count_i
+				pos = pos_i
 			end
 		end
+		if count < 0 then return end
 		local pr = PseudoRandom(vm_context.chunkseed)
 		place(pos, nil, pr)
 	end,
