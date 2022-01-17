@@ -22,8 +22,27 @@ local corner_z = sz - 3
 local air_offset_x = ox - 6
 local air_offset_z = oz - 6
 
+local function is_air(pos)
+	local node = minetest.get_node(pos)
+	return node.name == "air"
+end
+
+local stair_support_node = {name = "mcl_core:cobble"}
 local function on_placed(p1, rotation, pr, size)
 	local p2 = {x = p1.x + sx - 1, y = p1.y + sy - 1, z = p1.z + sz - 1}
+
+	-- Support stairs
+	local y = p1.y + 5
+	local bottom = mcl_mapgen.get_chunk_beginning(y)
+	local stair_list = minetest.find_nodes_in_area({x = p1.x, y = y, z = p1.z}, {x = p2.x, y = y, z = p2.z}, {"mcl_stairs:stair_cobble"}, false)
+	for i = 1, #stair_list do
+		local pos = stair_list[i]
+		pos.y = y - 1
+		while is_air(pos) and pos.y > bottom  do
+			minetest.swap_node(pos, stair_support_node)
+			pos.y = pos.y - 1
+		end
+	end
 
 	-- Find chests.
 	local chests = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, "mcl_chests:chest")
@@ -87,11 +106,6 @@ local function process_pos(pos)
 	}
 end
 
-local function is_air(pos)
-	local node = minetest.get_node(pos)
-	return node.name == "air"
-end
-
 local function get_place_rank(pos)
 	local x1 = pos.x + 1
 	local x2 = x1 + corner_x
@@ -107,7 +121,7 @@ local function get_place_rank(pos)
 	local p1 = {x = x1 + air_offset_x, y = y2, z = z1 + air_offset_z}
 	local p2 = {x = x2 - air_offset_x, y = y2, z = z2 + air_offset_z}
 	local pos_counter_air = #minetest.find_nodes_in_area(p1, p2, {"air", "group:buildable_to", "group:deco_block"}, false)
-	local pos_counter_air = pos_counter_air - #minetest.find_nodes_in_area(p1, p2, {"group:tree"}, false)
+	local pos_counter_air = pos_counter_air - 2 * (#minetest.find_nodes_in_area(p1, p2, {"group:tree"}, false))
 
 	local p1 = {x = x1 + 1, y = y1, z = z1 + 1}
 	local p2 = {x = x2 - 1, y = y1, z = z2 - 1}

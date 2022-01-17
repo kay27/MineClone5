@@ -488,3 +488,6 @@ function mcl_mapgen.clamp_to_chunk(x, size)
 	end
 	return x - overflow
 end
+function mcl_mapgen.get_chunk_beginning(x)
+	return x - ((x + central_chunk_min_pos) % CS_NODES)
+end
