@@ -1,6 +1,9 @@
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 
+local per_chunk_probability = 8
+local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
+
 local node_list = {"mcl_core:dirt_with_grass", "mcl_core:dirt", "mcl_core:stone", "mcl_core:granite", "mcl_core:gravel", "mcl_core:diorite"}
 
 local schematic_file = modpath .. "/schematics/mcl_structures_jungle_temple.mts"
@@ -161,12 +164,10 @@ mcl_structures.register_structure({
 		},
 	},
 	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
-		local a = seed % 17
-		local b = (math.ceil(seed / 123) - 4) % 17
-		if a ~= b then return end
-		mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
-		local current_noise_level = mcl_structures.perlin_noise:get_3d(maxp)
-		if current_noise_level < 0.8 then return end
+		local pr = PseudoRandom(seed + 132)
+		local random_number = pr:next(1, per_chunk_probability)
+		local noise = mcl_structures_get_perlin_noise_level(minp)
+		if (random_number + noise) < (per_chunk_probability - 1) then return end
 		local pos
 		local count = -1
 		for i = 1, #pos_list do

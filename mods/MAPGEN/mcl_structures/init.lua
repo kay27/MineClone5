@@ -17,7 +17,25 @@ local use_process_mapgen_chunk = false
 local on_finished_block_callbacks = {}
 local on_finished_chunk_callbacks = {}
 
-mcl_structures.perlin_noise = minetest.get_perlin(329, 3, 0.6, 100)
+local noise_params = {
+	offset = 0,
+	scale  = 1,
+	spread = {
+		x = mcl_mapgen.CS_NODES,
+		y = mcl_mapgen.CS_NODES,
+		z = mcl_mapgen.CS_NODES,
+	},
+	seed = 329,
+	octaves = 1,
+	persistence = 0.6,
+}
+
+local perlin_noise
+local get_perlin_noise_level = function(minp)
+	perlin_noise = perlin_noise or minetest.get_perlin(noise_params)
+	return perlin_noise:get_3d(minp)
+end
+mcl_structures.get_perlin_noise_level = get_perlin_noise_level
 
 local spawnstruct_hint = S("Use /help spawnstruct to see a list of avaiable types.")
 

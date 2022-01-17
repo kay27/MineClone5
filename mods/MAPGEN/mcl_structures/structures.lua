@@ -6,5 +6,5 @@ if not mcl_mapgen.singlenode then
 	dofile(modpath .. "/jungle_temple.lua")
 	dofile(modpath .. "/stronghold.lua")
 
-	-- dofile(modpath .. "/noise_indicator.lua")
+	dofile(modpath .. "/noise_indicator.lua")
 end

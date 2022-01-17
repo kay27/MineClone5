@@ -1,5 +1,5 @@
 local step = 1
-local chunk_borders = true
+local chunk_borders = false
 
 local levels = {
 	[-9] = "black",
@@ -26,13 +26,15 @@ local levels = {
 local math_min, math_max = math.min, math.max
 local math_floor, math_ceil = math.floor, math.ceil
 
+local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
+
+local noise_offset_x_and_z = math_floor(mcl_mapgen.CS_NODES/2)
+
 mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
-	mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
-	local perlin_noise = mcl_structures.perlin_noise
 	local y0 = minp.y
 	for x0 = minp.x, maxp.x, step do
 		for z0 = minp.z, maxp.z, step do
-			local current_noise_level = perlin_noise:get_3d({x=x0, y=y0, z=z0})
+			local current_noise_level = mcl_structures_get_perlin_noise_level({x = x0 - noise_offset_x_and_z, y = y0, z = z0 - noise_offset_x_and_z})
 			local amount
 			if current_noise_level < 0 then
 				amount = math_max(math_ceil(current_noise_level * 9), -9)
