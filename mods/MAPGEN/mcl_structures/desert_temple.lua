@@ -146,7 +146,6 @@ mcl_structures.register_structure({
 	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
 		local a = seed % 14
 		local b = (math.floor(seed / 39) + 4) % 12
-		minetest.chat_send_all("seed=" .. tostring(seed) .. ", a=" .. tostring(a) .. ", b=" ..tostring(b))
 		if a ~= b then return end
 		mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
 		local current_noise_level = mcl_structures.perlin_noise:get_3d(minp)

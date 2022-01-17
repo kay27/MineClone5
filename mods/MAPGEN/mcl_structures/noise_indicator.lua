@@ -1,3 +1,6 @@
+local step = 1
+local chunk_borders = true
+
 local levels = {
 	[-9] = "black",
 	[-8] = "brown",
@@ -27,8 +30,8 @@ mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
 	mcl_structures.perlin_noise = mcl_structures.perlin_noise or minetest.get_perlin(329, 3, 0.6, 100)
 	local perlin_noise = mcl_structures.perlin_noise
 	local y0 = minp.y
-	for x0 = minp.x, maxp.x do
-		for z0 = minp.z, maxp.z do
+	for x0 = minp.x, maxp.x, step do
+		for z0 = minp.z, maxp.z, step do
 			local current_noise_level = perlin_noise:get_3d({x=x0, y=y0, z=z0})
 			local amount
 			if current_noise_level < 0 then
@@ -38,6 +41,18 @@ mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
 			end
 			local y0 = maxp.y - 9 + amount
 			minetest.set_node({x=x0, y=y0, z=z0}, {name = "mcl_core:glass_"..levels[amount]})
+		end
+	end
+	if chunk_borders then
+		for x0 = minp.x, maxp.x, step do
+			for y0 = minp.y, maxp.y, step do
+				minetest.set_node({x=x0, y=y0, z=maxp.z}, {name = "mcl_core:glass"})
+			end
+		end
+		for z0 = minp.z, maxp.z, step do
+			for y0 = minp.y, maxp.y, step do
+				minetest.set_node({x=maxp.x, y=y0, z=z0}, {name = "mcl_core:glass"})
+			end
 		end
 	end
 end, -1)
