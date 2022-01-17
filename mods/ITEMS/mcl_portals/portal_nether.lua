@@ -355,7 +355,7 @@ function build_nether_portal(pos, width, height, orientation, name, clear_before
 	return pos
 end
 
-function mcl_portals.spawn_nether_portal(pos, rot, pr, name)
+function mcl_portals.spawn_nether_portal(pos, rot, pr, placer)
 	if not pos then return end
 	local o = 0
 	if rot then
@@ -364,6 +364,10 @@ function mcl_portals.spawn_nether_portal(pos, rot, pr, name)
 		elseif rot == "random" then
 			o = random(0,1)
 		end
+	end
+	local name
+	if placer and placer:is_player() then
+		name = placer:get_player_name()
 	end
 	build_nether_portal(pos, nil, nil, o, name, true)
 end
@@ -752,6 +756,8 @@ local function teleport(obj, portal_pos)
 
 	minetest.after(DELAY, teleport_no_delay, obj, portal_pos)
 end
+
+mcl_structures.register_structure({name = "nether_portal", place_function = mcl_portals.spawn_nether_portal})
 
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",

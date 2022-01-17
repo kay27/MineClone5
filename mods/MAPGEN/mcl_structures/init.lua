@@ -19,6 +19,74 @@ local on_finished_chunk_callbacks = {}
 
 mcl_structures.perlin_noise = minetest.get_perlin(329, 3, 0.6, 100)
 
+local spawnstruct_hint = S("Use /help spawnstruct to see a list of avaiable types.")
+
+local function dir_to_rotation(dir)
+	local ax, az = math.abs(dir.x), math.abs(dir.z)
+	if ax > az then
+		if dir.x < 0 then
+			return "270"
+		end
+		return "90"
+	end
+	if dir.z < 0 then
+		return "180"
+	end
+	return "0"
+end
+
+local function spawnstruct_function(name, param)
+	local player = minetest.get_player_by_name(name)
+	if not player then return end
+	if param == "" then
+		minetest.chat_send_player(name, S("Error: No structure type given. Please use “/spawnstruct <type>”."))
+		minetest.chat_send_player(name, spawnstruct_hint)
+		return
+	end
+	local struct = registered_structures[param]
+	if not struct then
+		struct = registered_structures[name_prefix .. param]
+	end
+	if not struct then
+		minetest.chat_send_player(name, S("Error: Unknown structure type. Please use “/spawnstruct <type>”."))
+		minetest.chat_send_player(name, spawnstruct_hint)
+		return
+	end
+	local place = struct.place_function
+	if not place then return end
+
+	local pos = player:get_pos()
+	if not pos then return end
+	local pr = PseudoRandom(math.floor(pos.x * 333 + pos.y * 19 - pos.z + 4))
+	pos = vector.round(pos)
+	local dir = minetest.yaw_to_dir(player:get_look_horizontal())
+	local rot = dir_to_rotation(dir)
+	place(pos, rot, pr, player)
+	minetest.chat_send_player(name, S("Structure placed."))
+end
+
+local function update_spawnstruct_chatcommand()
+	local spawnstruct_params = ""
+	for _, registered_structure in pairs(registered_structures) do
+		if spawnstruct_params ~= "" then
+			spawnstruct_params = spawnstruct_params .. " | "
+		end
+		spawnstruct_params = spawnstruct_params .. registered_structure.short_name
+	end
+	local def = {
+		params = spawnstruct_params,
+		description = S("Generate a pre-defined structure near your position."),
+		privs = {debug = true},
+		func = spawnstruct_function,
+	}
+	local registered_chatcommands = minetest.registered_chatcommands
+	if registered_chatcommands["spawnstruct"] then
+		minetest.override_chatcommand("spawnstruct", def)
+	else
+		minetest.register_chatcommand("spawnstruct", def)
+	end
+end
+
 function process_mapgen_block_lvm(vm_context)
 	local nodes = minetest.find_nodes_in_area(vm_context.minp, vm_context.maxp, {"group:struct"}, true)
 	for node_name, pos_list in pairs(nodes) do
@@ -54,14 +122,15 @@ end
 --	decoration        - decoration definition, to use as structure seed (thanks cora for the idea)
 --	on_finished_block - callback, if needed, to use with decorations: funcion(vm_context, pos_list)
 --	on_finished_chunk - next callback if needed: funcion(minp, maxp, seed, vm_context, pos_list)
---	place_function    - callback to place schematic by /spawnstruct debug command: function(pos, rotation, pr)
+--	place_function    - callback to place schematic by /spawnstruct debug command: function(pos, rotation, pr, placer)
 --	on_placed         - useful when you want to process the area after placement: function(pos, rotation, pr, size)
 function mcl_structures.register_structure(def)
 	local short_name         = def.name
 	local name               = "mcl_structures:" .. short_name
 	local decoration         = def.decoration
-	local on_finished_block    = def.on_finished_block
+	local on_finished_block  = def.on_finished_block
 	local on_finished_chunk  = def.on_finished_chunk
+	local place_function     = def.place_function
 	if not name then
 		minetest.log('warning', 'Structure name is not passed for registration - ignoring')
 		return
@@ -108,12 +177,13 @@ function mcl_structures.register_structure(def)
 		})
 	end
 	registered_structures[name] = {
-		place_function    = def.place_function,
+		place_function    = place_function,
 		on_finished_block = on_finished_block,
 		on_finished_chunk = on_finished_chunk,
 		decoration_id     = decoration_id,
 		short_name        = short_name,
 	}
+	update_spawnstruct_chatcommand()
 	if on_finished_block then
 		on_finished_block_callbacks[name] = on_finished_block
 		if not use_process_mapgen_block_lvm then
@@ -535,62 +605,4 @@ function mcl_structures.generate_end_gateway_portal(pos, rot)
 	return mcl_structures.place_schematic(pos, path, rot or "0", nil, true)
 end
 
-local function dir_to_rotation(dir)
-	local ax, az = math.abs(dir.x), math.abs(dir.z)
-	if ax > az then
-		if dir.x < 0 then
-			return "270"
-		end
-		return "90"
-	end
-	if dir.z < 0 then
-		return "180"
-	end
-	return "0"
-end
-
 dofile(modpath .. "/structures.lua")
-
--- Debug command
-local spawnstruct_params = ""
-for _, registered_structure in pairs(registered_structures) do
-	if spawnstruct_params ~= "" then
-		spawnstruct_params = spawnstruct_params .. " | "
-	end
-	spawnstruct_params = spawnstruct_params .. registered_structure.short_name
-end
-local spawnstruct_hint = S("Use /help spawnstruct to see a list of avaiable types.")
-minetest.register_chatcommand("spawnstruct", {
-	params = spawnstruct_params,
-	description = S("Generate a pre-defined structure near your position."),
-	privs = {debug = true},
-	func = function(name, param)
-		local player = minetest.get_player_by_name(name)
-		if not player then return end
-		if param == "" then
-			minetest.chat_send_player(name, S("Error: No structure type given. Please use “/spawnstruct <type>”."))
-			minetest.chat_send_player(name, spawnstruct_hint)
-			return
-		end
-		local struct = registered_structures[param]
-		if not struct then
-			struct = registered_structures[name_prefix .. param]
-		end
-		if not struct then
-			minetest.chat_send_player(name, S("Error: Unknown structure type. Please use “/spawnstruct <type>”."))
-			minetest.chat_send_player(name, spawnstruct_hint)
-			return
-		end
-		local place = struct.place_function
-		if not place then return end
-
-		local pos = player:get_pos()
-		if not pos then return end
-		local pr = PseudoRandom(math.floor(pos.x * 333 + pos.y * 19 - pos.z + 4))
-		pos = vector.round(pos)
-		local dir = minetest.yaw_to_dir(player:get_look_horizontal())
-		local rot = dir_to_rotation(dir)
-		place(pos, rot, pr)
-		minetest.chat_send_player(name, S("Structure placed."))
-	end
-})

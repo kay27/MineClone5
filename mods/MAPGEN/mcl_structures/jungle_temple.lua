@@ -29,7 +29,12 @@ end
 
 local stair_support_node = {name = "mcl_core:cobble"}
 local function on_placed(p1, rotation, pr, size)
-	local p2 = {x = p1.x + sx - 1, y = p1.y + sy - 1, z = p1.z + sz - 1}
+	local p2
+	if rotation == "90" or rotation == "270" then
+		p2 = {x = p1.x + sz - 1, y = p1.y + sy - 1, z = p1.z + sx - 1}
+	else
+		p2 = {x = p1.x + sx - 1, y = p1.y + sy - 1, z = p1.z + sz - 1}
+	end
 
 	-- Support stairs
 	local y = p1.y + 5
