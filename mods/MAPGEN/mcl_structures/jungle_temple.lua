@@ -45,7 +45,7 @@ local function on_placed(p1, rotation, pr, size)
 	end
 
 	-- Find chests.
-	local chests = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, "mcl_chests:chest")
+	local chests = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, "mcl_chests:trapped_chest_small")
 
 	-- Add desert temple loot into chests
 	for c=1, #chests do
