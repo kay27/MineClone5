@@ -5,6 +5,7 @@ local chance_per_chunk = 15
 local noise_multiplier = 1
 local random_offset    = 133
 local struct_threshold = chance_per_chunk - 1
+local scanning_ratio   = 0.00021
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 
 local node_list = {"mcl_core:dirt_with_grass", "mcl_core:dirt", "mcl_core:stone", "mcl_core:granite", "mcl_core:gravel", "mcl_core:diorite"}
@@ -68,10 +69,18 @@ local function on_placed(p1, rotation, pr, size)
 		end
 	end
 
-	-- Find chests.
-	local chests = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, "mcl_chests:trapped_chest_small")
+	-- Initialize some nodes
+	local chest_node = "mcl_chests:trapped_chest_small"
+	local lever_node = "mesecons_walllever:wall_lever_off"
+	local nodes = minetest.find_nodes_in_area(p1, {x = p2.x, y = p1.y + 5, z = p2.z}, {chest_node, lever_node}, true)
 
-	-- Add desert temple loot into chests
+	local levers = nodes[lever_node]
+	for _, pos in pairs(levers) do
+		mcl_structures.init_node_construct(pos)
+	end
+
+	-- Add loot into chests TODO: fix items
+	local chests = nodes[chest_node]
 	for c=1, #chests do
 		local lootitems = mcl_loot.get_multi_loot({
 		{
@@ -158,7 +167,7 @@ mcl_structures.register_structure({
 		deco_type = "simple",
 		place_on = node_list,
 		flags = "all_floors",
-		fill_ratio = 0.00021,
+		fill_ratio = scanning_ratio,
 		y_min = -20,
 		y_max = mcl_mapgen.overworld.max,
 		height = 1,

@@ -81,25 +81,6 @@ end
 max_noise = max_noise * octaves
 max_noise = offset + scale * max_noise
 
-local function spawn_desert_temple(p, nn, pr, vm_context)
-	if p.y < 5 then return end
-	if nn ~= "mcl_core:sand" and nn ~= "mcl_core:sandstone" then return end
-	-- if pr:next(1,12000) ~= 1 then return end
-	mcl_structures.call_struct(p, "desert_temple", nil, pr)
-	return true
-end
-
-local function spawn_desert_well(p, nn, pr, vm_context)
-	if p.y < 5 then return end
-	if nn ~= "mcl_core:sand" and nn ~= "mcl_core:sandstone" then return end
-	local desert_well_prob = minecraft_chunk_probability(1000, vm_context.minp, vm_context.maxp)
-	-- if pr:next(1, desert_well_prob) ~= 1 then return end
-	local surface = minetest_find_nodes_in_area({x=p.x,y=p.y-1,z=p.z}, {x=p.x+5, y=p.y-1, z=p.z+5}, "mcl_core:sand")
-	if #surface < 25 then return end
-	mcl_structures.call_struct(p, "desert_well", nil, pr)
-	return true
-end
-
 local function spawn_igloo(p, nn, pr, vm_context)
 	if nn ~= "mcl_core:snowblock" and nn ~= "mcl_core:snow" and minetest_get_item_group(nn, "grass_block_snow") ~= 1 then return end
 	-- if pr:next(1, 4400) ~= 1 then return end
@@ -110,23 +91,6 @@ local function spawn_igloo(p, nn, pr, vm_context)
 	mcl_structures.call_struct(p, "igloo", nil, pr)
 	-- chunk_has_igloo = true
 	return true
-end
-
-local function spawn_fossil(p, nn, pr, vm_context)
-	-- if chunk_has_desert_temple or p.y < 4 then return end
-	if p.y < 4 then return end
-	if nn ~= "mcl_core:sandstone" and nn ~= "mcl_core:sand" then return end
-	local fossil_prob = minecraft_chunk_probability(64, vm_context.minp, vm_context.maxp)
-	if pr:next(1, fossil_prob) ~= 1 then return end
-	-- Spawn fossil below desert surface between layers 40 and 49
-	local p1 = {x=p.x, y=pr:next(mcl_worlds.layer_to_y(40), mcl_worlds.layer_to_y(49)), z=p.z}
-	-- Very rough check of the environment (we expect to have enough stonelike nodes).
-	-- Fossils may still appear partially exposed in caves, but this is O.K.
-	local p2 = vector.add(p1, 4)
-	local nodes = minetest_find_nodes_in_area(p1, p2, {"mcl_core:sandstone", "mcl_core:stone", "mcl_core:diorite", "mcl_core:andesite", "mcl_core:granite", "mcl_core:stone_with_coal", "mcl_core:dirt", "mcl_core:gravel"})
-	if #nodes < 100 then return end
-	-- >= 80%
-	mcl_structures.call_struct(p1, "fossil", nil, pr)
 end
 
 local witch_hut_offsets = {

@@ -337,9 +337,7 @@ function mcl_structures.call_struct(pos, struct_style, rotation, pr, callback)
 	if not rotation then
 		rotation = "random"
 	end
-	if struct_style == "desert_well" then
-		return mcl_structures.generate_desert_well(pos, rotation)
-	elseif struct_style == "igloo" then
+	if struct_style == "igloo" then
 		return mcl_structures.generate_igloo(pos, rotation, pr)
 	elseif struct_style == "witch_hut" then
 		return mcl_structures.generate_witch_hut(pos, rotation)
@@ -349,8 +347,6 @@ function mcl_structures.call_struct(pos, struct_style, rotation, pr, callback)
 		return mcl_structures.generate_ice_spike_large(pos, rotation)
 	elseif struct_style == "boulder" then
 		return mcl_structures.generate_boulder(pos, rotation, pr)
-	elseif struct_style == "fossil" then
-		return mcl_structures.generate_fossil(pos, rotation, pr)
 	elseif struct_style == "end_exit_portal" then
 		return mcl_structures.generate_end_exit_portal(pos, rotation, pr, callback)
 	elseif struct_style == "end_exit_portal_open" then
@@ -378,17 +374,6 @@ function mcl_structures.generate_end_portal(pos, rotation, pr)
 			end
 		end
 	end
-end
-
-function mcl_structures.generate_desert_well(pos, rot)
-	local newpos = {x=pos.x,y=pos.y-2,z=pos.z}
-	local path = modpath.."/schematics/mcl_structures_desert_well.mts"
-	return mcl_structures.place_schematic({
-		pos = newpos,
-		schematic = path,
-		rotation = rot or "0",
-		force_placement = true
-	})
 end
 
 function mcl_structures.generate_igloo(pos, rotation, pr)
@@ -590,24 +575,6 @@ function mcl_structures.generate_ice_spike_large(pos, rotation)
 	return minetest.place_schematic(pos, path, rotation or "random", nil, false) -- don't serialize schematics for registered biome decorations, for MT 5.4.0
 end
 
-function mcl_structures.generate_fossil(pos, rotation, pr)
-	-- Generates one out of 8 possible fossil pieces
-	local newpos = {x=pos.x,y=pos.y-1,z=pos.z}
-	local fossils = {
-		"mcl_structures_fossil_skull_1.mts", -- 4×5×5
-		"mcl_structures_fossil_skull_2.mts", -- 5×5×5
-		"mcl_structures_fossil_skull_3.mts", -- 5×5×7
-		"mcl_structures_fossil_skull_4.mts", -- 7×5×5
-		"mcl_structures_fossil_spine_1.mts", -- 3×3×13
-		"mcl_structures_fossil_spine_2.mts", -- 5×4×13
-		"mcl_structures_fossil_spine_3.mts", -- 7×4×13
-		"mcl_structures_fossil_spine_4.mts", -- 8×5×13
-	}
-	local r = pr:next(1, #fossils)
-	local path = modpath.."/schematics/"..fossils[r]
-	return mcl_structures.place_schematic(newpos, path, rotation or "random", nil, true)
-end
-
 function mcl_structures.generate_end_exit_portal(pos, rot, pr, callback)
 	local path = modpath.."/schematics/mcl_structures_end_exit_portal.mts"
 	return mcl_structures.place_schematic(pos, path, rot or "0", {["mcl_portals:portal_end"] = "air"}, true, nil, callback)
@@ -621,6 +588,17 @@ end
 function mcl_structures.generate_end_gateway_portal(pos, rot)
 	local path = modpath.."/schematics/mcl_structures_end_gateway_portal.mts"
 	return mcl_structures.place_schematic(pos, path, rot or "0", nil, true)
+end
+
+local chunk_square = mcl_mapgen.CS_NODES * mcl_mapgen.CS_NODES
+local block_square = mcl_mapgen.BS * mcl_mapgen.BS
+
+function mcl_structures.from_16x16_to_chunk_inverted_chance(x)
+	return math.floor(x * chunk_square / 256 + 0.5)
+end
+
+function mcl_structures.from_16x16_to_block_inverted_chance(x)
+	return math.floor(x * block_square / 256 + 0.5)
 end
 
 dofile(modpath .. "/structures.lua")
