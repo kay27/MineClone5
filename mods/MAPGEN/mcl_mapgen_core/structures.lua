@@ -67,7 +67,6 @@ end
 
 --local chunk_has_desert_struct
 --local chunk_has_desert_temple
---local chunk_has_igloo
 
 local octaves = 3
 local persistence = 0.6
@@ -80,18 +79,6 @@ for i = 1, octaves do
 end
 max_noise = max_noise * octaves
 max_noise = offset + scale * max_noise
-
-local function spawn_igloo(p, nn, pr, vm_context)
-	if nn ~= "mcl_core:snowblock" and nn ~= "mcl_core:snow" and minetest_get_item_group(nn, "grass_block_snow") ~= 1 then return end
-	-- if pr:next(1, 4400) ~= 1 then return end
-	-- Check surface
-	local floor = {x=p.x+9, y=p.y-1, z=p.z+9}
-	local surface = minetest_find_nodes_in_area({x=p.x,y=p.y-1,z=p.z}, floor, {"mcl_core:snowblock", "mcl_core:dirt_with_grass_snow"})
-	if #surface < 63 then return end
-	mcl_structures.call_struct(p, "igloo", nil, pr)
-	-- chunk_has_igloo = true
-	return true
-end
 
 local witch_hut_offsets = {
 	["0"] = {
@@ -228,7 +215,6 @@ local function generate_structures(vm_context)
 	local pr = PcgRandom(vm_context.chunkseed)
 	-- chunk_has_desert_struct = false
 	-- chunk_has_desert_temple = false
-	-- chunk_has_igloo = false
 	local minp, maxp = vm_context.minp, vm_context.maxp
 
 	perlin_structures = perlin_structures or minetest.get_perlin(329, 3, 0.6, 100)
@@ -251,7 +237,6 @@ local function generate_structures(vm_context)
 				if minetest.registered_nodes[nn0] and minetest.registered_nodes[nn0].buildable_to then
 					--spawn_desert_temple(p, nn, pr, vm_context)
 					--spawn_desert_well(p, nn, pr, vm_context)
-					--spawn_igloo(p, nn, pr, vm_context)
 					--spawn_fossil(p, nn, pr, vm_context)
 					--spawn_witch_hut(p, nn, pr, vm_context)
 					if V6 then

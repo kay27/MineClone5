@@ -450,6 +450,7 @@ mcl_mapgen.dungeons = normal
 
 mcl_mapgen.overworld = overworld
 mcl_mapgen.end_ = end_
+mcl_mapgen["end"] = mcl_mapgen.end_
 mcl_mapgen.nether = nether
 
 mcl_mapgen.order = order
