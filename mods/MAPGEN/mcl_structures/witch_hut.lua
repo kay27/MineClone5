@@ -4,7 +4,7 @@ local modpath = minetest.get_modpath(modname)
 local chance_per_chunk = 3
 local noise_multiplier = -0.9
 local random_offset    = 8
-local scanning_ratio   = 0.0001
+local scanning_ratio   = 0.01
 local struct_threshold = chance_per_chunk - 1
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
@@ -67,14 +67,19 @@ local function get_place_rank(pos)
 end
 
 local function tune_pos(pos)
+	local pos = table.copy(pos)
 	local y = pos.y - 1
 	if y >= WITCH_HUT_HEIGHT - 5 and y <= WITCH_HUT_HEIGHT + 5 then
 		pos.y = WITCH_HUT_HEIGHT
 		return pos
 	end
+	local x = pos.x
+	local z = pos.z
+	local p1 = {x = x - 3, y = y    , z = z - 3}
+	local p2 = {x = x + 3, y = y + 2, z = z + 3}
 	local water_list = minetest.find_nodes_in_area(p1, p2, {"group:water"}, false)
 	if not water_list or #water_list < 1 then
-		pos.y = pos.y - 1
+		pos.y = y
 		return pos
 	end
 	local top = -1
@@ -83,7 +88,7 @@ local function tune_pos(pos)
 			top = pos.y
 		end
 	end
-	pos.y = top - 1
+	pos.y = top
 	return pos
 end
 
@@ -94,7 +99,7 @@ mcl_structures.register_structure({
 		place_on = node_list,
 		spawn_by = {"mcl_core:water_source", "group:frosted_ice"},
 		num_spawn_by = 1,
-		flags = "all_floors",
+		-- flags = "all_floors",
 		fill_ratio = scanning_ratio,
 		y_min = mcl_mapgen.overworld.min,
 		y_max = mcl_mapgen.overworld.max,

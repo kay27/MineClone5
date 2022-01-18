@@ -159,7 +159,7 @@ function mcl_structures.register_structure(def)
 	local decoration_id
 	if decoration then
 		minetest.register_node(':' .. name, {
-			drawtype            = "airlike",
+			-- drawtype            = "airlike",
 			sunlight_propagates = true,
 			pointable           = false,
 			walkable            = false,
