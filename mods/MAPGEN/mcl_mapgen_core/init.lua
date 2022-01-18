@@ -1602,9 +1602,6 @@ mcl_mapgen.register_mapgen_block_lvm(basic_safe, 1)
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(modpath .. "/clay.lua")
 dofile(modpath .. "/tree_decoration.lua")
-if minetest.get_modpath("mcl_structures") then
-	dofile(modpath .. "/structures.lua")
-end
 
 mcl_mapgen.register_mapgen_block_lvm(function(vm_context)
 	local minp = vm_context.minp
