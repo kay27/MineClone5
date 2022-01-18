@@ -2,10 +2,10 @@ local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 
 -- local chance_per_chunk = mcl_structures.from_16x16_to_chunk_inverted_chance(4400)
-local chance_per_chunk = 1
-local noise_multiplier = 0 --1.3
-local random_offset    = 132
-local struct_threshold = 0 --chance_per_chunk - 1
+local chance_per_chunk = 100
+local noise_multiplier = 1.4
+local random_offset    = 555
+local struct_threshold = chance_per_chunk - 1
 local scanning_ratio   = 0.0003
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level

@@ -1,6 +1,4 @@
-
 local END_EXIT_PORTAL_POS = vector.new(-3, -27003, -3) -- End exit portal position
-local WITCH_HUT_HEIGHT = 3 -- Exact Y level to spawn witch huts at. This height refers to the height of the floor
 local OVERWORLD_STRUCT_MIN, OVERWORLD_STRUCT_MAX = mcl_mapgen.overworld.min, mcl_mapgen.overworld.max
 local END_STRUCT_MIN, END_STRUCT_MAX = mcl_mapgen.end_.min, mcl_mapgen.end_.max
 local DIVLEN = 5
@@ -80,93 +78,6 @@ end
 max_noise = max_noise * octaves
 max_noise = offset + scale * max_noise
 
-local witch_hut_offsets = {
-	["0"] = {
-		{x=1, y=0, z=1}, {x=1, y=0, z=5}, {x=6, y=0, z=1}, {x=6, y=0, z=5},
-	},
-	["180"] = {
-		{x=2, y=0, z=1}, {x=2, y=0, z=5}, {x=7, y=0, z=1}, {x=7, y=0, z=5},
-	},
-	["270"] = {
-		{x=1, y=0, z=1}, {x=5, y=0, z=1}, {x=1, y=0, z=6}, {x=5, y=0, z=6},
-	},
-	["90"] = {
-		{x=1, y=0, z=2}, {x=5, y=0, z=2}, {x=1, y=0, z=7}, {x=5, y=0, z=7},
-	},
-}
-
-local function spawn_witch_hut(p, nn, pr, vm_context)
-	minetest.log("warning", "p="..minetest.pos_to_string(p)..", nn="..nn)
-	-- if p.y > 1 or minetest_get_item_group(nn, "dirt") == 0 then return end
-	local minp, maxp = vm_context.minp, vm_context.maxp
-	local prob = minecraft_chunk_probability(48, minp, maxp)
-	minetest.log("warning", "prob="..tostring(prob))
-	-- if pr:next(1, prob) ~= 1 then return end
-
-	-- Where do witches live?
-	if V6 then
-		-- v6: In Normal biome
-		if biomeinfo.get_v6_biome(p) ~= "Normal" then return end
-	else
-		-- Other mapgens: In swampland biome
-		local biomemap = vm_context.biomemap
-		if not biomemap then
-			vm_context.biomemap = minetest_get_mapgen_object('biomemap')
-			biomemap = vm_context.biomemap
-		end
-		local swampland = minetest.get_biome_id("Swampland")
-		local swampland_shore = minetest.get_biome_id("Swampland_shore")
-		local bi = xz_to_biomemap_index(p.x, p.z, vm_context.minp, vm_context.maxp)
-		-- if biomemap[bi] ~= swampland and biomemap[bi] ~= swampland_shore then return end
-	end
-
-	local r = tostring(pr:next(0, 3) * 90) -- "0", "90", "180" or 270"
-	local p1 = {x=p.x-1, y=WITCH_HUT_HEIGHT+2, z=p.z-1}
-	local size
-	if r == "0" or r == "180" then
-		size = {x=10, y=4, z=8}
-	else
-		size = {x=8, y=4, z=10}
-	end
-	local p2 = vector.add(p1, size)
-
-	-- This checks free space at the “body” of the hut and a bit around.
-	-- ALL nodes must be free for the placement to succeed.
-	local free_nodes = minetest_find_nodes_in_area(p1, p2, {"air", "mcl_core:water_source", "mcl_flowers:waterlily"})
-	if #free_nodes < ((size.x+1)*(size.y+1)*(size.z+1)) then return end
-
-	local place = {x=p.x, y=WITCH_HUT_HEIGHT-1, z=p.z}
-
-	-- FIXME: For some mysterious reason (black magic?) this
-	-- function does sometimes NOT spawn the witch hut. One can only see the
-	-- oak wood nodes in the water, but no hut. :-/
-	mcl_structures.call_struct(place, "witch_hut", r, pr)
-
-	-- TODO: Spawn witch in or around hut when the mob sucks less.
-
-	local function place_tree_if_free(pos, prev_result)
-		local nn = minetest.get_node(pos).name
-		if nn == "mcl_flowers:waterlily" or nn == "mcl_core:water_source" or nn == "mcl_core:water_flowing" or nn == "air" then
-			minetest.set_node(pos, {name="mcl_core:tree", param2=0})
-			return prev_result
-		else
-			return false
-		end
-	end
-
-	local offsets = witch_hut_offsets[r]
-	for o=1, #offsets do
-		local ok = true
-		for y=place.y-1, place.y-64, -1 do
-			local tpos = vector.add(place, offsets[o])
-			tpos.y = y
-			ok = place_tree_if_free(tpos, ok)
-			if not ok then
-				break
-			end
-		end
-	end
-end
 
 -- TODO: Check spikes sizes, it looks like we have to swap them:
 
@@ -235,10 +146,6 @@ local function generate_structures(vm_context)
 				local nn0 = minetest.get_node(p).name
 				-- Check if the node can be replaced
 				if minetest.registered_nodes[nn0] and minetest.registered_nodes[nn0].buildable_to then
-					--spawn_desert_temple(p, nn, pr, vm_context)
-					--spawn_desert_well(p, nn, pr, vm_context)
-					--spawn_fossil(p, nn, pr, vm_context)
-					--spawn_witch_hut(p, nn, pr, vm_context)
 					if V6 then
 						spawn_spikes_in_v6(p, nn, pr, vm_context)
 					end
