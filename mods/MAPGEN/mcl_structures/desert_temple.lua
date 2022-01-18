@@ -1,7 +1,11 @@
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 
-local per_chunk_probability = 11
+local chance_per_chunk = 11
+local noise_multiplier = 1
+local random_offset    = 999
+local struct_threshold = chance_per_chunk - 1
+
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 
 local node_list = {"mcl_core:sand", "mcl_core:sandstone", "mcl_core:redsand", "mcl_colorblocks:hardened_clay_orange"}
@@ -147,10 +151,10 @@ mcl_structures.register_structure({
 		},
 	},
 	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
-		local pr = PseudoRandom(seed + 999)
-		local random_number = pr:next(1, per_chunk_probability)
-		local noise = mcl_structures_get_perlin_noise_level(minp)
-		if (random_number + noise) < (per_chunk_probability - 1) then return end
+		local pr = PseudoRandom(seed + random_offset)
+		local random_number = pr:next(1, chance_per_chunk)
+		local noise = mcl_structures_get_perlin_noise_level(minp) * noise_multiplier
+		if (random_number + noise) < struct_threshold then return end
 		local pos = pos_list[1]
 		if #pos_list > 1 then
 			local count = get_place_rank(pos)

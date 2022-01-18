@@ -1,15 +1,15 @@
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 
-local chance_per_chunk = 9
-local noise_multiplier = 1.3
-local random_offset    = 132
+local chance_per_chunk = 15
+local noise_multiplier = 1
+local random_offset    = 133
 local struct_threshold = chance_per_chunk - 1
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 
 local node_list = {"mcl_core:dirt_with_grass", "mcl_core:dirt", "mcl_core:stone", "mcl_core:granite", "mcl_core:gravel", "mcl_core:diorite"}
 
-local schematic_file = modpath .. "/schematics/mcl_structures_jungle_temple.mts"
+local schematic_file = modpath .. "/schematics/mcl_structures_nice_jungle_temple.mts"
 
 local temple_schematic_lua = minetest.serialize_schematic(schematic_file, "lua", {lua_use_comments = false, lua_num_indent_spaces = 0}) .. " return schematic"
 local temple_schematic = loadstring(temple_schematic_lua)()
@@ -41,6 +41,12 @@ local stair_support_node = {
 	{name = "mcl_core:stonebrickcracked"},
 }
 
+local nodes_to_be_supported = {
+	"mcl_stairs:stair_cobble",
+	"mcl_stairs:stair_stonebrickmossy",
+	"mcl_stairs:stair_stonebrickcracked",
+}
+
 local function on_placed(p1, rotation, pr, size)
 	local p2
 	if rotation == "90" or rotation == "270" then
@@ -52,7 +58,7 @@ local function on_placed(p1, rotation, pr, size)
 	-- Support stairs
 	local y = p1.y + 5
 	local bottom = mcl_mapgen.get_chunk_beginning(y)
-	local stair_list = minetest.find_nodes_in_area({x = p1.x, y = y, z = p1.z}, {x = p2.x, y = y, z = p2.z}, {"mcl_stairs:stair_cobble"}, false)
+	local stair_list = minetest.find_nodes_in_area({x = p1.x, y = y, z = p1.z}, {x = p2.x, y = y, z = p2.z}, nodes_to_be_supported, false)
 	for i = 1, #stair_list do
 		local pos = stair_list[i]
 		pos.y = y - 1
@@ -147,13 +153,13 @@ local function get_place_rank(pos)
 end
 
 mcl_structures.register_structure({
-	name = "jungle_temple",
+	name = "nice_jungle_temple",
 	decoration = {
 		deco_type = "simple",
 		place_on = node_list,
 		flags = "all_floors",
-		fill_ratio = 0.0003,
-		y_min = -13,
+		fill_ratio = 0.00021,
+		y_min = -20,
 		y_max = mcl_mapgen.overworld.max,
 		height = 1,
 		biomes =
