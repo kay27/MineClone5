@@ -339,10 +339,6 @@ function mcl_structures.call_struct(pos, struct_style, rotation, pr, callback)
 	end
 	if struct_style == "witch_hut" then
 		return mcl_structures.generate_witch_hut(pos, rotation)
-	elseif struct_style == "ice_spike_small" then
-		return mcl_structures.generate_ice_spike_small(pos, rotation)
-	elseif struct_style == "ice_spike_large" then
-		return mcl_structures.generate_ice_spike_large(pos, rotation)
 	elseif struct_style == "boulder" then
 		return mcl_structures.generate_boulder(pos, rotation, pr)
 	elseif struct_style == "end_exit_portal" then
@@ -403,11 +399,6 @@ end
 function mcl_structures.generate_witch_hut(pos, rotation, pr)
 	local path = modpath.."/schematics/mcl_structures_witch_hut.mts"
 	mcl_structures.place_schematic(pos, path, rotation, nil, true, nil, hut_placement_callback, pr)
-end
-
-function mcl_structures.generate_ice_spike_small(pos, rotation)
-	local path = modpath.."/schematics/mcl_structures_ice_spike_small.mts"
-	return minetest.place_schematic(pos, path, rotation or "random", nil, false) -- don't serialize schematics for registered biome decorations, for MT 5.4.0
 end
 
 function mcl_structures.generate_ice_spike_large(pos, rotation)

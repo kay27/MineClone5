@@ -203,7 +203,6 @@ mcl_structures.register_structure({
 			end
 		end
 		if count < 0 then return end
-		local pr = PseudoRandom(vm_context.chunkseed)
 		place(pos, nil, pr)
 	end,
 	place_function = place,
