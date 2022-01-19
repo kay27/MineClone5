@@ -19,7 +19,7 @@ local W_MIN, W_MAX			= 4, 23
 local H_MIN, H_MAX			= 5, 23
 local N_MIN, N_MAX			= 6, (W_MAX-2) * (H_MAX-2)
 local TRAVEL_X, TRAVEL_Y, TRAVEL_Z	= 8, 1, 8
-local LIM_MIN, LIM_MAX			= mcl_vars.mapgen_edge_min, mcl_vars.mapgen_edge_max
+local LIM_MIN, LIM_MAX			= mcl_mapgen.EDGE_MIN, mcl_mapgen.EDGE_MAX
 local PLAYER_COOLOFF, MOB_COOLOFF	= 3, 14 -- for this many seconds they won't teleported again
 local TOUCH_CHATTER_TIME		= 1 -- prevent multiple teleportation attempts caused by multiple portal touches, for this number of seconds
 local CHATTER_US			= TOUCH_CHATTER_TIME * 1000000
@@ -27,8 +27,8 @@ local DELAY				= 3 -- seconds before teleporting in Nether portal in Survival mo
 local DISTANCE_MAX			= 128
 local PORTAL				= "mcl_portals:portal"
 local OBSIDIAN				= "mcl_core:obsidian"
-local O_Y_MIN, O_Y_MAX			= max(mcl_vars.mg_overworld_min, -31), min(mcl_vars.mg_overworld_max, 2048)
-local N_Y_MIN, N_Y_MAX			= mcl_vars.mg_bedrock_nether_bottom_min, mcl_vars.mg_bedrock_nether_top_min - H_MIN
+local O_Y_MIN, O_Y_MAX			= max(mcl_mapgen.overworld.min, -31), min(mcl_mapgen.overworld.max, 2048)
+local N_Y_MIN, N_Y_MAX			= mcl_mapgen.nether.bedrock_bottom_min, mcl_mapgen.nether.bedrock_top_min - H_MIN
 
 -- Alpha and particles
 local node_particles_allowed = minetest.settings:get("mcl_node_particles") or "none"
@@ -66,7 +66,7 @@ minetest.register_on_shutdown(function()
 	storage:set_string("nether_exits_keys", minetest.serialize(keys))
 end)
 
-local get_node = mcl_vars.get_node
+local get_node = mcl_mapgen.get_far_node
 local set_node = minetest.set_node
 local registered_nodes = minetest.registered_nodes
 local is_protected = minetest.is_protected
@@ -355,7 +355,7 @@ function build_nether_portal(pos, width, height, orientation, name, clear_before
 	return pos
 end
 
-function mcl_portals.spawn_nether_portal(pos, rot, pr, name)
+function mcl_portals.spawn_nether_portal(pos, rot, pr, placer)
 	if not pos then return end
 	local o = 0
 	if rot then
@@ -364,6 +364,10 @@ function mcl_portals.spawn_nether_portal(pos, rot, pr, name)
 		elseif rot == "random" then
 			o = random(0,1)
 		end
+	end
+	local name
+	if placer and placer:is_player() then
+		name = placer:get_player_name()
 	end
 	build_nether_portal(pos, nil, nil, o, name, true)
 end
@@ -437,7 +441,7 @@ local function create_portal_2(pos1, name, obj)
 	end
 	local exit = build_nether_portal(pos1, W_MIN-2, H_MIN-2, orientation, name)
 	finalize_teleport(obj, exit)
-	local cn = mcl_vars.get_chunk_number(pos1)
+	local cn = mcl_mapgen.get_chunk_number(pos1)
 	chunks[cn] = nil
 	if queue[cn] then
 		for next_obj, _ in pairs(queue[cn]) do
@@ -451,9 +455,9 @@ end
 
 local function get_lava_level(pos, pos1, pos2)
 	if pos.y > -1000 then
-		return max(min(mcl_vars.mg_lava_overworld_max, pos2.y-1), pos1.y+1)
+		return max(min(mcl_mapgen.overworld.lava_max, pos2.y-1), pos1.y+1)
 	end
-	return max(min(mcl_vars.mg_lava_nether_max, pos2.y-1), pos1.y+1)
+	return max(min(mcl_mapgen.nether.lava_max, pos2.y-1), pos1.y+1)
 end
 
 local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
@@ -532,7 +536,7 @@ local function ecb_scan_area_2(blockpos, action, calls_remaining, param)
 end
 
 local function create_portal(pos, limit1, limit2, name, obj)
-	local cn = mcl_vars.get_chunk_number(pos)
+	local cn = mcl_mapgen.get_chunk_number(pos)
 	if chunks[cn] then
 		local q = queue[cn] or {}
 		q[obj] = true
@@ -545,8 +549,8 @@ local function create_portal(pos, limit1, limit2, name, obj)
 	-- so we'll emerge single chunk only: 5x5x5 blocks, 80x80x80 nodes maximum
 	-- and maybe one more chunk from below if (SCAN_2_MAP_CHUNKS = true)
 
-	local pos1 = add(mul(mcl_vars.pos_to_chunk(pos), mcl_vars.chunk_size_in_nodes), mcl_vars.central_chunk_offset_in_nodes)
-	local pos2 = add(pos1, mcl_vars.chunk_size_in_nodes - 1)
+	local pos1 = add(mul(mcl_mapgen.pos_to_chunk(pos), mcl_mapgen.CS_NODES), mcl_mapgen.OFFSET_NODES)
+	local pos2 = add(pos1, mcl_mapgen.CS_NODES - 1)
 
 	if not SCAN_2_MAP_CHUNKS then
 		if limit1 and limit1.x and limit1.y and limit1.z then
@@ -560,8 +564,8 @@ local function create_portal(pos, limit1, limit2, name, obj)
 	end
 
 	-- Basically the copy of code above, with minor additions to continue the search in single additional chunk below:
-	local next_chunk_1 = {x = pos1.x, y = pos1.y - mcl_vars.chunk_size_in_nodes, z = pos1.z}
-	local next_chunk_2 = add(next_chunk_1, mcl_vars.chunk_size_in_nodes - 1)
+	local next_chunk_1 = {x = pos1.x, y = pos1.y - mcl_mapgen.CS_NODES, z = pos1.z}
+	local next_chunk_2 = add(next_chunk_1, mcl_mapgen.CS_NODES - 1)
 	local next_pos = {x = pos.x, y=max(next_chunk_2.y, limit1.y), z = pos.z}
 	if limit1 and limit1.x and limit1.y and limit1.z then
 		pos1 = {x = max(min(limit1.x, pos.x), pos1.x), y = max(min(limit1.y, pos.y), pos1.y), z = max(min(limit1.z, pos.z), pos1.z)}
@@ -692,6 +696,7 @@ local function teleport_no_delay(obj, pos)
 		finalize_teleport(obj, exit)
 	else
 		dim = dimension_to_teleport[dim]
+		if not dim then return end
 		-- need to create arrival portal
 		create_portal(target, limits[dim].pmin, limits[dim].pmax, name, obj)
 	end
@@ -752,6 +757,8 @@ local function teleport(obj, portal_pos)
 
 	minetest.after(DELAY, teleport_no_delay, obj, portal_pos)
 end
+
+mcl_structures.register_structure({name = "nether_portal", place_function = mcl_portals.spawn_nether_portal})
 
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
