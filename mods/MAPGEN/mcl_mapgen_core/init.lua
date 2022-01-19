@@ -1612,7 +1612,7 @@ mcl_mapgen.register_mapgen_block_lvm(function(vm_context)
 	local maxp = vm_context.maxp
 	local maxy = maxp.y
 	if maxy <= mcl_mapgen.end_.min then return end
-	local p1 = {x = minp.x, y = math.max(miny, mcl_mapgen.end_.min), z = maxp.z}
+	local p1 = {x = minp.x, y = math.max(miny, mcl_mapgen.end_.min), z = minp.z}
 	local p2 = {x = maxp.x, y = math.min(maxy, mcl_mapgen.end_.max), z = maxp.z}
 	vm_context.vm:set_lighting({day=15, night=15}, p1, p2)
 	vm_context.write = true
