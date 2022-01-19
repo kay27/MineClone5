@@ -4,7 +4,8 @@
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 
-local mg_name = minetest.get_mapgen_setting("mg_name")
+local mg_name = mcl_mapgen.name
+local v6 = mcl_mapgen.v6
 
 local math = math
 local vector = vector
@@ -381,7 +382,7 @@ function mcl_core.generate_tree(pos, tree_type, options)
 	local balloon = options and options.balloon
 
 	if tree_type == nil or tree_type == OAK_TREE_ID then
-		if mg_name == "v6" then
+		if v6 then
 			mcl_core.generate_v6_oak_tree(pos)
 		else
 			if balloon then
@@ -396,7 +397,7 @@ function mcl_core.generate_tree(pos, tree_type, options)
 		if two_by_two then
 			mcl_core.generate_huge_spruce_tree(pos)
 		else
-			if mg_name == "v6" then
+			if v6 then
 				mcl_core.generate_v6_spruce_tree(pos)
 			else
 				mcl_core.generate_spruce_tree(pos)
@@ -408,7 +409,7 @@ function mcl_core.generate_tree(pos, tree_type, options)
 		if two_by_two then
 			mcl_core.generate_huge_jungle_tree(pos)
 		else
-			if mg_name == "v6" then
+			if v6 then
 				mcl_core.generate_v6_jungle_tree(pos)
 			else
 				mcl_core.generate_jungle_tree(pos)
@@ -786,7 +787,7 @@ function mcl_core.generate_huge_jungle_tree(pos)
 end
 
 
-local grass_spread_randomizer = PseudoRandom(minetest.get_mapgen_setting("seed"))
+local grass_spread_randomizer = PseudoRandom(mcl_mapgen.seed)
 
 function mcl_core.get_grass_palette_index(pos)
 	local biome_data = minetest.get_biome_data(pos)
