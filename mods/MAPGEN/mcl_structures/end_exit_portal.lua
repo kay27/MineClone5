@@ -33,7 +33,7 @@ mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
 	for y = y2, y1, -1 do
 		p.y = y
 		if minetest.get_node(p).name == "mcl_end:end_stone" then
-			place(p, "0", PseudoRandom(vm_content.chunkseed))
+			place(p, "0", PseudoRandom(vm_context.chunkseed))
 			return
 		end
 	end
@@ -41,12 +41,12 @@ mcl_mapgen.register_mapgen(function(minp, maxp, seed, vm_context)
 	for y = y2, y1, -1 do
 		p.y = y
 		if minetest.get_node(p).name ~= "air" then
-			place(p, "0", PseudoRandom(vm_content.chunkseed))
+			place(p, "0", PseudoRandom(vm_context.chunkseed))
 			return
 		end
 	end
 
-	place(p0, "0", PseudoRandom(vm_content.chunkseed))
+	place(p0, "0", PseudoRandom(vm_context.chunkseed))
 end)
 
 mcl_structures.register_structure({name = "end_exit_portal", place_function = place})
