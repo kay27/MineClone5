@@ -276,9 +276,11 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			vm:set_light_data(light)
 		end
 		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
-			vm:calc_lighting(minp, maxp, vm_context.shadow or true) -- TODO: check boundaries
+			vm:calc_lighting(minp, maxp, (vm_context.shadow ~= nil) or true) -- TODO: check boundaries
 			vm:write_to_map()
 			vm:update_liquids()
+		elseif vm_context.calc_lighting then
+			vm:calc_lighting(minp, maxp, (vm_context.shadow ~= nil) or true)
 		end
 	end
 
@@ -323,6 +325,8 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			-- vm:calc_lighting(minp, maxp, vm_context.shadow or true)
 			vm:write_to_map()
 			vm:update_liquids()
+		elseif vm_context.calc_lighting then
+			vm:calc_lighting(minp, maxp, (vm_context.shadow ~= nil) or true)
 		end
 		current_chunks[i] = nil
 	end
