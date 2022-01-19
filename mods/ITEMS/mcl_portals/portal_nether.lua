@@ -696,6 +696,7 @@ local function teleport_no_delay(obj, pos)
 		finalize_teleport(obj, exit)
 	else
 		dim = dimension_to_teleport[dim]
+		if not dim then return end
 		-- need to create arrival portal
 		create_portal(target, limits[dim].pmin, limits[dim].pmax, name, obj)
 	end
