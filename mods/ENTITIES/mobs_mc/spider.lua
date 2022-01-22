@@ -77,6 +77,7 @@ local spider = {
 mobs:register_mob("mobs_mc:spider", spider)
 
 
+
 --Cave Spider
 
 local cave_spider = {
@@ -89,19 +90,19 @@ local cave_spider = {
 	docile_by_day = true,
 	rotate = 270,
 
-	--work-around for poison until punch augmentations are added to mob API
-	--works functionally but the jump while punching animation in gone
+	--[[work-around for poison until punch augmentations are added to mob API
+	works functionally but the jump while punching animation in gone--]]
 	reach = 0.5, --makes it look like it's biting
 	attack_type = "projectile",
-	arrow = "spider_venom", --ultra short range projectile to inflict poison effect
-	projectile_cooldown_min = 1, --if kept at 0.5, this mob can annhiliate you
+	arrow = "spider_venom", --ultra short range projectile to inflict poison effect + punch damage
+	projectile_cooldown_min = 1,
 	projectile_cooldown_max = 1,
 	shoot_arrow = function(self, pos, dir)
 		local dmg = 2
 		mobs.shoot_projectile_handling("mobs_mc:spider_venom", pos, dir, self.object:get_yaw(), self.object, 1, dmg,nil,nil,nil,-0.6)
 	end,
 
-	hp_min = 1,
+	hp_min = 12, --reflect Minecraft health
 	hp_max = 12,
 	ignores_cobwebs = true,
 	xp_min = 5,
@@ -126,7 +127,7 @@ local cave_spider = {
 	},
 	base_pitch = 1.25,
 	walk_velocity = 1.3,
-	run_velocity = 3.2,
+	run_velocity = 3.5, --Compenstaing for the loss of aility to leap while attacking
 	jump = true,
 	jump_height = 4,
 	view_range = 16,
@@ -168,15 +169,25 @@ mobs:register_arrow("mobs_mc:spider_venom", {
 			full_punch_interval = 1.0,
 			damage_groups = {fleshy = self._damage},
 		}, nil)
+
 		mcl_potions.poison_func(player, 0.5, 8) --modified cuz MC rate is an unessesarily bad fraction
+		local vel = player:get_velocity()
+		player:add_velocity({x=(vel.x * -1.5), y=6, z=(vel.z * -1.5)}) --"chaos knockback" effect (Temporary until I understand how to implement knockback for a projectile)
 	end,
 
 	hit_mob = function(self, mob)
-		mob:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = self._damage},
-		}, nil)
-		mcl_potions.poison_func(mob, 0.5, 8) --modified cuz MC rate is an unessesarily bad fraction
+		if mob ~= self then --due to low power of attack, spider can shoot itself while chasing a target
+			mob:punch(self.object, 1.0, {
+				full_punch_interval = 1.0,
+				damage_groups = {fleshy = self._damage},
+			}, nil)
+
+			if ((mob ~= "mobs_mc:cave_spider") and (mob ~= "mobs_mc:spider")) then --spider's don't have automatic immunity to poison yet so this is a stop gap solution
+				mcl_potions.poison_func(mob, 0.5, 8) --modified cuz MC rate is an unessesarily bad fraction
+			end
+			local vel = mob:get_velocity()
+			mob:add_velocity({x=(-1 * vel.z), y=6, z=(-1 * vel.x)}) --"chaos knockback" effect (Temporary until I understand how to implement knockback for a projectile)
+		end
 	end,
 })
 
