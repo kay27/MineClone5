@@ -10,9 +10,8 @@ MineClone 5 is maintained by kay27 and the Community.
 
 You can find us in:
 - [Mesehub issue tracker](https://git.minetest.land/MineClone5/MineClone5/issues),
-- [Minetest forums](https://forum.minetest.net/viewtopic.php?f=50&t=16407),
-- IRC in the #mineclone2 channel on irc.freenode.net, <ircs://irc.freenode.net:6697/#mineclone2>,
-- [Matrix](https://app.element.io/#/room/#mc2:matrix.org).
+- [Minetest forums](https://forum.minetest.net/viewtopic.php?f=50&t=27107),
+- [Discord](https://discord.gg/PUm5YRn7dX).
 
 There is **no** guarantee we will accept anything from anybody.
 
