@@ -544,6 +544,16 @@ for s=1, #specialstones do
 		clust_size     = 3,
 		y_min          = mcl_vars.mg_nether_min,
 		y_max          = mcl_vars.mg_nether_max,
+		noise_params = {
+			offset  = 0,
+			scale   = 1,
+			spread  = {x=250, y=250, z=250},
+			seed    = 12345,
+			octaves = 3,
+			persist = 0.6,
+			lacunarity = 2,
+			flags = "defaults",
+		},
 	})
 	minetest.register_ore({
 		ore_type       = "blob",
@@ -554,6 +564,16 @@ for s=1, #specialstones do
 		clust_size     = 5,
 		y_min          = mcl_vars.mg_nether_min,
 		y_max          = mcl_vars.mg_nether_max,
+		noise_params = {
+			offset  = 0,
+			scale   = 1,
+			spread  = {x=250, y=250, z=250},
+			seed    = 12345,
+			octaves = 3,
+			persist = 0.6,
+			lacunarity = 2,
+			flags = "defaults",
+		},
 	})
 end
 
