@@ -1224,13 +1224,7 @@ local function generate_underground_mushrooms(minp, maxp, seed)
 	end
 end
 
-local nether_wart_chance
-if v6 then
-	nether_wart_chance = 85
-else
-	nether_wart_chance = 170
-end
--- Generate Nether decorations manually: Eternal fire, mushrooms, nether wart
+-- Generate Nether decorations manually: Eternal fire, mushrooms
 -- Minetest's API does not support decorations in caves yet. :-(
 local function generate_nether_decorations(minp, maxp, seed)
 	if c_nether == nil then
@@ -1292,15 +1286,6 @@ local function generate_nether_decorations(minp, maxp, seed)
 			end
 		end)
 	end
-
-	-- Nether wart on soul sand
-	-- TODO: Spawn in Nether fortresses
-	special_deco(ssand, function(bpos)
-		if pr_nether:next(1, nether_wart_chance) == 1 then
-			minetest.set_node(bpos, {name = "mcl_nether:nether_wart"})
-		end
-	end)
-
 end
 
 -- Generate basic layer-based nodes: void, bedrock, realm barrier, lava seas, etc.
@@ -1589,6 +1574,7 @@ mcl_mapgen.register_mapgen_block_lvm(basic_safe, 1)
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(modpath .. "/clay.lua")
 dofile(modpath .. "/tree_decoration.lua")
+dofile(modpath .. "/nether_wart.lua")
 
 -- Nether Roof Light:
 mcl_mapgen.register_mapgen_block_lvm(function(vm_context)
