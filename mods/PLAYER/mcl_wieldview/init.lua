@@ -41,14 +41,19 @@ function mcl_wieldview.update_wielded_item(player)
 
 	local def = mcl_wieldview.players[player]
 
-	if def.item == itemname then
+	if def and (def.item == itemname) then
 		return
 	end
 
-	def.item = itemname
-	def.texture = mcl_wieldview.get_item_texture(itemname) or "blank.png"
+	local texture = mcl_wieldview.get_item_texture(itemname) or "blank.png"
 
-	mcl_player.player_set_wielditem(player, def.texture)
+	local new_def = {
+		item = itemname,
+		texture = texture,
+	}
+	mcl_wieldview.players[player] = new_def
+
+	mcl_player.player_set_wielditem(player, texture)
 end
 
 minetest.register_on_joinplayer(function(player)
