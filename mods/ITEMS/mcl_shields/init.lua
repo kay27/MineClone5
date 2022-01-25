@@ -173,9 +173,10 @@ local function set_shield(player, block, i)
 		end
 	end
 	local shield = mcl_shields.players[player].shields[i]
-	if shield then
-		shield:get_luaentity()._blocking = block
-	end
+	if not shield then return end
+	local luaentity = shield:get_luaentity()
+	if not luaentity then return end
+	luaentity._blocking = block
 end
 
 local function set_interact(player, interact)
