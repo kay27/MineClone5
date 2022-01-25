@@ -22,8 +22,10 @@ for _, action in pairs({"grant", "revoke"}) do
 	minetest["register_on_priv_" .. action](function(name, _, priv)
 		if priv == "fly" then
 			local player = minetest.get_player_by_name(name)
-			local meta = player:get_meta()
-			meta:set_int("fly_changed", 1)
+			if player then
+				local meta = player:get_meta()
+				meta:set_int("fly_changed", 1)
+			end
 		end
 	end)
 end
