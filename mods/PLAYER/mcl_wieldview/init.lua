@@ -6,7 +6,7 @@ mcl_wieldview = {
 }
 
 function mcl_wieldview.get_item_texture(itemname)
-	if itemname == "" then
+	if itemname == "" or minetest.get_item_group(itemname, "no_wieldview") ~= 0 then
 		return
 	end
 
@@ -41,14 +41,19 @@ function mcl_wieldview.update_wielded_item(player)
 
 	local def = mcl_wieldview.players[player]
 
-	if def.item == itemname then
+	if def and (def.item == itemname) then
 		return
 	end
 
-	def.item = itemname
-	def.texture = mcl_wieldview.get_item_texture(itemname) or "blank.png"
+	local texture = mcl_wieldview.get_item_texture(itemname) or "blank.png"
 
-	mcl_player.player_set_wielditem(player, def.texture)
+	local new_def = {
+		item = itemname,
+		texture = texture,
+	}
+	mcl_wieldview.players[player] = new_def
+
+	mcl_player.player_set_wielditem(player, texture)
 end
 
 minetest.register_on_joinplayer(function(player)
@@ -110,6 +115,10 @@ minetest.register_entity("mcl_wieldview:wieldnode", {
 					self.object:set_properties({textures = {itemstring}})
 				-- wield item as flat
 				else
+					self.object:set_properties({textures = {""}})
+				end
+
+				if minetest.get_item_group(itemstring, "no_wieldview") ~= 0 then
 					self.object:set_properties({textures = {""}})
 				end
 

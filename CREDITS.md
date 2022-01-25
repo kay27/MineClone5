@@ -43,6 +43,7 @@
 * Laurent Rocher
 * Li0n
 * Marcin Serwin
+* Mental-Inferno
 * Midgard
 * MysticTempest
 * Nicholas Niro
