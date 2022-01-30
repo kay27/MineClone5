@@ -372,7 +372,7 @@ local function get_ignitable_by_lava(pos)
 	return check_aircube(vector.add(pos,vector.new(-1,1,-1)),vector.add(pos,vector.new(1,1,1))) or check_aircube(vector.add(pos,vector.new(-2,2,-2)),vector.add(pos,vector.new(2,2,2))) or nil
 end
 
-local function add_fire_particle(pos)
+local function add_fire_particle(pos,f)
 	minetest.add_particle({
 		pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
 		velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.25), z=f.z-pos.z},
@@ -406,7 +406,7 @@ else -- Fire enabled
 		action = function(pos)
 			local p = get_ignitable(pos)
 			if p then
-				add_fire_particle(p)
+				add_fire_particle(p,pos)
 				spawn_fire(p)
 				shuffle_adjacents()
 			end
@@ -426,7 +426,7 @@ else -- Fire enabled
 		action = function(pos)
 			local p=get_ignitable_by_lava(pos)
 			if p then
-				add_fire_particle(p)
+				add_fire_particle(p,pos)
 				spawn_fire(p)
 			end
 		end,
@@ -453,7 +453,7 @@ else -- Fire enabled
 			if def and def._on_burn then
 				def._on_burn(p)
 			elseif fgroup ~= -1 then
-				add_fire_particle(p)
+				add_fire_particle(p,pos)
 				spawn_fire(p)
 				fire_timer(p)
 				minetest.check_for_falling(p)
