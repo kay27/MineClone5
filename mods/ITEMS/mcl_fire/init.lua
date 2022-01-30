@@ -37,7 +37,7 @@ local lava_fire=
 	{ x = 1, y = 1, z = 0},
 	{ x = 1, y = 1, z = 1}
 }
-local alldirs=
+local adjacents =
 {
 	{ x =-1, y = 0, z = 0},
 	{ x = 1, y = 0, z = 0},
@@ -87,12 +87,29 @@ else
 end
 
 local function fire_timer(pos)
-	minetest.get_node_timer(pos):start(math.random(3, 7))
+	minetest.get_node_timer(pos):start(math.random(15, 45))
 end
 
 local function spawn_fire(pos, age)
 	set_node(pos, {name="mcl_fire:fire", param2 = age})
 	minetest.check_single_for_falling({x=pos.x, y=pos.y+1, z=pos.z})
+end
+
+local function shuffle_adjacents()
+  for i = #adjacents, 1, -1 do
+    local r = math.random(i)
+    adjacents[i], adjacents[r] = adjacents[r], adjacents[i]
+  end
+end
+
+local function has_flammable(pos)
+	for k,v in pairs(adjacents) do
+		local p=vector.add(pos,v)
+		local n=minetest.get_node_or_nil(p)
+		if n and minetest.get_item_group(n.name, "flammable") ~= 0 then
+			return p
+		end
+	end
 end
 
 minetest.register_node("mcl_fire:fire", {
@@ -125,80 +142,12 @@ minetest.register_node("mcl_fire:fire", {
 		end
 	end,
 	on_timer = function(pos)
-		local node = get_node(pos)
-		-- Age is a number from 0 to 15 and is increased every timer step.
-		-- "old" fire is more likely to be extinguished
-		local age = node.param2
-		local flammables = find_nodes_in_area({x=pos.x-1, y=pos.y-1, z=pos.z-1}, {x=pos.x+1, y=pos.y+4, z=pos.z+1}, {"group:flammable"})
-		local below = get_node({x=pos.x, y=pos.z-1, z=pos.z})
-		local below_is_flammable = get_item_group(below.name, "flammable") > 0
-		-- Extinguish fire
-		if (not fire_enabled) and (math.random(1,3) == 1) then
-			remove_node(pos)
+		local p=has_flammable(pos)
+		if not p or minetest.get_item_group(minetest.get_node(p).name, "flammable") == -1 then
+			minetest.remove_node(pos)
 			return
 		end
-		if age == 15 and not below_is_flammable then
-			remove_node(pos)
-			return
-		elseif age > 3 and #flammables == 0 and not below_is_flammable and math.random(1,4) == 1 then
-			remove_node(pos)
-			return
-		end
-		local age_add = 1
-		-- If fire spread is disabled, we have to skip the "destructive" code
-		if (not fire_enabled) then
-			if age + age_add <= 15 then
-				node.param2 = age + age_add
-				set_node(pos, node)
-			end
-			-- Restart timer
-			fire_timer(pos)
-			return
-		end
-		-- Spawn fire to nearby flammable nodes
-		local is_next_to_flammable = find_node_near(pos, 2, {"group:flammable"}) ~= nil
-		if is_next_to_flammable and math.random(1,2) == 1 then
-			-- The fire we spawn copies the age of this fire.
-			-- This prevents fire from spreading infinitely far as the fire fire dies off
-			-- quicker the further it has spreaded.
-			local age_next = math.min(15, age + math.random(0, 1))
-			-- Select random type of fire spread
-			local burntype = math.random(1,2)
-			if burntype == 1 then
-				-- Spawn fire in air
-				local nodes = find_nodes_in_area({x=pos.x-1, y=pos.y-1, z=pos.z-1}, {x=pos.x+1, y=pos.y+4, z=pos.z+1}, {"air"})
-				while #nodes > 0 do
-					local r = math.random(1, #nodes)
-					if find_node_near(nodes[r], 1, {"group:flammable"}) then
-						spawn_fire(nodes[r], age_next)
-						break
-					else
-						table.remove(nodes, r)
-					end
-				end
-			else
-				-- Burn flammable block
-				local nodes = find_nodes_in_area({x=pos.x-1, y=pos.y-1, z=pos.z-1}, {x=pos.x+1, y=pos.y+4, z=pos.z+1}, {"group:flammable"})
-				if #nodes > 0 then
-					local r = math.random(1, #nodes)
-					local nn = get_node(nodes[r]).name
-					local ndef = minetest.registered_nodes[nn]
-					local fgroup = get_item_group(nn, "flammable")
-					if ndef and ndef._on_burn then
-						ndef._on_burn(nodes[r])
-					elseif fgroup ~= -1 then
-						spawn_fire(nodes[r], age_next)
-					end
-				end
-			end
-		end
-		-- Regular age increase
-		if age + age_add <= 15 then
-			node.param2 = age + age_add
-			set_node(pos, node)
-		end
-		-- Restart timer
-		fire_timer(pos)
+		return true --restart timer
 	end,
 	drop = "",
 	sounds = {},
@@ -254,29 +203,8 @@ minetest.register_node("mcl_fire:eternal_fire", {
 			minetest.sound_play("fire_extinguish_flame", {pos = pos, gain = 0.25, max_hear_distance = 16}, true)
 		end
 	end,
-	on_timer = function(pos)
-		if fire_enabled then
-			local airs = find_nodes_in_area({x=pos.x-1, y=pos.y-1, z=pos.z-1}, {x=pos.x+1, y=pos.y+4, z=pos.z+1}, {"air"})
-			while #airs > 0 do
-				local r = math.random(1, #airs)
-				if find_node_near(airs[r], 1, {"group:flammable"}) then
-					local node = get_node(airs[r])
-					local age = node.param2
-					local age_next = math.min(15, age + math.random(0, 1))
-					spawn_fire(airs[r], age_next)
-					break
-				else
-					table.remove(airs, r)
-				end
-			end
-		end
-		-- Restart timer
-		fire_timer(pos)
-	end,
-	-- Start burning timer and light Nether portal (if possible)
+	-- light Nether portal (if possible)
 	on_construct = function(pos)
-		fire_timer(pos)
-
 		if has_mcl_portals then --Calling directly minetest.get_modpath consumes 4x more compute time
 			mcl_portals.light_nether_portal(pos)
 		end
@@ -421,21 +349,39 @@ minetest.register_abm({
 	end,
 })
 
+--- Fire spread logic
 
--- Enable the following ABMs according to 'enable fire' setting
+-- A fire that is not adjacent to any flammable block does not spread, even to another flammable block within the normal range.
+-- A fire block can turn any air block that is adjacent to a flammable block into a fire block. This can happen at a distance of up to one block downward, one block sideways (including diagonals), and four blocks upward of the original fire block (not the block the fire is on/next to).
+-- Fire spreads from a still lava block similarly: any air block one above and up to one block sideways (including diagonals) or two above and two blocks sideways (including diagonals) that is adjacent to a flammable block may be turned into a fire block.
+-- https://minecraft.fandom.com/wiki/Fire#Spread
 
-local function has_flammable(pos)
-	local npos, node
-	for n, v in ipairs(alldirs) do
-		npos = vector.add(pos, v)
-		node = get_node_or_nil(npos)
-		if node and node.name and get_item_group(node.name, "flammable") ~= 0 then
-			return npos
-		end
+local function check_aircube(p1,p2)
+	local nds=minetest.find_nodes_in_area(p1,p2,{"air"})
+	for k,v in pairs(nds) do
+		if has_flammable(v) then return v end
 	end
 	return false
 end
 
+local function get_ignitable(pos)
+	return check_aircube(vector.add(pos,vector.new(-1,-1,-1)),vector.add(pos,vector.new(1,4,1))) 
+end
+
+local function get_ignitable_by_lava(pos)
+	return check_aircube(vector.add(pos,vector.new(-1,1,-1)),vector.add(pos,vector.new(1,1,1))) or check_aircube(vector.add(pos,vector.new(-2,2,-2)),vector.add(pos,vector.new(2,2,2))) or nil
+end
+
+local function add_fire_particle(pos)
+	minetest.add_particle({
+		pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
+		velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.25), z=f.z-pos.z},
+		expirationtime=1, size=1, collisiondetection=false,
+		glow=minetest.LIGHT_MAX, texture="mcl_particles_flame.png"
+	})
+end
+
+-- Enable the following ABMs according to 'enable fire' setting
 if not fire_enabled then
 
 	-- Occasionally remove fire if fire disabled
@@ -451,60 +397,68 @@ if not fire_enabled then
 
 else -- Fire enabled
 
+	minetest.register_abm({
+		label = "Ignite flame",
+		nodenames ={"mcl_fire:fire","mcl_fire:eternal_fire"},
+		interval = 7,
+		chance = 12,
+		catch_up = false,
+		action = function(pos)
+			local p = get_ignitable(pos)
+			if p then
+				add_fire_particle(p)
+				spawn_fire(p)
+				shuffle_adjacents()
+			end
+		end
+	})
+
+
 	-- Set fire to air nodes
 	minetest.register_abm({
 		label = "Ignite fire by lava",
 		nodenames = {"group:lava"},
-		neighbors = {"air"},
+		nodenames = {"mcl_core:lava_source","mcl_nether:nether_lava_source"},
+		neighbors = {"air","group:flammable"},
 		interval = 7,
 		chance = 3,
 		catch_up = false,
 		action = function(pos)
-			local i, dir, target, node, i2, f
-			i = math.random(1,9)
-			dir = lava_fire[i]
-			target = {x=pos.x+dir.x, y=pos.y+dir.y, z=pos.z+dir.z}
-			node = get_node(target)
-			if not node or node.name ~= "air" then
-				i = ((i + math.random(0,7)) % 9) + 1
-				dir = lava_fire[i]
-				target = {x=pos.x+dir.x, y=pos.y+dir.y, z=pos.z+dir.z}
-				node = get_node(target)
-				if not node or node.name ~= "air" then
-					return
-				end
-			end
-			i2 = math.random(1,15)
-			if i2 < 10 then
-				local dir2, target2, node2
-				dir2 = lava_fire[i2]
-				target2 = {x=target.x+dir2.x, y=target.y+dir2.y, z=target.z+dir2.z}
-				node2 = get_node(target2)
-				if node2 and node2.name == "air" then
-					f = has_flammable(target2)
-					if f then
-						minetest.after(1, spawn_fire, {x=target2.x, y=target2.y, z=target2.z})
-						minetest.add_particle({
-							pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
-							velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.7), z=f.z-pos.z},
-							expirationtime=1, size=1.5, collisiondetection=false,
-							glow=minetest.LIGHT_MAX, texture="mcl_particles_flame.png"
-						})
-						return
-					end
-				end
-			end
-			f = has_flammable(target)
-			if f then
-				minetest.after(1, spawn_fire, {x=target.x, y=target.y, z=target.z})
-				minetest.add_particle({
-					pos = vector.new({x=pos.x, y=pos.y+0.5, z=pos.z}),
-					velocity={x=f.x-pos.x, y=math.max(f.y-pos.y,0.25), z=f.z-pos.z},
-					expirationtime=1, size=1, collisiondetection=false,
-					glow=minetest.LIGHT_MAX, texture="mcl_particles_flame.png"
-				})
+			local p=get_ignitable_by_lava(pos)
+			if p then
+				add_fire_particle(p)
+				spawn_fire(p)
 			end
 		end,
+	})
+
+	-- Remove flammable nodes around basic flame
+	minetest.register_abm({
+		label = "Remove flammable nodes",
+		nodenames = {"mcl_fire:fire","mcl_fire:eternal_fire"},
+		neighbors = {"group:flammable"},
+		interval = 5,
+		chance = 18,
+		catch_up = false,
+		action = function(pos)
+			local p = has_flammable(pos)
+			if not p then
+				return
+			end
+			
+			local nn = minetest.get_node(p).name
+			local def = minetest.registered_nodes[nn]
+			local fgroup = minetest.get_item_group(nn, "flammable")
+
+			if def and def._on_burn then
+				def._on_burn(p)
+			elseif fgroup ~= -1 then
+				add_fire_particle(p)
+				spawn_fire(p)
+				fire_timer(p)
+				minetest.check_for_falling(p)
+			end
+		end
 	})
 
 end
