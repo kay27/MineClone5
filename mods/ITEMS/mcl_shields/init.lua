@@ -197,7 +197,12 @@ local function remove_shield_hud(player)
 		set_shield(player, false, 1)
 		set_shield(player, false, 2)
 	end
-	player:hud_set_flags({wielditem = true})
+
+	local hf=player:hud_get_flags()
+	if not hf.wielditem then
+		player:hud_set_flags({wielditem = true})
+	end
+
 	playerphysics.remove_physics_factor(player, "speed", "shield_speed")
 	set_interact(player, true)
 end
