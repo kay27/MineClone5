@@ -70,6 +70,12 @@ function mcl_weather.remove_spawners_player(pl)
 	return true
 end
 
+function mcl_weather.remove_all_spawners()
+	for k,v in pairs(minetest.get_connected_players()) do
+		mcl_weather.remove_spawners_player(v)
+	end
+end
+
 function mcl_weather.get_rand_end_time(min_duration, max_duration)
 	local r
 	if min_duration and max_duration then
