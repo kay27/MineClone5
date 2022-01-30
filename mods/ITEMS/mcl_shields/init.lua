@@ -182,8 +182,10 @@ end
 local function set_interact(player, interact)
 	local player_name = player:get_player_name()
 	local privs = minetest.get_player_privs(player_name)
-	privs.interact = interact
-	minetest.set_player_privs(player_name, privs)
+	if privs.interact ~= interact then
+		privs.interact = interact
+		minetest.set_player_privs(player_name, privs)
+	end
 end
 
 local shield_hud = {}
