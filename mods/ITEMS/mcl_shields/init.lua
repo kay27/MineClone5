@@ -464,6 +464,5 @@ minetest.register_on_joinplayer(function(player)
 		shields = {},
 		blocking = 0,
 	}
-	mcl_shields.players[player].blocking = 0
 	remove_shield_hud(player)
 end)
