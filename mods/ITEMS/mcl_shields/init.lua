@@ -183,8 +183,11 @@ local function set_interact(player, interact)
 	local player_name = player:get_player_name()
 	local privs = minetest.get_player_privs(player_name)
 	if privs.interact ~= interact then
-		privs.interact = interact
-		minetest.set_player_privs(player_name, privs)
+		local meta = player:get_meta()
+		if meta:get_int("ineract_revoked") ~= 1 then
+			privs.interact = interact
+			minetest.set_player_privs(player_name, privs)
+		end
 	end
 end
 
@@ -464,6 +467,5 @@ minetest.register_on_joinplayer(function(player)
 		shields = {},
 		blocking = 0,
 	}
-	mcl_shields.players[player].blocking = 0
 	remove_shield_hud(player)
 end)
