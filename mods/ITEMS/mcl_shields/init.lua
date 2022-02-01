@@ -184,7 +184,7 @@ local function set_interact(player, interact)
 	local privs = minetest.get_player_privs(player_name)
 	if privs.interact ~= interact then
 		local meta = player:get_meta()
-		if meta:get_int("ineract_revoked") ~= 1 then
+		if meta:get_int("interact_revoked") ~= 1 then
 			privs.interact = interact
 			minetest.set_player_privs(player_name, privs)
 		end
