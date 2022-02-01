@@ -4,13 +4,17 @@ local c_snow_block           = minetest.get_content_id("mcl_core:snowblock")
 
 mcl_mapgen.register_on_generated(function(vm_context)
 	local minp, maxp = vm_context.minp, vm_context.maxp
-	local min_y = minp.y
-	if min_y > mcl_mapgen.overworld.max or maxp.y < mcl_mapgen.overworld.min then return end
+	local min_y, max_y = minp.y, maxp.y
+	if min_y > mcl_mapgen.overworld.max or max_y < mcl_mapgen.overworld.min then return end
+
 	vm_context.param2_data = vm_context.param2_data or vm:get_param2_data(vm_context.lvm_param2_buffer)
 	vm_context.biomemap    = vm_context.biomemap or minetest.get_mapgen_object("biomemap")
 	local param2_data      = vm_context.param2_data
 	local biomemap         = vm_context.biomemap
 	local vm, data, area   = vm_context.vm, vm_context.data, vm_context.area
+
+	local min_x, min_z = minp.x, minp.z
+	local chunksize = max_y - min_y + 1
 
 	----- Interactive block fixing section -----
 	----- The section to perform basic block overrides of the core mapgen generated world. -----
@@ -23,16 +27,16 @@ mcl_mapgen.register_on_generated(function(vm_context)
 	-- Clear snowy grass blocks without snow above to ensure consistency.
 	local nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:dirt_with_grass", "mcl_core:dirt_with_grass_snow"})
 
-	-- Flat area at y=0 to read biome 3 times faster than 5.3.0.get_biome_data(pos).biome: 43us vs 125us per iteration:
-	local aream = VoxelArea:new({MinEdge={x=minp.x, y=min_y, z=minp.z}, MaxEdge={x=maxp.x, y=min_y, z=maxp.z}})
 	for n=1, #nodes do
-		local n = nodes[n]
-		local p_pos = area:index(n.x, n.y, n.z)
-		local p_pos_above = area:index(n.x, n.y+1, n.z)
-		local b_pos = aream:index(n.x, min_y, n.z)
-		local bn = minetest.get_biome_name(biomemap[b_pos])
-		if bn then
-			local biome = minetest.registered_biomes[bn]
+		local pos = nodes[n]
+		local x, y, z = pos.x, pos.y, pos.z
+		local p_pos = area:index(x, y, z)
+		local p_pos_above = area:index(x, y + 1, z)
+		local biomemap_offset = (z - min_z) * chunksize + x - min_x + 1
+		local biome_id = biomemap[biomemap_offset]
+		local biome_name = minetest.get_biome_name(biome_id)
+		if biome_name then
+			local biome = minetest.registered_biomes[biome_name]
 			if biome and biome._mcl_biome_type then
 				param2_data[p_pos] = biome._mcl_palette_index
 				vm_context.write_param2 = true

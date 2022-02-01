@@ -264,6 +264,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	end
 
 	if #queue_unsafe_engine > 0 then
+		vm_context.minp, vm_context.maxp = minp, maxp
 		for _, v in pairs(queue_unsafe_engine) do
 			v.f(vm_context)
 		end

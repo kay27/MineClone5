@@ -65,7 +65,6 @@ local c_stone = minetest.get_content_id("mcl_core:stone")
 local c_dirt = minetest.get_content_id("mcl_core:dirt")
 local c_dirt_with_grass = minetest.get_content_id("mcl_core:dirt_with_grass")
 local c_sand = minetest.get_content_id("mcl_core:sand")
---local c_sandstone = minetest.get_content_id("mcl_core:sandstone")
 local c_void = minetest.get_content_id("mcl_core:void")
 local c_lava = minetest.get_content_id("mcl_core:lava_source")
 local c_water = minetest.get_content_id("mcl_core:water_source")
@@ -1189,100 +1188,6 @@ function mcl_mapgen_core.generate_end_exit_portal(pos)
 	portal_generated = true
 end
 
--- Generate mushrooms in caves manually.
--- Minetest's API does not support decorations in caves yet. :-(
-local function generate_underground_mushrooms(minp, maxp, seed)
-	if not mcl_mushrooms then return end
-
-	local pr_shroom = PseudoRandom(seed-24359)
-	-- Generate rare underground mushrooms
-	-- TODO: Make them appear in groups, use Perlin noise
-	local min, max = mcl_mapgen.overworld.lava_max + 4, 0
-	if minp.y > max or maxp.y < min then
-		return
-	end
-
-	local bpos
-	local stone = minetest.find_nodes_in_area_under_air(minp, maxp, {"mcl_core:stone", "mcl_core:dirt", "mcl_core:mycelium", "mcl_core:podzol", "mcl_core:andesite", "mcl_core:diorite", "mcl_core:granite", "mcl_core:stone_with_coal", "mcl_core:stone_with_iron", "mcl_core:stone_with_gold"})
-
-	for n = 1, #stone do
-		bpos = {x = stone[n].x, y = stone[n].y + 1, z = stone[n].z }
-
-		local l = minetest.get_node_light(bpos, 0.5)
-		if bpos.y >= min and bpos.y <= max and l and l <= 12 and pr_shroom:next(1,1000) < 4 then
-			if pr_shroom:next(1,2) == 1 then
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
-			else
-				minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
-			end
-		end
-	end
-end
-
--- Generate Nether decorations manually: Eternal fire, mushrooms
--- Minetest's API does not support decorations in caves yet. :-(
-local function generate_nether_decorations(minp, maxp, seed)
-	if c_nether == nil then
-		return
-	end
-
-	local pr_nether = PseudoRandom(seed+667)
-
-	if minp.y > mcl_mapgen.nether.max or maxp.y < mcl_mapgen.nether.min then
-		return
-	end
-
-	minetest.log("action", "[mcl_mapgen_core] Nether decorations " .. minetest.pos_to_string(minp) .. " ... " .. minetest.pos_to_string(maxp))
-
-	-- TODO: Generate everything based on Perlin noise instead of PseudoRandom
-
-	local bpos
-	local rack = minetest.find_nodes_in_area_under_air(minp, maxp, {"mcl_nether:netherrack"})
-	local magma = minetest.find_nodes_in_area_under_air(minp, maxp, {"mcl_nether:magma"})
-	local ssand = minetest.find_nodes_in_area_under_air(minp, maxp, {"mcl_nether:soul_sand"})
-
-	-- Helper function to spawn “fake” decoration
-	local function special_deco(nodes, spawn_func)
-		for n = 1, #nodes do
-			bpos = {x = nodes[n].x, y = nodes[n].y + 1, z = nodes[n].z }
-
-			spawn_func(bpos)
-		end
-
-	end
-
-	-- Eternal fire on netherrack
-	special_deco(rack, function(bpos)
-		-- Eternal fire on netherrack
-		if pr_nether:next(1,100) <= 3 then
-			minetest.set_node(bpos, {name = "mcl_fire:eternal_fire"})
-		end
-	end)
-
-	-- Eternal fire on magma cubes
-	special_deco(magma, function(bpos)
-		if pr_nether:next(1,150) == 1 then
-			minetest.set_node(bpos, {name = "mcl_fire:eternal_fire"})
-		end
-	end)
-
-	-- Mushrooms on netherrack
-	-- Note: Spawned *after* the fire because of light level checks
-	if mcl_mushrooms then
-		special_deco(rack, function(bpos)
-			local l = minetest.get_node_light(bpos, 0.5)
-			if bpos.y > mcl_mapgen.nether.lava_max + 6 and l and l <= 12 and pr_nether:next(1,1000) <= 4 then
-				-- TODO: Make mushrooms appear in groups, use Perlin noise
-				if pr_nether:next(1,2) == 1 then
-					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_brown"})
-				else
-					minetest.set_node(bpos, {name = "mcl_mushrooms:mushroom_red"})
-				end
-			end
-		end)
-	end
-end
-
 -- Generate basic layer-based nodes: void, bedrock, realm barrier, lava seas, etc.
 -- Also perform some basic node replacements.
 
@@ -1334,7 +1239,7 @@ end
 --
 -- returns true if any node was set and lvm_used otherwise
 local function set_layers(vm_context, pr, min, max, content_id, check)
-	local minp, maxp = vm_context.minp, vm_context.maxp
+	local minp, maxp, data, area = vm_context.minp, vm_context.maxp, vm_context.data, vm_context.area
 	if (maxp.y >= min and minp.y <= max) then
 		for y = math.max(min, minp.y), math.min(max, maxp.y) do
 			for x = minp.x, maxp.x do
@@ -1342,10 +1247,10 @@ local function set_layers(vm_context, pr, min, max, content_id, check)
 					local p_pos = vm_context.area:index(x, y, z)
 					if check then
 						if type(check) == "function" and check({x=x,y=y,z=z}, data[p_pos], pr) then
-							vm_context.data[p_pos] = content_id
+							data[p_pos] = content_id
 							vm_context.write = true
 						elseif check == data[p_pos] then
-							vm_context.data[p_pos] = content_id
+							data[p_pos] = content_id
 							vm_context.write = true
 						end
 					else
