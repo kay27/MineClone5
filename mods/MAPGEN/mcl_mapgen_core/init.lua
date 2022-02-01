@@ -60,14 +60,10 @@ local flat = mcl_mapgen.flat
 
 -- Content IDs
 local c_bedrock = minetest.get_content_id("mcl_core:bedrock")
-local c_obsidian = minetest.get_content_id("mcl_core:obsidian")
-local c_stone = minetest.get_content_id("mcl_core:stone")
 local c_dirt = minetest.get_content_id("mcl_core:dirt")
 local c_dirt_with_grass = minetest.get_content_id("mcl_core:dirt_with_grass")
-local c_sand = minetest.get_content_id("mcl_core:sand")
 local c_void = minetest.get_content_id("mcl_core:void")
 local c_lava = minetest.get_content_id("mcl_core:lava_source")
-local c_water = minetest.get_content_id("mcl_core:water_source")
 
 local c_nether = nil
 if minetest.get_modpath("mcl_nether") then
@@ -1328,4 +1324,6 @@ if v6 then
 elseif not singlenode then
 	dofile(modpath .. "/biomes.lua")
 end
--- dofile(modpath .. "/nether.lua")
+if not singlenode and c_nether then
+	dofile(modpath .. "/nether.lua")
+end

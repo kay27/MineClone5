@@ -2,6 +2,19 @@ local c_air = minetest.CONTENT_AIR
 
 mcl_mapgen.register_on_generated(function(vm_context)
 	local minp, maxp = vm_context.minp, vm_context.maxp
+
+	if minp.y <= mcl_mapgen.end_.max and maxp.y >= mcl_mapgen.end_.min then
+		local nodes = minetest.find_nodes_in_area(minp, maxp, {"mcl_core:water_source", "mcl_core:stone", "mcl_core:sand", "mcl_core:dirt"})
+		if #nodes > 0 then
+			for _, n in pairs(nodes) do
+				data[area:index(n.x, n.y, n.z)] = c_air
+			end
+		end
+		vm_context.write = true
+		return
+	end
+
+
 	if minp.y > mcl_mapgen.overworld.max or maxp.y < mcl_mapgen.overworld.min then return end
 	local vm, data, area = vm_context.vm, vm_context.data, vm_context.area
 
