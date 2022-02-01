@@ -52,13 +52,14 @@ local seed = minetest.get_mapgen_setting("seed")
 mcl_mapgen.seed = seed
 mcl_mapgen.name = minetest.get_mapgen_setting("mg_name")
 mcl_mapgen.v6 = mcl_mapgen.name == "v6"
-mcl_mapgen.superflat = mcl_mapgen.name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
+mcl_mapgen.flat = mcl_mapgen.name == "flat"
+mcl_mapgen.superflat = mcl_mapgen.flat and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
 mcl_mapgen.singlenode = mcl_mapgen.name == "singlenode"
 mcl_mapgen.normal = not mcl_mapgen.superflat and not mcl_mapgen.singlenode
-local superflat, singlenode, normal = mcl_mapgen.superflat, mcl_mapgen.singlenode, mcl_mapgen.normal
+local flat, superflat, singlenode, normal = mcl_mapgen.flat, mcl_mapgen.superflat, mcl_mapgen.singlenode, mcl_mapgen.normal
 
-minetest_log("action", "[mcl_mapgen] Mapgen mode: " .. (normal and "normal" or (superflat and "superflat" or "singlenode")))
-----------------------------------------------------------------------------------------------------------------------------
+minetest_log("action", "[mcl_mapgen] Mapgen mode: " .. (normal and "normal" or (superflat and "superflat" or (flat and "flat" or "singlenode"))))
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- Generator queues
 local queue_unsafe_engine = {}
@@ -263,6 +264,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	end
 
 	if #queue_unsafe_engine > 0 then
+		vm_context.minp, vm_context.maxp = minp, maxp
 		for _, v in pairs(queue_unsafe_engine) do
 			v.f(vm_context)
 		end
@@ -430,14 +432,12 @@ else
 	nether.bedrock_top_min = nether.bedrock_top_max
 	nether.lava_max = nether.min + 2
 end
-if mcl_mapgen.name == "flat" then
-	if superflat then
-		nether.flat_floor = nether.bedrock_bottom_max + 4
-		nether.flat_ceiling = nether.bedrock_bottom_max + 52
-	else
-		nether.flat_floor = nether.lava_max + 4
-		nether.flat_ceiling = nether.lava_max + 52
-	end
+if superflat then
+	nether.flat_floor = nether.bedrock_bottom_max + 4
+	nether.flat_ceiling = nether.bedrock_bottom_max + 52
+elseif flat then
+	nether.flat_floor = nether.lava_max + 4
+	nether.flat_ceiling = nether.lava_max + 52
 end
 
 -- The End (surface at ca. Y = -27000)
