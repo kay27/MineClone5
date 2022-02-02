@@ -1228,7 +1228,7 @@ local void_layers = {
 }
 
 local bedrock_layers = {}
-if not singlelayer then
+if not singlenode then
 	bedrock_layers = {
 		{mcl_mapgen.overworld.bedrock_min    , mcl_mapgen.overworld.bedrock_max    },
 		{mcl_mapgen.nether.bedrock_bottom_min, mcl_mapgen.nether.bedrock_bottom_max},
