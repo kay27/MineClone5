@@ -1133,57 +1133,6 @@ if string.len(mg_flags_str) > 0 then
 end
 minetest.set_mapgen_setting("mg_flags", mg_flags_str, true)
 
--- Takes an index of a biomemap table (from minetest.get_mapgen_object),
--- minp and maxp (from an on_generated callback) and returns the real world coordinates
--- as X, Z.
--- Inverse function of xz_to_biomemap
---[[local function biomemap_to_xz(index, minp, maxp)
-	local xwidth = maxp.x - minp.x + 1
-	local zwidth = maxp.z - minp.z + 1
-	local x = ((index-1) % xwidth) + minp.x
-	local z = ((index-1) / zwidth) + minp.z
-	return x, z
-end]]
-
-local dragon_spawn_pos = false
-local dragon_spawned, portal_generated = false, false
-
-local function spawn_ender_dragon()
-	local obj = minetest.add_entity(dragon_spawn_pos, "mobs_mc:enderdragon")
-	if not obj then return false end
-	local dragon_entity = obj:get_luaentity()
-	dragon_entity._initial = true
-	dragon_entity._portal_pos = pos
-	return obj
-end
-
-local function try_to_spawn_ender_dragon()
-	if spawn_ender_dragon() then
-		dragon_spawned = true
-		return
-	end
-	minetest.after(2, try_to_spawn_ender_dragon)
-	minetest.log("warning", "[mcl_mapgen_core] WARNING! Ender dragon doesn't want to spawn at "..minetest.pos_to_string(dragon_spawn_pos))
-end
-
-if portal_generated and not dragon_spawned then
-	minetest.after(10, try_to_spawn_ender_dragon)
-end
-
-function mcl_mapgen_core.generate_end_exit_portal(pos)
-	if dragon_spawn_pos then return false end
-	dragon_spawn_pos = vector.add(pos, vector.new(3, 11, 3))
-	mcl_structures.call_struct(pos, "end_exit_portal", nil, nil, function()
-		minetest.after(2, function()
-			minetest.emerge_area(vector.subtract(dragon_spawn_pos, {x = 64, y = 12, z = 5}), vector.add(dragon_spawn_pos, {x = 3, y = 3, z = 5}), function(blockpos, action, calls_remaining, param)
-				if calls_remaining > 0 then return end
-				minetest.after(2, try_to_spawn_ender_dragon)
-			end)
-		end)
-	end)
-	portal_generated = true
-end
-
 -- Generate basic layer-based nodes: void, bedrock, realm barrier, lava seas, etc.
 -- Also perform some basic node replacements.
 
@@ -1279,7 +1228,7 @@ local void_layers = {
 }
 
 local bedrock_layers = {}
-if not singlelayer then
+if not singlenode then
 	bedrock_layers = {
 		{mcl_mapgen.overworld.bedrock_min    , mcl_mapgen.overworld.bedrock_max    },
 		{mcl_mapgen.nether.bedrock_bottom_min, mcl_mapgen.nether.bedrock_bottom_max},
