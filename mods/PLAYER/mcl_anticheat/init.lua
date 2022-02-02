@@ -46,7 +46,15 @@ local function update_player(player_object)
 	end
 
 	local air = #find_nodes_in_area({x = x, y = feet_y, z = z}, {x = x + 1, y = feet_y + 1, z = z + 1}, "air") == 8
-		and #get_objects_inside_radius({x = pos.x, y = pos.y - 0.6, z = pos.z}, 1.3) > 1
+	if air then
+		local objects = get_objects_inside_radius({x = pos.x, y = pos.y - 0.6, z = pos.z}, 1.3)
+		for _, obj in pairs(objects) do
+			if not obj:is_player() and obj:get_luaentity() and obj:get_luaentity()._cmi_is_mob then
+				air = false
+				break
+			end
+		end
+	end
 
 	local noclip = #find_nodes_in_area({x = x, y = head_y, z = z}, {x = x + 1, y = head_y + 1, z = z + 1}, "group:opaque") == 8
 
