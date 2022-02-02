@@ -121,10 +121,10 @@ local function check_player(name)
 		end
 		local pos = obj_player:get_pos()
 		local x, y, z = floor(pos.x), floor(pos.y+1.49), floor(pos.z)
-		while #find_nodes_in_area({x = x, y = y, z = z}, {x = x + 1, y = y, z = z + 1}, "group:opaque") == 8 do
+		while #find_nodes_in_area({x = x, y = y, z = z}, {x = x + 1, y = y + 1, z = z + 1}, "group:opaque") >= 7 do
 			y = y + 1
 		end
-		obj_player:set_pos({x = x, y = y, z = z})
+		obj_player:set_pos({x = x, y = y + 0.5, z = z})
 		obj_player:set_velocity({x = 0, y = 0, z = 0})
 		obj_player:set_acceleration({x = 0, y = 0, z = 0})
 	end
