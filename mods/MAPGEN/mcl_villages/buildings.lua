@@ -192,7 +192,8 @@ local function construct_node(p1, p2, name)
 	end
 	minetest.log("warning", "[mcl_villages] Attempt to 'construct' inexistant nodes: " .. name)
 end
-local function init_nodes(p1, p2, size, rotation, pr)
+local function init_nodes(p1, rotation, pr, size)
+	local p2 = vector.subtract(vector.add(p1, size), 1)
 	construct_node(p1, p2, "mcl_itemframes:item_frame")
 	construct_node(p1, p2, "mcl_furnaces:furnace")
 	construct_node(p1, p2, "mcl_anvils:anvil")
@@ -272,8 +273,7 @@ function settlements.place_schematics(settlement_info, pr)
 			pos = pos,
 			schematic = schematic,
 			rotation = rotation,
-			force_placement = true,
-			on_place = init_nodes,
+			on_placed = init_nodes,
 			pr = pr,
 		})
 	end
