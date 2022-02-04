@@ -144,7 +144,7 @@ local chunk_scan_range = {
 }
 
 local function is_chunk_finished(minp)
-	local center = minp + HALF_CS_NODES
+	local center = vector.add(minp, HALF_CS_NODES)
 	for check_x = center.x - CS_NODES, center.x + CS_NODES, CS_NODES do
 		for check_y = center.y - CS_NODES, center.y + CS_NODES, CS_NODES do
 			for check_z = center.z - CS_NODES, center.z + CS_NODES, CS_NODES do
@@ -218,7 +218,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	if safe_functions > 0 then
 		local ready_blocks = table.copy(all_blocks_in_chunk)
 		local p0 = vector.new(minp)
-		local center = p0 + HALF_CS_NODES
+		local center = vector.add(p0, HALF_CS_NODES)
 		for x = -CS_NODES, CS_NODES, CS_NODES do
 			for y = -CS_NODES, CS_NODES, CS_NODES do
 				for z = -CS_NODES, CS_NODES, CS_NODES do
@@ -252,8 +252,8 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		local number_of_blocks = 0
 		for k, offset in pairs(ready_blocks) do
 			if queue_blocks_lvm_counter > 0 then
-				local block_minp = p0 + offset * BS
-				local block_maxp = block_minp + LAST_NODE_IN_BLOCK
+				local block_minp = p0 + vector.multiply(offset, BS)
+				local block_maxp = vector.add(block_minp, LAST_NODE_IN_BLOCK)
 				local blockseed = getBlockSeed2(block_minp)
 				vm_context.minp, vm_context.maxp, vm_context.blockseed = block_minp, block_maxp, blockseed
 				--                                                                            --
