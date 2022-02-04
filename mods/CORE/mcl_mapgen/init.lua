@@ -31,6 +31,8 @@ mcl_mapgen.LAST_NODE_IN_BLOCK = mcl_mapgen.BS - 1
 mcl_mapgen.LAST_NODE_IN_CHUNK = mcl_mapgen.CS_NODES - 1
 mcl_mapgen.HALF_CS_NODES      = math_floor(mcl_mapgen.CS_NODES / 2)
 mcl_mapgen.CS_3D              = mcl_mapgen.CS^3
+mcl_mapgen.CHUNK_WITH_SHELL   = mcl_mapgen.CS + 2
+mcl_mapgen.CHUNK_WITH_SHELL_3D = mcl_mapgen.CHUNK_WITH_SHELL^3
 
 local central_chunk_min_pos = mcl_mapgen.OFFSET * mcl_mapgen.BS
 local central_chunk_max_pos = central_chunk_min_pos + mcl_mapgen.CS_NODES - 1
@@ -90,6 +92,8 @@ local LAST_NODE_IN_BLOCK = mcl_mapgen.LAST_NODE_IN_BLOCK
 local LAST_NODE_IN_CHUNK = mcl_mapgen.LAST_NODE_IN_CHUNK
 local HALF_CS_NODES      = mcl_mapgen.HALF_CS_NODES
 local CS_3D              = mcl_mapgen.CS_3D
+local CHUNK_WITH_SHELL   = mcl_mapgen.CHUNK_WITH_SHELL
+local CHUNK_WITH_SHELL_3D = mcl_mapgen.CHUNK_WITH_SHELL_3D
 
 local DEFAULT_ORDER = order.DEFAULT
 
@@ -129,18 +133,18 @@ local data, param2_data, light, area
 local lvm_buffer, lvm_param2_buffer, lvm_light_buffer = {}, {}, {} -- Static buffer pointers
 
 local all_blocks_in_chunk = {}
-for x = 0, CS-1 do
-	for y = 0, CS-1 do
-		for z = 0, CS-1 do
-			all_blocks_in_chunk[CS * (CS * x + y) + z] = vector.new(x, y, z)
+for x = -1, LAST_BLOCK+1 do
+	for y = -1, LAST_BLOCK+1 do
+		for z = -1, LAST_BLOCK+1 do
+			all_blocks_in_chunk[CHUNK_WITH_SHELL * (CHUNK_WITH_SHELL * y + z) + x] = vector.new(x, y, z)
 		end
 	end
 end
 
 local chunk_scan_range = {
-	[-CS_NODES] = {0         , 0         },
-	[ 0       ] = {0         , LAST_BLOCK},
-        [ CS_NODES] = {LAST_BLOCK, LAST_BLOCK},
+	[-CS_NODES] = {-1          , -1          },
+	[ 0       ] = {-1          , LAST_BLOCK+1},
+        [ CS_NODES] = {LAST_BLOCK+1, LAST_BLOCK+1},
 }
 
 local function is_chunk_finished(minp)
@@ -159,6 +163,7 @@ local function is_chunk_finished(minp)
 			end
 		end
 	end
+	return true
 end
 
 local function unsigned(v)
@@ -193,7 +198,7 @@ end
 minetest.register_on_generated(function(minp, maxp, chunkseed)
 	local minp, maxp, chunkseed = minp, maxp, chunkseed
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	minetest_log("warning", "[mcl_mapgen] New_chunk=" .. minetest_pos_to_string(minp) .. "..." .. minetest_pos_to_string(maxp) .. ", shell=" .. minetest_pos_to_string(emin) .. "..." .. minetest_pos_to_string(emax) .. ", chunkseed=" .. tostring(chunkseed))
+	minetest_log("action", "[mcl_mapgen] New_chunk=" .. minetest_pos_to_string(minp) .. "..." .. minetest_pos_to_string(maxp) .. ", shell=" .. minetest_pos_to_string(emin) .. "..." .. minetest_pos_to_string(emax) .. ", chunkseed=" .. tostring(chunkseed))
 
 	data = vm:get_data(lvm_buffer)
 	area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
@@ -240,7 +245,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 								for cut_y = scan_range_y[1], scan_range_y[2] do
 									local scan_range_z = chunk_scan_range[z]
 									for cut_z = scan_range_z[1], scan_range_z[2] do
-										ready_blocks[CS * (CS * cut_x + cut_y) + cut_z] = nil
+										ready_blocks[CHUNK_WITH_SHELL * (CHUNK_WITH_SHELL * cut_y + cut_z) + cut_x] = nil
 									end
 								end
 							end
@@ -268,7 +273,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			end
 			number_of_blocks = number_of_blocks + 1
 		end
-		if number_of_blocks == CS_3D then
+		if number_of_blocks == CHUNK_WITH_SHELL_3D then
 			current_chunks[#current_chunks + 1] = p0
 		end
 	end
@@ -291,7 +296,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			vm:set_light_data(light)
 		end
 		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
-			vm:calc_lighting(minp, maxp, (vm_context.shadow ~= nil) or true) -- TODO: check boundaries
+			vm:calc_lighting(minp, maxp, (vm_context.shadow ~= nil) or true)
 			vm:write_to_map()
 			vm:update_liquids()
 		elseif vm_context.calc_lighting then
@@ -300,7 +305,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 	end
 
 	for i, chunk_minp in pairs(current_chunks) do
-		local chunk_maxp = chunk_minp + LAST_NODE_IN_CHUNK
+		local chunk_maxp = vector.add(chunk_minp, LAST_NODE_IN_CHUNK)
 		local chunkseed = getBlockSeed2(chunk_minp)
 		area = VoxelArea:new({MinEdge=minp, MaxEdge=maxp})
 		vm_context = {
@@ -327,7 +332,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		--  mcl_mapgen.register_mapgen(function(minp, maxp, chunkseed, vm_context), order_number)  --
 		--                                                                                         --
 		for _, v in pairs(queue_chunks_nodes) do
-			v.f(minp, maxp, seed, vm_context)
+			v.f(chunk_minp, chunk_maxp, chunkseed, vm_context)
 		end
 		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
 			if vm_context.write then
