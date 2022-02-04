@@ -52,7 +52,11 @@ local function get_visual_size(obj)
 			return boat_visual_size
 		end
 	end
-	return obj:get_properties().visual_size
+	local obj_properties = obj:get_properties()
+	if not obj_properties then
+		return boat_visual_size
+	end
+	return obj_properties.visual_size
 end
 
 local function set_attach(boat)
