@@ -30,6 +30,7 @@ mcl_mapgen.LAST_BLOCK         = mcl_mapgen.CS - 1
 mcl_mapgen.LAST_NODE_IN_BLOCK = mcl_mapgen.BS - 1
 mcl_mapgen.LAST_NODE_IN_CHUNK = mcl_mapgen.CS_NODES - 1
 mcl_mapgen.HALF_CS_NODES      = math_floor(mcl_mapgen.CS_NODES / 2)
+mcl_mapgen.HALF_BS            = math_floor(mcl_mapgen.BS / 2)
 mcl_mapgen.CS_3D              = mcl_mapgen.CS^3
 mcl_mapgen.CHUNK_WITH_SHELL   = mcl_mapgen.CS + 2
 mcl_mapgen.CHUNK_WITH_SHELL_3D = mcl_mapgen.CHUNK_WITH_SHELL^3

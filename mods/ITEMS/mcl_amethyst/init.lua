@@ -1,4 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
+local modname = minetest.get_current_modname()
+local modpath = minetest.get_modpath(modname)
 mcl_amethyst = {}
 
 -- Amethyst block
@@ -208,5 +210,5 @@ if minetest.get_modpath("mcl_spyglass") then
 	end
 end
 
--- Amethyst Growing
-dofile(minetest.get_modpath(minetest.get_current_modname()) .. "/grow.lua")
+dofile(modpath .. "/grow.lua")
+dofile(modpath .. "/geode.lua")
