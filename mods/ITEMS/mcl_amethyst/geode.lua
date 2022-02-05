@@ -24,15 +24,32 @@ local function round(v)
 end
 
 local function place(pos, rotation, pr)
-	local radius = pr:next(radius_min, radius_max)
-	local pos = vector.add(pos, radius)
-	for x = pos.x - radius, pos.x + radius do
-		for y = pos.y - radius, pos.y + radius do
-			for z = pos.z - radius, pos.z + radius do
-				local node_pos = vector.new(x, y, z)
-				local inverted_layer = round(vector.distance(node_pos, pos))
-				if inverted_layer <= radius then
-					local layer = math.min(radius - inverted_layer + 1, #layers)
+	local radius1 = vector.new(
+		-pr:next(radius_min, radius_max),
+		-pr:next(radius_min, radius_max),
+		-pr:next(radius_min, radius_max)
+	)
+	local radius2 = vector.new(
+		pr:next(radius_min, radius_max),
+		pr:next(radius_min, radius_max),
+		pr:next(radius_min, radius_max)
+	)
+	local layer_radius = pr:next(radius_min, radius_max)
+	local radius1_normalized = vector.normalize(radius1)
+	local radius2_normalized = vector.normalize(radius2)
+	local pos = vector.subtract(pos, radius1)
+	for x = radius1.x, radius2.x do
+		local max_x = (x < 0) and radius1.x or radius2.x
+		for y = radius1.y, radius2.y do
+			local max_y = (y < 0) and radius1.y or radius2.y
+			for z = radius1.z, radius2.z do
+				local max_z = (z < 0) and radius1.z or radius2.z
+				local normal_abs = vector.new(x / max_x, y / max_y, z / max_z)
+				local inverted_layer = round(vector.length(normal_abs) * layer_radius)
+				if inverted_layer <= layer_radius then
+					local layer = math.min(math.max(1, layer_radius - inverted_layer + 1), #layers)
+					local offset = vector.new(x, y, z)
+					local node_pos = pos + offset
 					local node_candidates = layers[layer]
 					local node_name
 					local chance_index = pr:next(1, 100)
