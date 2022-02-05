@@ -2,7 +2,8 @@ local radius_min = 3
 local radius_max = mcl_mapgen.HALF_BS
 local layers = {
 	{
-		[100] = "mcl_blackstone:basalt_polished",
+		[8] = "mcl_blackstone:basalt_polished",
+		[92] = "mcl_deepslate:deepslate",
 	},
 	{
 		[100] = "mcl_amethyst:calcite",
@@ -80,9 +81,10 @@ mcl_structures.register_structure({
 local decrease_scan_area = 1
 local mapblock_opacity_placement_threshold = 0.98
 local threshold = math.floor(((mcl_mapgen.BS - 2 * decrease_scan_area)^3) * mapblock_opacity_placement_threshold)
+local upper_than = mcl_mapgen.overworld.bedrock_max
 mcl_mapgen.register_mapgen_block(function(minp, maxp, blockseed)
 	local y = minp.y
-	if y < 0 then return end
+	if y <= upper_than then return end
 	local pr = PseudoRandom(blockseed + 143)
 	if pr:next(1, 120) ~= 54 then return end
 	local opacity_counter = #minetest.find_nodes_in_area(vector.add(minp, decrease_scan_area), vector.subtract(maxp, decrease_scan_area), "group:opaque")
