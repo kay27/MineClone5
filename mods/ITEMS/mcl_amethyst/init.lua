@@ -19,6 +19,7 @@ minetest.register_node("mcl_amethyst:amethyst_block",{
 	_doc_items_longdesc = S("The Block of Amethyst is a decoration block creft from amethyst shards."),
 })
 
+-- Budding Amethyst block
 minetest.register_node("mcl_amethyst:budding_amethyst_block",{
 	description = S("Budding Amethyst"),
 	tiles = {"budding_amethyst.png"},
@@ -35,7 +36,6 @@ minetest.register_node("mcl_amethyst:budding_amethyst_block",{
 	stack_max = 64,
 	_doc_items_longdesc = S("The Budding Amethyst can grow amethyst"),
 })
-mcl_wip.register_wip_item("mcl_amethyst:budding_amethyst_block")
 
 -- Amethyst Shard
 minetest.register_craftitem("mcl_amethyst:amethyst_shard",{

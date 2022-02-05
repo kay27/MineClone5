@@ -2,14 +2,18 @@ local radius_min = 3
 local radius_max = mcl_mapgen.HALF_BS
 local layers = {
 	{
-		[100] = "mcl_core:andesite",
+		[100] = "mcl_blackstone:basalt_polished",
 	},
 	{
 		[100] = "mcl_amethyst:calcite",
 	},
 	{
-		[95] = "mcl_amethyst:amethyst_block",
-		[5] = "mcl_amethyst:budding_amethyst_block",
+		[85] = "mcl_amethyst:amethyst_block",
+		[15] = "mcl_amethyst:budding_amethyst_block",
+	},
+	{
+		[98] = "mcl_amethyst:amethyst_block",
+		[2] = "mcl_amethyst:budding_amethyst_block",
 	},
 	{
 		[100] = "air",
@@ -72,3 +76,16 @@ mcl_structures.register_structure({
 	name = "amethyst_geode",
 	place_function = place,
 })
+
+local decrease_scan_area = 1
+local mapblock_opacity_placement_threshold = 0.9
+local threshold = math.floor(((mcl_mapgen.BS - 2 * decrease_scan_area)^3) * mapblock_opacity_placement_threshold)
+mcl_mapgen.register_mapgen_block(function(minp, maxp, blockseed)
+	local y = minp.y
+	if y < 0 then return end
+	local pr = PseudoRandom(blockseed + 143)
+	if pr:next(120) ~= 54 then return end
+	local opacity_counter = #minetest.find_nodes_in_area(vector.add(minp, decrease_scan_area), vector.subtract(maxp, decrease_scan_area), "group:opaque")
+	if opacity_counter < threshold then return end
+	place(minp, nil,pr)
+end)
