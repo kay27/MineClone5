@@ -16,6 +16,13 @@ local layers = {
 	}
 }
 
+local function round(v)
+	if v < 0 then
+		return math.ceil(v - 0.5)
+	end
+	return math.floor(v + 0.5)
+end
+
 local function place(pos, rotation, pr)
 	local radius = pr:next(radius_min, radius_max)
 	local pos = vector.add(pos, radius)
@@ -23,7 +30,7 @@ local function place(pos, rotation, pr)
 		for y = pos.y - radius, pos.y + radius do
 			for z = pos.z - radius, pos.z + radius do
 				local node_pos = vector.new(x, y, z)
-				local inverted_layer = vector.round(vector.distance(node_pos, pos))
+				local inverted_layer = round(vector.distance(node_pos, pos))
 				if inverted_layer <= radius then
 					local layer = math.max(radius - inverted_layer + 1, #layers)
 					local node_candidates = layers[layer]
