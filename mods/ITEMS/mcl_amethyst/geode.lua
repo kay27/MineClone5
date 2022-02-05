@@ -78,14 +78,14 @@ mcl_structures.register_structure({
 })
 
 local decrease_scan_area = 1
-local mapblock_opacity_placement_threshold = 0.9
+local mapblock_opacity_placement_threshold = 0.98
 local threshold = math.floor(((mcl_mapgen.BS - 2 * decrease_scan_area)^3) * mapblock_opacity_placement_threshold)
 mcl_mapgen.register_mapgen_block(function(minp, maxp, blockseed)
 	local y = minp.y
 	if y < 0 then return end
 	local pr = PseudoRandom(blockseed + 143)
-	if pr:next(120) ~= 54 then return end
+	if pr:next(1, 120) ~= 54 then return end
 	local opacity_counter = #minetest.find_nodes_in_area(vector.add(minp, decrease_scan_area), vector.subtract(maxp, decrease_scan_area), "group:opaque")
 	if opacity_counter < threshold then return end
-	place(minp, nil,pr)
+	place(minp, nil, pr)
 end)
