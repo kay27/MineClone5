@@ -32,13 +32,13 @@ local function place(pos, rotation, pr)
 				local node_pos = vector.new(x, y, z)
 				local inverted_layer = round(vector.distance(node_pos, pos))
 				if inverted_layer <= radius then
-					local layer = math.max(radius - inverted_layer + 1, #layers)
+					local layer = math.min(radius - inverted_layer + 1, #layers)
 					local node_candidates = layers[layer]
 					local node_name
 					local chance_index = pr:next(1, 100)
 					local current_weight = 0
 					for chance, node_name_iterated in pairs(node_candidates) do
-						if chance_index < current_weight + chance then
+						if chance_index <= current_weight + chance then
 							node_name = node_name_iterated
 							break
 						end
