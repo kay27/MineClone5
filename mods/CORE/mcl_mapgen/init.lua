@@ -30,6 +30,7 @@ mcl_mapgen.LAST_BLOCK         = mcl_mapgen.CS - 1
 mcl_mapgen.LAST_NODE_IN_BLOCK = mcl_mapgen.BS - 1
 mcl_mapgen.LAST_NODE_IN_CHUNK = mcl_mapgen.CS_NODES - 1
 mcl_mapgen.HALF_CS_NODES      = math_floor(mcl_mapgen.CS_NODES / 2)
+mcl_mapgen.HALF_BS            = math_floor(mcl_mapgen.BS / 2)
 mcl_mapgen.CS_3D              = mcl_mapgen.CS^3
 mcl_mapgen.CHUNK_WITH_SHELL   = mcl_mapgen.CS + 2
 mcl_mapgen.CHUNK_WITH_SHELL_3D = mcl_mapgen.CHUNK_WITH_SHELL^3
@@ -166,40 +167,38 @@ local function is_chunk_finished(minp)
 	return true
 end
 
-local function unsigned(v)
-	if v < 0 then
-		v = 0x100000000 - (math.abs(v) % 0x100000000)
+local function uint32_t(v)
+	if v >= 0 then
+		return v % 0x100000000
 	end
-	return v % 0x100000000
+	return 0x100000000 - (math.abs(v) % 0x100000000)
 end
 
-local function bitwise_xor_32(a, b)
-	local a = unsigned(a)
-	local b = unsigned(b)
-	local c = 0
-	for n = 31, 0, -1 do
-		local mask = math.floor(2^n)
-		if (a >= mask) ~= (b >= mask) then
-			c = c + mask
-		end
-		a = a % mask
-		b = b % mask
-	end
-	return c
+local function get_block_seed(pos, current_seed)
+	local current_seed = current_seed or uint32_t(tonumber(seed))
+	return uint32_t(uint32_t(23 * pos.x) + uint32_t(42123 * pos.y) + uint32_t(38134234 * pos.z) + current_seed)
 end
 
-local function getBlockSeed2(pos, seed)
-	local seed = seed or mcl_mapgen.seed
-	local n = unsigned(unsigned(1619 * pos.x) + unsigned(31337 * pos.y) + unsigned(52591 * pos.z) + unsigned(1013 * seed))
-	n = bitwise_xor_32(math.floor(n / 0x2000), n)
-	return unsigned((n * unsigned(n * n * 60493 + 19990303) + 1376312589))
+local function get_block_seed2(pos, current_seed)
+	local current_seed = current_seed or uint32_t(tonumber(seed))
+	local n = uint32_t(uint32_t(1619 * pos.x) + uint32_t(31337 * pos.y) + uint32_t(52591 * pos.z) + uint32_t(1013 * current_seed))
+	n = bit.bxor(bit.rshift(n, 13), n)
+	local seed = uint32_t((n * uint32_t(n * n * 60493 + 19990303) + 1376312589))
+	return seed
+end
+
+local function get_block_seed3(pos, current_seed)
+	local current_seed = uint32_t(current_seed or uint32_t(tonumber(seed)))
+	local x = uint32_t((pos.x + 32768) * 13)
+	local y = uint32_t((pos.y + 32767) * 13873)
+	local z = uint32_t((pos.z + 76705) * 115249)
+	local seed = uint32_t(bit.bxor(current_seed, x, y, z))
+	return seed
 end
 
 minetest.register_on_generated(function(minp, maxp, chunkseed)
 	local minp, maxp, chunkseed = minp, maxp, chunkseed
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	minetest_log("action", "[mcl_mapgen] New_chunk=" .. minetest_pos_to_string(minp) .. "..." .. minetest_pos_to_string(maxp) .. ", shell=" .. minetest_pos_to_string(emin) .. "..." .. minetest_pos_to_string(emax) .. ", chunkseed=" .. tostring(chunkseed))
-
 	data = vm:get_data(lvm_buffer)
 	area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
 	vm_context = {
@@ -256,10 +255,10 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		end
 		local number_of_blocks = 0
 		for k, offset in pairs(ready_blocks) do
-			if queue_blocks_lvm_counter > 0 then
+			if queue_blocks_lvm_counter > 0 or nodes_block > 0 then
 				local block_minp = p0 + vector.multiply(offset, BS)
 				local block_maxp = vector.add(block_minp, LAST_NODE_IN_BLOCK)
-				local blockseed = getBlockSeed2(block_minp)
+				local blockseed = get_block_seed3(block_minp)
 				vm_context.minp, vm_context.maxp, vm_context.blockseed = block_minp, block_maxp, blockseed
 				--                                                                            --
 				--  mcl_mapgen.register_mapgen_block_lvm(function(vm_context), order_number)  --
@@ -268,7 +267,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 					v.callback_function(vm_context)
 				end
 				if nodes_block > 0 then
-					current_blocks[#current_blocks + 1] = { minp = block_minp, maxp = block_maxp, seed = blockseed }
+					current_blocks[#current_blocks + 1] = { minp = block_minp, maxp = block_maxp, blockseed = blockseed }
 				end
 			end
 			number_of_blocks = number_of_blocks + 1
@@ -306,7 +305,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 
 	for i, chunk_minp in pairs(current_chunks) do
 		local chunk_maxp = vector.add(chunk_minp, LAST_NODE_IN_CHUNK)
-		local chunkseed = getBlockSeed2(chunk_minp)
+		local current_chunk_seed = get_block_seed3(vector.subtract(chunk_minp, BS))
 		area = VoxelArea:new({MinEdge=minp, MaxEdge=maxp})
 		vm_context = {
 			data              = data,
@@ -320,7 +319,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 			emax              = chunk_maxp,
 			minp              = chunk_minp,
 			maxp              = chunk_maxp,
-			chunkseed         = chunkseedseed,
+			chunkseed         = current_chunk_seed,
 		}
 		--                                                                        --
 		--  mcl_mapgen.register_mapgen_lvm(function(vm_context), order_number)    --
@@ -332,7 +331,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		--  mcl_mapgen.register_mapgen(function(minp, maxp, chunkseed, vm_context), order_number)  --
 		--                                                                                         --
 		for _, v in pairs(queue_chunks_nodes) do
-			v.f(chunk_minp, chunk_maxp, chunkseed, vm_context)
+			v.f(chunk_minp, chunk_maxp, current_chunk_seed, vm_context)
 		end
 		if vm_context.write or vm_context.write_param2 or vm_context.write_light then
 			if vm_context.write then
@@ -353,12 +352,12 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		end
 	end
 
-	for i, b in pairs(current_blocks) do
+	for _, b in pairs(current_blocks) do
 		--                                                                                     --
 		--  mcl_mapgen.register_mapgen_block(function(minp, maxp, blockseed), order_number)    --
 		--                                                                                     --
 		for _, v in pairs(queue_blocks_nodes) do
-			v.f(b.minp, b.maxp, b.seed)
+			v.f(b.minp, b.maxp, b.blockseed)
 		end
 	end
 end)
