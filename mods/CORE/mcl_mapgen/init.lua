@@ -480,7 +480,6 @@ function mcl_mapgen.get_voxel_manip(vm_context)
 	return vm_context.vm
 end
 
-local CS_NODES = mcl_mapgen.CS_NODES
 function mcl_mapgen.clamp_to_chunk(x, size)
 	if not size then
 		minetest.log("warning", "[mcl_mapgen] Couldn't clamp " .. tostring(x) .. " - missing size")
@@ -504,6 +503,11 @@ function mcl_mapgen.clamp_to_chunk(x, size)
 	end
 	return x - overflow
 end
+
 function mcl_mapgen.get_chunk_beginning(x)
 	return x - ((x + central_chunk_min_pos) % CS_NODES)
+end
+
+function mcl_mapgen.get_chunk_ending(x)
+	return mcl_mapgen.get_chunk_beginning(x) + LAST_NODE_IN_CHUNK
 end

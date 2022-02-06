@@ -59,7 +59,7 @@ local function build_a_settlement(minp, maxp, blockseed)
 	local pr = PseudoRandom(blockseed)
 
 	-- fill settlement_info with buildings and their data
-	local settlement_info = settlements.create_site_plan(maxp, minp, pr)
+	local settlement_info = settlements.create_site_plan(minp, maxp, pr)
 	if not settlement_info then return end
 
 	-- evaluate settlement_info and prepair terrain
@@ -74,33 +74,37 @@ end
 
 -- Disable natural generation in singlenode.
 local mg_name = minetest.get_mapgen_setting("mg_name")
+local scan_last_node = (mcl_mapgen.CS - 2) * mcl_mapgen.BS - 1
+local scan_offset = mcl_mapgen.BS
 if mg_name ~= "singlenode" then
 	mcl_mapgen.register_mapgen(function(minp, maxp, blockseed)
 		-- local str1 = (maxp.y >= 0 and blockseed % 77 == 17) and "YES" or "no"
 		-- minetest.log("action","[mcl_villages] " .. str1 .. ": minp=" .. minetest.pos_to_string(minp) .. ", maxp=" .. minetest.pos_to_string(maxp) .. ", blockseed=" .. tostring(blockseed))
 		-- don't build settlement underground
-		if maxp.y < 0 then return end
+		local y_max = maxp.y
+		if y_max < -30 then return end
 		-- randomly try to build settlements
-		if blockseed % 77 ~= 17 then return end
+		-- if blockseed % 77 ~= 17 then return end
 
 		-- don't build settlements on (too) uneven terrain
 
 		-- lame and quick replacement of `heightmap` by kay27 - we maybe need to restore `heightmap` analysis if there will be a way for the engine to avoid cavegen conflicts:
 		--------------------------------------------------------------------------
-		local height_difference, min, max
-		local pr1=PseudoRandom(blockseed)
-		for i=1,pr1:next(5,10) do
-			local x = pr1:next(0, 40) + minp.x + 19
-			local z = pr1:next(0, 40) + minp.z + 19
-			local y = minetest_get_spawn_level(x, z)
-			if not y then return end
-			if y < (min or y+1) then min = y end
-			if y > (max or y-1) then max = y end
+		local min, max = 9999999, -9999999
+		local pr = PseudoRandom(blockseed)
+		for i = 1, pr:next(5,10) do
+			local pos = vector.add(vector.new(pr:next(0, scan_last_node) + scan_offset, 0, pr:next(0, scan_last_node) + scan_offset), minp)
+			local surface_point = settlements.find_surface(pos)
+			if not surface_point then return end
+			local y = surface_point.y
+			min = math.min(y, min)
+			max = math.max(y, max)
 		end
-		height_difference = max - min + 1
+		local height_difference = max - min
 		--------------------------------------------------------------------------
 
-		if height_difference > max_height_difference then return end
+		minetest.chat_send_all("height diff="..height_difference)
+		if height_difference > 10 then return end
 
 		build_a_settlement(minp, maxp, blockseed)
 	end, mcl_mapgen.order.VILLAGES)

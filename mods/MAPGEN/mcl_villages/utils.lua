@@ -1,4 +1,4 @@
-local get_node = mcl_mapgen.get_far_node
+local get_node = minetest.get_node
 
 -------------------------------------------------------------------------------
 -- function to copy tables
@@ -22,55 +22,36 @@ end
 -- function to find surface block y coordinate
 -- returns surface postion
 -------------------------------------------------------------------------------
-function settlements.find_surface(pos, wait)
+function settlements.find_surface(pos)
 	local p6 = vector.new(pos)
-	local cnt = 0
-	local itter = 1 -- count up or down
-	local cnt_max = 200
-	-- check, in which direction to look for surface
-	local surface_node
-	if wait then
-		surface_node = get_node(p6, true, 10000000)
-	else
-		surface_node = get_node(p6)
-	end
-	if surface_node.name=="air" or surface_node.name=="ignore" then
-		itter = -1
-	end
-	-- go through nodes an find surface
-	while cnt < cnt_max do
-		-- Check Surface_node and Node above
-		--
-		if settlements.surface_mat[surface_node.name] then
-			local surface_node_plus_1 = get_node({ x=p6.x, y=p6.y+1, z=p6.z})
-			if surface_node_plus_1 and surface_node and
-				(string.find(surface_node_plus_1.name,"air") or
-				string.find(surface_node_plus_1.name,"snow") or
-				string.find(surface_node_plus_1.name,"fern") or
-				string.find(surface_node_plus_1.name,"flower") or
-				string.find(surface_node_plus_1.name,"bush") or
-				string.find(surface_node_plus_1.name,"tree") or
-				string.find(surface_node_plus_1.name,"grass"))
-				then
-					settlements.debug("find_surface7: " ..surface_node.name.. " " .. surface_node_plus_1.name)
-					return p6, surface_node.name
-			else
-				settlements.debug("find_surface2: wrong surface+1")
-			end
-		else
-			settlements.debug("find_surface3: wrong surface "..surface_node.name.." at pos "..minetest.pos_to_string(p6))
+	p6.y = mcl_mapgen.get_chunk_ending(p6.y)
+	local ymin = mcl_mapgen.get_chunk_beginning(p6.y)
+	local node = get_node(p6)
+	minetest.chat_send_all(node.name)
+	if node.name ~= "air" then return end
+	while true do
+		p6.y = p6.y - 1
+		if p6.y < ymin then return end
+		node = get_node(p6)
+		if settlements.surface_mat[node.name] then
+			break
 		end
+	end
+	minetest.chat_send_all(node.name)
 
-		p6.y = p6.y + itter
-		if p6.y < 0 then
-			settlements.debug("find_surface4: y<0")
-			return nil
-		end
-		cnt = cnt+1
-		surface_node = get_node(p6)
+	local prev_node = minetest.get_node(vector.new(p6.x, p6.y + 1, p6.z))
+	local name = prev_node.name
+	if (string.find(name, "air")
+		or string.find(name, "snow")
+		or string.find(name, "fern")
+		or string.find(name, "flower")
+		or string.find(name, "bush")
+		or string.find(name, "tree")
+		or string.find(name, "grass")
+	) then
+		minetest.chat_send_all("found! "..node.name..", "..minetest.pos_to_string(p6))
+		return p6, node.name
 	end
-	settlements.debug("find_surface5: cnt_max overflow")
-	return nil
 end
 -------------------------------------------------------------------------------
 -- check distance for new building
