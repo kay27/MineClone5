@@ -291,27 +291,40 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 		end
 	end
 
-	local function drop_items_chest(pos, oldnode, oldmetadata)
-		local meta = minetest.get_meta(pos)
-		local meta2 = meta:to_table()
-		if oldmetadata then
-			meta:from_table(oldmetadata)
-		end
-		local inv = meta:get_inventory()
-		for i=1,inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			if not stack:is_empty() then
-				local p = {x=pos.x+math.random(0, 10)/10-0.5, y=pos.y, z=pos.z+math.random(0, 10)/10-0.5}
-				minetest.add_item(p, stack)
-			end
-		end
-		meta:from_table(meta2)
+	local function drop_item_stack(pos, stack)
+		if not stack or stack:is_empty() then return end
+		local drop_offset = vector.new(math.random() - 0.5, 0, math.random() - 0.5)
+		minetest.add_item(vector.add(pos, drop_offset), stack)
 	end
 
-	local function on_chest_blast(pos)
+	local function drop_items_chest(pos, oldnode, oldmetadata, digger)
+		if oldmetadata and oldmetadata.inventory then
+			-- process after_dig_node callback
+			local main = oldmetadata.inventory.main
+			if not main then return end
+			for _, stack in pairs(main) do
+				drop_item_stack(pos, stack)
+			end
+		else
+			local meta = minetest.get_meta(pos)
+			local inv = meta:get_inventory()
+			for i = 1, inv:get_size("main") do
+				drop_item_stack(pos, inv:get_stack("main", i))
+			end
+			meta:from_table()
+		end
+	end
+
+	local function on_chest_blast(pos, intensity)
 		local node = minetest.get_node(pos)
 		drop_items_chest(pos, node)
 		minetest.remove_node(pos)
+		-- drop node itself with some probability depended on explosion intensity (1 for TNT):
+		if math.random(1, math.floor((intensity or 1) * 2)) ~= 1 then return end
+		local node_def = minetest.registered_nodes[node.name]
+		if not node_def then return end
+		local node_name = node_def.drop or node_def.name
+		drop_item_stack(pos, ItemStack(node_name))
 	end
 
 	local function limit_put_list(stack, list)
