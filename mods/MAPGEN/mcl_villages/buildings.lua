@@ -23,9 +23,7 @@ function settlements.create_site_plan(minp, maxp, pr)
 	-- find center of chunk
 	local center = vector.add(minp, mcl_mapgen.HALF_CS_NODES)
 	-- find center_surface of chunk
-	local center_surface , surface_material = settlements.find_surface(center)
-	local chunks = {}
-	chunks[mcl_mapgen.get_chunk_number(center)] = true
+	local center_surface, surface_material = settlements.find_surface(center)
 
 	-- go build settlement around center
 	if not center_surface then return false end
@@ -60,15 +58,8 @@ function settlements.create_site_plan(minp, maxp, pr)
 			local ptx, ptz = x + r * math.cos( angle ), z + r * math.sin( angle )
 			ptx = settlements.round(ptx, 0)
 			ptz = settlements.round(ptz, 0)
-			local pos1 = { x=ptx, y=center_surface.y+50, z=ptz}
-			local chunk_number = mcl_mapgen.get_chunk_number(pos1)
-			local pos_surface, surface_material
-			if chunks[chunk_number] then
-				pos_surface, surface_material = settlements.find_surface(pos1)
-			else
-				chunks[chunk_number] = true
-				pos_surface, surface_material = settlements.find_surface(pos1)
-			end
+			local pos1 = { x=ptx, y=center_surface.y, z=ptz}
+			local pos_surface, surface_material = settlements.find_surface(pos1)
 			if not pos_surface then break end
 
 			local randomized_schematic_table = shuffle(settlements.schematic_table, pr)
