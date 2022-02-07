@@ -1,4 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
+local F = minetest.formspec_escape
+local C = minetest.colorize
 local mod_doc = minetest.get_modpath("doc")
 
 -- Chest Entity
@@ -174,7 +176,7 @@ end]]
 local function player_chest_open(player, pos, node_name, textures, param2, double, sound, mesh, shulker)
 	local name = player:get_player_name()
 	open_chests[name] = {pos = pos, node_name = node_name, textures = textures, param2 = param2, double = double, sound = sound, mesh = mesh, shulker = shulker}
-	if animate_chests then
+	if animate_chests and not string.find(node_name, "barrel") then
 		local dir = minetest.facedir_to_dir(param2)
 		find_or_create_entity(pos, node_name, textures, param2, double, sound, mesh, shulker and "shulker" or "chest", dir):open(name)
 	end
@@ -226,6 +228,8 @@ local function chest_update_after_close(pos)
 		minetest.swap_node(pos_other, {name="mcl_chests:trapped_chest_left", param2 = node.param2})
 		find_or_create_entity(pos_other, "mcl_chests:trapped_chest_left", {"mcl_chests_trapped_double.png"}, node.param2, true, "default_chest", "mcl_chests_chest", "chest"):reinitialize("mcl_chests:trapped_chest_left")
 		mesecon.receptor_off(pos_other, trapped_chest_mesecons_rules)
+	elseif node.name == "mcl_chests:barrel_open" then
+		minetest.swap_node(pos, {name = "mcl_chests:barrel", param2 = node.param2})
 	end
 end
 
@@ -236,7 +240,7 @@ local function player_chest_close(player)
 	if open_chest == nil then
 		return
 	end
-	if animate_chests then
+	if animate_chests and not string.find(open_chest.node_name, "barrel") then
 		find_or_create_entity(open_chest.pos, open_chest.node_name, open_chest.textures, open_chest.param2, open_chest.double, open_chest.sound, open_chest.mesh, open_chest.shulker and "shulker" or "chest"):close(name)
 	end
 	chest_update_after_close(open_chest.pos)
@@ -491,10 +495,10 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 			minetest.show_formspec(clicker:get_player_name(),
 			"mcl_chests:"..canonical_basename.."_"..pos.x.."_"..pos.y.."_"..pos.z,
 			"size[9,8.75]"..
-			"label[0,0;"..minetest.formspec_escape(minetest.colorize("#313131", name)).."]"..
+			"label[0,0;"..F(C("#313131", name)).."]"..
 			"list[nodemeta:"..pos.x..","..pos.y..","..pos.z..";main;0,0.5;9,3;]"..
 			mcl_formspec.get_itemslot_bg(0,0.5,9,3)..
-			"label[0,4.0;"..minetest.formspec_escape(minetest.colorize("#313131", S("Inventory"))).."]"..
+			"label[0,4.0;"..F(C("#313131", S("Inventory"))).."]"..
 			"list[current_player;main;0,4.5;9,3;9]"..
 			mcl_formspec.get_itemslot_bg(0,4.5,9,3)..
 			"list[current_player;main;0,7.74;9,1;]"..
@@ -642,12 +646,12 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 			minetest.show_formspec(clicker:get_player_name(),
 			"mcl_chests:"..canonical_basename.."_"..pos.x.."_"..pos.y.."_"..pos.z,
 			"size[9,11.5]"..
-			"label[0,0;"..minetest.formspec_escape(minetest.colorize("#313131", name)).."]"..
+			"label[0,0;"..F(C("#313131", name)).."]"..
 			"list[nodemeta:"..pos.x..","..pos.y..","..pos.z..";main;0,0.5;9,3;]"..
 			mcl_formspec.get_itemslot_bg(0,0.5,9,3)..
 			"list[nodemeta:"..pos_other.x..","..pos_other.y..","..pos_other.z..";main;0,3.5;9,3;]"..
 			mcl_formspec.get_itemslot_bg(0,3.5,9,3)..
-			"label[0,7;"..minetest.formspec_escape(minetest.colorize("#313131", S("Inventory"))).."]"..
+			"label[0,7;"..F(C("#313131", S("Inventory"))).."]"..
 			"list[current_player;main;0,7.5;9,3;9]"..
 			mcl_formspec.get_itemslot_bg(0,7.5,9,3)..
 			"list[current_player;main;0,10.75;9,1;]"..
@@ -790,12 +794,12 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 			"mcl_chests:"..canonical_basename.."_"..pos.x.."_"..pos.y.."_"..pos.z,
 
 			"size[9,11.5]"..
-			"label[0,0;"..minetest.formspec_escape(minetest.colorize("#313131", name)).."]"..
+			"label[0,0;"..F(C("#313131", name)).."]"..
 			"list[nodemeta:"..pos_other.x..","..pos_other.y..","..pos_other.z..";main;0,0.5;9,3;]"..
 			mcl_formspec.get_itemslot_bg(0,0.5,9,3)..
 			"list[nodemeta:"..pos.x..","..pos.y..","..pos.z..";main;0,3.5;9,3;]"..
 			mcl_formspec.get_itemslot_bg(0,3.5,9,3)..
-			"label[0,7;"..minetest.formspec_escape(minetest.colorize("#313131", S("Inventory"))).."]"..
+			"label[0,7;"..F(C("#313131", S("Inventory"))).."]"..
 			"list[current_player;main;0,7.5;9,3;9]"..
 			mcl_formspec.get_itemslot_bg(0,7.5,9,3)..
 			"list[current_player;main;0,10.75;9,1;]"..
@@ -915,38 +919,6 @@ register_chest("trapped_chest_on",
 	"trapped_chest"
 )
 
---[[local function close_if_trapped_chest(pos, player)
-	local node = minetest.get_node(pos)
-
-	if node.name == "mcl_chests:trapped_chest_on_small" then
-		minetest.swap_node(pos, {name="mcl_chests:trapped_chest_small", param2 = node.param2})
-		find_or_create_entity(pos, "mcl_chests:trapped_chest_small", {"mcl_chests_trapped.png"}, node.param2, false, "default_chest", "mcl_chests_chest", "chest"):reinitialize("mcl_chests:trapped_chest_small")
-		mesecon.receptor_off(pos, trapped_chest_mesecons_rules)
-
-		player_chest_close(player)
-	elseif node.name == "mcl_chests:trapped_chest_on_left" then
-		minetest.swap_node(pos, {name="mcl_chests:trapped_chest_left", param2 = node.param2})
-		find_or_create_entity(pos, "mcl_chests:trapped_chest_left", {"mcl_chests_trapped_double.png"}, node.param2, true, "default_chest", "mcl_chests_chest", "chest"):reinitialize("mcl_chests:trapped_chest_left")
-		mesecon.receptor_off(pos, trapped_chest_mesecons_rules)
-
-		local pos_other = mcl_util.get_double_container_neighbor_pos(pos, node.param2, "left")
-		minetest.swap_node(pos_other, {name="mcl_chests:trapped_chest_right", param2 = node.param2})
-		mesecon.receptor_off(pos_other, trapped_chest_mesecons_rules)
-
-		player_chest_close(player)
-	elseif node.name == "mcl_chests:trapped_chest_on_right" then
-		minetest.swap_node(pos, {name="mcl_chests:trapped_chest_right", param2 = node.param2})
-		mesecon.receptor_off(pos, trapped_chest_mesecons_rules)
-
-		local pos_other = mcl_util.get_double_container_neighbor_pos(pos, node.param2, "right")
-		minetest.swap_node(pos_other, {name="mcl_chests:trapped_chest_left", param2 = node.param2})
-		find_or_create_entity(pos_other, "mcl_chests:trapped_chest_left", {"mcl_chests_trapped_double.png"}, node.param2, true, "default_chest", "mcl_chests_chest", "chest"):reinitialize("mcl_chests:trapped_chest_left")
-		mesecon.receptor_off(pos_other, trapped_chest_mesecons_rules)
-
-		player_chest_close(player)
-	end
-end]]
-
 -- Disable chest when it has been closed
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname:find("mcl_chests:") == 1 then
@@ -1003,10 +975,10 @@ minetest.register_node("mcl_chests:ender_chest", {
 })
 
 local formspec_ender_chest = "size[9,8.75]"..
-	"label[0,0;"..minetest.formspec_escape(minetest.colorize("#313131", S("Ender Chest"))).."]"..
+	"label[0,0;"..F(C("#313131", S("Ender Chest"))).."]"..
 	"list[current_player;enderchest;0,0.5;9,3;]"..
 	mcl_formspec.get_itemslot_bg(0,0.5,9,3)..
-	"label[0,4.0;"..minetest.formspec_escape(minetest.colorize("#313131", S("Inventory"))).."]"..
+	"label[0,4.0;"..F(C("#313131", S("Inventory"))).."]"..
 	"list[current_player;main;0,4.5;9,3;9]"..
 	mcl_formspec.get_itemslot_bg(0,4.5,9,3)..
 	"list[current_player;main;0,7.74;9,1;]"..
@@ -1138,10 +1110,10 @@ local function formspec_shulker_box(name)
 		name = S("Shulker Box")
 	end
 	return "size[9,8.75]"..
-	"label[0,0;"..minetest.formspec_escape(minetest.colorize("#313131", name)).."]"..
+	"label[0,0;"..F(C("#313131", name)).."]"..
 	"list[context;main;0,0.5;9,3;]"..
 	mcl_formspec.get_itemslot_bg(0,0.5,9,3)..
-	"label[0,4.0;"..minetest.formspec_escape(minetest.colorize("#313131", S("Inventory"))).."]"..
+	"label[0,4.0;"..F(C("#313131", S("Inventory"))).."]"..
 	"list[current_player;main;0,4.5;9,3;9]"..
 	mcl_formspec.get_itemslot_bg(0,4.5,9,3)..
 	"list[current_player;main;0,7.74;9,1;]"..
@@ -1448,4 +1420,96 @@ minetest.register_lbm({
 	action = function(pos, node)
 		minetest.get_meta(pos):set_string("formspec", "")
 	end,
+})
+
+local function barrel_open(pos, node, clicker)
+	local name = minetest.get_meta(pos):get_string("name")
+
+	if name == "" then
+		name = S("Barrel")
+	end
+
+	local playername = clicker:get_player_name()
+
+	minetest.show_formspec(playername,
+		"mcl_chests:barrel_"..pos.x.."_"..pos.y.."_"..pos.z,
+		table.concat({
+			"size[9,8.75]",
+			"label[0,0;"..F(C("#313131", name)).."]",
+			"list[nodemeta:"..pos.x..","..pos.y..","..pos.z..";main;0,0.5;9,3;]",
+			mcl_formspec.get_itemslot_bg(0, 0.5, 9, 3),
+			"label[0,4.0;"..F(C("#313131", S("Inventory"))).."]",
+			"list[current_player;main;0,4.5;9,3;9]",
+			mcl_formspec.get_itemslot_bg(0, 4.5, 9, 3),
+			"list[current_player;main;0,7.74;9,1;]",
+			mcl_formspec.get_itemslot_bg(0, 7.74, 9, 1),
+			"listring[nodemeta:"..pos.x..","..pos.y..","..pos.z..";main]",
+			"listring[current_player;main]",
+		})
+	)
+
+	minetest.swap_node(pos,	{ name = "mcl_chests:barrel_open", param2 = node.param2 })
+	player_chest_open(clicker, pos, "mcl_chests:barrel")
+end
+
+minetest.register_node("mcl_chests:barrel", {
+	description = S("Barrel"),
+	_tt_help = S("27 inventory slots"),
+	_doc_items_longdesc = S("Barrels are containers which provide 27 inventory slots."),
+	_doc_items_usagehelp = S("To access its inventory, rightclick it. When broken, the items will drop out."),
+	tiles = {"mcl_barrels_barrel_top.png", "mcl_barrels_barrel_bottom.png", "mcl_barrels_barrel_side.png"},
+	paramtype = "light",
+	paramtype2 = "facedir",
+	on_place = function(itemstack, placer, pointed_thing)
+		minetest.rotate_and_place(itemstack, placer, pointed_thing, minetest.is_creative_enabled(placer:get_player_name()), {}, false)
+		return itemstack
+	end,
+	stack_max = 64,
+	sounds = mcl_sounds.node_sound_wood_defaults(),
+	groups = {handy = 1, axey = 1, container = 2, material_wood = 1, flammable = -1, deco_block = 1},
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		inv:set_size("main", 9*3)
+	end,
+	after_place_node = function(pos, placer, itemstack, pointed_thing)
+		minetest.get_meta(pos):set_string("name", itemstack:get_meta():get_string("name"))
+	end,
+	after_dig_node = drop_items_chest,
+	on_blast = on_blast,
+	on_rightclick = barrel_open,
+	on_destruct = close_forms,
+	_mcl_blast_resistance = 2.5,
+	_mcl_hardness = 2.5,
+})
+
+minetest.register_node("mcl_chests:barrel_open", {
+	description = S("Barrel Open"),
+	_tt_help = S("27 inventory slots"),
+	_doc_items_longdesc = S("Barrels are containers which provide 27 inventory slots."),
+	_doc_items_usagehelp = S("To access its inventory, rightclick it. When broken, the items will drop out."),
+	_doc_items_create_entry = false,
+	tiles = {"mcl_barrels_barrel_top_open.png", "mcl_barrels_barrel_bottom.png", "mcl_barrels_barrel_side.png"},
+	paramtype = "light",
+	paramtype2 = "facedir",
+	drop = "mcl_chests:barrel",
+	stack_max = 64,
+	sounds = mcl_sounds.node_sound_wood_defaults(),
+	groups = {handy = 1, axey = 1, container = 2, material_wood = 1, flammable = -1, deco_block = 1, not_in_creative_inventory = 1},
+	after_dig_node = drop_items_chest,
+	on_blast = on_blast,
+	on_rightclick = barrel_open,
+	on_destruct = close_forms,
+	_mcl_blast_resistance = 2.5,
+	_mcl_hardness = 2.5,
+})
+
+--Minecraft Java Edition craft
+minetest.register_craft({
+	output = "mcl_chests:barrel",
+	recipe = {
+		{"group:wood", "group:wood_slab", "group:wood"},
+		{"group:wood", "",                "group:wood"},
+		{"group:wood", "group:wood_slab", "group:wood"},
+	}
 })
