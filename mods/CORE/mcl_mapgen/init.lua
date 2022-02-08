@@ -511,3 +511,7 @@ end
 function mcl_mapgen.get_chunk_ending(x)
 	return mcl_mapgen.get_chunk_beginning(x) + LAST_NODE_IN_CHUNK
 end
+
+mcl_mapgen.get_block_seed = get_block_seed
+mcl_mapgen.get_block_seed2 = get_block_seed2
+mcl_mapgen.get_block_seed3 = get_block_seed3

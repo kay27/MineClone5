@@ -1,0 +1,2 @@
+# textdomain: mcl_villages
+Chiseled Stone Village Bricks=
