@@ -44,6 +44,8 @@ local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_le
 local math_pi                               = math.pi
 local math_cos                              = math.cos
 local math_sin                              = math.sin
+local math_min                              = math.min
+local math_max                              = math.max
 local math_floor                            = math.floor
 local math_ceil                             = math.ceil
 local minetest_swap_node                    = minetest.swap_node
@@ -51,7 +53,7 @@ local minetest_registered_nodes             = minetest.registered_nodes
 local air_offset                            = chunk_offset_top - 1
 local ground_offset                         = chunk_offset_bottom + 1
 local surface_search_list                   = {}
-for k, _ in surface_mat do
+for k, _ in pairs(surface_mat) do
 	table.insert(surface_search_list, k)
 end
 
@@ -77,7 +79,9 @@ local function find_surface(pos, minp, maxp)
 		or string.find(node_name_from_above, "bush"  )
 		or string.find(node_name_from_above, "tree"  )
 		or string.find(node_name_from_above, "grass" )
-		then return surface_pos, minetese_get_node(surface_pos).name
+		then
+			return surface_pos, minetest_get_node(surface_pos).name
+		end
 	end
 end
 
@@ -165,7 +169,7 @@ local function create_site_plan(minp, maxp, pr)
 					z = math_round(z + r * math_sin(angle))
 				},
 				minp,
-				maxp,
+				maxp
 			)
 			if pos_surface then
 				shuffle_index = (shuffle_index % (#schematic_table)) + 1
@@ -178,7 +182,7 @@ local function create_site_plan(minp, maxp, pr)
 						local pos = built_house.pos
 						local building = built_house.building
 						local distance2 = (pos_surface.x - pos.x)^2 + (pos_surface.z - pos.z)^2
-						if distance2 < building.hsize^2 or distance < hsize2 then
+						if distance2 < building.hsize^2 or distance2 < hsize2 then
 							is_distance_ok = false
 							break
 						end
@@ -190,7 +194,7 @@ local function create_site_plan(minp, maxp, pr)
 							rotation    = get_random_rotation(pr),
 							surface_mat = surface_material,
 						}
-						count_buildinigs[schematic_index] = count_buildinigs[schematic_index] + 1
+						count_buildings[schematic_index] = count_buildings[schematic_index] + 1
 						number_built = number_built + 1
 						break
 					end
@@ -227,10 +231,10 @@ end
 local function terraform(plan, minp, maxp, pr)
 	local fheight, fwidth, fdepth, schematic_data, pos, rotation
 	for _, built_house in pairs(plan) do
-		schematic_data = plan[i].building
-		pos = plan[i].pos
-		rotation = plan[i].rotation
-		if rotation == "0" or rotation = "180" then
+		schematic_data = built_house.building
+		pos = built_house.pos
+		rotation = built_house.rotation
+		if rotation == "0" or rotation == "180" then
 			fwidth = schematic_data.hwidth
 			fdepth = schematic_data.hdepth
 		else
@@ -243,7 +247,7 @@ local function terraform(plan, minp, maxp, pr)
 				for yi = pos.y, math_min(pos.y + fheight * 3, maxp.y) do
 					local p = {x = xi, y = yi, z = zi}
 					if yi == pos.y then
-						ground(p, pr)
+						ground(p, minp, maxp, pr)
 					else
 						minetest_swap_node(p, {name = "air"})
 					end
@@ -253,21 +257,24 @@ local function terraform(plan, minp, maxp, pr)
 	end
 end
 
-local function paths(plan)
-	local starting_point
-	local end_point
-	local distance
-	starting_point = plan[1].pos
-	for o, p in pairs(plan) do
-		end_point = settlement_info[o].pos
-		local path = minetest.find_path(starting_point, end_point, mcl_mapgen.CS_NODES, 2, 2)
+local function paths(plan, minp, maxp)
+	local starting_point = find_surface({x = plan[1].pos.x + 2, z = plan[1].pos.z + 2}, minp, maxp)
+	if not starting_point then return end
+	starting_point.y = starting_point.y + 1
+	for i = 2, #plan do
+		local p = plan[i]
+		local end_point = p.pos
+		end_point.y = end_point.y + 1
+		local path = minetest.find_path(starting_point, end_point, mcl_mapgen.CS_NODES, 2, 2, "A*_noprefetch")
 		if path then
 			for _, pos in pairs(path) do
+				pos.y = pos.y - 1
+				
 			        local surface_mat = minetest.get_node(pos).name
 				if surface_mat == "mcl_core:sand" or surface_mat == "mcl_core:redsand" then
-					minetest.swap_node(surface_point, {name = "mcl_core:sandstonesmooth2"})
+					minetest.swap_node(pos, {name = "mcl_core:sandstonesmooth2"})
 				else
-					minetest.swap_node(surface_point, {name = "mcl_core:grass_path"})
+					minetest.swap_node(pos, {name = "mcl_core:grass_path"})
 				end
 			end
 		end
@@ -353,18 +360,11 @@ local function build_a_settlement(minp, maxp, pr)
 	local pr = pr or PseudoRandom(mcl_mapgen.get_block_seed3(minp))
 	local plan = create_site_plan(minp, maxp, pr)
 	if not plan then return end
+	paths(plan, minp, maxp)
 	terraform(plan, minp, maxp, pr)
-	paths(plan)
 	place_schematics(plan, pr)
-
-	local center = vector.add(minp, mcl_mapgen.HALF_CS_NODES)
-	local center_surface = settlements.find_surface(center)
-	table.insert(villages, center_surface)
+	table.insert(villages, minp)
 	storage:set_string("villages", minetest.serialize(villages))
-
-	-- save list to file
-	settlements.save()
-
 end
 
 -- Disable natural generation in singlenode.
@@ -375,27 +375,29 @@ if mg_name ~= "singlenode" then
 	mcl_mapgen.register_mapgen(function(minp, maxp, chunkseed)
 		if minp.y < minp_min then return end
 		local pr = PseudoRandom(chunkseed * random_multiply + random_offset)
+		local random_number = pr:next(1, chance_per_chunk)
 		local noise = mcl_structures_get_perlin_noise_level(minp) * noise_multiplier
 		if (random_number + noise) < struct_threshold then return end
 		local min, max = 9999999, -9999999
 		for i = 1, pr:next(5,10) do
-			local surface_point = settlements.find_surface(
+			local surface_point = find_surface(
 				vector.add(
 					vector.new(
-						pr:next(scan_offset, scan_last_node) + ,
+						pr:next(scan_offset, scan_last_node),
 						0,
-						pr:next(0, scan_last_node) + scan_offset
+						pr:next(scan_offset, scan_last_node)
 					),
 					minp
-				)
+				),
+				minp,
+				maxp
 			)
 			if not surface_point then return end
 			local y = surface_point.y
-			min = math.min(y, min)
-			max = math.max(y, max)
+			min = math_min(y, min)
+			max = math_max(y, max)
 		end
 		local height_difference = max - min
-		minetest.chat_send_all("height diff="..height_difference)
 		if height_difference > max_height_difference then return end
 		build_a_settlement(minp, maxp, chunkkseed)
 	end, mcl_mapgen.order.VILLAGES)
