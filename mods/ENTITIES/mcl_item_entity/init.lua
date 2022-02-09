@@ -790,9 +790,10 @@ minetest.register_entity(":__builtin:item", {
 				local oldvel = self.object:get_velocity() -- v is vector, vel is velocity
 
 				-- drag
-                newv.x = newv.x - (oldvel.x - newv.x) * item_drop_settings.fluid_drag * dtime
-                newv.y = newv.y - (oldvel.y - newv.y) * item_drop_settings.fluid_drag * dtime
-                newv.z = newv.z - (oldvel.z - newv.z) * item_drop_settings.fluid_drag * dtime
+				local fluid_drag = item_drop_settings.fluid_drag
+                newv.x = newv.x - (oldvel.x - newv.x) * fluid_drag * dtime
+                newv.y = newv.y - (oldvel.y - newv.y) * fluid_drag * dtime
+                newv.z = newv.z - (oldvel.z - newv.z) * fluid_drag * dtime
 
                 newv.y = newv.y + -0.22 -- (keep slight downward thrust from previous version of code)
                                         -- NOTE:    is there any particular reason we have this, anyway?
@@ -843,6 +844,7 @@ minetest.register_entity(":__builtin:item", {
 				    return
                 end
 
+                local ground_drag = item_drop_settings.ground_drag
 				local newvel = {
 				    x = oldvel.x - oldvel.x * ground_drag * dtime,
 				    y = oldvel.y,
