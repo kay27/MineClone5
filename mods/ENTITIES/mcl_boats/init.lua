@@ -112,7 +112,9 @@ local function detach_object(obj, change_pos)
 		mcl_player.player_attached[obj:get_player_name()] = false
 		mcl_player.player_set_animation(obj, "stand" , 30)
 	else
-		obj:get_luaentity()._old_visual_size = nil
+		local luaentity = obj:get_luaentity()
+		if not luaentity then return end
+		luaentity._old_visual_size = nil
 	end
 	if change_pos then
 		 obj:set_pos(vector.add(obj:get_pos(), vector.new(0, 0.2, 0)))
