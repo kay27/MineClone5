@@ -28,7 +28,8 @@ local item_drop_settings                 = {} --settings table
 item_drop_settings.dug_buffer            = 0.65 -- the warm up period before a dug item can be collected
 item_drop_settings.age                   = 1.0 --how old a dropped item (_insta_collect==false) has to be before collecting
 item_drop_settings.fluid_flow_rate       = 1.39 --the speed of a flowing fluid, used when computing push and drag forces of water on items; default is tuned to Minecraft
-item_drop_settings.fluid_drag            = 0.8 --how much drag water has on items (how quickly an item's motion will settle onto the water's flow speed)
+item_drop_settings.fluid_drag            = 0.2 --how much drag water has on items (how quickly an item's motion will settle onto the water's flow speed)
+item_drop_settings.ground_drag           = 0.6 --how much friction with the ground slows items sliding on it
 item_drop_settings.radius_magnet         = 2.0 --radius of item magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.xp_radius_magnet      = 7.25 --radius of xp magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.radius_collect        = 0.2 --radius of collection
@@ -832,7 +833,22 @@ minetest.register_entity(":__builtin:item", {
 						end
 					end
 				end
-				disable_physics(self.object, self)
+				--disable_physics(self.object, self)
+				-- apply ground drag
+				local oldvel = self.object:get_velocity()
+
+                -- ignore momentum if it's tiny
+				if math.abs(oldvel.x) < 0.05 and math.abs(oldvel.z) < 0.05 then
+				    disable_physics(self.object, self)
+				    return
+                end
+
+				local newvel = {
+				    x = oldvel.x - oldvel.x * ground_drag * dtime,
+				    y = oldvel.y,
+				    z = oldvel.z - oldvel.z * ground_drag * dtime
+                }
+                self.object:set_velocity(new_vel)
 			end
 		else
 			if self._magnet_active == false then
