@@ -143,9 +143,9 @@ local dropperdef = {
 
 					local newv = minetest.facedir_to_dir(node.param2)
 					newv = {
-					    x = newv.x * shoot_force,
-					    y = newv.y * shoot_force,
-					    z = newv.z * shoot_force
+					    x = -newv.x * shoot_force,
+					    y = -newv.y * shoot_force,
+					    z = -newv.z * shoot_force
 					}
 
 					dropitemobj:set_velocity(newv)
