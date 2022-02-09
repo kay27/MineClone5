@@ -275,7 +275,7 @@ local dispenserdef = {
             				    z = newv.z * shoot_force
             				}
 
-            				dropitemobj.set_velocity(newv)
+            				dropitemobj:set_velocity(newv)
 						end
 					end
 
