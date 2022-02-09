@@ -31,6 +31,7 @@ item_drop_settings.fluid_flow_rate       = 1.39 --the speed of a flowing fluid, 
 item_drop_settings.fluid_drag            = 1.8 --how much drag water has on items (how quickly an item's motion will settle onto the water's flow speed)
 item_drop_settings.ground_drag           = 3.0 --how much friction with the ground slows items sliding on it
 item_drop_settings.slippery_drag_factor  = 0.25 --scales item friction with the ground on slippery floors (e.g. ice)
+item_drop_settings.slippery_fluid_drag_factor = 0.4 --scales item drag with waterflow on slippery floors (e.g. ice)
 item_drop_settings.radius_magnet         = 2.0 --radius of item magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.xp_radius_magnet      = 7.25 --radius of xp magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.radius_collect        = 0.2 --radius of collection
@@ -792,6 +793,14 @@ minetest.register_entity(":__builtin:item", {
 
 				-- drag
 				local fluid_drag = item_drop_settings.fluid_drag
+
+                local floornn = minetest.get_node({x=p.x, y=p.y-0.5, z=p.z}).name
+                local floornode = floornn and minetest.registered_nodes[floornn]
+				if floornode and minetest.get_item_group(floornode.name, "slippery") then
+				    -- scale fluid drag on slippery floors
+				    fluid_drag = fluid_drag * item_drop_settings.slippery_fluid_drag_factor
+				end
+
                 newv.x = newv.x - (oldvel.x - newv.x) * fluid_drag * dtime
                 newv.y = newv.y - (oldvel.y - newv.y) * fluid_drag * dtime
                 newv.z = newv.z - (oldvel.z - newv.z) * fluid_drag * dtime
