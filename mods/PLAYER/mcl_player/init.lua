@@ -90,7 +90,7 @@ function mcl_player.player_set_model(player, model_name)
 end
 
 local function set_texture(player, index, texture)
-	local textures = player_textures[player:get_player_name()]
+	local textures = player_textures[player:get_player_name()] or {}
 	textures[index] = texture
 	player:set_properties({textures = textures})
 end
