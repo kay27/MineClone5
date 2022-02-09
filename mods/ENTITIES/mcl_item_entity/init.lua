@@ -850,7 +850,7 @@ minetest.register_entity(":__builtin:item", {
 				    y = oldvel.y,
 				    z = oldvel.z - oldvel.z * ground_drag * dtime
                 }
-                self.object:set_velocity(new_vel)
+                self.object:set_velocity(newvel)
 			end
 		else
 			if self._magnet_active == false then
