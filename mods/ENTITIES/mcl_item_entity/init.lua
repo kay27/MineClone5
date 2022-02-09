@@ -789,9 +789,9 @@ minetest.register_entity(":__builtin:item", {
 				local oldvel = self.object:get_velocity() -- v is vector, vel is velocity
 
 				-- drag
-                newv.x = newv.x - (oldvel.x - newv.x) * item_drop_settings.fluid_drag
-                newv.y = newv.y - (oldvel.y - newv.y) * item_drop_settings.fluid_drag
-                newv.z = newv.z - (oldvel.z - newv.z) * item_drop_settings.fluid_drag
+                newv.x = newv.x - (oldvel.x - newv.x) * item_drop_settings.fluid_drag * dtime
+                newv.y = newv.y - (oldvel.y - newv.y) * item_drop_settings.fluid_drag * dtime
+                newv.z = newv.z - (oldvel.z - newv.z) * item_drop_settings.fluid_drag * dtime
 
                 newv.y = newv.y + -0.22 -- (keep slight downward thrust from previous version of code)
                                         -- NOTE:    is there any particular reason we have this, anyway?
@@ -799,7 +799,7 @@ minetest.register_entity(":__builtin:item", {
                                         --          apply gravity here; drag will slow down the fall
                                         --          realistically
 				
-				self.object:set_velocity({x = oldvel.x + newv.x, y = oldvel.y + newv.y, z = oldvel.z + newv.z})
+				self.object:set_velocity({x = oldvel.x + newv.x * dtime, y = oldvel.y + newv.y * dtime, z = oldvel.z + newv.z * dtime})
 
 				self.physical_state = true
 				self._flowing = true
