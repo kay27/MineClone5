@@ -15,7 +15,7 @@ local basic_pseudobiome_villages = minetest.settings:get_bool("basic_pseudobiome
 local schem_path                 = modpath .. "/schematics/"
 local schematic_table = {
 	{name = "large_house",	mts = schem_path.."large_house.mts",	hwidth = 11, hdepth = 12, hheight =  9, hsize = 14, max_num = 0.08 , rplc = basic_pseudobiome_villages },
-	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	hwidth =  7, hdepth =  7, hheight = 13, hsize = 13, max_num = 0.055, rplc = basic_pseudobiome_villages },
+	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	hwidth =  7, hdepth = 11, hheight =  7, hsize = 13, max_num = 0.055, rplc = basic_pseudobiome_villages },
 	{name = "butcher",	mts = schem_path.."butcher.mts",	hwidth = 11, hdepth =  8, hheight = 10, hsize = 14, max_num = 0.03 , rplc = basic_pseudobiome_villages },
 	{name = "church",	mts = schem_path.."church.mts",		hwidth = 13, hdepth = 13, hheight = 14, hsize = 15, max_num = 0.04 , rplc = basic_pseudobiome_villages },
 	{name = "farm",		mts = schem_path.."farm.mts",		hwidth =  7, hdepth =  7, hheight = 13, hsize = 13, max_num = 0.1  , rplc = basic_pseudobiome_villages },
@@ -27,13 +27,13 @@ local schematic_table = {
 	{name = "well",		mts = schem_path.."well.mts",		hwidth =  6, hdepth =  8, hheight =  6, hsize = 10, max_num = 0.045, rplc = basic_pseudobiome_villages },
 }
 local surface_mat = {
-	["mcl_core:dirt_with_dry_grass"]  = true,
-	["mcl_core:dirt_with_grass"]      = true,
-	["mcl_core:dirt_with_grass_snow"] = true,
-	["mcl_core:podzol"]               = true,
-	["mcl_core:redsand"]              = true,
-	["mcl_core:sand"]                 = true,
-	["mcl_core:snow"]                 = true,
+	["mcl_core:dirt_with_dry_grass"]  = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
+	["mcl_core:dirt_with_grass"]      = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
+	["mcl_core:dirt_with_grass_snow"] = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
+	["mcl_core:podzol"]               = { top = "mcl_core:podzol",  bottom = "mcl_core:stone"        },
+	["mcl_core:redsand"]              = { top = "mcl_core:redsand", bottom = "mcl_core:redsandstone" },
+	["mcl_core:sand"]                 = { top = "mcl_core:sand",    bottom = "mcl_core:sandstone"    },
+	["mcl_core:snow"]                 = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
 }
 local storage  = minetest.get_mod_storage()
 local villages = minetest.deserialize(storage:get_string("villages") or "return {}") or {}
@@ -48,8 +48,10 @@ local math_min                              = math.min
 local math_max                              = math.max
 local math_floor                            = math.floor
 local math_ceil                             = math.ceil
+local string_find                           = string.find
 local minetest_swap_node                    = minetest.swap_node
 local minetest_registered_nodes             = minetest.registered_nodes
+local minetest_bulk_set_node                = minetest.bulk_set_node
 local air_offset                            = chunk_offset_top - 1
 local ground_offset                         = chunk_offset_bottom + 1
 local surface_search_list                   = {}
@@ -72,13 +74,13 @@ local function find_surface(pos, minp, maxp)
 	local nodes = minetest_find_nodes_in_area({x=x, y=y_min, z=z}, {x=x, y=y_max, z=z}, surface_search_list)
 	for _, surface_pos in pairs(nodes) do
 		local node_name_from_above = minetest_get_node({x=surface_pos.x, y=surface_pos.y+1, z=surface_pos.z}).name
-		if string.find(node_name_from_above, "air"   )
-		or string.find(node_name_from_above, "snow"  )
-		or string.find(node_name_from_above, "fern"  )
-		or string.find(node_name_from_above, "flower")
-		or string.find(node_name_from_above, "bush"  )
-		or string.find(node_name_from_above, "tree"  )
-		or string.find(node_name_from_above, "grass" )
+		if string_find(node_name_from_above, "air"   )
+		or string_find(node_name_from_above, "snow"  )
+		or string_find(node_name_from_above, "fern"  )
+		or string_find(node_name_from_above, "flower")
+		or string_find(node_name_from_above, "bush"  )
+		or string_find(node_name_from_above, "tree"  )
+		or string_find(node_name_from_above, "grass" )
 		then
 			return surface_pos, minetest_get_node(surface_pos).name
 		end
@@ -212,48 +214,68 @@ local function create_site_plan(minp, maxp, pr)
 	return plan
 end
 
-local function ground(pos, minp, maxp, pr)
-	local p2 = vector.new(pos)
-	local cnt = 0
-	local mat = "mcl_core:dirt"
-	p2.y = p2.y - 1
-	local min_y = math_max(minp.y, p2.y - pr:next(17,27))
-	local stone_level =  p2.y - pr:next(2, 4)
-	while p2.y >= min_y do
-		if p2.y == stone_level then
-			mat = "mcl_core:stone"
-		end
-		minetest.swap_node(p2, {name=mat})
-		p2.y = p2.y - 1
-	end
-end
-
-local function terraform(plan, minp, maxp, pr)
-	local fheight, fwidth, fdepth, schematic_data, pos, rotation
-	for _, built_house in pairs(plan) do
-		schematic_data = built_house.building
-		pos = built_house.pos
-		rotation = built_house.rotation
-		if rotation == "0" or rotation == "180" then
-			fwidth = schematic_data.hwidth
-			fdepth = schematic_data.hdepth
-		else
-			fwidth = schematic_data.hdepth
-			fdepth = schematic_data.hwidth
-		end
-		fheight = schematic_data.hheight
-		for xi = pos.x, pos.x + fwidth - 1 do
-			for zi = pos.z, pos.z + fdepth - 1 do
-				for yi = pos.y, math_min(pos.y + fheight * 3, maxp.y) do
-					local p = {x = xi, y = yi, z = zi}
-					if yi == pos.y then
-						ground(p, minp, maxp, pr)
-					else
-						minetest_swap_node(p, {name = "air"})
+local function ground(pos1, pos2, minp, maxp, pr, mat)
+	local pos1, pos2 = pos1, pos2
+	local x1, x2, z1, z2, y = pos1.x, pos2.x, pos1.z, pos2.z, pos1.y - 1
+	local pos_list_dirt = {}
+	local pos_list_stone = {}
+	for x0 = x1, x2 do
+		for z0 = z1, z2 do
+			local finish = false
+			local y1 = y - pr:next(2, 4)
+			for y0 = y, y1, -1 do
+				local p0 = {x = x0, y = y0, z = z0}
+				local node = minetest_get_node(p0)
+				local node_name = node.name
+				if node_name ~= "air" and not string_find(node_name, "water") and not string_find(node_name, "flower") then
+					finish = true
+					break
+				end
+				pos_list_dirt[#pos_list_dirt + 1] = p0
+			end
+			if not finish then
+				for y0 = y1 - 1, math_max(minp.y, y - pr:next(17, 27)), -1 do
+					local p0 = {x = x0, y = y0, z = z0}
+					local node = minetest_get_node(p0)
+					local node_name = node.name
+					if node_name ~= "air" and not string_find(node_name, "water") and not string_find(node_name, "flower") then
+						break
 					end
+					pos_list_stone[#pos_list_stone + 1] = p0
 				end
 			end
 		end
+	end
+	minetest_bulk_set_node(pos_list_dirt,  {name = surface_mat[mat].top})
+	minetest_bulk_set_node(pos_list_stone, {name = surface_mat[mat].bottom})
+end
+
+local function terraform(plan, minp, maxp, pr)
+	local fheight, fwidth, fdepth, schematic_data, pos, rotation, swap_wd, build_material
+	for _, built_house in pairs(plan) do
+		schematic_data = built_house.building
+		pos            = built_house.pos
+		rotation       = built_house.rotation
+		build_material = built_house.surface_mat
+		swap_wd        = rotation == "90" or rotation == "270"
+		fwidth         = swap_wd and schematic_data.hdepth or schematic_data.hwidth
+		fdepth         = swap_wd and schematic_data.hwidth or schematic_data.hdepth
+		fheight        = schematic_data.hheight
+		local pos2 = {
+			x = pos.x + fwidth - 1,
+			y = math_min(pos.y + fheight * 3, maxp.y),
+			z = pos.z + fdepth - 1
+		}
+		ground(pos, {x = pos2.x, y = pos.y, z = pos2.z}, minp, maxp, pr, build_material)
+		local node_list = {}
+		for xi = pos.x, pos2.x do
+			for zi = pos.z, pos2.z do
+				for yi = pos.y, pos2.y do
+					node_list[#node_list + 1] = {x = xi, y = yi, z = zi}
+				end
+			end
+		end
+		minetest_bulk_set_node(node_list, {name = "air"})
 	end
 end
 
@@ -283,12 +305,13 @@ end
 
 local function init_nodes(p1, rotation, pr, size)
 	local p2 = vector.subtract(vector.add(p1, size), 1)
-	local nodes = minetest.find_nodes_in_area(p1, p2, {"mcl_itemframes:item_frame", "mcl_furnaces:furnace", "mcl_anvils:anvil"})
+	local nodes = minetest.find_nodes_in_area(p1, p2, {"mcl_itemframes:item_frame", "mcl_furnaces:furnace", "mcl_anvils:anvil", "mcl_chests:chest"})
 	for _, pos in pairs(nodes) do
 		local name = minetest_get_node(pos).name
 		local def = minetest_registered_nodes[minetest_get_node(pos).name]
 		def.on_construct(pos)
 		if name == "mcl_chests:chest" then
+			minetest_swap_node(pos, {name = "mcl_chests:chest_small"})
 			fill_chest(pos, pr)
 		end
 	end
@@ -363,7 +386,7 @@ local function build_a_settlement(minp, maxp, pr)
 	paths(plan, minp, maxp)
 	terraform(plan, minp, maxp, pr)
 	place_schematics(plan, pr)
-	table.insert(villages, minp)
+	villages[#villages + 1] = minp
 	storage:set_string("villages", minetest.serialize(villages))
 end
 
