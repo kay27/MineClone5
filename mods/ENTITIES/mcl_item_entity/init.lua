@@ -821,8 +821,9 @@ minetest.register_entity(":__builtin:item", {
 		-- If node is not registered or node is walkably solid and resting on nodebox
 		local nn = minetest.get_node({x=p.x, y=p.y-0.5, z=p.z}).name
 		local v = self.object:get_velocity()
+		local node = nn and minetest.registered_nodes[nn]
 
-		if not minetest.registered_nodes[nn] or minetest.registered_nodes[nn].walkable and v.y == 0 then
+		if not node or node.walkable and v.y == 0 then
 			if self.physical_state then
 				local own_stack = ItemStack(self.object:get_luaentity().itemstring)
 				-- Merge with close entities of the same item
@@ -847,7 +848,7 @@ minetest.register_entity(":__builtin:item", {
 
                 local ground_drag = item_drop_settings.ground_drag
 
-                if minetest.registered_nodes[nn].slippery then
+                if node and minetest.get_item_group(node.name, "slippery") ~= 0 then
                     ground_drag = ground_drag * item_drop_settings.slippery_drag_factor
                 end
                 
