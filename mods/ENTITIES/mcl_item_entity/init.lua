@@ -824,6 +824,7 @@ minetest.register_entity(":__builtin:item", {
 			-- Disable flowing physics if not on/in flowing liquid
 			self._flowing = false
 			--enable_physics(self.object, self, true) -- do not reset velocity upon leaving water!
+			self.object:set_acceleration({x=0,y=-get_gravity(),z=0}) -- resume applying gravity
 			return
 		end
 
