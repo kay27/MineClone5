@@ -3,7 +3,7 @@
 ---------------------------
 This mod counts time when all players sleep or some area is inactive.
 
-It depends very much in `time_speed` configuration variable, which could be changed 'on the fly' by a chat command.
+It depends very much on `time_speed` configuration variable, which could be changed 'on the fly' by a chat command.
 
 If `time_speed` set to 0, this mod logs warnings and returns zeroes.
 
@@ -11,7 +11,7 @@ If `time_speed` set to 0, this mod logs warnings and returns zeroes.
 ------------------------------
 Returns: Integer value of realtime (not in-game) seconds since world creation.
 
-Usually this value grow smoothly. But whe you skip the night being in the bed, or leave some area for some time, you may experience value jumps. That's basically the idea of this mod.
+Usually this value grow smoothly. But when you skip the night being in the bed, or leave some area for some time, you may experience value jumps. That's basically the idea of this mod.
 
 ### mcl_time.get_number_of_times(last_time, interval, chance)
 -------------------------------------------------------------
