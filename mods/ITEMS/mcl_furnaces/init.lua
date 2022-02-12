@@ -215,62 +215,11 @@ local function swap_node(pos, name)
 	end
 end
 
-local function furnace_reset_delta_time(pos)
-	local meta = minetest.get_meta(pos)
-	local time_speed = tonumber(minetest.settings:get("time_speed") or 72)
-	if (time_speed < 0.1) then
-		return
-	end
-	local time_multiplier = 86400 / time_speed
-	local current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
-
-	-- TODO: Change meta:get/set_string() to get/set_float() for "last_gametime".
-	-- In Windows *_float() works OK but under Linux it returns rounded unusable values like 449540.000000000
-	local last_game_time = meta:get_string("last_gametime")
-	if last_game_time then
-		last_game_time = tonumber(last_game_time)
-	end
-	if not last_game_time or last_game_time < 1 or math.abs(last_game_time - current_game_time) <= 1.5 then
-		return
-	end
-
-	meta:set_string("last_gametime", tostring(current_game_time))
-end
-
-local function furnace_get_delta_time(pos, elapsed)
-	local meta = minetest.get_meta(pos)
-	local time_speed = tonumber(minetest.settings:get("time_speed") or 72)
-	local current_game_time
-	if (time_speed < 0.1) then
-		return meta, elapsed
-	else
-		local time_multiplier = 86400 / time_speed
-		current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
-	end
-
-	local last_game_time = meta:get_string("last_gametime")
-	if last_game_time then
-		last_game_time = tonumber(last_game_time)
-	end
-	if not last_game_time or last_game_time < 1 then
-		last_game_time = current_game_time - 0.1
-	elseif last_game_time == current_game_time then
-		current_game_time = current_game_time + 1.0
-	end
-
-	local elapsed_game_time = .0 + current_game_time - last_game_time
-
-	meta:set_string("last_gametime", tostring(current_game_time))
-
-	return meta, elapsed_game_time
-end
-
 local function furnace_node_timer(pos, elapsed)
 	--
 	-- Inizialize metadata
 	--
-	local meta, elapsed_game_time = furnace_get_delta_time(pos, elapsed)
-
+	local meta = minetest.get_meta(pos)
 	local fuel_time = meta:get_float("fuel_time") or 0
 	local src_time = meta:get_float("src_time") or 0
 	local src_item = meta:get_string("src_item") or ""
@@ -294,6 +243,7 @@ local function furnace_node_timer(pos, elapsed)
 	end
 
 	local update = true
+	local elapsed_game_time = mcl_time.get_irl_seconds_passed_at_pos_or_nil(pos) or elapsed
 	while elapsed_game_time > 0.00001 and update do
 		--
 		-- Cooking
@@ -489,20 +439,20 @@ minetest.register_node("mcl_furnaces:furnace", {
 
 	on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
 		-- Reset accumulated game time when player works with furnace:
-		furnace_reset_delta_time(pos)
+		mcl_time.touch(pos)
 		minetest.get_node_timer(pos):start(1.0)
 
 		on_metadata_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
 	end,
 	on_metadata_inventory_put = function(pos)
 		-- Reset accumulated game time when player works with furnace:
-		furnace_reset_delta_time(pos)
+		mcl_time.touch(pos)
 		-- start timer function, it will sort out whether furnace can burn or not.
 		minetest.get_node_timer(pos):start(1.0)
 	end,
 	on_metadata_inventory_take = function(pos, listname, index, stack, player)
 		-- Reset accumulated game time when player works with furnace:
-		furnace_reset_delta_time(pos)
+		mcl_time.touch(pos)
 		-- start timer function, it will helpful if player clears dst slot
 		minetest.get_node_timer(pos):start(1.0)
 
