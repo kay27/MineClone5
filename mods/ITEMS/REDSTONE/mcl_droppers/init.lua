@@ -134,9 +134,21 @@ local dropperdef = {
 				-- No container?
 				if not dropped and not dropnodedef.groups.container then
 					-- Drop item normally
-					minetest.add_item(droppos, dropitem)
+					local dropitemobj = minetest.add_item(droppos, dropitem)
 					stack:take_item()
 					inv:set_stack("main", stack_id, stack)
+
+					-- Set item velocity (overrides the default random drop direction)
+					local shoot_force = 1.3
+
+					local newv = minetest.facedir_to_dir(node.param2)
+					newv = {
+					    x = -newv.x * shoot_force,
+					    y = -newv.y * shoot_force,
+					    z = -newv.z * shoot_force
+					}
+
+					dropitemobj:set_velocity(newv)
 				end
 			end
 		end,

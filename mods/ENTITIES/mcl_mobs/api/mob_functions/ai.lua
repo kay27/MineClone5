@@ -893,6 +893,17 @@ function mobs.mob_step(self, dtime)
 		end
 	end
 
+	--water damage
+	if self.water_damage and self.water_damage ~= 0 then
+		local pos = self.object:get_pos()
+		local node = minetest_get_node(pos).name
+		if minetest_get_item_group(node, "water") ~= 0 then
+			mobs.smoke_effect(self)
+			self.health = self.health - self.water_damage
+			self:teleport()
+		end
+	end
+
 	--set mobs on fire when burned by sunlight
 	if self.ignited_by_sunlight then
 		local pos = self.object:get_pos()

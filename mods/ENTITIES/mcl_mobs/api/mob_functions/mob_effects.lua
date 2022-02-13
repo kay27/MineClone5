@@ -148,3 +148,23 @@ mobs.breeding_effect = function(self)
         texture = "heart.png",
     })
 end
+
+mobs.smoke_effect = function(self)
+	local pos = self.object:get_pos()
+	minetest.add_particlespawner({
+		amount = 5,
+		time = 0.25,
+		minpos = pos,
+		maxpos = pos,
+		minvel = {x = -1, y = -1, z = -1},
+		maxvel = {x = 1, y = 1, z = 1},
+		minacc = {x = 0, y = 10, z = 0},
+		maxacc = {x = 0, y = 10, z = 0},
+		minexptime = 0.1,
+		maxexptime = 1,
+		minsize = 0.5,
+		maxsize = 1,
+	        collisiondetection = false,
+		texture = "mcl_particles_smoke.png",
+	})
+end
