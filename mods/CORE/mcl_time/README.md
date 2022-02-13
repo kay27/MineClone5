@@ -29,7 +29,7 @@ This function 'toches' node at position `pos` by writing `_t` meta variable of `
 
 ### mcl_time.get_number_of_times_at_pos(pos, interval, chance)
 --------------------------------------------------------------
-Much more handy to call from LBM or area load, than `mcl_time.get_number_of_times()`!
+Much more handy to call from LBM on area load, than `mcl_time.get_number_of_times()`!
 
 It reads meta variable `_t` from position `pos` and uses it as previous `seconds_irl`, which then pass as first argument into `mcl_time.get_number_of_times()`.
 After calling this, it also 'touches' the node at `pos` by writing `seconds_irl` into meta variable `_t`.
