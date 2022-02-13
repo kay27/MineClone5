@@ -6,21 +6,6 @@ local interval = 35
 local chance = 11
 local max_interval = interval * chance
 
-local time_speed
-local time_multiplier
-local current_game_time
-
-function update_timespeed()
-	time_speed = tonumber(minetest.settings:get("time_speed") or 72)
-	time_multiplier = 86400 / time_speed
-	current_game_time = .0 + ((minetest.get_day_count() + minetest.get_timeofday()) * time_multiplier)
-	minetest.after(5, update_timespeed)
-end
-
-minetest.register_on_mods_loaded(function()
-	minetest.after(5, update_timespeed)
-end)
-
 minetest.register_node("mcl_nether:nether_wart_0", {
 	description = S("Premature Nether Wart (Stage 1)"),
 	_doc_items_longdesc = S("A premature nether wart has just recently been planted on soul sand. Nether wart slowly grows on soul sand in 4 stages (the second and third stages look identical). Although nether wart is home to the Nether, it grows in any dimension."),
@@ -183,6 +168,9 @@ local function grow(pos, node)
 	new_node.param = node.param
 	new_node.param2 = node.param2
 	minetest.set_node(pos, new_node)
+	local meta = minetest.get_meta(pos)
+	meta:set_string("gametime", tostring(mcl_time:get_seconds_irl()))
+
 end
 
 minetest.register_abm({
@@ -197,9 +185,10 @@ minetest.register_abm({
 			return
 		end
 		pos.y = pos.y+1
-		grow(pos, node)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("gametime", tostring(current_game_time))
+
+		for i = 1, mcl_time.get_number_of_times_at_pos_or_1(pos, interval, chance) do
+			grow(pos, node)
+		end
 	end
 })
 
@@ -214,26 +203,14 @@ minetest.register_lbm({
 			return
 		end
 		pos.y = pos.y+1
-		local meta = minetest.get_meta(pos)
-		local last_game_time = tonumber(meta:get_string("gametime"))
-		if not last_game_time then return end
-
-		local real_seconds = last_game_time - current_game_time
-		if real_seconds < interval then return end
-
-		local threshold = math.random(interval, max_interval)
-		local i = 0
-		while real_seconds >= threshold and i < 4 do
+		for i = 1, mcl_time.get_number_of_times_at_pos(pos, interval, chance) do
 			grow(pos, node)
-			real_seconds = real_seconds - threshold
-			threshold = math.random(interval, max_interval)
-			i = i + 1
 		end
 	end
 })
 
 if minetest.get_modpath("doc") then
-	for i=1,2 do
+	for i=1, 2 do
 		doc.add_entry_alias("nodes", "mcl_nether:nether_wart_0", "nodes", "mcl_nether:nether_wart_"..i)
 	end
 end
