@@ -42,6 +42,15 @@ item_drop_settings.drop_single_item      = false --if true, the drop control dro
 
 item_drop_settings.magnet_time           = 0.75 -- how many seconds an item follows the player before giving up
 
+function is_player(obj)
+	if not obj then return end
+	if not obj:is_player() then return end
+	local name = obj:get_player_name()
+	if not name then return end
+	if possible_hackers[name] then return end
+	return true
+end
+
 local function get_gravity()
 	return tonumber(minetest.settings:get("movement_gravity")) or 9.81
 end
@@ -132,7 +141,7 @@ minetest.register_globalstep(function(dtime)
 
 			--magnet and collection
 			for _,object in pairs(minetest.get_objects_inside_radius(checkpos, item_drop_settings.xp_radius_magnet)) do
-				if not object:is_player() and vector.distance(checkpos, object:get_pos()) < item_drop_settings.radius_magnet and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" and object:get_luaentity()._magnet_timer and (object:get_luaentity()._insta_collect or (object:get_luaentity().age > item_drop_settings.age)) then
+				if not is_player(object) and vector.distance(checkpos, object:get_pos()) < item_drop_settings.radius_magnet and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" and object:get_luaentity()._magnet_timer and (object:get_luaentity()._insta_collect or (object:get_luaentity().age > item_drop_settings.age)) then
 
 					if object:get_luaentity()._magnet_timer >= 0 and object:get_luaentity()._magnet_timer < item_drop_settings.magnet_time and inv and inv:room_for_item("main", ItemStack(object:get_luaentity().itemstring)) then
 
@@ -166,7 +175,7 @@ minetest.register_globalstep(function(dtime)
 						end
 					end
 
-				elseif not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "mcl_experience:orb" then
+				elseif not is_player(object) and object:get_luaentity() and object:get_luaentity().name == "mcl_experience:orb" then
 					local entity = object:get_luaentity()
 					entity.collector = player:get_player_name()
 					entity.collected = true
@@ -229,7 +238,7 @@ function minetest.handle_node_drops(pos, drops, digger)
 	-- This means there is no digger. This is a special case which allows this function to be called
 	-- by hand. Creative Mode is intentionally ignored in this case.
 
-	if (digger and digger:is_player() and minetest.is_creative_enabled(digger:get_player_name())) or doTileDrops == false then
+	if (digger and is_player(digger) and minetest.is_creative_enabled(digger:get_player_name())) or doTileDrops == false then
 		return
 	end
 
@@ -339,7 +348,7 @@ end
 
 -- Drop single items by default
 function minetest.item_drop(itemstack, dropper, pos)
-	if dropper and dropper:is_player() then
+	if dropper and is_player(dropper) then
 		local v = dropper:get_look_dir()
 		local p = {x=pos.x, y=pos.y+1.2, z=pos.z}
 		local cs = itemstack:get_count()
