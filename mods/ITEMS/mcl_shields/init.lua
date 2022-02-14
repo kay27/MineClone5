@@ -21,17 +21,10 @@ local interact_priv = minetest.registered_privileges.interact
 interact_priv.give_to_singleplayer = false
 interact_priv.give_to_admin = false
 
+local is_player = mcl_playerplus.is_player
+
 local overlay = mcl_enchanting.overlay
 local hud = "mcl_shield_hud.png"
-
-local function is_player_for_real(obj)
-	if not obj then return end
-	if not obj:is_player() then return end
-	local name = obj:get_player_name()
-	if not name then return end
-	if possible_hackers[name] then return end
-	return true
-end
 
 minetest.register_tool("mcl_shields:shield", {
 	description = S("Shield"),
@@ -132,7 +125,7 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 	local type = reason.type
 	local damager = reason.direct
 	local blocking, shieldstack = mcl_shields.is_blocking(obj)
-	if is_player_for_real(obj) and blocking and mcl_shields.types[type] and damager then
+	if is_player(obj) and blocking and mcl_shields.types[type] and damager then
 		local entity = damager:get_luaentity()
 		if entity and (type == "arrow" or type == "generic") then
 			damager = entity._shooter
