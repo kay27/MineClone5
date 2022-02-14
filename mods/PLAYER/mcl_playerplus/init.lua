@@ -27,15 +27,6 @@ local mcl_playerplus_internal = {}
 local time = 0
 local look_pitch = 0
 
-function is_player(obj)
-	if not obj then return end
-	if not obj:is_player() then return end
-	local name = obj:get_player_name()
-	if not name then return end
-	if possible_hackers[name] then return end
-	return true
-end
-
 local function player_collision(player)
 
 	local pos = player:get_pos()

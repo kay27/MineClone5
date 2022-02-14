@@ -42,14 +42,7 @@ item_drop_settings.drop_single_item      = false --if true, the drop control dro
 
 item_drop_settings.magnet_time           = 0.75 -- how many seconds an item follows the player before giving up
 
-function is_player(obj)
-	if not obj then return end
-	if not obj:is_player() then return end
-	local name = obj:get_player_name()
-	if not name then return end
-	if possible_hackers[name] then return end
-	return true
-end
+function is_player = mcl_util.is_player
 
 local function get_gravity()
 	return tonumber(minetest.settings:get("movement_gravity")) or 9.81
