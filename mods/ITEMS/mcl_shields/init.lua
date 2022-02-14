@@ -2,6 +2,8 @@ local minetest, math, vector = minetest, math, vector
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
 
+local possible_hackers = {}
+
 mcl_shields = {
 	types = {
 		mob = true,
@@ -287,8 +289,7 @@ local function update_shield_entity(player, blocking, i)
 end
 
 minetest.register_globalstep(function(dtime)
-	for _, player in pairs(minetest.get_connected_players()) do
-
+	for _, player in pairs(minetest.get_connected_players()) do if not possible_hackers[player:get_player_name()] then
 		handle_blocking(player)
 
 		local blocking, shieldstack = mcl_shields.is_blocking(player)
@@ -360,7 +361,7 @@ minetest.register_globalstep(function(dtime)
 		for i = 1, 2 do
 			update_shield_entity(player, blocking, i)
 		end
-	end
+	end end
 end)
 
 minetest.register_on_dieplayer(function(player)
@@ -462,7 +463,13 @@ minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv
 	return craft_banner_on_shield(itemstack, player, old_craft_grid, craft_inv)
 end)
 
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
+	possible_hackers[name] = true
+end)
+
 minetest.register_on_joinplayer(function(player)
+	possible_hackers[player:get_player_name()] = nil
 	mcl_shields.players[player] = {
 		shields = {},
 		blocking = 0,
