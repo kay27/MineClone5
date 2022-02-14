@@ -1093,9 +1093,13 @@ if progressive_mode then
 
 	mcl_craftguide.add_recipe_filter("Default progressive filter", progressive_filter)
 
+	M.register_on_authplayer(function(name, ip, is_success)
+		if not is_success then return
+		init_data(name)
+	end)
+
 	M.register_on_joinplayer(function(player)
 		local name = player:get_player_name()
-		init_data(name)
 		local meta = player:get_meta()
 		local data = player_data[name]
 
