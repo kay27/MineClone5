@@ -17,8 +17,6 @@ local is_sprinting = mcl_sprint.is_sprinting
 local exhaust = mcl_hunger.exhaust
 local playerphysics = playerphysics
 
-local is_player = mcl_util.is_player
-
 local vector = vector
 local math = math
 -- Internal player state
@@ -37,7 +35,7 @@ local function player_collision(player)
 
 	for _,object in pairs(minetest.get_objects_inside_radius(pos, width)) do
 
-		if object and (is_player(object)
+		if object and ((mcl_util and mcl_util.is_player(object))
 		or (object:get_luaentity()._cmi_is_mob == true and object ~= player)) then
 
 			local pos2 = object:get_pos()
