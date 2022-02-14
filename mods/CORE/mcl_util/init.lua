@@ -503,6 +503,7 @@ local possible_hackers = {}
 
 function mcl_util.is_player(obj)
 	if not obj then return end
+	if not obj.is_player then return end
 	if not obj:is_player() then return end
 	local name = obj:get_player_name()
 	if not name then return end
