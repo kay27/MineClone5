@@ -73,7 +73,7 @@ minetest.register_globalstep(function(dtime)
 end)
 
 -- set to blank on join (for 3rd party mods)
-minetest.register_on_authlayer(function(name, ip, is_success)
+minetest.register_on_authplayer(function(name, ip, is_success)
 	if not is_success then return end
 	mcl_playerinfo[name] = {
 		node_head = "",
