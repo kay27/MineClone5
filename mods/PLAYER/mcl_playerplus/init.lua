@@ -17,7 +17,7 @@ local is_sprinting = mcl_sprint.is_sprinting
 local exhaust = mcl_hunger.exhaust
 local playerphysics = playerphysics
 
-local is_player = mcl_player.is_player
+local is_player = mcl_util.is_player
 
 local vector = vector
 local math = math
