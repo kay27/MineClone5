@@ -1124,10 +1124,10 @@ minetest.register_chatcommand("helpform", {
 	}
 )
 
-minetest.register_on_joinplayer(function(player)
-	local playername = player:get_player_name()
+minetest.register_on_authplayer(function(playername, ip, is_success)
+	if not is_success then return end
 	local playerdata = doc.data.players[playername]
-	if playerdata == nil then
+	if not playerdata then
 		-- Initialize player data
 		doc.data.players[playername] = {}
 		playerdata = doc.data.players[playername]
@@ -1171,7 +1171,9 @@ minetest.register_on_joinplayer(function(player)
 			playerdata.stored_data.revealed_count[cid] = rc
 		end
 	end
+end
 
+minetest.register_on_joinplayer(function(player)
 	-- Add button for Inventory++
 	if mod_inventory_plus then
 		inventory_plus.register_button(player, "doc_inventory_plus", S("Help"))
