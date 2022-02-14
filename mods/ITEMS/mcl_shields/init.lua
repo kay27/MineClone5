@@ -21,10 +21,17 @@ local interact_priv = minetest.registered_privileges.interact
 interact_priv.give_to_singleplayer = false
 interact_priv.give_to_admin = false
 
-local is_player = mcl_playerplus.is_player
-
 local overlay = mcl_enchanting.overlay
 local hud = "mcl_shield_hud.png"
+
+function is_player(obj)
+	if not obj then return end
+	if not obj:is_player() then return end
+	local name = obj:get_player_name()
+	if not name then return end
+	if possible_hackers[name] then return end
+	return true
+end
 
 minetest.register_tool("mcl_shields:shield", {
 	description = S("Shield"),
