@@ -109,6 +109,7 @@ for _, e in pairs(mcl_shields.enchantments) do
 end
 
 function mcl_shields.is_blocking(obj)
+	if not mcl_util or not mcl_util.is_player(obj) then return end
 	local blocking = mcl_shields.players[obj].blocking
 	if blocking > 0 then
 		local shieldstack = obj:get_wielded_item()
