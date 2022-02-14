@@ -1171,7 +1171,7 @@ minetest.register_on_authplayer(function(playername, ip, is_success)
 			playerdata.stored_data.revealed_count[cid] = rc
 		end
 	end
-end
+end)
 
 minetest.register_on_joinplayer(function(player)
 	-- Add button for Inventory++
