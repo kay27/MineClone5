@@ -34,9 +34,9 @@ local function player_collision(player)
 	local width = .75
 
 	for _,object in pairs(minetest.get_objects_inside_radius(pos, width)) do
-
+		local luaentity = object:get_luaentity()
 		if object and ((mcl_util and mcl_util.is_player(object))
-		or (object:get_luaentity()._cmi_is_mob == true and object ~= player)) then
+		or (luaentity and luaentity._cmi_is_mob == true and object ~= player)) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
