@@ -13,19 +13,6 @@ local modpath                    = minetest.get_modpath(modname)
 local S                          = minetest.get_translator(modname)
 local basic_pseudobiome_villages = minetest.settings:get_bool("basic_pseudobiome_villages", true)
 local schem_path                 = modpath .. "/schematics/"
---[[local schematic_table = {
-	{name = "large_house",	mts = schem_path.."large_house.mts",	hwidth = 11, hdepth = 12, hheight =  9, hsize = 14, max_num = 0.08 , rplc = basic_pseudobiome_villages },
-	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	hwidth =  7, hdepth = 11, hheight =  7, hsize = 13, max_num = 0.055, rplc = basic_pseudobiome_villages },
-	{name = "butcher",	mts = schem_path.."butcher.mts",	hwidth = 11, hdepth =  8, hheight = 10, hsize = 14, max_num = 0.03 , rplc = basic_pseudobiome_villages },
-	{name = "church",	mts = schem_path.."church.mts",		hwidth = 13, hdepth = 13, hheight = 14, hsize = 15, max_num = 0.04 , rplc = basic_pseudobiome_villages },
-	{name = "farm",		mts = schem_path.."farm.mts",		hwidth =  7, hdepth =  7, hheight = 13, hsize = 13, max_num = 0.1  , rplc = basic_pseudobiome_villages },
-	{name = "lamp",		mts = schem_path.."lamp.mts",		hwidth =  3, hdepth =  3, hheight = 13, hsize = 10, max_num = 0.1  , rplc = false                      },
-	{name = "library",	mts = schem_path.."library.mts",	hwidth = 12, hdepth = 12, hheight =  8, hsize = 13, max_num = 0.04 , rplc = basic_pseudobiome_villages },
-	{name = "medium_house",	mts = schem_path.."medium_house.mts",	hwidth =  8, hdepth = 12, hheight =  8, hsize = 14, max_num = 0.08 , rplc = basic_pseudobiome_villages },
-	{name = "small_house",	mts = schem_path.."small_house.mts",	hwidth =  9, hdepth =  7, hheight =  8, hsize = 13, max_num = 0.7  , rplc = basic_pseudobiome_villages },
-	{name = "tavern",	mts = schem_path.."tavern.mts",		hwidth = 11, hdepth = 10, hheight = 10, hsize = 13, max_num = 0.050, rplc = basic_pseudobiome_villages },
-	{name = "well",		mts = schem_path.."well.mts",		hwidth =  6, hdepth =  8, hheight =  6, hsize = 10, max_num = 0.045, rplc = basic_pseudobiome_villages },
-}]]
 local schematic_table = {
 	{name = "large_house",	mts = schem_path.."large_house.mts",	max_num = 0.08 , rplc = basic_pseudobiome_villages },
 	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	max_num = 0.055, rplc = basic_pseudobiome_villages },
@@ -293,14 +280,14 @@ local function terraform(plan, minp, maxp, pr)
 		fheight        = schematic_data.hheight
 		local pos2 = {
 			x = pos.x + fwidth - 1,
-			y = math_min(pos.y + fheight * 3, maxp.y),
+			y = math_min(pos.y + fheight + 4, maxp.y),
 			z = pos.z + fdepth - 1
 		}
-		ground(pos, {x = pos2.x, y = pos.y, z = pos2.z}, minp, maxp, pr, build_material)
+		ground(pos, {x = pos2.x, y = pos.y + 1, z = pos2.z}, minp, maxp, pr, build_material)
 		local node_list = {}
 		for xi = pos.x, pos2.x do
 			for zi = pos.z, pos2.z do
-				for yi = pos.y, pos2.y do
+				for yi = pos.y + 1, pos2.y do
 					node_list[#node_list + 1] = {x = xi, y = yi, z = zi}
 				end
 			end
