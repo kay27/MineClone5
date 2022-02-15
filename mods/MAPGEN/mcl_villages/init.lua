@@ -13,7 +13,7 @@ local modpath                    = minetest.get_modpath(modname)
 local S                          = minetest.get_translator(modname)
 local basic_pseudobiome_villages = minetest.settings:get_bool("basic_pseudobiome_villages", true)
 local schem_path                 = modpath .. "/schematics/"
-local schematic_table = {
+--[[local schematic_table = {
 	{name = "large_house",	mts = schem_path.."large_house.mts",	hwidth = 11, hdepth = 12, hheight =  9, hsize = 14, max_num = 0.08 , rplc = basic_pseudobiome_villages },
 	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	hwidth =  7, hdepth = 11, hheight =  7, hsize = 13, max_num = 0.055, rplc = basic_pseudobiome_villages },
 	{name = "butcher",	mts = schem_path.."butcher.mts",	hwidth = 11, hdepth =  8, hheight = 10, hsize = 14, max_num = 0.03 , rplc = basic_pseudobiome_villages },
@@ -25,7 +25,37 @@ local schematic_table = {
 	{name = "small_house",	mts = schem_path.."small_house.mts",	hwidth =  9, hdepth =  7, hheight =  8, hsize = 13, max_num = 0.7  , rplc = basic_pseudobiome_villages },
 	{name = "tavern",	mts = schem_path.."tavern.mts",		hwidth = 11, hdepth = 10, hheight = 10, hsize = 13, max_num = 0.050, rplc = basic_pseudobiome_villages },
 	{name = "well",		mts = schem_path.."well.mts",		hwidth =  6, hdepth =  8, hheight =  6, hsize = 10, max_num = 0.045, rplc = basic_pseudobiome_villages },
+}]]
+local schematic_table = {
+	{name = "large_house",	mts = schem_path.."large_house.mts",	max_num = 0.08 , rplc = basic_pseudobiome_villages },
+	{name = "blacksmith",	mts = schem_path.."blacksmith.mts",	max_num = 0.055, rplc = basic_pseudobiome_villages },
+	{name = "butcher",	mts = schem_path.."butcher.mts",	max_num = 0.03 , rplc = basic_pseudobiome_villages },
+	{name = "church",	mts = schem_path.."church.mts",		max_num = 0.04 , rplc = basic_pseudobiome_villages },
+	{name = "farm",		mts = schem_path.."farm.mts",		max_num = 0.1  , rplc = basic_pseudobiome_villages },
+	{name = "lamp",		mts = schem_path.."lamp.mts",		max_num = 0.1  , rplc = false                      },
+	{name = "library",	mts = schem_path.."library.mts",	max_num = 0.04 , rplc = basic_pseudobiome_villages },
+	{name = "medium_house",	mts = schem_path.."medium_house.mts",	max_num = 0.08 , rplc = basic_pseudobiome_villages },
+	{name = "small_house",	mts = schem_path.."small_house.mts",	max_num = 0.7  , rplc = basic_pseudobiome_villages },
+	{name = "tavern",	mts = schem_path.."tavern.mts",		max_num = 0.050, rplc = basic_pseudobiome_villages },
+	{name = "well",		mts = schem_path.."well.mts",		max_num = 0.045, rplc = basic_pseudobiome_villages },
 }
+for k, v in pairs(schematic_table) do
+	local schem_lua = minetest.serialize_schematic(
+		v.mts,
+		"lua",
+		{
+			lua_use_comments = false,
+			lua_num_indent_spaces = 0,
+		}
+	):gsub("mcl_core:stonebrickcarved", "mcl_villages:stonebrickcarved") .. " return schematic"
+	v.preloaded_schematic = schem_lua
+	local loaded_schematic = loadstring(schem_lua)()
+	local size = loaded_schematic.size
+	v.hwidth = size.x
+	v.hheight = size.y
+	v.hdepth = size.z
+	v.hsize = math.ceil(math.sqrt((size.x/2)^2 + (size.y/2)^2) * 2 + 1)
+end
 local surface_mat = {
 	["mcl_core:dirt_with_dry_grass"]  = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
 	["mcl_core:dirt_with_grass"]      = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
@@ -322,12 +352,8 @@ local function place_schematics(plan, pr)
 		local pos = built_house.pos
 		local rotation = built_house.rotation
 		local platform_material = built_house.surface_mat
-		local building = built_house.building.mts
 		local replace_wall = built_house.building.rplc
-		local schem_lua = minetest.serialize_schematic(building,
-			"lua",
-			{lua_use_comments = false, lua_num_indent_spaces = 0}).." return schematic"
-		schem_lua = schem_lua:gsub("mcl_core:stonebrickcarved", "mcl_villages:stonebrickcarved")
+		local schem_lua = built_house.building.preloaded_schematic
 		if replace_wall then
 			--Note, block substitution isn't matching node names exactly; so nodes that are to be substituted that have the same prefixes cause bugs.
 			-- Example: Attempting to swap out 'mcl_core:stonebrick'; which has multiple, additional sub-variants: (carved, cracked, mossy). Will currently cause issues, so leaving disabled.
