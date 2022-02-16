@@ -318,7 +318,7 @@ end
 
 local function init_nodes(p1, rotation, pr, size)
 	local p2 = vector.subtract(vector.add(p1, size), 1)
-	local nodes = minetest.find_nodes_in_area(p1, p2, {"mcl_itemframes:item_frame", "mcl_furnaces:furnace", "mcl_anvils:anvil", "mcl_chests:chest"})
+	local nodes = minetest.find_nodes_in_area(p1, p2, {"mcl_itemframes:item_frame", "mcl_furnaces:furnace", "mcl_anvils:anvil", "mcl_chests:chest", "mcl_villages:stonebrickcarved"})
 	for _, pos in pairs(nodes) do
 		local name = minetest_get_node(pos).name
 		local def = minetest_registered_nodes[minetest_get_node(pos).name]
@@ -370,6 +370,9 @@ end
 --
 -- register block for npc spawn
 --
+local function spawn_villager(pos)
+	minetest.add_entity({x = pos.x, y = pos.y + 1, z = pos.z}, "mobs_mc:villager")
+end
 minetest.register_node("mcl_villages:stonebrickcarved", {
 	description = S("Chiseled Stone Village Bricks"),
 	_doc_items_longdesc = doc.sub.items.temp.build,
@@ -381,7 +384,34 @@ minetest.register_node("mcl_villages:stonebrickcarved", {
 	is_ground_content = false,
 	_mcl_blast_resistance = 6,
 	_mcl_hardness = 1.5,
+	on_construct = spawn_villager,
 })
+
+minetest.register_abm({
+	label = "Spawn villagers",
+	nodenames = {"mcl_villages:stonebrickcarved"},
+	interval = 60,
+	chance = 3,
+	action = function(pos, node)
+		-- check the space above
+		local p = table.copy(pos)
+		p.y = p.y + 1
+		if minetest_get_node(p).name ~= "air" then return end
+		p.y = p.y + 1
+		if minetest_get_node(p).name ~= "air" then return end
+		p.y = p.y - 1
+		local villagers_counter = 0
+		for _, obj in pairs(minetest.get_objects_inside_radius(p, 40)) do
+			local lua_entity = obj:get_luaentity()
+			if luaentity and luaentity.name == "mobs_mc:villager" then
+				villagers_counter = villagers_counter + 1
+				if villagers_counter > 7 then return end
+			end
+		end
+		spawn_villager(pos)
+	end
+})
+
 
 
 --
