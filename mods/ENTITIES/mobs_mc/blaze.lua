@@ -68,7 +68,7 @@ mobs:register_mob("mobs_mc:blaze", {
 	light_damage = 0,
 	view_range = 16,
 	attack_type = "projectile",
-	arrow = "mobs_mc:blaze_fireball",
+	arrow = "mobs_mc:blaze_fireball_entity",
 	shoot_interval = 3.5,
 	shoot_offset = 1.0,
 	passive = false,
@@ -85,7 +85,7 @@ mobs:register_mob("mobs_mc:blaze", {
 	shoot_arrow = function(self, pos, dir)
 		-- 2-4 damage per arrow
 		local dmg = math.random(2,4)
-		mobs.shoot_projectile_handling("mobs_mc:blaze_fireball", pos, dir, self.object:get_yaw(), self.object, 7, dmg,nil,nil,nil,-0.4)
+		mobs.shoot_projectile_handling("mobs_mc:blaze_fireball_entity", pos, dir, self.object:get_yaw(), self.object, 7, dmg,nil,nil,nil,-0.4)
 	end,
 
 	do_custom = function(self)
