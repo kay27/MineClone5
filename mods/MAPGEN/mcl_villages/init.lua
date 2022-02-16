@@ -7,7 +7,7 @@ local chance_per_chunk           = 1
 local noise_multiplier           = 1
 local random_offset              = 1
 local random_multiply            = 19
-local struct_threshold           = chance_per_chunk - 1
+local struct_threshold           = chance_per_chunk
 local noise_params = {
 	offset = 0,
 	scale  = 2,
@@ -387,11 +387,18 @@ minetest.register_node("mcl_villages:stonebrickcarved", {
 --
 -- on map generation, try to build a settlement
 --
-local function build_a_settlement(minp, maxp, pr)
+local function build_a_village(minp, maxp, pr, placer)
 	minetest.log("action","[mcl_villages] Building village at mapchunk " .. minetest.pos_to_string(minp) .. "..." .. minetest.pos_to_string(maxp))
 	local pr = pr or PseudoRandom(mcl_mapgen.get_block_seed3(minp))
 	local plan = create_site_plan(minp, maxp, pr)
-	if not plan then return end
+	if not plan then
+		if placer then
+			if placer:is_player() then
+				minetest.chat_send_player(placer:get_player_name(), S("Map chunk @1 to @2 is not suitable for placing villages.", minetest.pos_to_string(minp), minetest.pos_to_string(maxp)))
+			end
+		end
+		return
+	end
 	paths(plan, minp, maxp)
 	terraform(plan, minp, maxp, pr)
 	place_schematics(plan, pr)
@@ -432,7 +439,7 @@ if mg_name ~= "singlenode" then
 		end
 		local height_difference = max - min
 		if height_difference > max_height_difference then return end
-		build_a_settlement(minp, maxp, chunkkseed)
+		build_a_village(minp, maxp, chunkkseed)
 	end, mcl_mapgen.order.VILLAGES)
 end
 
@@ -473,6 +480,15 @@ for k, v in pairs(schematic_table) do
 		end
 	})
 end
+
+mcl_structures.register_structure({
+	name = "village",
+	place_function = function(pos, rotation, pr, placer)
+		local minp = mcl_mapgen.get_chunk_beginning(pos)
+		local maxp = mcl_mapgen.get_chunk_ending(pos)
+		build_a_village(minp, maxp, pr, placer)
+	end
+})
 
 function mcl_villages.get_villages()
 	return villages
