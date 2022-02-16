@@ -1,0 +1,26 @@
+# textdomain: mcl_commands
+Players can't be killed right now, damage has been disabled.=现在不能杀死玩家，由于互相伤害被禁止.
+Player @1 does not exist.=玩家 @1 不存在
+You are already dead=你已经死了
+@1 is already dead=@1 已经死了
+@1 committed suicide.=@1 尝试自杀
+@1 was killed by @2.=@1 被 @2 杀了.
+[<name>]=[<名字>]
+Kill player or yourself=杀死其他玩家或者自己
+Can use /say=可以使用 /say
+<message>=<信息>
+Send a message to every player=给每位玩家发消息
+Invalid usage, see /help @1.=无效的使用，请查看 /help @1.
+<X>,<Y>,<Z> <NodeString>=<X>,<Y>,<Z> <节点字符串>
+Set node at given position=设置节点在所给的位置
+Invalid node=无效的节点
+@1 spawned.=@1 生成.
+Invalid parameters (see /help setblock)=无效参数 (请查看 /help setblock)
+List bans=被禁止的列表
+Ban list: @1=禁止的列表: @1
+Show who is logged on=显示谁已登录
+Displays the world seed=显示世界生成种子
+Only peaceful mobs allowed!=只允许和平的生物！
+@1[<name>]=@1[<名字>]
+Set game mode for player or yourself=为玩家或你自己设置游戏模式
+Error: No game mode specified.=错误: 没有指定游戏模式.
