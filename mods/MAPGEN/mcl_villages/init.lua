@@ -7,7 +7,7 @@ local chance_per_chunk           = 1
 local noise_multiplier           = 1
 local random_offset              = 1
 local random_multiply            = 19
-local struct_threshold           = chance_per_chunk -- 1
+local struct_threshold           = chance_per_chunk - 1
 local noise_params = {
 	offset = 0,
 	scale  = 2,
@@ -39,23 +39,6 @@ local schematic_table = {
 	{name = "tavern",	mts = schem_path.."tavern.mts",		max_num = 0.050, rplc = basic_pseudobiome_villages },
 	{name = "well",		mts = schem_path.."well.mts",		max_num = 0.045, rplc = basic_pseudobiome_villages },
 }
-for k, v in pairs(schematic_table) do
-	local schem_lua = minetest.serialize_schematic(
-		v.mts,
-		"lua",
-		{
-			lua_use_comments = false,
-			lua_num_indent_spaces = 0,
-		}
-	):gsub("mcl_core:stonebrickcarved", "mcl_villages:stonebrickcarved") .. " return schematic"
-	v.preloaded_schematic = schem_lua
-	local loaded_schematic = loadstring(schem_lua)()
-	local size = loaded_schematic.size
-	v.hwidth = size.x
-	v.hheight = size.y
-	v.hdepth = size.z
-	v.hsize = math.ceil(math.sqrt((size.x/2)^2 + (size.y/2)^2) * 2 + 1)
-end
 local surface_mat = {
 	["mcl_core:dirt_with_dry_grass"]  = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
 	["mcl_core:dirt_with_grass"]      = { top = "mcl_core:dirt",    bottom = "mcl_core:stone"        },
@@ -451,6 +434,44 @@ if mg_name ~= "singlenode" then
 		if height_difference > max_height_difference then return end
 		build_a_settlement(minp, maxp, chunkkseed)
 	end, mcl_mapgen.order.VILLAGES)
+end
+
+for k, v in pairs(schematic_table) do
+	local schem_lua = minetest.serialize_schematic(
+		v.mts,
+		"lua",
+		{
+			lua_use_comments = false,
+			lua_num_indent_spaces = 0,
+		}
+	):gsub("mcl_core:stonebrickcarved", "mcl_villages:stonebrickcarved") .. " return schematic"
+	v.preloaded_schematic = schem_lua
+	local loaded_schematic = loadstring(schem_lua)()
+	local size = loaded_schematic.size
+	v.hwidth = size.x
+	v.hheight = size.y
+	v.hdepth = size.z
+	v.hsize = math.ceil(math.sqrt((size.x/2)^2 + (size.y/2)^2) * 2 + 1)
+	mcl_structures.register_structure({
+		name = v.name,
+		place_function = function(pos, rotation, pr, placer)
+			local minp = mcl_mapgen.get_chunk_beginning(pos)
+			local maxp = mcl_mapgen.get_chunk_ending(pos)
+			local surface_pos, surface_material = find_surface(pos, minp, maxp)
+			local plan = {
+				[1] = {
+					pos         = pos,
+					building    = schematic_table[k],
+					rotation    = rotation,
+					surface_mat = surface_material or "mcl_core:snow",
+				}
+			}
+			if surface_material then
+				terraform(plan, minp, maxp, pr)
+			end
+			place_schematics(plan, pr)
+		end
+	})
 end
 
 function mcl_villages.get_villages()

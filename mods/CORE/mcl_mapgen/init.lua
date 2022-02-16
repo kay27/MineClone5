@@ -505,11 +505,29 @@ function mcl_mapgen.clamp_to_chunk(x, size)
 end
 
 function mcl_mapgen.get_chunk_beginning(x)
-	return x - ((x + central_chunk_min_pos) % CS_NODES)
+	if tonumber(x) then
+		return x - ((x + central_chunk_min_pos) % CS_NODES)
+	end
+	if x.x then
+		return {
+			x = mcl_mapgen.get_chunk_beginning(x.x),
+			y = mcl_mapgen.get_chunk_beginning(x.y),
+			z = mcl_mapgen.get_chunk_beginning(x.z)
+		}
+	end
 end
 
 function mcl_mapgen.get_chunk_ending(x)
-	return mcl_mapgen.get_chunk_beginning(x) + LAST_NODE_IN_CHUNK
+	if tonumber(x) then
+		return mcl_mapgen.get_chunk_beginning(x) + LAST_NODE_IN_CHUNK
+	end
+	if x.x then
+		return {
+			x = mcl_mapgen.get_chunk_beginning(x.x) + LAST_NODE_IN_CHUNK,
+			y = mcl_mapgen.get_chunk_beginning(x.y) + LAST_NODE_IN_CHUNK,
+			z = mcl_mapgen.get_chunk_beginning(x.z) + LAST_NODE_IN_CHUNK
+		}
+	end
 end
 
 mcl_mapgen.get_block_seed = get_block_seed
