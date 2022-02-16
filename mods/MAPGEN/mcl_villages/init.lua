@@ -7,7 +7,20 @@ local chance_per_chunk           = 1
 local noise_multiplier           = 1
 local random_offset              = 1
 local random_multiply            = 19
-local struct_threshold           = chance_per_chunk - 1
+local struct_threshold           = chance_per_chunk -- 1
+local noise_params = {
+	offset = 0,
+	scale  = 2,
+	spread = {
+		x = mcl_mapgen.CS_NODES * chance_per_chunk,
+		y = mcl_mapgen.CS_NODES * chance_per_chunk,
+		z = mcl_mapgen.CS_NODES * chance_per_chunk,
+	},
+	seed = 842458,
+	octaves = 2,
+	persistence = 0.5,
+}
+local perlin_noise
 local modname                    = minetest.get_current_modname()
 local modpath                    = minetest.get_modpath(modname)
 local S                          = minetest.get_translator(modname)
@@ -57,7 +70,7 @@ local villages = minetest.deserialize(storage:get_string("villages") or "return 
 local minetest_get_spawn_level              = minetest.get_spawn_level
 local minetest_get_node                     = minetest.get_node
 local minetest_find_nodes_in_area           = minetest.find_nodes_in_area
-local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
+local minetest_get_perlin                   = minetest.get_perlin
 local math_pi                               = math.pi
 local math_cos                              = math.cos
 local math_sin                              = math.sin
@@ -412,7 +425,8 @@ if mg_name ~= "singlenode" then
 		if minp.y < minp_min then return end
 		local pr = PseudoRandom(chunkseed * random_multiply + random_offset)
 		local random_number = pr:next(1, chance_per_chunk)
-		local noise = mcl_structures_get_perlin_noise_level(minp) * noise_multiplier
+		perlin_noise = perlin_noise or minetest_get_perlin(noise_params)
+		local noise = perlin_noise:get_3d(minp) * noise_multiplier
 		if (random_number + noise) < struct_threshold then return end
 		local min, max = 9999999, -9999999
 		for i = 1, pr:next(5,10) do
