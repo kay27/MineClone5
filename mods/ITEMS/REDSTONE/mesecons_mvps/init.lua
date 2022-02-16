@@ -151,7 +151,7 @@ function mesecon.mvps_get_stack(pos, dir, maximum, piston_pos)
 			-- add connected nodes to frontiers, connected is a vector list
 			-- the vectors must be absolute positions
 			local connected = {}
-            local has_loop
+			local has_loop
 			if minetest.registered_nodes[nn.name]
 			and minetest.registered_nodes[nn.name].mvps_sticky then
 				connected, has_loop = minetest.registered_nodes[nn.name].mvps_sticky(np, nn, piston_pos)
