@@ -1,9 +1,9 @@
 mcl_villages                     = {}
+local chance_per_chunk           = 100
 local chunk_offset_top           = 16
 local chunk_offset_bottom        = 3
 local max_height_difference      = 12
 local minp_min                   = -64
-local chance_per_chunk           = 1
 local noise_multiplier           = 1
 local random_offset              = 1
 local random_multiply            = 19
