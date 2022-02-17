@@ -26,6 +26,8 @@ local math_random  = math.random
           |_|
 ]]--
 
+local minetest_line_of_sight = minetest.line_of_sight
+
 mobs.explode_attack_walk = function(self,dtime)
 
     --this needs an exception
@@ -36,17 +38,27 @@ mobs.explode_attack_walk = function(self,dtime)
 
     mobs.set_yaw_while_attacking(self)
 
-    local distance_from_attacking = vector_distance(self.object:get_pos(), self.attacking:get_pos())
+    local pos = self.object:get_pos()
+    local attack_pos = self.attacking:get_pos()
+    local distance_from_attacking = vector_distance(pos, attack_pos)
 
     --make mob walk up to player within 2 nodes distance then start exploding
-    if distance_from_attacking >= self.reach and
-    --don't allow explosion to cancel unless out of the reach boundary
-    not (self.explosion_animation and self.explosion_animation > 0 and distance_from_attacking <= self.defuse_reach) then
+    if (
+        distance_from_attacking >= self.reach and
 
+        --don't allow explosion to cancel unless out of the reach boundary
+        not (self.explosion_animation and self.explosion_animation > 0 and distance_from_attacking <= self.defuse_reach) or
+        --don't allow creeper to finish exploding animation if can't see target
+        not minetest_line_of_sight(
+            {x = pos.x, y = pos.y + self.eye_height, z = pos.z},
+            {x = attack_pos.x, y = attack_pos.y + (self.attacking.eye_height or 0), z = attack_pos.z}
+        )
+    ) then
         mobs.set_velocity(self, self.run_velocity)
         mobs.set_mob_animation(self,"run")
 
         mobs.reverse_explosion_animation(self,dtime)
+
     else
         mobs.set_velocity(self,0)
 
