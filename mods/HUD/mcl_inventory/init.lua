@@ -47,6 +47,7 @@ function return_fields(player, name)
 end
 
 local function set_inventory(player, armor_change_only)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	if minetest.is_creative_enabled(player:get_player_name()) then
 		if armor_change_only then
 			-- Stay on survival inventory plage if only the armor has been changed
