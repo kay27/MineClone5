@@ -157,6 +157,7 @@ function mcl_experience.throw_xp(pos, total_xp)
 end
 
 function mcl_experience.update(player)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	local xp = mcl_experience.get_xp(player)
 	local cache = caches[player]
 
