@@ -8,7 +8,7 @@ mcl_inventory = {}
 
 -- Returns a single itemstack in the given inventory to the main inventory, or drop it when there's no space left
 function return_item(itemstack, dropper, pos, inv)
-	if dropper:is_player() then
+	if mcl_util and mcl_util.is_player(dropper) then
 		-- Return to main inventory
 		if inv:room_for_item("main", itemstack) then
 			inv:add_item("main", itemstack)
@@ -130,6 +130,7 @@ end
 
 -- Drop items in craft grid and reset inventory on closing
 minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	if fields.quit then
 		return_fields(player,"craft")
 		return_fields(player,"enchanting_lapis")
