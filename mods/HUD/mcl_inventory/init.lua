@@ -143,6 +143,7 @@ end)
 
 if not minetest.is_creative_enabled("") then
 	function mcl_inventory.update_inventory_formspec(player)
+		if not mcl_util or not mcl_util.is_player(player) then return end
 		set_inventory(player)
 	end
 end
