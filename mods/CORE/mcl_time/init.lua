@@ -14,11 +14,21 @@ local last_save_seconds_irl = seconds_irl_public
 local next_save_seconds_irl = last_save_seconds_irl + save_to_storage_interval
 
 local previous_seconds_irl = -2
+local time_speed_is_ok = true
+
 local function get_seconds_irl()
 	local time_speed = tonumber(minetest.settings:get("time_speed") or default_time_speed)
 	if time_speed < 1 then
-		minetest.log("warning", "[mcl_time] time_speed < 1 - please increase to make mcl_time api work (default: " .. default_time_speed .. ")")
+		if time_speed_is_ok then
+			minetest.log("warning", "[mcl_time] time_speed < 1 - please increase to make mcl_time api work (default: " .. default_time_speed .. ")")
+			time_speed_is_ok = false
+		end
 		return 0
+	else
+		if not time_speed_is_ok then
+			minetest.log("warning", "[mcl_time] time_speed is now " .. time_speed)
+			time_speed_is_ok = true
+		end
 	end
 	local irl_multiplier = 86400 / time_speed
 	local day_count = minetest.get_day_count()
@@ -86,14 +96,12 @@ function mcl_time.touch(pos)
 	meta:set_int(meta_name, seconds_irl_public)
 end
 
-local touch = mcl_time.touch
-
 function mcl_time.get_number_of_times_at_pos(pos, interval, chance)
 	if not pos then return 0 end
 	local meta = minetest.get_meta(pos)
 	local last_time = meta:get_int(meta_name)
 	local number_of_times = (last_time == 0) and 0 or get_number_of_times(last_time, interval, chance)
-	touch(pos)
+	meta:set_int(meta_name, seconds_irl_public)
 	return number_of_times, seconds_irl_public
 end
 
@@ -108,6 +116,7 @@ function mcl_time.get_irl_seconds_passed_at_pos(pos)
 	local meta = minetest.get_meta(pos)
 	local last_time = meta:get_int(meta_name)
 	local irl_seconds_passed = (last_time == 0) and 0 or (seconds_irl_public - last_time)
+	meta:set_int(meta_name, seconds_irl_public)
 	return irl_seconds_passed
 end
 
@@ -116,6 +125,7 @@ function mcl_time.get_irl_seconds_passed_at_pos_or_1(pos)
 	local meta = minetest.get_meta(pos)
 	local last_time = meta:get_int(meta_name)
 	local irl_seconds_passed = (last_time == 0) and 1 or (seconds_irl_public - last_time)
+	meta:set_int(meta_name, seconds_irl_public)
 	return irl_seconds_passed
 end
 
@@ -126,6 +136,7 @@ function mcl_time.get_irl_seconds_passed_at_pos_or_nil(pos)
 	if last_time == 0 then return end
 	local delta_time = seconds_irl_public - last_time
 	if delta_time <= 0 then return end
+	meta:set_int(meta_name, seconds_irl_public)
 	return delta_time
 end
 
