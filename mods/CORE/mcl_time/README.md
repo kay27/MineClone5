@@ -3,7 +3,8 @@
 ---------------------------
 This mod counts time when all players sleep or some area is inactive.
 
-It depends very much on `time_speed` configuration variable, which could be changed 'on the fly' by a chat command.
+It depends very much on `time_speed` configuration variable, which could be changed 'on the fly' by a chat command:
+ * `/set time_speed 72`
 
 If `time_speed` set to 0, this mod logs warnings and returns zeroes.
 
