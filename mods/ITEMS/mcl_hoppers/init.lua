@@ -359,10 +359,10 @@ minetest.register_abm({
 					local posob = object:get_pos()
 					local posob_miny = posob.y + object:get_properties().collisionbox[2]
 					if math.abs(posob.x-pos.x) <= 0.5 and (posob_miny-pos.y < 1.5 and posob.y-pos.y >= 0.3) then
-						inv:add_item("main", ItemStack(object:get_luaentity().itemstring))
 						entity._removed = true
 						entity.itemstring = ""
 						object:remove()
+						inv:add_item("main", ItemStack(object:get_luaentity().itemstring))
 					end
 				end
 			end
