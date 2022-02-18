@@ -304,7 +304,6 @@ local function paths(plan, minp, maxp)
 		if path then
 			for _, pos in pairs(path) do
 				pos.y = pos.y - 1
-				
 			        local surface_mat = minetest.get_node(pos).name
 				if surface_mat == "mcl_core:sand" or surface_mat == "mcl_core:redsand" then
 					minetest.swap_node(pos, {name = "mcl_core:sandstonesmooth2"})
