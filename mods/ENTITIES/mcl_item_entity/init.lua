@@ -153,6 +153,10 @@ minetest.register_globalstep(function(dtime)
 								object:set_velocity({x=0,y=0,z=0})
 								object:set_acceleration({x=0,y=0,z=0})
 
+								if object._flowing then
+								    object._flowing = false
+								end
+
 								object:move_to(checkpos)
 
 								pool[name] = pool[name] + 1
