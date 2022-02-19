@@ -61,10 +61,10 @@ local function get_seconds_irl()
 		next_save_seconds_irl = seconds_irl + save_to_storage_interval
 	end
 
-	return seconds_irl
+	return math.floor(seconds_irl)
 end
 
-local seconds_irl_public = get_seconds_irl()
+seconds_irl_public = get_seconds_irl()
 
 function mcl_time.get_seconds_irl()
 	return seconds_irl_public
