@@ -1,6 +1,8 @@
+local S = minetest.get_translator(minetest.get_current_modname())
+
 minetest.register_tool("mcl_spyglass:spyglass",{
-    description = ("Spyglass"),
-    _doc_items_longdesc = ("A spyglass is an item that can be used for zooming in on specific locations."),
+    description = S("Spyglass"),
+    _doc_items_longdesc = S("A spyglass is an item that can be used for zooming in on specific locations."),
     inventory_image = "mcl_spyglass.png",
     stack_max = 1,
     _mcl_toollike_wield = true,

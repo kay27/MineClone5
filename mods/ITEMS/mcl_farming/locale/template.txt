@@ -97,3 +97,5 @@ Turns block into farmland=
 Surface for crops=
 Can become wet=
 Uses: @1=
+Sweet Berry=
+Sweet Berry Bush (Stage @1)=
