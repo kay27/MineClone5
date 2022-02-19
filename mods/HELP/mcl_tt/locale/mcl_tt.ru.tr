@@ -1,8 +1,8 @@
 # textdomain: mcl_tt
-Head armor=Броня головы
-Torso armor=Броня тела
-Legs armor=Броня ног
-Feet armor=Броня ступней
+Head armor=Броня для головы
+Torso armor=Броня для торса
+Legs armor=Броня для ног
+Feet armor=Броня для ступней
 Armor points: @1=Эффективность брони: @1
 Armor durability: @1=Прочность брони: @1
 Protection: @1%=Уровень защиты: @1%
