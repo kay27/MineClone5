@@ -140,16 +140,22 @@ function mcl_maps.create_map(pos)
 	return itemstack
 end
 
+local loading_maps = {}
+
 function mcl_maps.load_map(id)
-	if id == "" or creating_maps[id] then
+	if id == "" or creating_maps[id] or loading_maps[id] then
 		return
 	end
 
 	local texture = "mcl_maps_map_texture_" .. id .. ".png"
 
 	if not loaded_maps[id] then
-		loaded_maps[id] = true
-		minetest.dynamic_add_media(map_textures_path .. texture, function() end)
+		loading_maps[id] = true
+		minetest.dynamic_add_media({filepath = map_textures_path .. texture, ephemeral = true}, function(player_name)
+			loaded_maps[id] = true
+			loading_maps[id] = nil
+		end)
+		return
 	end
 
 	return texture
