@@ -33,7 +33,7 @@ function mcl_maps.create_map(pos)
 
 	local itemstack = ItemStack("mcl_maps:filled_map")
 	local meta = itemstack:get_meta()
-	local id = string.format("%.0f", minetest.hash_node_position(minp))
+	local id = string.format("%.0f-%.0f", minetest.hash_node_position(minp), mcl_time.get_seconds_irl())
 	meta:set_string("mcl_maps:id", id)
 	meta:set_string("mcl_maps:minp", minetest.pos_to_string(minp))
 	meta:set_string("mcl_maps:maxp", minetest.pos_to_string(maxp))
