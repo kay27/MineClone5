@@ -1,6 +1,6 @@
 # textdomain: mcl_minecarts
 Minecart=Вагонетка
-Minecarts can be used for a quick transportion on rails.=Вагонетки может быть использована для быстрого перемещения по рельсам.
+Minecarts can be used for a quick transportion on rails.=Вагонетка может быть использована для быстрого перемещения по рельсам.
 Minecarts only ride on rails and always follow the tracks. At a T-junction with no straight way ahead, they turn left. The speed is affected by the rail type.=Вагонетки едут только по проложенным рельсам. На Т-образной развилке они поворачивают налево. Скорость зависит от типа рельсов.
 You can place the minecart on rails. Right-click it to enter it. Punch it to get it moving.=Вы можете поставить вагонетку на рельсы. Правым кликом сядьте в неё. Бейте по вагонетке, чтобы она ехала.
 To obtain the minecart, punch it while holding down the sneak key.=Чтобы забрать вагонетку, ударьте по ней, удерживая клавишу [Красться].
