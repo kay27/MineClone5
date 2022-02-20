@@ -509,7 +509,7 @@ function mcl_enchanting.show_enchanting_formspec(player)
 		.. "real_coordinates[true]"
 		.. "image[3.15,0.6;7.6,4.1;mcl_enchanting_button_background.png]"
 	local itemstack = inv:get_stack("enchanting_item", 1)
-	local player_levels = mcl_experience.get_level(player)
+	local player_levels = mcl_experience.get_level(player) or 0
 	local y = 0.65
 	local any_enchantment = false
 	local table_slots = mcl_enchanting.get_table_slots(player, itemstack, num_bookshelves)
