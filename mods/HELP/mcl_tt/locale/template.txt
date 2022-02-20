@@ -17,6 +17,7 @@ Skeleton view range: -50%=
 Creeper view range: -50%=
 Damage: @1=
 Damage (@1): @2=
+Durability: @1
 Healing: @1=
 Healing (@1): @2=
 Full punch interval: @1s=

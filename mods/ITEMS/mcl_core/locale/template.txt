@@ -92,6 +92,7 @@ Diorite=
 Diorite is an igneous rock.=
 Dirt=
 Dirt acts as a soil for a few plants. When in light, this block may grow a grass or mycelium cover if such blocks are nearby.=
+Enchanted Golden Apple=
 Emerald=
 Emerald Ore=
 Emerald ore is the ore of emeralds. It is very rare and can be found alone, not in clusters.=

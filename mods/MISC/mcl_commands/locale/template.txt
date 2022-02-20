@@ -24,3 +24,7 @@ Only peaceful mobs allowed!=
 @1[<name>]=
 Set game mode for player or yourself=
 Error: No game mode specified.=
+<sound> <target>=
+Play a sound. Arguments: <sound>: name of the sound. <target>: Target.=
+Sound name is invalid!=
+Target is invalid!!=
