@@ -24,3 +24,7 @@ Only peaceful mobs allowed!=Включены только мирные мобы!
 @1[<name>]=@1[<имя>]
 Set game mode for player or yourself=Задаёт режим игры для игрока или для вас
 Error: No game mode specified.=Ошибка: Режим игры не указан.
+<sound> <target>=<звук> <цель>
+Play a sound. Arguments: <sound>: name of the sound. <target>: Target.=Проигрывает звук. Аргументы: <звук> - название звука, <цель> - целевой игрок.
+Sound name is invalid!=Неправильное название звука!
+Target is invalid!!=Неправильная цель!!
