@@ -2,9 +2,9 @@
 Players can't be killed right now, damage has been disabled.=Игроки не могут быть убиты - урон отключён.
 Player @1 does not exist.=Игрока @1 не существует.
 You are already dead=Вы уже мертвы
-@1 is already dead=@1 уже мертв
+@1 is already dead=@1 уже мертв(а)
 @1 committed suicide.=@1 совершил(а) Роскомнадзор.
-@1 was killed by @2.=@1 был убит @2.
+@1 was killed by @2.=@1 был убит(а) @2.
 [<name>]=[<имя>]
 Kill player or yourself=Убить игрока или себя
 Can use /say=Можно использовать /say

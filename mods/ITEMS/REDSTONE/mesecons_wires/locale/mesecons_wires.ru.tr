@@ -5,7 +5,7 @@ Redstone power can be received from various redstone components, such as a block
 Place redstone on the ground to build a redstone trail. The trails will connect to each other automatically and it can also go over hills. An easy way to power a redstone trail is by placing a redstone torch.=Поместите редстоун на землю, чтобы создать из него дорожку. Фрагменты дорожек будут соединяться между собой автоматически и могут даже проходить по холмам. Простой способ подать энергию редстоуна к дорожке редстоуна это установка красного факела.
 Read the help entries on the other redstone components to learn how redstone components interact.=Смотрите справочные записи к остальным компонентам редстоуна, чтобы узнать больше об их взаимодействии.
 Redstone=Редстоун
-Powered Redstone Spot (@1)=Подключённое пятно редстоуна (@1)
+Powered Redstone Spot (@1)=Подключенное пятно редстоуна (@1)
 Redstone Trail (@1)=Дорожка редстоуна (@1)
-Powered Redstone Trail (@1)=Подключённая дорожка редстоуна (@1)
+Powered Redstone Trail (@1)=Подключенная дорожка редстоуна (@1)
 Transmits redstone power, powers mechanisms=Передаёт сигнал редстоуна, питает механизмы
