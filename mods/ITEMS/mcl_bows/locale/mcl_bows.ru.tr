@@ -1,7 +1,7 @@
 # textdomain: mcl_bows
 Arrow=Стрела
 Arrows are ammunition for bows and dispensers.=Стрелы - это боеприпасы для луков и раздатчиков.
-An arrow fired from a bow has a regular damage of 1-9. At full charge, there's a 20% chance of a critical hit dealing 10 damage instead. An arrow fired from a dispenser always deals 3 damage.=Стрела, выпущенная из лука, обычно наносит урон 1-9. При полном натяжении есть 20% шанс критического удара с уроном 10. Стрела из раздатчика всегда наносит урон 3.
+An arrow fired from a bow has a regular damage of 1-9. At full charge, there's a 20% chance of a critical hit dealing 10 damage instead. An arrow fired from a dispenser always deals 3 damage.=Стрела, выпущенная из лука, обычно наносит урон 1-9. При полном натяжении есть шанс в 20% для критического удара с уроном 10. Стрела из раздатчика всегда наносит урон 3.
 Arrows might get stuck on solid blocks and can be retrieved again. They are also capable of pushing wooden buttons.=Стрелы могут застревать в твёрдых блоках, тогда их можно снова подобрать. Стрелы также способны нажимать деревянные кнопки.
 To use arrows as ammunition for a bow, just put them anywhere in your inventory, they will be used up automatically. To use arrows as ammunition for a dispenser, place them in the dispenser's inventory. To retrieve an arrow that sticks in a block, simply walk close to it.=Чтобы использовать стрелы в качестве боеприпасов для лука, просто положите их в любую ячейку вашего инвентаря, и они будут использоваться автоматически. Чтобы использовать стрелы в качестве боеприпасов для раздатчика, поместите их в инвентарь раздатчика. Чтобы взять стрелу, застрявшую в блоке, просто пройдите рядом с ней.
 Bow=Лук
