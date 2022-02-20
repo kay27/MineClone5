@@ -55,7 +55,7 @@ Wield the bone near wolves to attract them. Use the “Place” key on the wolf 
 String=Ficelle
 Strings are used in crafting.=Les ficelles sont utilisées dans l'artisanat.
 Blaze Rod=Bâton de Blaze
-This is a crafting component dropped from dead blazes.=Il s'agit d'un composant d'artisanat tombé des Blazes morts.
+This is a crafting component dropped from dead blazes.=Il s'agit d'un composant d'artisanat lâché par des Blazes morts.
 Blaze Powder=Poudre de Blaze
 This item is mainly used for crafting.=Cet objet est principalement utilisé pour l'artisanat.
 Magma Cream=Crème de Magma
@@ -76,19 +76,19 @@ Rabbit's Foot=Patte de Lapin
 Must be your lucky day! Place this item in an item frame for decoration.=Ce doit être votre jour de chance! Placez cet article dans un cadre d'article pour la décoration.
 Saddle=Selle
 Can be placed on animals to ride them=Peut être placé sur les animaux pour les monter
-Saddles can be put on some animals in order to mount them.=Des selles peuvent être posées sur certains animaux afin de les monter.
+Saddles can be put on some animals in order to mount them.=Les selles peuvent être posées sur certains animaux afin de les monter.
 
 Use the placement key with the saddle in your hand to try to put on the saddle. Saddles fit on horses, mules, donkeys and pigs. Horses, mules and donkeys need to be tamed first, otherwise they'll reject the saddle. Saddled animals can be mounted by using the placement key on them again.=Utilisez la touche de placement avec la selle à la main pour essayer de mettre la selle. Les selles conviennent aux chevaux, mulets, ânes et cochons. Les chevaux, les mulets et les ânes doivent d'abord être apprivoisés, sinon ils rejetteront la selle. Les animaux sellés peuvent être montés en utilisant à nouveau la touche de placement.
 
 Rabbit Stew=Ragout de Lapin
 Rabbit stew is a very nutricious food item.=Le ragoût de lapin est un aliment très nutritif.
 Shulker Shell=Carapace de Shulker
-Shulker shells are used in crafting. They are dropped from dead shulkers.=Les carapaces Shulker sont utilisés dans l'artisanat. Ils sont lâchés de shulkers morts.
+Shulker shells are used in crafting. They are dropped from dead shulkers.=Les carapaces Shulker sont utilisés dans l'artisanat. Elles sont lâchées par des shulkers morts.
 Slimeball=Boule de Slime
-Slimeballs are used in crafting. They are dropped from slimes.=Les boules de slime sont utilisées dans l'artisanat. Ils sont lâchés par les Slimes.
+Slimeballs are used in crafting. They are dropped from slimes.=Les boules de slime sont utilisées dans l'artisanat. Elles sont lâchése par les Slimes.
 Gunpowder=Poudre à canon
 Carrot on a Stick=Carotte sur un Batôn
 Lets you ride a saddled pig=Vous permet de monter un cochon sellé
 A carrot on a stick can be used on saddled pigs to ride them.=Une carotte sur un bâton peut être utilisée sur les porcs sellés pour les monter.
 
-Place it on a saddled pig to mount it. You can now ride the pig like a horse. Pigs will also walk towards you when you just wield the carrot on a stick.=Placez-le sur un cochon sellé pour le monter. Vous pouvez maintenant monter le cochon comme un cheval. Les porcs marcheront également vers vous lorsque vous brandirez la carotte sur un bâton.
+Place it on a saddled pig to mount it. You can now ride the pig like a horse. Pigs will also walk towards you when you just wield the carrot on a stick.=Placez-la sur un cochon sellé pour le monter. Vous pouvez maintenant monter le cochon comme un cheval. Les porcs marcheront également vers vous lorsque vous brandirez la carotte sur un bâton.
