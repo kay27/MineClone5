@@ -1,18 +1,20 @@
+local S = minetest.get_translator(minetest.get_current_modname())
+
 local function register_raw_ore(description, n)
     local ore = description:lower()
     local n = n or ""
     local raw_ingot = "mcl_raw_ores:raw_"..ore
     local texture = "mcl_raw_ores_raw_"..ore
     minetest.register_craftitem(raw_ingot, {
-    	description = ("Raw "..description),
-    	_doc_items_longdesc = ("Raw "..ore..". Mine a"..n.." "..ore.." ore to get it."),
+    	description = S("Raw "..description),
+    	_doc_items_longdesc = S("Raw "..ore..". Mine a"..n.." "..ore.." ore to get it."),
     	inventory_image = texture..".png",
     	stack_max = 64,
     	groups = { craftitem = 1 },
     })
     minetest.register_node(raw_ingot.."_block", {
-        description = ("Block of Raw "..description),
-        _doc_items_longdesc = ("A block of raw "..ore.." is mostly a decorative block but also useful as a compact storage of raw "..ore.."."),
+        description = S("Block of Raw "..description),
+        _doc_items_longdesc = S("A block of raw "..ore.." is mostly a decorative block but also useful as a compact storage of raw "..ore.."."),
         tiles = { texture.."_block.png" },
         is_ground_content = false,
         stack_max = 64,

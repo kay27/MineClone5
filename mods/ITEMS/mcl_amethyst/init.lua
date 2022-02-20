@@ -156,7 +156,7 @@ for _, def in pairs(bud_def) do
 end
 
 minetest.register_node("mcl_amethyst:amethyst_cluster",{
-	description = "Amethyst Cluster",
+	description = S("Amethyst Cluster"),
 	_mcl_hardness = 1.5,
 	_mcl_blast_resistance = 1.5,
 	_doc_items_longdesc = S("Amethyst Cluster is the final growth of amethyst bud."),
