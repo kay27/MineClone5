@@ -1,13 +1,17 @@
-# Blackstone Mod
+# Lanterns Mod
 
 This mod is made for the Minetest Subgame Mineclone2.
 
-It adds new Blocks: Blackstone, Basalt, Soul Fire, Soul Torch etc.
+It adds new Block: Lanterns
 
 ## Version:
 
-Its version 1.0.2
+Its version 1.0.0
 
 ## License
 
 CC BY-SA 4.0
+
+## Author
+
+PrairieWind (Github: PrairieAstronomer)
