@@ -12,6 +12,7 @@ if not mcl_mapgen.singlenode then
 	dofile(modpath .. "/jungle_temple.lua")
 	dofile(modpath .. "/nice_jungle_temple.lua")
 	dofile(modpath .. "/noise_indicator.lua")
+	dofile(modpath .. "/ruined_portal.lua")
 	dofile(modpath .. "/stronghold.lua")
 	dofile(modpath .. "/witch_hut.lua")
 end
