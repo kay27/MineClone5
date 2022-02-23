@@ -2,11 +2,10 @@ local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 
 local chance_per_chunk = 400
-chance_per_chunk = 1
 local noise_multiplier = 2.5
 local random_offset    = 9159
-local scanning_ratio   = 0.0001
-local struct_threshold = chance_per_chunk - 3
+local scanning_ratio   = 0.01
+local struct_threshold = 390
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 
@@ -30,8 +29,18 @@ local node_top = {
 	"mcl_core:goldblock",
 }
 
+local node_garbage = {
+	"mcl_nether:netherrack",
+	"mcl_core:lava_source",
+	"mcl_nether:netherrack",
+	"mcl_nether:netherrack",
+	"mcl_nether:magma",
+	"mcl_nether:netherrack",
+}
+
 local stone1 = {name = "mcl_core:stonebrickcracked"}
 local stone2 = {name = "mcl_core:stonebrickmossy"}
+local stone3 = {name = "mcl_nether:magma"}
 local stone4 = {name = "mcl_core:stonebrick"}
 
 local slab1 = {name = "mcl_stairs:slab_stonebrickcracked_top"}
@@ -267,14 +276,83 @@ end
 
 local possible_rotations = {"0", "90", "180", "270"}
 
+local function draw_trash(pos, width, height, lift, orientation, pr)
+	local slide_x = (1 - orientation)
+	local slide_z = orientation
+	local x1 = pos.x - lift - 1
+	local x2 = pos.x + (width - 1) * slide_x + lift + 1
+	local z1 = pos.z - lift - 1
+	local z2 = pos.z + (width - 1) * slide_z + lift + 1
+	local y1 = pos.y - pr:next(1, height) - 1
+	local y2 = pos.y
+	local opacity_layers = math.floor((y2 - y1) / 2)
+	local opacity_layer = -opacity_layers
+	for y = y1, y2 do
+		local inverted_opacity_0_5 = math.round(math.abs(opacity_layer) / opacity_layers * 5)
+		for x = x1 + pr:next(0, 2), x2 - pr:next(0, 2) do
+			for z = z1 + pr:next(0, 2), z2 - pr:next(0, 2) do
+				if inverted_opacity_0_5 == 0 or (x % inverted_opacity_0_5 ~= pr:next(0, 1) and z % inverted_opacity_0_5 ~= pr:next(0, 1)) then
+					minetest.swap_node({x = x, y = y, z = z}, {name = node_garbage[pr:next(1, #node_garbage)]})
+				end
+			end
+		end
+		opacity_layer = opacity_layer + 1
+	end
+end
+
+local stair_replacement_list = {
+	"air",
+	"group:water",
+	"group:lava",
+	"group:buildable_to",
+	"group:deco_block",
+}
+
+local stair_offset_from_bottom = 3
+local function draw_stairs(pos, width, height, lift, orientation, pr, is_chain)
+	local lift = lift + stair_offset_from_bottom
+	local slide_x = (1 - orientation)
+	local slide_z = orientation
+	local width = width + (is_chain and 2 or 0)
+	local x1 = pos.x - lift - (is_chain and 1 or 0) - 1
+	local x2 = pos.x + lift + width * slide_x + 1
+	local z1 = pos.z - lift - (is_chain and 1 or 0) - 1
+	local z2 = pos.z + lift + width * slide_z + 1
+	local y1 = pos.y - stair_offset_from_bottom
+	local y2 = pos.y + lift - stair_offset_from_bottom
+	local current_radius = lift
+	for y = y1, y2 do
+		for x = x1, x2 do
+			for z = z1, z2 do
+--local stair1 = "mcl_stairs:stair_stonebrickcracked"
+--local stair2 = "mcl_stairs:stair_stonebrickmossy"
+--local stair3 = "mcl_stairs:stair_stone_rough"
+--local stair4 = "mcl_stairs:stair_stonebrick"
+				local pos = {x = x, y = y, z = z}
+				if #minetest.find_nodes_in_area(pos, pos, stair_replacement_list, false) > 0 then
+					minetest.swap_node(pos, {name = "mcl_stairs:stair_stone_rough"})
+				end
+			end
+		end
+		x1 = x1 + 1
+		x2 = x2 - 1
+		z1 = z1 + 1
+		z2 = z2 - 1
+	end
+end
+
 local function place(pos, rotation, pr)
 	local width = pr:next(2, 10)
 	local height = pr:next(((width < 3) and 3 or 2), 10)
 	local lift = pr:next(0, 4)
 	local rotation = rotation or possible_rotations[pr:next(1, #possible_rotations)]
 	local orientation = rotation_to_orientation[rotation]
-	local is_chain = pr:next(1, 3) > 1
 	assert(orientation)
+	local param2 = rotation_to_param2[rotation]
+	assert(param2)
+	local is_chain = pr:next(1, 3) > 1
+	draw_trash(pos, width, height, lift, orientation, pr)
+	draw_stairs(pos, width, height, lift, orientation, pr, is_chain)
 	draw_frame({x = pos.x, y = pos.y + lift, z = pos.z}, width + 2, height + 2, orientation, pr, is_chain, rotation)
 end
 
@@ -296,6 +374,7 @@ mcl_structures.register_structure({
 		flags = "all_floors",
 		fill_ratio = scanning_ratio,
 		height = 1,
+		place_on = {"mcl_core:sand", "mcl_core:dirt_with_grass", "mcl_core:water_source"},
 	},
 	on_finished_chunk = function(minp, maxp, seed, vm_context, pos_list)
 		if maxp.y < mcl_mapgen.overworld.min then return end
