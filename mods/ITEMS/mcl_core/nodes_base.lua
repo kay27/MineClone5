@@ -465,6 +465,19 @@ minetest.register_node("mcl_core:dirt", {
 	_mcl_hardness = 0.5,
 })
 
+minetest.register_node("mcl_core:moss", {
+	description = S("Moss"),
+	_doc_items_longdesc = S("A moss block is a natural block that can be spread to some other blocks by using bone meal."),--TODO: Other desciption?
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	stack_max = 64,
+	groups = {handy=1, hoey=1},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
+})
+
 minetest.register_node("mcl_core:coarse_dirt", {
 	description = S("Coarse Dirt"),
 	_doc_items_longdesc = S("Coarse dirt acts as a soil for some plants and is similar to dirt, but it will never grow a cover."),
@@ -1075,10 +1088,43 @@ minetest.register_node("mcl_core:snowblock", {
 	_mcl_silk_touch_drop = true,
 })
 
+minetest.register_node("mcl_core:moss", {
+	description = S("Moss"),
+	_doc_items_longdesc = S("A moss block is a natural block that can be spread to some other blocks by using bone meal."),--TODO: Other desciption?
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	stack_max = 64,
+	groups = {handy=1, hoey=1},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
+})
+
+minetest.register_node("mcl_core:moss_carpet", {
+	description = S("Moss Carpet"),
+	_doc_items_longdesc = S("Moss Carpets are a thin decorative variant of the moss block."),--TODO: Other desciption?
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	paramtype = "light",
+	stack_max = 64,
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-8/16, -8/16, -8/16, 8/16, -7/16, 8/16},
+		},
+	},
+	groups = {handy=1, hoey=1},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
+})
+
 -- Add entry aliases for the Help
 if minetest.get_modpath("doc") then
 	doc.add_entry_alias("nodes", "mcl_core:stone_with_redstone", "nodes", "mcl_core:stone_with_redstone_lit")
 	doc.add_entry_alias("nodes", "mcl_core:water_source", "nodes", "mcl_core:water_flowing")
 	doc.add_entry_alias("nodes", "mcl_core:lava_source", "nodes", "mcl_core:lava_flowing")
 end
-
