@@ -560,7 +560,7 @@ function mcl_enchanting.handle_formspec_fields(player, formname, fields)
 			return
 		end
 		local player_level = mcl_experience.get_level(player)
-		if player_level < slot.level_requirement then
+		if not player_level or (player_level < slot.level_requirement) then
 			return
 		end
 		mcl_experience.set_level(player, player_level - button_pressed)
