@@ -34,9 +34,9 @@ local function player_collision(player)
 	local width = .75
 
 	for _,object in pairs(minetest.get_objects_inside_radius(pos, width)) do
-
-		if object and (object:is_player()
-		or (object:get_luaentity()._cmi_is_mob == true and object ~= player)) then
+		local luaentity = object:get_luaentity()
+		if object and ((mcl_util and mcl_util.is_player(object))
+		or (luaentity and luaentity._cmi_is_mob == true and object ~= player)) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
@@ -275,7 +275,7 @@ minetest.register_globalstep(function(dtime)
 
 		local fly_pos = player:get_pos()
 		local fly_node = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.5, z = fly_pos.z}).name
-		local elytra = mcl_playerplus.elytra[player]
+		local elytra = mcl_playerplus.elytra[name]
 
 		elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
 			and not player:get_attach()
@@ -625,15 +625,14 @@ minetest.register_globalstep(function(dtime)
 end)
 
 -- set to blank on join (for 3rd party mods)
-minetest.register_on_joinplayer(function(player)
-	local name = player:get_player_name()
-
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
 	mcl_playerplus_internal[name] = {
 		lastPos = nil,
 		swimDistance = 0,
 		jump_cooldown = -1,	-- Cooldown timer for jumping, we need this to prevent the jump exhaustion to increase rapidly
 	}
-	mcl_playerplus.elytra[player] = {active = false, rocketing = 0}
+	mcl_playerplus.elytra[name] = {active = false, rocketing = 0}
 end)
 
 -- clear when player leaves
@@ -641,7 +640,7 @@ minetest.register_on_leaveplayer(function(player)
 	local name = player:get_player_name()
 
 	mcl_playerplus_internal[name] = nil
-	mcl_playerplus.elytra[player] = nil
+	mcl_playerplus.elytra[name] = nil
 end)
 
 -- Don't change HP if the player falls in the water or through End Portal:

@@ -2,6 +2,7 @@ Dripping Mod
 by kddekadenz
 
 modified for MineClone 2 by Wuzzy and NO11
+modified for MineClone 5 by kay27
 
 
 Installing instructions:

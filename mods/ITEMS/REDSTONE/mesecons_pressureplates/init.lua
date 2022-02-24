@@ -201,4 +201,15 @@ mesecon.register_pressure_plate(
 	{ player = true, mob = true },
 	S("A stone pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else."))
 
-
+mesecon.register_pressure_plate(
+	"mesecons_pressureplates:pressure_plate_gold",
+	S("Light-Weighted Pressure Plate"),
+	{"default_gold_block.png"},
+	{"default_gold_block.png"},
+	"default_gold_block.png",
+	nil,
+	{{"mcl_core:gold_ingot", "mcl_core:gold_ingot"}},
+	mcl_sounds.node_sound_metal_defaults(),
+	{pickaxey=1},
+	{ player = true, mob = true },
+	S("A light-weighted pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else."))
