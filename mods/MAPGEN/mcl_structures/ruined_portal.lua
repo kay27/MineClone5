@@ -5,7 +5,7 @@ local chance_per_chunk = 400
 local noise_multiplier = 2.5
 local random_offset    = 9159
 local scanning_ratio   = 0.001
-local struct_threshold = 1
+local struct_threshold = 396
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 local minetest_find_nodes_in_area = minetest.find_nodes_in_area
