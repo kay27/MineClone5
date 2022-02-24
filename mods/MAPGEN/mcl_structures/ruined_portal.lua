@@ -5,7 +5,7 @@ local chance_per_chunk = 400
 local noise_multiplier = 2.5
 local random_offset    = 9159
 local scanning_ratio   = 0.001
-local struct_threshold = 396
+local struct_threshold = 1
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 local minetest_find_nodes_in_area = minetest.find_nodes_in_area
@@ -313,7 +313,6 @@ local stair_replacement_list = {
 	"group:deco_block",
 }
 
-local stair_offset_from_bottom = 3
 local stair_names = {
 	"mcl_stairs:stair_stonebrickcracked",
 	"mcl_stairs:stair_stonebrickmossy",
@@ -344,6 +343,15 @@ local stair_content = {
 	{name = "mcl_core:stone"},
 	{name = "mcl_core:stonebrick"},
 	{name = "mcl_nether:magma"},
+	{name = "mcl_nether:netherrack"},
+	{name = "mcl_nether:netherrack"},
+}
+
+local stair_content_bottom = {
+	{name = "mcl_nether:magma"},
+	{name = "mcl_nether:magma"},
+	{name = "mcl_nether:netherrack"},
+	{name = "mcl_nether:netherrack"},
 	{name = "mcl_nether:netherrack"},
 	{name = "mcl_nether:netherrack"},
 }
@@ -412,7 +420,12 @@ local stair_selector = {
 	},
 }
 
+local stair_offset_from_bottom = 2
+
 local function draw_stairs(pos, width, height, lift, orientation, pr, is_chain, param2)
+
+	local current_stair_content = stair_content
+	local current_stones = stones
 
 	local function set_ruined_node(pos, node)
 		if pr:next(1, 7) < 3 then return end
@@ -441,10 +454,12 @@ local function draw_stairs(pos, width, height, lift, orientation, pr, is_chain, 
 	local stair_layer = true
 	local y = y2
 	local place_slabs = true
-	local x_key, y_key
+	local x_key, z_key
 	local need_to_place_chest = true
 	local chest_pos
-	while y >= y1 do
+	local bad_nodes_ratio = 0
+	while (y >= y1) or (bad_nodes_ratio > 0.07) do
+		local good_nodes_counter = 0
 		for x = x1, x2 do
 			x_key = (x == x1) and -1 or (x == x2) and 1 or 0
 			for z = z1, z2 do
@@ -460,7 +475,7 @@ local function draw_stairs(pos, width, height, lift, orientation, pr, is_chain, 
 						elseif place_slabs then
 							set_ruined_node(pos, slabs[pr:next(1, #slabs)])
 						else
-							local placed = set_ruined_node(pos, stones[pr:next(1, #stones)])
+							local placed = set_ruined_node(pos, current_stones[pr:next(1, #current_stones)])
 							if need_to_place_chest and placed then
 								chest_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
 								minetest_swap_node(chest_pos, {name = "mcl_chests:chest_small"})
@@ -468,20 +483,42 @@ local function draw_stairs(pos, width, height, lift, orientation, pr, is_chain, 
 							end
 						end
 					elseif not stair_layer then
-						set_ruined_node(pos, stair_content[pr:next(1, #stair_content)])
+						set_ruined_node(pos, current_stair_content[pr:next(1, #current_stair_content)])
 					end
+				else
+					good_nodes_counter = good_nodes_counter + 1
 				end
 			end
 		end
-		x1 = x1 - 1
-		x2 = x2 + 1
-		z1 = z1 - 1
-		z2 = z2 + 1
-		if (stair_layer or place_slabs) then
+		bad_nodes_ratio = 1 - good_nodes_counter / ((x2 - x1 + 1) * (z2 - z1 + 1))
+		if y >= y1 then
+			x1 = x1 - 1
+			x2 = x2 + 1
+			z1 = z1 - 1
+			z2 = z2 + 1
+			if (stair_layer or place_slabs) then
+				y = y - 1
+				if y <= y1 then
+					current_stair_content = stair_content_bottom
+					current_stones = stair_content_bottom
+				end
+			end
+			place_slabs = not place_slabs
+			stair_layer = false
+		else
+			place_slabs = false
 			y = y - 1
+			local dx1 = pr:next(0, 10)
+			if dx1 < 3 then x1 = x1 + dx1 end
+			local dx2 = pr:next(0, 10)
+			if dx2 < 3 then x2 = x2 - dx1 end
+			if x1 >= x2 then return chest_pos end
+			local dz1 = pr:next(0, 10)
+			if dz1 < 3 then z1 = z1 + dz1 end
+			local dz2 = pr:next(0, 10)
+			if dz2 < 3 then z2 = z2 - dz1 end
+			if z1 >= z2 then return chest_pos end
 		end
-		stair_layer = false
-		place_slabs = not place_slabs
 	end
 	return chest_pos
 end
@@ -536,11 +573,11 @@ local function place(pos, rotation, pr)
 				{itemstring = "mcl_farming:carrot_item_gold",                    weight =  5, amount_min = 4, amount_max = 12},
 				{itemstring = "mcl_core:gold_ingot",                             weight =  5, amount_min = 2, amount_max =  8},
 				{itemstring = "mcl_clock:clock",                                 weight =  5},
-				{itemstring = "mesecons_pressureplates:pressure_plate_gold_off", weight = 5},
-				{itemstring = "mobs_mc:gold_horse_armor",                        weight = 5},
-				{itemstring = "mcl_core:goldblock",                              weight = 1, amount_min = 1, amount_max =  2},
-				{itemstring = "mcl_bells:bell",                                  weight = 1},
-				{itemstring = "mcl_core:apple_gold_enchanted",                   weight = 1},
+				{itemstring = "mesecons_pressureplates:pressure_plate_gold_off", weight =  5},
+				{itemstring = "mobs_mc:gold_horse_armor",                        weight =  5},
+				{itemstring = "mcl_core:goldblock",                              weight =  1, amount_min = 1, amount_max =  2},
+				{itemstring = "mcl_bells:bell",                                  weight =  1},
+				{itemstring = "mcl_core:apple_gold_enchanted",                   weight =  1},
 			}
 		},
 		pr
