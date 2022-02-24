@@ -68,7 +68,7 @@ mobs:register_mob("mobs_mc:blaze", {
 	light_damage = 0,
 	view_range = 16,
 	attack_type = "projectile",
-	arrow = "mobs_mc:blaze_fireball",
+	arrow = "mobs_mc:blaze_fireball_entity",
 	shoot_interval = 3.5,
 	shoot_offset = 1.0,
 	passive = false,

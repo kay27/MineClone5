@@ -5,7 +5,7 @@ local chance_per_chunk = 11
 local noise_multiplier = 1
 local random_offset    = 999
 local scanning_ratio   = 0.00003
-local struct_threshold = chance_per_chunk - 1
+local struct_threshold = chance_per_chunk
 
 local mcl_structures_get_perlin_noise_level = mcl_structures.get_perlin_noise_level
 

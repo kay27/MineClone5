@@ -28,12 +28,14 @@ mobs.shoot_projectile_handling = function(arrow_item, pos, dir, yaw, shooter, po
 	obj:set_acceleration({x=0, y=gravity, z=0})
 	obj:set_yaw(yaw-math.pi/2)
 	local le = obj:get_luaentity()
-	le._shooter = shooter
-	le._damage = damage
-	le._is_critical = is_critical
-	le._startpos = pos
-	le._knockback = knockback
-	le._collectable = collectable
+	if le then
+		le._shooter = shooter
+		le._damage = damage
+		le._is_critical = is_critical
+		le._startpos = pos
+		le._knockback = knockback
+		le._collectable = collectable
+	end
 
     --play custom shoot sound
     if shooter and shooter.shoot_sound then

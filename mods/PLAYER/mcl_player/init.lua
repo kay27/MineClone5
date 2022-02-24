@@ -127,6 +127,8 @@ function mcl_player.player_get_preview(player)
 end
 
 function mcl_player.get_player_formspec_model(player, x, y, w, h, fsname)
+	if not mcl_util then return end
+	if not mcl_util.is_player(player) then return end
 	local name = player:get_player_name()
 	local model = player_model[name]
 	local anim = models[model].animations[player_anim[name]]

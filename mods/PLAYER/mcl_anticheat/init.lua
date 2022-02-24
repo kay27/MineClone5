@@ -39,7 +39,7 @@ local function update_player(player_object)
 	local feet_y, head_y = floor(pos.y-0.1), floor(pos.y + 1.49)
 
 	if mcl_playerplus.elytra then
-		local elytra = mcl_playerplus.elytra[player_object]
+		local elytra = mcl_playerplus.elytra[name]
 		if elytra and elytra.active then
 			return
 		end

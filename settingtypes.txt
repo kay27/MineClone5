@@ -168,3 +168,5 @@ kick_threshold (Cheat Kicking Threshold) int 10
 [Debugging]
 # If enabled, this will show the itemstring of an item in the description.
 mcl_item_id_debug (Item ID Debug) bool false
+mcl_debug_struct_noise (Show Structures Perlin Noise) bool false
+mcl_debug_chunk_borders (Show Chunk Borders) bool false

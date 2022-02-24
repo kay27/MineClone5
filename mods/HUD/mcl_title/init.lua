@@ -157,13 +157,14 @@ function mcl_title.set(player, type, data)
 end
 
 function mcl_title.remove(player, type)
-	if player then
+	if player and mcl_util and mcl_util.is_player(player) then
 		player:hud_change(huds_idx[type][player], "text", "")
 		--player:hud_change(huds_idx[type][player], "style", 0) --no styling
 	end
 end
 
 function mcl_title.clear(player)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	mcl_title.remove(player, "title")
 	mcl_title.remove(player, "subtitle")
 	mcl_title.remove(player, "actionbar")

@@ -1,24 +1,12 @@
 mcl_maps = {}
 
-local modname = minetest.get_current_modname()
-local modpath = minetest.get_modpath(modname)
-local S = minetest.get_translator(modname)
-
-local math = math
-local vector = vector
-local table = table
-local pairs = pairs
-
-local pos_to_string = minetest.pos_to_string
-local string_to_pos = minetest.string_to_pos
-local get_item_group = minetest.get_item_group
-local dynamic_add_media = minetest.dynamic_add_media
-local get_connected_players = minetest.get_connected_players
-
-local storage = minetest.get_mod_storage()
+local S = minetest.get_translator("mcl_maps")
+local modpath = minetest.get_modpath("mcl_maps")
 local worldpath = minetest.get_worldpath()
 local map_textures_path = worldpath .. "/mcl_maps/"
---local last_finished_id = storage:get_int("next_id") - 1
+
+local math_min = math.min
+local math_max = math.max
 
 minetest.mkdir(map_textures_path)
 
@@ -40,17 +28,15 @@ local loaded_maps = {}
 local c_air = minetest.get_content_id("air")
 
 function mcl_maps.create_map(pos)
-	local minp = vector.multiply(vector.floor(vector.divide(pos, 128)), 128)
-	local maxp = vector.add(minp, vector.new(127, 127, 127))
+	local minp = vector.subtract(vector.floor(pos), 64)
+	local maxp = vector.add(minp, 127)
 
 	local itemstack = ItemStack("mcl_maps:filled_map")
 	local meta = itemstack:get_meta()
-	local next_id = storage:get_int("next_id")
-	storage:set_int("next_id", next_id + 1)
-	local id = tostring(next_id)
+	local id = string.format("%.0f-%.0f", minetest.hash_node_position(minp), mcl_time.get_seconds_irl())
 	meta:set_string("mcl_maps:id", id)
-	meta:set_string("mcl_maps:minp", pos_to_string(minp))
-	meta:set_string("mcl_maps:maxp", pos_to_string(maxp))
+	meta:set_string("mcl_maps:minp", minetest.pos_to_string(minp))
+	meta:set_string("mcl_maps:maxp", minetest.pos_to_string(maxp))
 	tt.reload_itemstack_description(itemstack)
 
 	creating_maps[id] = true
@@ -62,93 +48,114 @@ function mcl_maps.create_map(pos)
 		local emin, emax = vm:read_from_map(minp, maxp)
 		local data = vm:get_data()
 		local param2data = vm:get_param2_data()
-		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
+		local offset_x, offset_y, offset_z = minp.x - emin.x, minp.y - emin.y, minp.z - emin.z
+		local dx = emax.x - emin.x + 1
+		local dy = (emax.y - emin.y + 1) * dx
+		local offset = offset_z * dy + offset_y * dx + offset_x
+		local map_y_start = 64 * dx
+		local map_y_limit = 127 * dx
+
 		local pixels = {}
 		local last_heightmap
 		for x = 1, 128 do
-			local map_x = minp.x - 1 + x
+			local map_x = x + offset
 			local heightmap = {}
 			for z = 1, 128 do
-				local map_z = minp.z - 1 + z
+				local map_z = (z-1) * dy + map_x
 				local color, height
-				for map_y = maxp.y, minp.y, -1 do
-					local index = area:index(map_x, map_y, map_z)
-					local c_id = data[index]
-					if c_id ~= c_air then
-						color = color_cache[c_id]
-						if color == nil then
-							local nodename = minetest.get_name_from_content_id(c_id)
-							local def = minetest.registered_nodes[nodename]
-							if def then
-								local texture
-								if def.palette then
-									texture = def.palette
-								elseif def.tiles then
-									texture = def.tiles[1]
-									if type(texture) == "table" then
-										texture = texture.name
-									end
-								end
-								if texture then
-									texture = texture:match("([^=^%^]-([^.]+))$"):split("^")[1]
-								end
-								if def.palette then
-									local palette = palettes[texture]
-									color = palette and {palette = palette}
-								else
-									color = texture_colors[texture]
-								end
+
+				local map_y = map_z + map_y_start
+				local map_y_limit = map_z + map_y_limit
+				while data[map_y] ~= c_air and map_y < map_y_limit do
+					map_y = map_y + dx
+				end
+				while data[map_y] == c_air and map_y > map_z do
+					map_y = map_y - dx
+				end
+				local c_id = data[map_y]
+				color = color_cache[c_id]
+				if color == nil then
+					local nodename = minetest.get_name_from_content_id(c_id)
+					local def = minetest.registered_nodes[nodename]
+					if def then
+						local texture
+						if def.palette then
+							texture = def.palette
+						elseif def.tiles then
+							texture = def.tiles[1]
+							if type(texture) == "table" then
+								texture = texture.name
 							end
 						end
-
-						if color and color.palette then
-							color = color.palette[param2data[index] + 1]
+						if texture then
+							texture = texture:match("([^=^%^]-([^.]+))$"):split("^")[1]
+						end
+						if def.palette then
+							local palette = palettes[texture]
+							color = palette and {palette = palette}
 						else
-							color_cache[c_id] = color or false
+							color = texture_colors[texture]
 						end
-
-						if color and last_heightmap then
-							local last_height = last_heightmap[z]
-							if last_height < map_y then
-								color = {
-									math.min(255, color[1] + 16),
-									math.min(255, color[2] + 16),
-									math.min(255, color[3] + 16),
-								}
-							elseif last_height > map_y then
-								color = {
-									math.max(0, color[1] - 16),
-									math.max(0, color[2] - 16),
-									math.max(0, color[3] - 16),
-								}
-							end
-						end
-						height = map_y
-						break
 					end
 				end
+
+				if color and color.palette then
+					color = color.palette[param2data[map_y] + 1]
+				else
+					color_cache[c_id] = color or false
+				end
+
+				if color and last_heightmap then
+					local last_height = last_heightmap[z]
+					local y = map_y - map_z
+					if last_height < y then
+						color = {
+							math_min(255, color[1] + 16),
+							math_min(255, color[2] + 16),
+							math_min(255, color[3] + 16),
+						}
+					elseif last_height > y then
+						color = {
+							math_max(0, color[1] - 16),
+							math_max(0, color[2] - 16),
+							math_max(0, color[3] - 16),
+						}
+					end
+				end
+				height = map_y - map_z
+
 				heightmap[z] = height or minp.y
-				pixels[z] = pixels[z] or {}
-				pixels[z][x] = color or {0, 0, 0}
+				pixels[#pixels + 1] = color and {r = color[1], g = color[2], b = color[3]} or {r = 0, g = 0, b = 0}
 			end
 			last_heightmap = heightmap
 		end
-		tga_encoder.image(pixels):save(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".tga")
+
+		local png = minetest.encode_png(128, 128, pixels)
+		local f = io.open(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".png", "w")
+		if not f then return end
+		f:write(png)
+		f:close()
 		creating_maps[id] = nil
 	end)
 	return itemstack
 end
 
+local loading_maps = {}
+
 function mcl_maps.load_map(id)
-	if id == "" or creating_maps[id] then
+	if id == "" or creating_maps[id] or loading_maps[id] then
 		return
 	end
 
-	local texture = "mcl_maps_map_texture_" .. id .. ".tga"
+	local texture = "mcl_maps_map_texture_" .. id .. ".png"
 
 	if not loaded_maps[id] then
-		loaded_maps[id] = true
-		dynamic_add_media(map_textures_path .. texture, function() end)
+		loading_maps[id] = true
+		minetest.dynamic_add_media({filepath = map_textures_path .. texture, ephemeral = true}, function(player_name)
+			loaded_maps[id] = true
+			loading_maps[id] = nil
+		end)
+		return
 	end
 
 	return texture
@@ -229,14 +236,14 @@ end
 local old_add_item = minetest.add_item
 function minetest.add_item(pos, stack)
 	stack = ItemStack(stack)
-	if get_item_group(stack:get_name(), "filled_map") > 0 then
+	if minetest.get_item_group(stack:get_name(), "filled_map") > 0 then
 		stack:set_name("mcl_maps:filled_map")
 	end
 	return old_add_item(pos, stack)
 end
 
 tt.register_priority_snippet(function(itemstring, _, itemstack)
-	if itemstack and get_item_group(itemstring, "filled_map") > 0 then
+	if itemstack and minetest.get_item_group(itemstring, "filled_map") > 0 then
 		local id = itemstack:get_meta():get_string("mcl_maps:id")
 		if id ~= "" then
 			return "#" .. id, mcl_colors.GRAY
@@ -262,7 +269,7 @@ minetest.register_craft({
 local function on_craft(itemstack, player, old_craft_grid, craft_inv)
 	if itemstack:get_name() == "mcl_maps:filled_map" then
 		for _, stack in pairs(old_craft_grid) do
-			if get_item_group(stack:get_name(), "filled_map") > 0 then
+			if minetest.get_item_group(stack:get_name(), "filled_map") > 0 then
 				itemstack:get_meta():from_table(stack:get_meta():to_table())
 				return itemstack
 			end
@@ -299,7 +306,7 @@ minetest.register_on_leaveplayer(function(player)
 end)
 
 minetest.register_globalstep(function(dtime)
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		local wield = player:get_wielded_item()
 		local texture = mcl_maps.load_map_item(wield)
 		local hud = huds[player]
@@ -319,8 +326,8 @@ minetest.register_globalstep(function(dtime)
 
 			local pos = vector.round(player:get_pos())
 			local meta = wield:get_meta()
-			local minp = string_to_pos(meta:get_string("mcl_maps:minp"))
-			local maxp = string_to_pos(meta:get_string("mcl_maps:maxp"))
+			local minp = minetest.string_to_pos(meta:get_string("mcl_maps:minp"))
+			local maxp = minetest.string_to_pos(meta:get_string("mcl_maps:maxp"))
 
 			local marker = "mcl_maps_player_arrow.png"
 

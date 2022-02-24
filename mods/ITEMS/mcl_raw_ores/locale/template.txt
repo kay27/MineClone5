@@ -1,0 +1,5 @@
+# textdomain: mcl_raw_ores
+Raw Iron=
+Raw Gold=
+Raw Iron. Mine an Iron ore to get it.=
+Raw Gold. Mine a Gold ore to get it.=
