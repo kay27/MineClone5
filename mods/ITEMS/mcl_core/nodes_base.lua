@@ -1100,9 +1100,10 @@ minetest.register_node("mcl_core:moss", {
 	--sounds = TODO: add sound
 	_mcl_blast_resistance = 0.1,
 	_mcl_hardness = 0.1,
-	on_rightclick = function(pos, node, pointed_thing, itemstack)
-	-- TODO: fix no-place-possiblity
-	if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+	-- TODO: fix that in creative you get removed blocks on place
+
+	if player:get_wielded_item():get_name() == "mcl_dye:white" then
 	      itemstack:take_item()
 	      for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-1, y = pos.y, z = pos.z-1}, {x = pos.x+1, y = pos.y, z = pos.z+1}, mossnodes)) do
 					minetest.set_node(j, {name="mcl_core:moss"})
@@ -1129,13 +1130,16 @@ minetest.register_node("mcl_core:moss", {
 						minetest.set_node({x=j.x,y=j.y+2,z=j.z} ,{name="mcl_flowers:double_grass_top"})
 					end
 				end
+			elseif minetest.registered_nodes[player:get_wielded_item():get_name()] then
+				itemstack:take_item()
+				minetest.set_node(pointed_thing.above, {name=player:get_wielded_item():get_name()})
 	    end
 	  end,
 })
 
 minetest.register_node("mcl_core:moss_carpet", {
 	description = S("Moss Carpet"),
-	_doc_items_longdesc = S("Moss Carpets are a thin decorative variant of the moss block."),--TODO: Other desciption?
+	_doc_items_longdesc = S("Moss Carpets are a thin decorative variant of the moss block."),
 	_doc_items_hidden = false,
 	tiles = {"mcl_core_moss_block.png"},
 	is_ground_content = true,
