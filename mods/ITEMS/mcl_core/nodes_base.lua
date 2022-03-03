@@ -1101,30 +1101,31 @@ minetest.register_node("mcl_core:moss", {
 	_mcl_blast_resistance = 0.1,
 	_mcl_hardness = 0.1,
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-	-- TODO: fix that in creative you get removed blocks on place
-
 	if player:get_wielded_item():get_name() == "mcl_dye:white" then
-	      itemstack:take_item()
-	      for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-1, y = pos.y, z = pos.z-1}, {x = pos.x+1, y = pos.y, z = pos.z+1}, mossnodes)) do
+				if not minetest.is_creative_enabled(player) and not minetest.check_player_privs(player, "creative") then
+					itemstack:take_item()
+				end
+
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-1, y = pos.y-1, z = pos.z-1}, {x = pos.x+1, y = pos.y+1, z = pos.z+1}, mossnodes)) do
 					minetest.set_node(j, {name="mcl_core:moss"})
 				end
-				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-2, y = pos.y, z = pos.z-2}, {x = pos.x+2, y = pos.y, z = pos.z+2}, mossnodes)) do
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-2, y = pos.y-1, z = pos.z-2}, {x = pos.x+2, y = pos.y+1, z = pos.z+2}, mossnodes)) do
 					if math.random(1,3) == 1 then minetest.set_node(j, {name="mcl_core:moss"}) end
 				end
-				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y, z = pos.z-3}, {x = pos.x+3, y = pos.y, z = pos.z+3}, mossnodes)) do
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, mossnodes)) do
 					if math.random(1,9) == 1 then minetest.set_node(j, {name="mcl_core:moss"}) end
 				end
-				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y, z = pos.z-3}, {x = pos.x+3, y = pos.y, z = pos.z+3}, {"mcl_core:moss"})) do
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
 					if math.random(1,2) == 1 then
 						minetest.set_node({x=j.x,y=j.y+1,z=j.z} ,{name="mcl_flowers:tallgrass"})
 					end
 				end
-				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y, z = pos.z-3}, {x = pos.x+3, y = pos.y, z = pos.z+3}, {"mcl_core:moss"})) do
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
 					if math.random(1,4) == 1 then
 						minetest.set_node({x=j.x,y=j.y+1,z=j.z}, {name="mcl_core:moss_carpet"})
 					end
 				end
-				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y, z = pos.z-3}, {x = pos.x+3, y = pos.y, z = pos.z+3}, {"mcl_core:moss"})) do
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
 					if math.random(1,10) == 1 then
 						minetest.set_node({x=j.x,y=j.y+1,z=j.z} ,{name="mcl_flowers:double_grass"})
 						minetest.set_node({x=j.x,y=j.y+2,z=j.z} ,{name="mcl_flowers:double_grass_top"})
