@@ -365,9 +365,9 @@ minetest.register_node("mcl_furnaces:smoker", {
 			S("Use the recipe book to see what you can smelt, what you can use as fuel and how long it will burn."),
 	_doc_items_hidden = false,
 	tiles = {
-		"smoker_top.png", "smoker_top.png",
-		"smoker_side.png", "smoker_side.png",
-		"smoker_side.png", "smoker_front.png"
+		"default_furnace_top.png", "default_furnace_top.png",
+		"default_furnace_side.png", "default_furnace_side.png",
+		"default_furnace_side.png", "smoker_front.png"
 	},
 	paramtype2 = "facedir",
 	groups = {pickaxey=1, container=4, deco_block=1, material_stone=1},
