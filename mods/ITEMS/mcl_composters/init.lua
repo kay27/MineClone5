@@ -71,7 +71,7 @@ local compostability = {
 	["mcl_flowers:sunflower"] = 65,
 	["mcl_flowers:waterlily"] = 65,
 	["mcl_farming:melon"] = 65,
-	-- missing: moss block?
+	["mcl_core:moss"] = 65,
 	-- mushroom aliases below?
 	["mcl_farming:mushroom_brown"] = 65,
 	["mcl_mushrooms:mushroom_brown"] = 65,
@@ -118,7 +118,7 @@ local compostability = {
 	["mcl_core:spruceleaves"] = 30,
 	--
 	["mcl_farming:melon_seeds"] = 30,
-	-- missing: moss carpet
+	["mcl_core:moss_carpet"] = 30,
 	["mcl_farming:pumpkin_seeds"] = 30,
 	["mcl_core:sapling"] = 30,
 	["mcl_core:acaciasapling"] = 30,
@@ -338,6 +338,6 @@ minetest.register_node("mcl_composters:composter_ready", {
 
 -- Add entry aliases for the Help
 if minetest.get_modpath("doc") then
-	doc.add_entry_alias("nodes", "mcl_composters:composter", 
+	doc.add_entry_alias("nodes", "mcl_composters:composter",
 		"nodes", "mcl_composters:composter_ready" )
 end
