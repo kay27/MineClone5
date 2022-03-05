@@ -96,8 +96,6 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 	if listname == "fuel" then
-				return 0
-		end
 
 		-- Test stack with size 1 because we burn one fuel at a time
 		local teststack = ItemStack(stack)
