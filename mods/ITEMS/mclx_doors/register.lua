@@ -10,12 +10,12 @@ mclx_doors:register_door("mclx_doors:crimson_door", {
 	description = S("Crimson Door"),
 	_doc_items_longdesc = wood_longdesc,
 	_doc_items_usagehelp = wood_usagehelp,
-	inventory_image = "mclx_doors_door_crimson.png",
+	inventory_image = "mcl_doors_door_crimson.png",
 	groups = {handy=1,axey=1, material_wood=1, flammable=-1},
 	_mcl_hardness = 3,
 	_mcl_blast_resistance = 3,
-	tiles_bottom = {"mclx_doors_door_crimson_lower.png", "mclx_doors_door_crimson_side_lower.png"},
-	tiles_top = {"mclx_doors_door_crimson_upper.png", "mclx_doors_door_crimson_side_upper.png"},
+	tiles_bottom = {"mcl_doors_door_crimson_lower.png", "mcl_doors_door_crimson_side_lower.png"},
+	tiles_top = {"mcl_doors_door_crimson_upper.png", "mcl_doors_door_crimson_side_upper.png"},
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 })
 
@@ -33,12 +33,12 @@ mclx_doors:register_door("mclx_doors:warped_door", {
 	description = S("Warped Door"),
 	_doc_items_longdesc = wood_longdesc,
 	_doc_items_usagehelp = wood_usagehelp,
-	inventory_image = "mclx_doors_door_warped.png",
+	inventory_image = "mcl_doors_door_warped.png",
 	groups = {handy=1,axey=1, material_wood=1, flammable=-1},
 	_mcl_hardness = 3,
 	_mcl_blast_resistance = 3,
-	tiles_bottom = {"mclx_doors_door_warped_lower.png", "mclx_doors_door_warped_side_lower.png"},
-	tiles_top = {"mclx_doors_door_warped_upper.png", "mclx_doors_door_warped_side_upper.png"},
+	tiles_bottom = {"mcl_doors_door_warped_lower.png", "mcl_doors_door_warped_side_lower.png"},
+	tiles_top = {"mcl_doors_door_warped_upper.png", "mcl_doors_door_warped_side_upper.png"},
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 })
 
@@ -68,8 +68,8 @@ minetest.register_craft({
 --[[ Trapdoors ]]
 local woods = {
 	-- id, desc, texture, craftitem
-	{ "crimson_trapdoor", S("Crimson Trapdoor"), "mclx_doors_trapdoor_crimson.png", "mclx_doors_trapdoor_crimson_side.png", "mcl_mushroom:crimson_hyphae_wood" },
-	{ "warped_trapdoor", S("Warped Trapdoor"), "mclx_doors_trapdoor_warped.png", "mclx_doors_trapdoor_warped_side.png", "mcl_mushroom:warped_hyphae_wood" },
+	{ "crimson_trapdoor", S("Crimson Trapdoor"), "mcl_doors_trapdoor_crimson.png", "mcl_doors_trapdoor_crimson_side.png", "mcl_mushroom:crimson_hyphae_wood" },
+	{ "warped_trapdoor", S("Warped Trapdoor"), "mcl_doors_trapdoor_warped.png", "mcl_doors_trapdoor_warped_side.png", "mcl_mushroom:warped_hyphae_wood" },
 }
 
 for w=1, #woods do
