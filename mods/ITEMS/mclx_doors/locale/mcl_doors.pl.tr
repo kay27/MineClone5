@@ -1,0 +1,11 @@
+# textdomain: mcl_doors
+Wooden doors are 2-block high barriers which can be opened or closed by hand and by a redstone signal.=Drewniane drzwi są blokami o wysokości 2, które mogą być otworzone i zamknięte ręcznie bądź przez zasilenie czerwienitem.
+To open or close a wooden door, rightclick it or supply its lower half with a redstone signal.=Aby otworzyć lub zamknąć drewniane drzwi, kliknij je prawym przyciskiem bądź zasil ich dolną połowę czerwienitem.
+Crimson Door=
+Warped Door=
+Crimson Trapdoor=
+Warped Trapdoor=
+Wooden trapdoors are horizontal barriers which can be opened and closed by hand or a redstone signal. They occupy the upper or lower part of a block, depending on how they have been placed. When open, they can be climbed like a ladder.=Drewniane klapy są poziomymi barierami, które mogą być otwarte i zamknięte ręcznie bądź przez zasilenie czerwienitem. Zajmują główną lub dolną część bloku w zależności od tego jak zostaną postawione. Gdy są otwarte można się po nich wspinać jak po drabinie.
+To open or close the trapdoor, rightclick it or send a redstone signal to it.=Aby otworzyć lub zamknąć drewniane klapy, kliknij je prawym przyciskiem bądź zasil ich dolną połowę czerwienitem.
+Openable by players and redstone power=Mogą być otworzone przez graczy i zasilanie czerwienitem
+Openable by redstone power=Mogą być otworzone przez zasilanie czerwienitem
