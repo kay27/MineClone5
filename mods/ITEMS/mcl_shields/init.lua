@@ -155,10 +155,13 @@ local function modify_shield(player, vpos, vrot, i)
 	if i == 1 then
 		arm = "Left"
 	end
-	local shield = mcl_shields.players[player].shields[i]
-	if shield then
-		shield:set_attach(player, "Arm_" .. arm, vpos, vrot, false)
-	end
+	local player_data = mcl_shields.players[player]
+	if not player_data then return end
+	local shields = player_data.shields
+	if not shields then return end
+	local shield = shields[i]
+	if not shield then return end
+	shield:set_attach(player, "Arm_" .. arm, vpos, vrot, false)
 end
 
 local function set_shield(player, block, i)
