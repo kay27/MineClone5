@@ -34,7 +34,7 @@ mcl_fences.register_fence_and_fence_gate(
 	minetest.registered_nodes["mcl_core:wood"]._mcl_hardness,
 	minetest.registered_nodes["mcl_core:wood"]._mcl_blast_resistance,
 	{"group:fence_wood"},
-	mcl_sounds.node_sound_wood_defaults(), "mcl_fences_crimson_wood_fence_gate_open", "mcl_fences_crimson_wood_fence_gate_close", 1, 1,
+	mcl_sounds.node_sound_wood_defaults(), "mcl_fences_nether_brick_gate_open", "mcl_fences_nether_brick_fence_gate_close", 1, 1,
 	"mcl_fences_fence_gate_crimson.png")
 
 -- Warped Wood Fence and Fence Gate
@@ -47,7 +47,7 @@ mcl_fences.register_fence_and_fence_gate(
 	minetest.registered_nodes["mcl_core:wood"]._mcl_hardness,
 	minetest.registered_nodes["mcl_core:wood"]._mcl_blast_resistance,
 	{"group:fence_wood"},
-	mcl_sounds.node_sound_wood_defaults(), "mcl_fences_warped_wood_fence_gate_open", "mcl_fences_warped_wood_fence_gate_close", 1, 1,
+	mcl_sounds.node_sound_wood_defaults(), "mcl_fences_nether_brick_fence_gate_open", "mcl_fences_nether_brick_fence_gate_close", 1, 1,
 	"mcl_fences_fence_gate_warped.png")
 
 
