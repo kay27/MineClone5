@@ -214,3 +214,29 @@ mcl_flowerpots.register_potted_flower("mcl_core:deadbush", {
 	desc = S("Dead Bush"),
 	image = "default_dry_shrub.png",
 })
+
+-- Add the possibility to pot nether fungi and roots, depend to mcl_mushroom
+
+mcl_flowerpots.register_potted_flower("mcl_mushroom:warped_fungus", {
+	name = "warped_fungus",
+	desc = S("Warped Fungus Mushroom"),
+	image = "farming_warped_fungus.png",
+})
+
+mcl_flowerpots.register_potted_flower("mcl_mushroom:crimson_fungus", {
+	name = "crimson_fungus",
+	desc = S("Crimson Fungus Mushroom"),
+	image = "farming_crimson_fungus.png",
+})
+
+mcl_flowerpots.register_potted_flower("mcl_mushroom:warped_roots", {
+	name = "warped_roots",
+	desc = S("Warped Roots"),
+	image = "warped_roots.png",
+})
+
+mcl_flowerpots.register_potted_flower("mcl_mushroom:crimson_roots", {
+	name = "crimson_roots",
+	desc = S("Crimson Roots"),
+	image = "crimson_roots.png",
+})
