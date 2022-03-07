@@ -143,6 +143,52 @@ minetest.register_craft({
 	}
 })
 
+--- Crimson Door --
+mcl_doors:register_door("mcl_doors:crimson_door", {
+	description = S("Crimson Door"),
+	_doc_items_longdesc = wood_longdesc,
+	_doc_items_usagehelp = wood_usagehelp,
+	inventory_image = "mcl_doors_door_crimson.png",
+	groups = {handy=1,axey=1, material_wood=1, flammable=-1},
+	_mcl_hardness = 3,
+	_mcl_blast_resistance = 3,
+	tiles_bottom = {"mcl_doors_door_crimson_lower.png", "mcl_doors_door_crimson_side_lower.png"},
+	tiles_top = {"mcl_doors_door_crimson_upper.png", "mcl_doors_door_crimson_side_upper.png"},
+	sounds = mcl_sounds.node_sound_wood_defaults(),
+})
+
+minetest.register_craft({
+	output = "mcl_doors:crimson_door 3",
+	recipe = {
+		{"mcl_mushroom:crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood"},
+		{"mcl_mushroom:crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood"},
+		{"mcl_mushroom:crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood"}
+	}
+})
+
+--- Warped Door --
+mclx_doors:register_door("mcl_doors:warped_door", {
+	description = S("Warped Door"),
+	_doc_items_longdesc = wood_longdesc,
+	_doc_items_usagehelp = wood_usagehelp,
+	inventory_image = "mcl_doors_door_warped.png",
+	groups = {handy=1,axey=1, material_wood=1, flammable=-1},
+	_mcl_hardness = 3,
+	_mcl_blast_resistance = 3,
+	tiles_bottom = {"mcl_doors_door_warped_lower.png", "mcl_doors_door_warped_side_lower.png"},
+	tiles_top = {"mcl_doors_door_warped_upper.png", "mcl_doors_door_warped_side_upper.png"},
+	sounds = mcl_sounds.node_sound_wood_defaults(),
+})
+
+minetest.register_craft({
+	output = "mcl_doors:warped_door 3",
+	recipe = {
+		{"mcl_mushroom:warped_hyphae_wood", "mcl_mushroom:warped_hyphae_wood"},
+		{"mcl_mushroom:warped_hyphae_wood", "mcl_mushroom:warped_hyphae_wood"},
+		{"mcl_mushroom:warped_hyphae_wood", "mcl_mushroom:warped_hyphae_wood"}
+	}
+})
+
 minetest.register_craft({
 	type = "fuel",
 	recipe = "mcl_doors:wooden_door",
@@ -171,6 +217,18 @@ minetest.register_craft({
 minetest.register_craft({
 	type = "fuel",
 	recipe = "mcl_doors:spruce_door",
+	burntime = 10,
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "mcl_doors:crimson_door",
+	burntime = 10,
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "mcl_doors:warped_door",
 	burntime = 10,
 })
 
@@ -212,6 +270,8 @@ local woods = {
 	{ "spruce_trapdoor", S("Spruce Trapdoor"), "mcl_doors_trapdoor_spruce.png", "mcl_doors_trapdoor_spruce_side.png", "mcl_core:sprucewood" },
 	{ "dark_oak_trapdoor", S("Dark Oak Trapdoor"), "mcl_doors_trapdoor_dark_oak.png", "mcl_doors_trapdoor_dark_oak_side.png", "mcl_core:darkwood" },
 	{ "jungle_trapdoor", S("Jungle Trapdoor"), "mcl_doors_trapdoor_jungle.png", "mcl_doors_trapdoor_jungle_side.png", "mcl_core:junglewood" },
+	{ "crimson_trapdoor", S("Crimson Trapdoor"), "mcl_doors_trapdoor_crimson.png", "mcl_doors_trapdoor_crimson_side.png", "mcl_mushroom:crimson_hyphae_wood" },
+	{ "warped_trapdoor", S("Warped Trapdoor"), "mcl_doors_trapdoor_warped.png", "mcl_doors_trapdoor_warped_side.png", "mcl_mushroom:warped_hyphae_wood" },
 }
 
 for w=1, #woods do
