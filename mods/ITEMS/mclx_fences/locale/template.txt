@@ -2,3 +2,7 @@
 Red Nether Brick Fence=
 Red Nether Brick Fence Gate=
 Nether Brick Fence Gate=
+Crimson Hyphae Wood Fence=
+Crimson Hyphae Wood Fence Gate=
+Warped Hyphae Wood Fence=
+Warped Hyphae Wood Fence Gate=
