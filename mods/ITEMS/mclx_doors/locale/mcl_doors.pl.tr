@@ -1,4 +1,4 @@
-# textdomain: mcl_doors
+# textdomain: mclx_doors
 Wooden doors are 2-block high barriers which can be opened or closed by hand and by a redstone signal.=Drewniane drzwi są blokami o wysokości 2, które mogą być otworzone i zamknięte ręcznie bądź przez zasilenie czerwienitem.
 To open or close a wooden door, rightclick it or supply its lower half with a redstone signal.=Aby otworzyć lub zamknąć drewniane drzwi, kliknij je prawym przyciskiem bądź zasil ich dolną połowę czerwienitem.
 Crimson Door=
