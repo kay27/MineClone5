@@ -1,4 +1,4 @@
-# textdomain: mcl_doors
+# textdomain: mclx_doors
 Wooden doors are 2-block high barriers which can be opened or closed by hand and by a redstone signal.=Деревянные двери это сдвоенные блочные преграды, которые можно открывать и закрывать вручную и по сигналу редстоуна.
 To open or close a wooden door, rightclick it or supply its lower half with a redstone signal.=Чтобы открыть или закрыть деревянную дверь, кликните правой либо подайте к её нижней части сигнал редстоуна.
 Crimson Door=
