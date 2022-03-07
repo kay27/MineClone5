@@ -167,7 +167,7 @@ minetest.register_craft({
 })
 
 --- Warped Door --
-mclx_doors:register_door("mcl_doors:warped_door", {
+mcl_doors:register_door("mcl_doors:warped_door", {
 	description = S("Warped Door"),
 	_doc_items_longdesc = wood_longdesc,
 	_doc_items_usagehelp = wood_usagehelp,
