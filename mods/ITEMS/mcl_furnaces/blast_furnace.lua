@@ -387,7 +387,7 @@ minetest.register_node("mcl_furnaces:blast_furnace", {
 			S("Use the recipe book to see what you can smelt, what you can use as fuel and how long it will burn."),
 	_doc_items_hidden = false,
 	tiles = {
-		"default_furnace_top.png", "default_furnace_top.png",
+		"blast_furnace_top.png", "blast_furnace_top.png",
 		"blast_furnace_side.png", "blast_furnace_side.png",
 		"blast_furnace_side.png", "blast_furnace_front.png"
 	},
