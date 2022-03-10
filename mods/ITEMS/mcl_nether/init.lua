@@ -167,7 +167,6 @@ minetest.register_node("mcl_nether:soul_sand", {
 	sounds = mcl_sounds.node_sound_sand_defaults(),
 	_mcl_blast_resistance = 0.5,
 	_mcl_hardness = 0.5,
-	-- Movement handling is done in mcl_playerplus mod
 })
 
 minetest.register_node("mcl_nether:nether_brick", {
@@ -418,3 +417,23 @@ minetest.register_craft({
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/nether_wart.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/lava.lua")
+
+local bubble_generation_schema = {
+	["mcl_nether:soul_sand"] = "mcl_core:bubble_column_source",
+	["mcl_nether:magma"]     = "mcl_core:whirlpool_source",
+}
+
+minetest.register_abm({
+	label = "Make whirlpools and bubble columns",
+	nodenames = {"mcl_nether:soul_sand", "mcl_nether:magma"},
+	neighbors = {"mcl_core:water_source"},
+	interval = 2,
+	chance = 1,
+	action = function(pos, node)
+		local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
+		local above_node_name = minetest.get_node(pos_above).name
+		if above_node_name ~= "mcl_core:water_source" then return end
+		local new_above_node_name = bubble_generation_schema[node.name]
+		minetest.swap_node(pos_above, {name = new_above_node_name})
+	end,
+})
