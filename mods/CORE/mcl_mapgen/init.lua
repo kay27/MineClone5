@@ -416,7 +416,7 @@ mcl_mapgen.bedrock_is_rough = normal
 overworld.min = -62
 if superflat then
 	mcl_mapgen.ground = tonumber(minetest.get_mapgen_setting("mgflat_ground_level")) or 8
-	overworld.min = ground - 3
+	overworld.min = mcl_mapgen.ground - 3
 end
 -- if singlenode then mcl_mapgen.overworld.min = -66 end -- DONT KNOW WHY
 overworld.max = mcl_mapgen.EDGE_MAX

@@ -19,11 +19,14 @@ local playerphysics = playerphysics
 
 local vector = vector
 local math = math
+local math_min = math.min
 -- Internal player state
 local mcl_playerplus_internal = {}
 
 local time = 0
 local look_pitch = 0
+
+local player_pos_for_bubble_columns = {}
 
 local function player_collision(player)
 
@@ -349,7 +352,7 @@ minetest.register_globalstep(function(dtime)
 			set_bone_position_conditional(player,"Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch+90,-30,pitch * -1 * .35))
 			set_bone_position_conditional(player,"Arm_Left_Pitch_Control", vector.new(3.5,5.785,0), vector.new(pitch+90,43,pitch * .35))
 		-- controls right and left arms pitch when loading a crossbow
-	elseif string.find(wielded:get_name(), "mcl_bows:crossbow_") then
+		elseif string.find(wielded:get_name(), "mcl_bows:crossbow_") then
 			set_bone_position_conditional(player,"Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(45,-20,25))
 			set_bone_position_conditional(player,"Arm_Left_Pitch_Control", vector.new(3,5.785,0), vector.new(55,20,-45))
 		-- when punching
@@ -407,14 +410,15 @@ minetest.register_globalstep(function(dtime)
 			mcl_playerplus_internal[name].jump_cooldown = mcl_playerplus_internal[name].jump_cooldown - dtime
 		end
 
+		node_head = mcl_playerinfo[name].node_head
+		node_feet = mcl_playerinfo[name].node_feet
+
 		if control.jump and mcl_playerplus_internal[name].jump_cooldown <= 0 then
 
 			--pos = player:get_pos()
 
 			node_stand = mcl_playerinfo[name].node_stand
 			node_stand_below = mcl_playerinfo[name].node_stand_below
-			node_head = mcl_playerinfo[name].node_head
-			node_feet = mcl_playerinfo[name].node_feet
 			if not node_stand or not node_stand_below or not node_head or not node_feet then
 				return
 			end
@@ -451,6 +455,48 @@ minetest.register_globalstep(function(dtime)
 
 			-- Reset cooldown timer
 				mcl_playerplus_internal[name].jump_cooldown = 0.45
+			end
+		end
+
+		local bubble_column_feet = node_feet == "mcl_core:bubble_column_source"
+		if bubble_column_feet then
+			if not player_pos_for_bubble_columns[name] then
+				player_pos_for_bubble_columns[name] = fly_pos
+			else
+				local bubble_column_head = node_head == "mcl_core:bubble_column_source"
+				fly_pos.y = player_pos_for_bubble_columns[name].y + (bubble_column_head and time or time/10)
+				player:set_pos(fly_pos)
+				player_pos_for_bubble_columns[name] = fly_pos
+			end
+		else
+			local whirlpool_feet = node_feet == "mcl_core:whirlpool_source"
+			if whirlpool_feet then
+				if not player_pos_for_bubble_columns[name] then
+					player_pos_for_bubble_columns[name] = fly_pos
+				else
+					local whirlpool_head = node_head == "mcl_core:whirlpool_source"
+					local stands_on = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.0001, z = fly_pos.z}).name
+					if stands_on == "mcl_nether:magma" then
+						fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
+						player:set_pos(fly_pos)
+						player_pos_for_bubble_columns[name] = fly_pos
+					else
+						fly_pos.y = player_pos_for_bubble_columns[name].y - (whirlpool_head and time/2 or time/5)
+						local will_stand_on = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.0001, z = fly_pos.z}).name
+						if will_stand_on == "mcl_nether:magma" then
+							fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
+							player:set_pos(fly_pos)
+							player_pos_for_bubble_columns[name] = fly_pos
+						elseif will_stand_on == "mcl_core:whirlpool_source" then
+							player:set_pos(fly_pos)
+							player_pos_for_bubble_columns[name] = fly_pos
+						else
+							player_pos_for_bubble_columns[name] = nil
+						end
+					end
+				end
+			elseif player_pos_for_bubble_columns[name] then
+				player_pos_for_bubble_columns[name] = nil
 			end
 		end
 	end
@@ -643,7 +689,7 @@ minetest.register_on_leaveplayer(function(player)
 	mcl_playerplus.elytra[name] = nil
 end)
 
--- Don't change HP if the player falls in the water or through End Portal:
+-- Don't change HP if the player falls in the liquid or through End Portal:
 mcl_damage.register_modifier(function(obj, damage, reason)
 	if reason.type == "fall" then
 		local pos = obj:get_pos()
@@ -661,7 +707,7 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 				if not def or def.walkable then
 					return
 				end
-				if minetest.get_item_group(node.name, "water") ~= 0 then
+				if minetest.get_item_group(node.name, "liquid") ~= 0 then
 					return 0
 				end
 				if node.name == "mcl_portals:portal_end" then

@@ -188,3 +188,7 @@ Technical differences from Minecraft:
 * `API.md`: For Minetest modders who want to mod this game
 * `LEGAL.md`: Legal information
 * `CREDITS.md`: List of everyone who contributed
+
+## Menu music
+
+* horizonchris96 — 02_what_we_ll_build_next

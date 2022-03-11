@@ -746,6 +746,13 @@ minetest.register_abm({
 			return
 		end
 
+		if lower_node_name == OBSIDIAN and pos.y >= mcl_mapgen.overworld.min and random(1, 200) == 19 then
+			local pigman_obj = minetest.add_entity(pos, "mobs_mc:pigman")
+			if pigman_obj then
+				teleport_cooloff(pigman_obj)
+			end
+		end
+
 		local o = node.param2		-- orientation
 
 		local closer_node_name = get_node({x = pos.x - 1 + o, y = pos.y, z = pos.z - o}).name
