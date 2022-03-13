@@ -21,7 +21,7 @@ mobs.can_despawn = function(self)
 			if new_distance < distance then
 				distance = new_distance
 				if distance < 33 then return false end
-				if distance < 128 and math_random(1, 200) == 19 then return true end
+				if distance < 128 and math_random(1, 42) ~= 11 then return false end
 			end
 		end
 	end
