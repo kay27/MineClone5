@@ -389,8 +389,8 @@ if mobs_spawn then
 		if #spawning_position_list <= 0 then return end
 		local spawning_position = spawning_position_list[math_random(1, #spawning_position_list)]
 
-		--hard code mob limit in area to 7 for now
-		if count_mobs(spawning_position) >= 7 then return end
+		--hard code mob limit in area to 5 for now
+		if count_mobs(spawning_position) >= 5 then return end
 
 		local gotten_node = get_node(spawning_position).name
 		local gotten_biome = minetest.get_biome_data(spawning_position)
