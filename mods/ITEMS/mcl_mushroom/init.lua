@@ -470,8 +470,8 @@ minetest.register_abm({
 })
 
 function generate_warped_tree(pos)
-  breakgrow = false
-  breakgrow2 = false
+	local breakgrow = false
+	local breakgrow2 = false
   -- Baumgenerator
   -- erste und zweite Etage
   	for x = pos.x - 2,pos.x + 2 do
@@ -547,8 +547,8 @@ function generate_warped_tree(pos)
 end
 
 function generate_crimson_tree(pos)
-  breakgrow = false
-  breakgrow2 = false
+	local breakgrow = false
+	local breakgrow2 = false
   -- Baumgenerator
   -- erste und zweite Etage
   	for x = pos.x - 2,pos.x + 2 do

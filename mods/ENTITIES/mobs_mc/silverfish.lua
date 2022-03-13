@@ -55,7 +55,7 @@ mobs:register_mob("mobs_mc:silverfish", {
 		local selfpos = self.object:get_pos()
 		local objects = minetest.get_objects_inside_radius(selfpos, PLAYER_SCAN_RADIUS)
 		for _, obj in pairs(objects) do
-			if obj:is_player() then
+			if obj:is_player() and not minetest.is_creative_enabled(obj:get_player_name()) then
 				self.attacking = obj
 				mobs.group_attack_initialization(self)
 				return

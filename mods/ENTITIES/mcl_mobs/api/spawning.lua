@@ -302,7 +302,6 @@ function mobs:spawn_setup(def)
 		on_spawn         = on_spawn,
 	}
 	summary_chance = summary_chance + chance
-	minetest.log("warning", minetest.serialize(spawn_dictionary))
 end
 
 function mobs:spawn_specific(name, dimension, type_of_spawning, biomes, min_light, max_light, interval, chance, aoc, min_height, max_height, day_toggle, on_spawn)
