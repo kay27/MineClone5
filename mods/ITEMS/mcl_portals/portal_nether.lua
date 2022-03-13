@@ -746,7 +746,7 @@ minetest.register_abm({
 			return
 		end
 
-		if lower_node_name == OBSIDIAN and pos.y >= mcl_mapgen.overworld.min and random(1, 200) == 19 then
+		if lower_node_name == OBSIDIAN and pos.y >= mcl_mapgen.overworld.min and random(1, 750) == 19 then
 			local pigman_obj = minetest.add_entity(pos, "mobs_mc:pigman")
 			if pigman_obj then
 				teleport_cooloff(pigman_obj)
