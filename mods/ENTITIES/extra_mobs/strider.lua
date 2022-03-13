@@ -213,20 +213,36 @@ baby_strider.child = 1
 mobs:register_mob("extra_mobs:baby_strider", baby_strider)
 
 -- Regular spawning in the Nether
-mobs:spawn_specific(
-"extra_mobs:strider",
-"nether", 
-"lava",
-{
-"Nether"
-},
-0, 
-minetest.LIGHT_MAX+1, 
-30, 
-6000, 
-3, 
-mobs_mc.spawn_height.nether_min, 
-mobs_mc.spawn_height.nether_max)
+
+mobs:spawn_setup({
+	name = "extra_mobs:strider",
+	type_of_spawning = "lava",
+	dimension = "nether",
+	biomes = {
+		"Nether"
+	},
+	min_height = mcl_mapgen.nether.min,
+	max_height = mcl_mapgen.nether.max,
+	chance = 2000,
+	check_position = function(pos)
+		return minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name:find("lava")
+	end
+})
+
+mobs:spawn_setup({
+	name = "extra_mobs:baby_strider",
+	type_of_spawning = "lava",
+	dimension = "nether",
+	biomes = {
+		"Nether"
+	},
+	min_height = mcl_mapgen.nether.min,
+	max_height = mcl_mapgen.nether.max,
+	chance = 100,
+	check_position = function(pos)
+		return minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name:find("lava")
+	end
+})
 
 -- spawn eggs
 mobs:register_egg("extra_mobs:strider", S("Strider"), "extra_mobs_spawn_icon_strider.png", 0)
