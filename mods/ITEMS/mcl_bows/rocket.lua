@@ -38,11 +38,14 @@ local function damage_explosion(self, damagemulitplier)
 	for _,obj in pairs(objects) do
 		if obj:is_player() then
 			mcl_util.deal_damage(obj, damagemulitplier - vector.distance(self.object:get_pos(), obj:get_pos()), {type = "explosion"})
-		elseif obj:get_luaentity()._cmi_is_mob then
-			obj:punch(self.object, 1.0, {
-				full_punch_interval=1.0,
-				damage_groups={fleshy=damagemulitplier - vector.distance(self.object:get_pos(), obj:get_pos())},
-			}, self.object:get_velocity())
+		else
+			local entity = obj:get_luaentity()
+			if entity and entity._cmi_is_mob then
+				obj:punch(self.object, 1.0, {
+					full_punch_interval=1.0,
+					damage_groups={fleshy=damagemulitplier - vector.distance(self.object:get_pos(), obj:get_pos())},
+				}, self.object:get_velocity())
+			end
 		end
 	end
 end
