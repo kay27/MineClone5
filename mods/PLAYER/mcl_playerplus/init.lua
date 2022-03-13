@@ -2,7 +2,6 @@ mcl_playerplus = {
 	elytra = {},
 }
 
-local player_velocity_old = {x=0, y=0, z=0}
 local get_connected_players = minetest.get_connected_players
 local dir_to_yaw = minetest.dir_to_yaw
 local get_item_group = minetest.get_item_group
@@ -336,9 +335,6 @@ minetest.register_globalstep(function(dtime)
 			set_bone_position_conditional(player,"Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
 		end
 
-		player_velocity_old = player:get_velocity() or player:get_player_velocity()
-
-
 		-- controls right and left arms pitch when shooting a bow or blocking
 		if mcl_shields.is_blocking(player) == 2 then
 			set_bone_position_conditional(player, "Arm_Right_Pitch_Control", vector.new(-3, 5.785, 0), vector.new(20, -20, 0))
@@ -466,6 +462,7 @@ minetest.register_globalstep(function(dtime)
 				local bubble_column_head = node_head == "mcl_core:bubble_column_source"
 				fly_pos.y = player_pos_for_bubble_columns[name].y + (bubble_column_head and time or time/10)
 				player:set_pos(fly_pos)
+				player:add_velocity({x = 0, y = -player_velocity.y / 2, z = 0})
 				player_pos_for_bubble_columns[name] = fly_pos
 			end
 		else
@@ -479,6 +476,7 @@ minetest.register_globalstep(function(dtime)
 					if stands_on == "mcl_nether:magma" then
 						fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
 						player:set_pos(fly_pos)
+						player:add_velocity({x = 0, y = -player_velocity.y / 2, z = 0})
 						player_pos_for_bubble_columns[name] = fly_pos
 					else
 						fly_pos.y = player_pos_for_bubble_columns[name].y - (whirlpool_head and time/2 or time/5)
@@ -486,9 +484,11 @@ minetest.register_globalstep(function(dtime)
 						if will_stand_on == "mcl_nether:magma" then
 							fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
 							player:set_pos(fly_pos)
+							player:add_velocity({x = 0, y = -player_velocity.y / 2, z = 0})
 							player_pos_for_bubble_columns[name] = fly_pos
 						elseif will_stand_on == "mcl_core:whirlpool_source" then
 							player:set_pos(fly_pos)
+							player:add_velocity({x = 0, y = -player_velocity.y / 2, z = 0})
 							player_pos_for_bubble_columns[name] = fly_pos
 						else
 							player_pos_for_bubble_columns[name] = nil
