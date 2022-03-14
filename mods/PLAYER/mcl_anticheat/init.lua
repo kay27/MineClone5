@@ -199,11 +199,10 @@ local function step()
 					end
 				end
 			elseif #players < 26 then
-				if should_be_banned then
-					minetest.chat_send_all("Player " .. first .. " has been banned for having more than 9 connections at once")
-					minetest.ban_player(first)
-				else
-					for _, player_name in pairs(players) do
+				for _, player_name in pairs(players) do
+					if should_be_banned then
+						minetest.ban_player(player_name)
+					else
 						if (player_doesnt_move[player_name] or 0) > 90/step_seconds then
 							minetest.kick_player(player_name, "Didn't move during 1.5 minutes being connected multiple times")
 							ban_next_time[ip] = 1
@@ -211,18 +210,18 @@ local function step()
 					end
 				end
 			elseif #players <= 100 then
-				if should_be_banned then
-					minetest.ban_player(first)
-					minetest.chat_send_all("Player " .. first .. " has been banned for having more than 25 connections at once")
-				else
-					for _, player_name in pairs(players) do
+				for _, player_name in pairs(players) do
+					if should_be_banned then
+						minetest.ban_player(player_name)
+					else
 						minetest.kick_player(player_name, "More than 25 connections from IP address " .. ip)
+						ban_next_time[ip] = 1
 					end
-					ban_next_time[ip] = 1
 				end
 			else
-				minetest.ban_player(first)
-				minetest.chat_send_all("Player " .. first .. " has been banned for having more than 100 connections at once")
+				for _, player_name in pairs(players) do
+					minetest.ban_player(player_name)
+				end
 			end
 		end
 	end
