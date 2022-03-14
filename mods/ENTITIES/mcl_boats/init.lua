@@ -175,10 +175,13 @@ function boat.on_activate(self, staticdata, dtime_s)
 end
 
 function boat.get_staticdata(self)
+	if not self then return end
+	local object = self.object
+	local object_properties = object and object.get_properties and object:get_properties()
 	return minetest.serialize({
 		v = self._v,
 		itemstring = self._itemstring,
-		textures = self.object:get_properties().textures
+		textures = object_properties and object_properties.textures
 	})
 end
 

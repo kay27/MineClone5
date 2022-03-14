@@ -352,7 +352,7 @@ local doll_def = {
 }
 
 doll_def.get_staticdata = function(self)
-	return self._mob
+	return self and self._mob
 end
 
 doll_def.on_activate = function(self, staticdata, dtime_s)

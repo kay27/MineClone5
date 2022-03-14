@@ -42,7 +42,7 @@ mobs.mob_staticdata = function(self)
 	self.following = nil
 
 	if use_cmi then
-		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
+		self.serialized_cmi_components = cmi and cmi.serialize_components(self._cmi_components)
 	end
 
 	local tmp = {}

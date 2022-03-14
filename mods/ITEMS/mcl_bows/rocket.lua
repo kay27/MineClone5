@@ -630,6 +630,7 @@ function ARROW_ENTITY.on_punch(self)
 end
 
 function ARROW_ENTITY.get_staticdata(self)
+	if not self then return end
 	local out = {
 		lastpos = self._lastpos,
 		startpos = self._startpos,

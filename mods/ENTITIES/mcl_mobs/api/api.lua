@@ -425,7 +425,9 @@ function mobs:register_mob(name, def)
 		end,
 
 		get_staticdata = function(self)
-			return mobs.mob_staticdata(self)
+			if self and mobs then
+				return mobs.mob_staticdata(self)
+			end
 		end,
 
 		--harmed_by_heal = def.harmed_by_heal,
