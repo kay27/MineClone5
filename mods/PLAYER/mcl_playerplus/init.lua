@@ -478,7 +478,8 @@ minetest.register_globalstep(function(dtime)
 							then
 								break
 							else
-								head_alt_1 = next_alt
+								-- show head slightly above water level:
+								head_alt_1 = head_alt_1 + (next_alt - head_alt_1) * 0.26
 								break
 							end
 						end
