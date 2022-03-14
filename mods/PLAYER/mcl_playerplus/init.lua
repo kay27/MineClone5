@@ -456,14 +456,46 @@ minetest.register_globalstep(function(dtime)
 
 		local bubble_column_feet = node_feet == "mcl_core:bubble_column_source"
 		if bubble_column_feet then
-			if not player_pos_for_bubble_columns[name] then
-				player_pos_for_bubble_columns[name] = fly_pos
+			local bubble_column_head = node_head == "mcl_core:bubble_column_source"
+			if bubble_column_head then
+				if not player_pos_for_bubble_columns[name] then
+					player_pos_for_bubble_columns[name] = fly_pos
+				else
+					local head_alt_1 = fly_pos.y + 1.5
+					local head_alt_2 = head_alt_1 + time
+					while head_alt_1 < head_alt_2 do
+						local next_alt = math.min(head_alt_1 + 1, head_alt_2)
+						local next_node_head = minetest.get_node({x = fly_pos.x, y = next_alt, z = fly_pos.z}).name
+						if next_node_head == "mcl_core:bubble_column_source" then
+							head_alt_1 = next_alt
+						else
+							local ndef = minetest.registered_nodes[next_node_head]
+							if (ndef.walkable == nil or ndef.walkable == true)
+							and (ndef.collision_box == nil or ndef.collision_box.type == "regular")
+							and (ndef.node_box == nil or ndef.node_box.type == "regular")
+							and (ndef.groups.disable_suffocation ~= 1)
+							and (ndef.groups.opaque == 1)
+							then
+								break
+							else
+								head_alt_1 = next_alt
+								break
+							end
+						end
+					end
+					local new_alt = head_alt_1 - 1.5
+					local delta_y = new_alt - fly_pos.y
+					if delta_y > 0 then
+						fly_pos.y = new_alt
+						player:set_pos(fly_pos)
+						player:add_velocity({x = 0, y = -player_velocity.y / 3, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					else
+						player_pos_for_bubble_columns[name] = nil
+					end
+				end
 			else
-				local bubble_column_head = node_head == "mcl_core:bubble_column_source"
-				fly_pos.y = player_pos_for_bubble_columns[name].y + (bubble_column_head and time or time/10)
-				player:set_pos(fly_pos)
-				player:add_velocity({x = 0, y = -player_velocity.y / 2, z = 0})
-				player_pos_for_bubble_columns[name] = fly_pos
+				player_pos_for_bubble_columns[name] = nil
 			end
 		else
 			local whirlpool_feet = node_feet == "mcl_core:whirlpool_source"
