@@ -248,6 +248,51 @@ local function player_chest_close(player)
 	open_chests[name] = nil
 end
 
+local function drop_item_stack(pos, stack)
+	if not stack or stack:is_empty() then return end
+	local drop_offset = vector.new(math.random() - 0.5, 0, math.random() - 0.5)
+	minetest.add_item(vector.add(pos, drop_offset), stack)
+end
+
+local function drop_items_chest(pos, oldnode, oldmetadata, digger)
+	if oldmetadata and oldmetadata.inventory then
+		-- process after_dig_node callback
+		local main = oldmetadata.inventory.main
+		if not main then return end
+		for _, stack in pairs(main) do
+			drop_item_stack(pos, stack)
+		end
+	else
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		for i = 1, inv:get_size("main") do
+			drop_item_stack(pos, inv:get_stack("main", i))
+		end
+		meta:from_table()
+	end
+end
+
+local function on_chest_blast(pos, intensity)
+	local node = minetest.get_node(pos)
+	drop_items_chest(pos, node)
+	minetest.remove_node(pos)
+	-- drop node itself with some probability depended on explosion intensity (1 for TNT):
+	if math.random(1, math.floor((intensity or 1) * 2)) ~= 1 then return end
+	local node_def = minetest.registered_nodes[node.name]
+	if not node_def then return end
+	local node_name = node_def.drop or node_def.name
+	drop_item_stack(pos, ItemStack(node_name))
+end
+
+local function close_forms(canonical_basename, pos)
+	local players = minetest.get_connected_players()
+	for p=1, #players do
+		if vector.distance(players[p]:get_pos(), pos) <= 30 then
+			minetest.close_formspec(players[p]:get_player_name(), "mcl_chests:"..canonical_basename.."_"..pos.x.."_"..pos.y.."_"..pos.z)
+		end
+	end
+end
+
 -- This is a helper function to register both chests and trapped chests. Trapped chests will make use of the additional parameters
 local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tiles_table, hidden, mesecons, on_rightclick_addendum, on_rightclick_addendum_left, on_rightclick_addendum_right, drop, canonical_basename)
 	-- START OF register_chest FUNCTION BODY
@@ -293,42 +338,6 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 				bottom_inv:add_item(listname, stack)
 			end
 		end
-	end
-
-	local function drop_item_stack(pos, stack)
-		if not stack or stack:is_empty() then return end
-		local drop_offset = vector.new(math.random() - 0.5, 0, math.random() - 0.5)
-		minetest.add_item(vector.add(pos, drop_offset), stack)
-	end
-
-	local function drop_items_chest(pos, oldnode, oldmetadata, digger)
-		if oldmetadata and oldmetadata.inventory then
-			-- process after_dig_node callback
-			local main = oldmetadata.inventory.main
-			if not main then return end
-			for _, stack in pairs(main) do
-				drop_item_stack(pos, stack)
-			end
-		else
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			for i = 1, inv:get_size("main") do
-				drop_item_stack(pos, inv:get_stack("main", i))
-			end
-			meta:from_table()
-		end
-	end
-
-	local function on_chest_blast(pos, intensity)
-		local node = minetest.get_node(pos)
-		drop_items_chest(pos, node)
-		minetest.remove_node(pos)
-		-- drop node itself with some probability depended on explosion intensity (1 for TNT):
-		if math.random(1, math.floor((intensity or 1) * 2)) ~= 1 then return end
-		local node_def = minetest.registered_nodes[node.name]
-		if not node_def then return end
-		local node_name = node_def.drop or node_def.name
-		drop_item_stack(pos, ItemStack(node_name))
 	end
 
 	local function limit_put_list(stack, list)
@@ -379,15 +388,6 @@ local function register_chest(basename, desc, longdesc, usagehelp, tt_help, tile
 			minetest.get_meta(pos):set_string("name", itemstack:get_meta():get_string("name"))
 		end,
 	})
-
-	local function close_forms(canonical_basename, pos)
-		local players = minetest.get_connected_players()
-		for p=1, #players do
-			if vector.distance(players[p]:get_pos(), pos) <= 30 then
-				minetest.close_formspec(players[p]:get_player_name(), "mcl_chests:"..canonical_basename.."_"..pos.x.."_"..pos.y.."_"..pos.z)
-			end
-		end
-	end
 
 	minetest.register_node(small_name, {
 		description = desc,
@@ -1476,9 +1476,11 @@ minetest.register_node("mcl_chests:barrel", {
 		minetest.get_meta(pos):set_string("name", itemstack:get_meta():get_string("name"))
 	end,
 	after_dig_node = drop_items_chest,
-	on_blast = on_blast,
+	on_blast = on_chest_blast,
 	on_rightclick = barrel_open,
-	on_destruct = close_forms,
+	on_destruct = function(pos)
+		close_forms("barrel", pos)
+	end,
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 2.5,
 })
@@ -1497,9 +1499,11 @@ minetest.register_node("mcl_chests:barrel_open", {
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	groups = {handy = 1, axey = 1, container = 2, material_wood = 1, flammable = -1, deco_block = 1, not_in_creative_inventory = 1},
 	after_dig_node = drop_items_chest,
-	on_blast = on_blast,
+	on_blast = on_chest_blast,
 	on_rightclick = barrel_open,
-	on_destruct = close_forms,
+	on_destruct = function(pos)
+		close_forms("barrel_open", pos)
+	end,
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 2.5,
 })

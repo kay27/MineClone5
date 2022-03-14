@@ -503,6 +503,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 	end
 
 	function cart:get_staticdata()
+		if not self then return end
 		return minetest.serialize({_railtype = self._railtype})
 	end
 

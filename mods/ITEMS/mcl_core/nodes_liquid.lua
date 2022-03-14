@@ -388,6 +388,12 @@ end
 		["mcl_core:whirlpool_source"] = -BUBBLE_COLUMN_SPEED,
 		["mcl_core:bubble_column_source"] = BUBBLE_COLUMN_SPEED,
 	}
+	local bubble_source_fast_switch_from_to = {
+		["mcl_nether:soul_sand"] = "mcl_core:bubble_column_source",
+		["mcl_core:bubble_column_source"] = "mcl_core:bubble_column_source",
+		["mcl_nether:magma"] = "mcl_core:whirlpool_source",
+		["mcl_core:whirlpool_source"] = "mcl_core:whirlpool_source",
+	}
 	minetest.register_abm({
 		label = "Process bubble columns and whirlpools",
 		nodenames = {"mcl_core:whirlpool_source", "mcl_core:bubble_column_source"},
@@ -399,7 +405,7 @@ end
 			local check = nether_node_to_check[name]
 			local below = minetest.get_node({x = x, y = y - 1, z = z}).name
 			if below ~= name and below ~= check then
-				minetest.swap_node(pos, {name = "mcl_core:water_source"})
+				minetest.swap_node(pos, {name = bubble_source_fast_switch_from_to[below] or "mcl_core:water_source"})
 				return
 			end
 			local upper_pos = {x = x, y = y + 1, z = z}

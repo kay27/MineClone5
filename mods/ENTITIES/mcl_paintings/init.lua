@@ -160,6 +160,7 @@ minetest.register_entity("mcl_paintings:painting", {
 		set_entity(self.object)
 	end,
 	get_staticdata = function(self)
+		if not self then return end
 		local data = {
 			_facing = self._facing,
 			_pos = self._pos,

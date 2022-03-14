@@ -902,10 +902,14 @@ function mobs.mob_step(self, dtime)
 				object = self.object,
 				max_hear_distance = 5
 			}, true)
-			self.object:punch(self.object, 1.0, {
-				full_punch_interval = 1.0,
-				damage_groups = {fleshy = self.lava_damage}
-			}, nil)
+--[[			if not mcl_burning.is_burning(self.object) then
+				mcl_burning.set_on_fire(self.object, 1.1)
+			else
+]]				self.object:punch(self.object, 1.0, {
+					full_punch_interval = 1.0,
+					damage_groups = {fleshy = self.lava_damage}
+				}, nil)
+--			end
 			self.lava_counter = 0
 			self.health = self.health - lava_damage
 			self:teleport()

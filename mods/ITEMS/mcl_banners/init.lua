@@ -618,6 +618,7 @@ local entity_standing = {
 			-- pattern: name of pattern (see list above)
 
 	get_staticdata = function(self)
+		if not self then return end
 		local out = { _base_color = self._base_color, _layers = self._layers, _name = self._name }
 		return minetest.serialize(out)
 	end,

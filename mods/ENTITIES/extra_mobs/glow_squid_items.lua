@@ -54,10 +54,11 @@ minetest.register_entity("extra_mobs:glow_item_frame_item",{
 		end
 	end,
 	get_staticdata = function(self)
+		if not self then return end
 		if self._nodename ~= nil and self._texture ~= nil then
 			local ret = self._nodename .. ';' .. self._texture
 			if self._scale ~= nil then
-				ret = ret .. ';' .. self._scale
+				ret = ret .. ';' .. tostring(self._scale)
 			end
 			return ret
 		end

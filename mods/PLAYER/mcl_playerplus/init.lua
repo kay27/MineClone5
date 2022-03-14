@@ -2,7 +2,6 @@ mcl_playerplus = {
 	elytra = {},
 }
 
-local player_velocity_old = {x=0, y=0, z=0}
 local get_connected_players = minetest.get_connected_players
 local dir_to_yaw = minetest.dir_to_yaw
 local get_item_group = minetest.get_item_group
@@ -336,9 +335,6 @@ minetest.register_globalstep(function(dtime)
 			set_bone_position_conditional(player,"Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
 		end
 
-		player_velocity_old = player:get_velocity() or player:get_player_velocity()
-
-
 		-- controls right and left arms pitch when shooting a bow or blocking
 		if mcl_shields.is_blocking(player) == 2 then
 			set_bone_position_conditional(player, "Arm_Right_Pitch_Control", vector.new(-3, 5.785, 0), vector.new(20, -20, 0))
@@ -460,13 +456,56 @@ minetest.register_globalstep(function(dtime)
 
 		local bubble_column_feet = node_feet == "mcl_core:bubble_column_source"
 		if bubble_column_feet then
-			if not player_pos_for_bubble_columns[name] then
-				player_pos_for_bubble_columns[name] = fly_pos
+			local bubble_column_head = node_head == "mcl_core:bubble_column_source"
+			if bubble_column_head then
+				if not player_pos_for_bubble_columns[name] then
+					player_pos_for_bubble_columns[name] = fly_pos
+				else
+					local head_alt_1 = fly_pos.y + 1.5
+					local head_alt_2 = head_alt_1 + time
+					while head_alt_1 < head_alt_2 do
+						local next_alt = math.min(head_alt_1 + 1, head_alt_2)
+						local next_node_head = minetest.get_node({x = fly_pos.x, y = next_alt, z = fly_pos.z}).name
+						if next_node_head == "mcl_core:bubble_column_source" then
+							head_alt_1 = next_alt
+						else
+							local ndef = minetest.registered_nodes[next_node_head]
+							if (ndef.walkable == nil or ndef.walkable == true)
+							and (ndef.collision_box == nil or ndef.collision_box.type == "regular")
+							and (ndef.node_box == nil or ndef.node_box.type == "regular")
+							and (ndef.groups.disable_suffocation ~= 1)
+							and (ndef.groups.opaque == 1)
+							then
+								break
+							else
+								-- pull head slightly above water level:
+								head_alt_1 = head_alt_1 + (next_alt - head_alt_1) * 0.5
+								break
+							end
+						end
+					end
+					local new_alt = head_alt_1 - 1.5
+					local delta_y = new_alt - fly_pos.y
+					if delta_y > 0 then
+						fly_pos.y = new_alt
+						player:set_pos(fly_pos)
+						local velocity_y = player_velocity.y
+						local add_velocity_y
+						if velocity_y > 1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y >= -1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					else
+						player_pos_for_bubble_columns[name] = nil
+					end
+				end
 			else
-				local bubble_column_head = node_head == "mcl_core:bubble_column_source"
-				fly_pos.y = player_pos_for_bubble_columns[name].y + (bubble_column_head and time or time/10)
-				player:set_pos(fly_pos)
-				player_pos_for_bubble_columns[name] = fly_pos
+				player_pos_for_bubble_columns[name] = nil
 			end
 		else
 			local whirlpool_feet = node_feet == "mcl_core:whirlpool_source"
@@ -479,20 +518,43 @@ minetest.register_globalstep(function(dtime)
 					if stands_on == "mcl_nether:magma" then
 						fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
 						player:set_pos(fly_pos)
+						local add_velocity_y
+						local velocity_y = player_velocity.y
+						if velocity_y < -1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y <= 1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					elseif stands_on == "mcl_core:whirlpool_source" then
+						local estimated_pos_y = player_pos_for_bubble_columns[name].y - (whirlpool_head and time/2 or time/5)
+						local next_pos_y = fly_pos.y
+						while next_pos_y > estimated_pos_y do
+							next_pos_y = next_pos_y - math.min(1, next_pos_y - estimated_pos_y)
+							local will_stand_on = minetest.get_node({x = fly_pos.x, y = next_pos_y - 0.0001, z = fly_pos.z}).name
+							if will_stand_on ~= "mcl_core:whirlpool_source" then
+								next_pos_y = math.floor(next_pos_y - 0.0001) + (control.sneak and 0.51 or 0.5)
+								break
+							end
+						end
+						fly_pos.y = next_pos_y
+						player:set_pos(fly_pos)
+						local add_velocity_y
+						local velocity_y = player_velocity.y
+						if velocity_y < -1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y <= 1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
 						player_pos_for_bubble_columns[name] = fly_pos
 					else
-						fly_pos.y = player_pos_for_bubble_columns[name].y - (whirlpool_head and time/2 or time/5)
-						local will_stand_on = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.0001, z = fly_pos.z}).name
-						if will_stand_on == "mcl_nether:magma" then
-							fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
-							player:set_pos(fly_pos)
-							player_pos_for_bubble_columns[name] = fly_pos
-						elseif will_stand_on == "mcl_core:whirlpool_source" then
-							player:set_pos(fly_pos)
-							player_pos_for_bubble_columns[name] = fly_pos
-						else
-							player_pos_for_bubble_columns[name] = nil
-						end
+						player_pos_for_bubble_columns[name] = nil
 					end
 				end
 			elseif player_pos_for_bubble_columns[name] then

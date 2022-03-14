@@ -486,6 +486,7 @@ minetest.register_entity(":__builtin:item", {
 	end,
 
 	get_staticdata = function(self)
+		if not self then return end
 		local data = minetest.serialize({
 			itemstring = self.itemstring,
 			always_collect = self.always_collect,

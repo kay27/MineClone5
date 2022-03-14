@@ -5,9 +5,27 @@ local minetest_settings = minetest.settings
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
 
+local vector_distance = vector.distance
+local minetest_get_connected_players = minetest.get_connected_players
+local math_random = math.random
+
 mobs.can_despawn = function(self)
-	return (not self.tamed and not self.bred and not self.nametag and
-	not mobs.check_for_player_within_area(self, 64));
+	if self.tamed or self.bred or self.nametag then return false end
+	local mob_pos = self.object:get_pos()
+	if not mob_pos then return true end
+	local distance = 999
+	for _, player in pairs(minetest_get_connected_players()) do
+		if player and player:get_hp() > 0 then
+			local player_pos = player:get_pos()
+			local new_distance = vector_distance(player_pos, mob_pos)
+			if new_distance < distance then
+				distance = new_distance
+				if distance < 33 then return false end
+				if distance < 128 and math_random(1, 42) ~= 11 then return false end
+			end
+		end
+	end
+	return true
 end
 
 -- get entity staticdata
@@ -24,7 +42,7 @@ mobs.mob_staticdata = function(self)
 	self.following = nil
 
 	if use_cmi then
-		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
+		self.serialized_cmi_components = cmi and cmi.serialize_components(self._cmi_components)
 	end
 
 	local tmp = {}

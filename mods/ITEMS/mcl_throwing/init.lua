@@ -57,6 +57,7 @@ end
 
 -- Staticdata handling because objects may want to be reloaded
 function mcl_throwing.get_staticdata(self)
+	if not self then return end
 	local thrower
 	-- Only save thrower if it's a player name
 	if type(self._thrower) == "string" then
