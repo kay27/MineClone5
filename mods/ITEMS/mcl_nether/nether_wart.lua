@@ -150,7 +150,7 @@ minetest.register_craftitem("mcl_nether:nether_wart_item", {
 			end
 		end
 	end,
-	groups = { craftitem = 1, brewitem=1 },
+	groups = { craftitem = 1, brewitem=1, compostability=30 },
 })
 
 local names = {"mcl_nether:nether_wart_0", "mcl_nether:nether_wart_1", "mcl_nether:nether_wart_2"}
