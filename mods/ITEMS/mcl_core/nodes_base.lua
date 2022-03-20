@@ -369,7 +369,7 @@ minetest.register_node("mcl_core:dirt_with_grass", {
 	color = "#8EB971",
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {handy=1,shovely=1,dirt=2,grass_block=1, grass_block_no_snow=1, soil=1, soil_sapling=2, soil_sugarcane=1, cultivatable=2, spreading_dirt_type=1, enderman_takable=1, building_block=1},
+	groups = {handy=1,shovely=1,dirt=2,grass_block=1, grass_block_no_snow=1, soil=1, soil_sapling=2, soil_sugarcane=1, cultivatable=2, spreading_dirt_type=1, enderman_takable=1, building_block=1, compostability=30},
 	drop = "mcl_core:dirt",
 	sounds = mcl_sounds.node_sound_dirt_defaults({
 		footstep = {name="default_grass_footstep", gain=0.1},
@@ -473,7 +473,7 @@ minetest.register_node("mcl_core:moss", {
 	tiles = {"mcl_core_moss_block.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {handy=1, hoey=1},
+	groups = {handy=1, hoey=1, compostability=65},
 	--sounds = TODO: add sound
 	_mcl_blast_resistance = 0.1,
 	_mcl_hardness = 0.1,
@@ -1096,7 +1096,7 @@ minetest.register_node("mcl_core:moss", {
 	tiles = {"mcl_core_moss_block.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {handy=1, hoey=1},
+	groups = {handy=1, hoey=1, compostability=65},
 	--sounds = TODO: add sound
 	_mcl_blast_resistance = 0.1,
 	_mcl_hardness = 0.1,
@@ -1153,7 +1153,7 @@ minetest.register_node("mcl_core:moss_carpet", {
 			{-8/16, -8/16, -8/16, 8/16, -7/16, 8/16},
 		},
 	},
-	groups = {handy=1, hoey=1},
+	groups = {handy=1, hoey=1, compostability=30},
 	--sounds = TODO: add sound
 	_mcl_blast_resistance = 0.1,
 	_mcl_hardness = 0.1,
