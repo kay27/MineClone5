@@ -165,6 +165,20 @@ kick_cheaters (Kick Cheaters) bool false
 # Cheat kicking threshold
 kick_threshold (Cheat Kicking Threshold) int 10
 
+[Antispam]
+# Maximum player messages in a sequence
+limit_messages (Maximum player messages in a sequence) int 10
+# Maximum message length
+limit_message_length (Maximum message length) int 200
+# Block special characters
+block_special_chars (Block special characters) bool true
+# Ban spammers
+ban_spammers (Ban spammers) bool true
+# Kick spammers
+kick_spammers (Kick spammers) bool true
+# Revoke shout priv for spammers
+revoke_shout_for_spammers (Revoke shout priv for spammers) bool true
+
 [Debugging]
 # If enabled, this will show the itemstring of an item in the description.
 mcl_item_id_debug (Item ID Debug) bool false
