@@ -26,8 +26,7 @@ local function ban(name)
 	if revoke_shout_for_spammers then
 		local privs = minetest.get_player_privs(name)
 		if privs then
-			privs.shoud = nil
-			privs.noclip = true
+			privs.shout = nil
 			minetest.set_player_privs(name, privs)
 		end
 	end
