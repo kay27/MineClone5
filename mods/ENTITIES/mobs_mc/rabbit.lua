@@ -76,6 +76,7 @@ local function spawn_rabbit(pos)
 	local biome_data = minetest.get_biome_data(pos)
 	local biome_name = biome_data and minetest.get_biome_name(biome_data.biome) or ""
 	local mob = minetest.add_entity(pos, mob_name)
+	if not mob then return end
 	local self = mob:get_luaentity()
 	local texture
 	if biome_name:find("Desert") then
