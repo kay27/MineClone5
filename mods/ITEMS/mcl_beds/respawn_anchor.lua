@@ -164,3 +164,8 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_4",{
     groups = {pickaxey=1, material_stone=1, not_in_creative_inventory=1},
     _mcl_hardness = 22.5
 })
+
+minetest.register_craft({ output = "mcl_beds:respawn_anchor",
+    recipe = { {"mcl_core:crying_obsidian", "mcl_core:crying_obsidian", "mcl_core:crying_obsidian"},
+    {"mcl_nether:glowstone", "mcl_nether:glowstone", "mcl_nether:glowstone"},
+    {"mcl_core:crying_obsidian", "mcl_core:crying_obsidian", "mcl_core:crying_obsidian"} } }) 
