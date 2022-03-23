@@ -452,10 +452,60 @@ function mcl_spawn.get_player_spawn_pos(player)
 		if bgroup ~= 1 and bgroup ~= 2 then
 			-- Bed is destroyed:
 			if player and player:is_player() then
-				player:get_meta():set_string("mcl_beds:spawn", "")
+
+                local function split(s, delimiter) --this is just a common function to split strings, since it is way harder to do in lua like in python, java etc.
+                    result = {};
+                    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+                        table.insert(result, match);
+                    end
+                    return result;
+                 end
+                s = split(player:get_meta():get_string("mcl_beds:spawn"), ",")
+                x = nil
+                y = nil
+                z = nil
+                for key, value in pairs(s) do
+                    if key == 1 then
+                        value = value:sub(2)
+                        x = tonumber(value)
+                    else
+                        if key == 2 then
+                            y = tonumber(value)
+                        else
+                            if key == 3 then
+                                value = value:sub(1, -2)
+                                z = tonumber(value)
+                            end
+                        end
+                    end
+                end
+                
+                checkblock = {x = x, y = y, z = z}
+                
+                if minetest.get_node(checkblock).name == "mcl_beds:respawn_anchor_charged_1" then
+                    minetest.set_node(checkblock, {name="mcl_beds:respawn_anchor"})
+                    player:set_pos(checkblock)
+                else
+                    if minetest.get_node(checkblock).name == "mcl_beds:respawn_anchor_charged_2" then
+                        minetest.set_node(checkblock, {name="mcl_beds:respawn_anchor_charged_1"})
+                        player:set_pos(checkblock)
+                    else
+                        if minetest.get_node(checkblock).name == "mcl_beds:respawn_anchor_charged_3" then
+                            minetest.set_node(checkblock, {name="mcl_beds:respawn_anchor_charged_2"})
+                            player:set_pos(checkblock)
+                        else
+                            if minetest.get_node(checkblock).name == "mcl_beds:respawn_anchor_charged_4" then
+                                minetest.set_node(checkblock, {name="mcl_beds:respawn_anchor_charged_3"})
+                                player:set_pos(checkblock)
+                            else
+                                player:get_meta():set_string("mcl_beds:spawn", "")
+                                minetest.chat_send_player(player:get_player_name(), S("Your spawn bed was missing or blocked, and you had no charged respawn anchor"))
+                                return mcl_spawn.get_world_spawn_pos(), false
+                            end
+                        end
+                    end
+                end	
 			end
-			minetest.chat_send_player(player:get_player_name(), S("Your spawn bed was missing or blocked."))
-			return mcl_spawn.get_world_spawn_pos(), false
 		end
 
 		-- Find spawning position on/near the bed free of solid or damaging blocks iterating a square spiral 15x15:
