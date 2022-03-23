@@ -23,9 +23,6 @@ minetest.register_node("mcl_beds:respawn_anchor",{
 		}
 	},
     on_rightclick = function(pos, node, player, itemstack)
-        minetest.log("tried to charge")
-        minetest.log(player.get_player_name(player))
-        minetest.log(itemstack.get_name(itemstack))
         if itemstack.get_name(itemstack) == "mcl_nether:glowstone" then
             minetest.set_node(pos, {name="mcl_beds:respawn_anchor_charged_1"})
         else
