@@ -80,7 +80,7 @@ function mcl_flowers.register_simple_flower(name, def)
 		walkable = false,
 		stack_max = 64,
 		drop = def.drop,
-		groups = {dig_immediate=3,flammable=2,fire_encouragement=60,fire_flammability=100,plant=1,flower=1,place_flowerlike=1,non_mycelium_plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1},
+		groups = {dig_immediate=3,flammable=2,fire_encouragement=60,fire_flammability=100,plant=1,flower=1,place_flowerlike=1,non_mycelium_plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1, compostability=65},
 		sounds = mcl_sounds.node_sound_leaves_defaults(),
 		node_placement_prediction = "",
 		on_place = on_place_flower,
@@ -143,7 +143,7 @@ local def_tallgrass = {
 	walkable = false,
 	buildable_to = true,
 	is_ground_content = true,
-	groups = {handy=1,shearsy=1, flammable=3,fire_encouragement=60,fire_flammability=100,attached_node=1,plant=1,place_flowerlike=2,non_mycelium_plant=1,dig_by_water=1,destroy_by_lava_flow=1,deco_block=1},
+	groups = {handy=1,shearsy=1, flammable=3,fire_encouragement=60,fire_flammability=100,attached_node=1,plant=1,place_flowerlike=2,non_mycelium_plant=1,dig_by_water=1,destroy_by_lava_flow=1,deco_block=1, compostability=30},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	drop = wheat_seed_drop,
 	_mcl_shears_drop = true,
@@ -163,6 +163,7 @@ def_fern._doc_items_longdesc = S("Ferns are small plants which occur naturally i
 def_fern.tiles = { "mcl_flowers_fern.png" }
 def_fern.inventory_image = "mcl_flowers_fern_inv.png"
 def_fern.wield_image = "mcl_flowers_fern_inv.png"
+def_fern.groups.compostability=65
 def_fern.selection_box = {
 	type = "fixed",
 	fixed = { -6/16, -0.5, -6/16, 6/16, 5/16, 6/16 },
@@ -204,6 +205,13 @@ local function add_large_plant(name, desc, longdesc, bottom_img, top_img, inv_im
 	if longdesc == nil then
 		bottom_groups.not_in_creative_inventory = 1
 		create_entry = false
+	end
+	-- some special cases for the composter group
+	if name == "double_fern" or "peony" or "rose_bush" or "lilac" or "sunflower" then
+		bottom_groups.compostability = 65
+	end
+	if name == "double_grass" then
+		bottom_groups.compostability = 50
 	end
 	-- Drop itself by default
 	local drop_bottom, drop_top
@@ -410,7 +418,7 @@ minetest.register_node("mcl_flowers:waterlily", {
 	liquids_pointable = true,
 	walkable = true,
 	sunlight_propagates = true,
-	groups = {dig_immediate = 3, plant=1, dig_by_water = 1,destroy_by_lava_flow=1, dig_by_piston = 1, deco_block=1, dig_by_boat=1},
+	groups = {dig_immediate = 3, plant=1, dig_by_water = 1,destroy_by_lava_flow=1, dig_by_piston = 1, deco_block=1, dig_by_boat=1, compostability=65},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	node_placement_prediction = "",
 	node_box = {

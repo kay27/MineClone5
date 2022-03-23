@@ -1,5 +1,4 @@
 # MineClone 5
-Version: 0.71.7 Release Candidate 0
 
 MineClone 5 is a fork of MineClone 2 with different workflow:
 * No Minecraft version limitation, target version is Latest Java Edition
@@ -70,9 +69,8 @@ Use the `/giveme` chat command to obtain them. See the in-game help for
 an explanation.
 
 ## Installation
-This game requires [Minetest](http://minetest.net) to run (version 5.4.1 or
-later). So you need to install Minetest first. Only stable versions of Minetest
-are officially supported.
+This game requires latest stable [Minetest](http://minetest.net) to run, please install
+it first. Only stable versions of Minetest are officially supported.
 There is no support for running MineClone 5 in development versions of Minetest.
 
 To install MineClone 5 (if you haven't already), move this directory into the
@@ -83,10 +81,8 @@ Minetest to learn more.
 The MineClone 5 repository is hosted at Mesehub. To contribute or report issues, head there.
 
 * Mesehub: <https://git.minetest.land/MineClone5/MineClone5>
-* IRC: <https://web.libera.chat/#mineclone2>
-* Matrix: <https://app.element.io/#/room/#mc2:matrix.org>
-* Reddit: <https://www.reddit.com/r/MineClone2/>
-* Minetest forums: <https://forum.minetest.net/viewtopic.php?f=50&t=16407>
+* Minetest forums: <https://forum.minetest.net/viewtopic.php?f=50&t=27107>
+* Semi-official Discord: <https://discord.gg/PUm5YRn7dX>
 
 ## Project description
 The main goal of **MineClone 5** is to be a clone of Minecraft and to be released as free software.
@@ -155,7 +151,7 @@ The following features are incomplete:
 * Special minecarts
 * A couple of non-trivial blocks and items
 
-Bonus features (not found in Minecraft 1.12):
+Bonus features (not found in Minecraft):
 
 * Built-in crafting guide which shows you crafting and smelting recipes
 * In-game help system containing extensive help about gameplay basics, blocks, items and more
@@ -168,6 +164,7 @@ Bonus features (not found in Minecraft 1.12):
     * Nether Brick Fence Gate
     * Red Nether Brick Fence
     * Red Nether Brick Fence Gate
+* Arbitrary-shaped Nether portals
 
 Technical differences from Minecraft:
 
@@ -191,3 +188,7 @@ Technical differences from Minecraft:
 * `API.md`: For Minetest modders who want to mod this game
 * `LEGAL.md`: Legal information
 * `CREDITS.md`: List of everyone who contributed
+
+## Menu music
+
+* horizonchris96 — 02_what_we_ll_build_next

@@ -175,16 +175,16 @@ end
 -- check if within physical map limits (-30911 to 30927)
 -- within_limits, wmin, wmax = nil, -30913, 30928
 mobs.within_limits = function(pos, radius)
-    local wmin, wmax
-	if mcl_vars then
-		if mcl_vars.mapgen_edge_min and mcl_vars.mapgen_edge_max then
-			wmin, wmax = mcl_vars.mapgen_edge_min, mcl_vars.mapgen_edge_max
+	local wmin, wmax
+	if mcl_mapgen then
+		if mcl_mapgen.EDGE_MIN and mcl_mapgen.EDGE_MAX then
+			wmin, wmax = mcl_mapgen.EDGE_MIN, mcl_mapgen.EDGE_MAX
+			return pos
+				and (pos.x - radius) > wmin and (pos.x + radius) < wmax
+				and (pos.y - radius) > wmin and (pos.y + radius) < wmax
+				and (pos.z - radius) > wmin and (pos.z + radius) < wmax
 		end
 	end
-	return pos
-		and (pos.x - radius) > wmin and (pos.x + radius) < wmax
-		and (pos.y - radius) > wmin and (pos.y + radius) < wmax
-		and (pos.z - radius) > wmin and (pos.z + radius) < wmax
 end
 
 -- get node but use fallback for nil or unknown
@@ -210,25 +210,6 @@ mobs.teleport = function(self, target)
 		end
 	end
 end
-
---a function used for despawning mobs
-mobs.check_for_player_within_area = function(self, radius)
-	local pos1 = self.object:get_pos()
-	--get players in radius
-	for _,player in pairs(minetest_get_connected_players()) do
-		if player and player:get_hp() > 0 then
-			local pos2 = player:get_pos()
-			local distance = vector_distance(pos1,pos2)
-			if distance < radius then
-				--found a player
-				return true
-			end
-		end
-	end
-	--did not find a player
-	return false
-end
-
 
 --a simple helper function for mobs following
 mobs.get_2d_distance = function(pos1,pos2)

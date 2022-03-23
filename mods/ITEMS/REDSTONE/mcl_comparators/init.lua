@@ -43,7 +43,9 @@ end
 
 local function comparator_activate(pos, node)
 	local def = minetest.registered_nodes[node.name]
-	minetest.swap_node(pos, { name = def.comparator_onstate, param2 = node.param2 })
+	local on_state = def.comparator_onstate
+	if not on_state then return end
+	minetest.swap_node(pos, { name = on_state, param2 = node.param2 })
 	minetest.after(0.1, comparator_turnon , {pos = pos, node = node})
 end
 

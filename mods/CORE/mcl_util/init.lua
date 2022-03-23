@@ -22,100 +22,14 @@ function table.update_nil(t, ...)
 	return t
 end
 
--- Based on minetest.rotate_and_place
+-- Creates a function that calls to the minetest
+-- function minetest_rotate_and_place. It rotates 
+-- a block based on where it thinks the player is facing
+-- at the moment. This is typically called by pillar-like nodes.
 
---[[
-Attempt to predict the desired orientation of the pillar-like node
-defined by `itemstack`, and place it accordingly in one of 3 possible
-orientations (X, Y or Z).
-
-Stacks are handled normally if the `infinitestacks`
-field is false or omitted (else, the itemstack is not changed).
-* `invert_wall`: if `true`, place wall-orientation on the ground and ground-
-  orientation on wall
-
-This function is a simplified version of minetest.rotate_and_place.
-The Minetest function is seen as inappropriate because this includes mirror
-images of possible orientations, causing problems with pillar shadings.
-]]
-function mcl_util.rotate_axis_and_place(itemstack, placer, pointed_thing, infinitestacks, invert_wall)
-	local unode = minetest.get_node_or_nil(pointed_thing.under)
-	if not unode then
-		return
-	end
-	local undef = minetest.registered_nodes[unode.name]
-	if undef and undef.on_rightclick then
-		undef.on_rightclick(pointed_thing.under, unode, placer,
-				itemstack, pointed_thing)
-		return
-	end
-	local fdir = minetest.dir_to_facedir(placer:get_look_dir())
-	local wield_name = itemstack:get_name()
-
-	local above = pointed_thing.above
-	local under = pointed_thing.under
-	local is_x = (above.x ~= under.x)
-	local is_y = (above.y ~= under.y)
-	local is_z = (above.z ~= under.z)
-
-	local anode = minetest.get_node_or_nil(above)
-	if not anode then
-		return
-	end
-	local pos = pointed_thing.above
-	local node = anode
-
-	if undef and undef.buildable_to then
-		pos = pointed_thing.under
-		node = unode
-	end
-
-	if minetest.is_protected(pos, placer:get_player_name()) then
-		minetest.record_protection_violation(pos, placer:get_player_name())
-		return
-	end
-
-	local ndef = minetest.registered_nodes[node.name]
-	if not ndef or not ndef.buildable_to then
-		return
-	end
-
-	local p2
-	if is_y then
-		if invert_wall then
-			if fdir == 3 or fdir == 1 then
-				p2 = 12
-			else
-				p2 = 6
-			end
-		end
-	elseif is_x then
-		if invert_wall then
-			p2 = 0
-		else
-			p2 = 12
-		end
-	elseif is_z then
-		if invert_wall then
-			p2 = 0
-		else
-			p2 = 6
-		end
-	end
-	minetest.set_node(pos, {name = wield_name, param2 = p2})
-
-	if not infinitestacks then
-		itemstack:take_item()
-		return itemstack
-	end
-end
-
--- Wrapper of above function for use as `on_place` callback (Recommended).
--- Similar to minetest.rotate_node.
 function mcl_util.rotate_axis(itemstack, placer, pointed_thing)
-	mcl_util.rotate_axis_and_place(itemstack, placer, pointed_thing,
-		minetest.is_creative_enabled(placer:get_player_name()),
-		placer:get_player_control().sneak)
+	minetest.rotate_and_place(itemstack, placer, pointed_thing,
+		minetest.is_creative_enabled(placer:get_player_name()))
 	return itemstack
 end
 
@@ -571,3 +485,37 @@ function mcl_util.replace_mob(obj, mob)
 	obj:set_yaw(rot)
 	return obj
 end
+
+function mcl_util.get_pointed_thing(player)
+	local pos = vector.offset(player:get_pos(), 0, player:get_properties().eye_height, 0)
+	local look_dir = vector.multiply(player:get_look_dir(), 5)
+	local pos2 = vector.add(pos, look_dir)
+	local ray = minetest.raycast(pos, pos2, false, true)
+	
+	if ray then
+		for pointed_thing in ray do
+			return pointed_thing
+		end
+	end
+end
+
+local possible_hackers = {}
+
+function mcl_util.is_player(obj)
+	if not obj then return end
+	if not obj.is_player then return end
+	if not obj:is_player() then return end
+	local name = obj:get_player_name()
+	if not name then return end
+	if possible_hackers[name] then return end
+	return true
+end
+
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
+	possible_hackers[name] = true
+end)
+
+minetest.register_on_joinplayer(function(player)
+	possible_hackers[player:get_player_name()] = nil
+end)

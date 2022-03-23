@@ -144,6 +144,7 @@ dofile(api_path .. "mob_effects.lua")
 dofile(api_path .. "projectile_handling.lua")
 dofile(api_path .. "breeding.lua")
 dofile(api_path .. "head_logic.lua")
+dofile(api_path .. "monster_light.lua")
 
 
 mobs.spawning_mobs = {}
@@ -424,7 +425,9 @@ function mobs:register_mob(name, def)
 		end,
 
 		get_staticdata = function(self)
-			return mobs.mob_staticdata(self)
+			if self and mobs then
+				return mobs.mob_staticdata(self)
+			end
 		end,
 
 		--harmed_by_heal = def.harmed_by_heal,
@@ -435,55 +438,6 @@ function mobs:register_mob(name, def)
 	end
 
 end -- END mobs:register_mob function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 -- register arrow for shoot attack
 function mobs:register_arrow(name, def)
@@ -586,36 +540,6 @@ function mobs:register_arrow(name, def)
 						self.object:remove();
 						return
 					end
-
-					--[[
-					local entity = player:get_luaentity()
-
-					if entity
-					and self.hit_mob
-					and entity._cmi_is_mob == true
-					and tostring(player) ~= self.owner_id
-					and entity.name ~= self.object:get_luaentity().name
-					and (self._shooter and entity.name ~= self._shooter:get_luaentity().name) then
-
-						--self.hit_mob(self, player)
-						self.object:remove();
-						return
-					end
-					]]--
-
-					--[[
-					if entity
-					and self.hit_object
-					and (not entity._cmi_is_mob)
-					and tostring(player) ~= self.owner_id
-					and entity.name ~= self.object:get_luaentity().name
-					and (self._shooter and entity.name ~= self._shooter:get_luaentity().name) then
-
-						--self.hit_object(self, player)
-						self.object:remove();
-						return
-					end
-					]]--
 				end
 			end
 
@@ -630,7 +554,6 @@ end
 -- * spawn_egg=1: Spawn egg (generic mob, no metadata)
 -- * spawn_egg=2: Spawn egg (captured/tamed mob, metadata)
 function mobs:register_egg(mob, desc, background, addegg, no_creative)
-
 	local grp = {spawn_egg = 1}
 
 	-- do NOT add this egg to creative inventory (e.g. dungeon master)
@@ -647,7 +570,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 	-- register old stackable mob egg
 	minetest.register_craftitem(mob, {
-
 		description = desc,
 		inventory_image = invimg,
 		groups = grp,
@@ -668,20 +590,50 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 			if pos
 			--and within_limits(pos, 0)
+
+			--testing to see if the block you are trying to mess with is protected
 			and not minetest.is_protected(pos, placer:get_player_name()) then
 
+				--getting the name of the player that placed the egg, and their privileges.
 				local name = placer:get_player_name()
 				local privs = minetest.get_player_privs(name)
+
 				if mod_mobspawners and under.name == "mcl_mobspawners:spawner" then
+					--If the thing you are trying to spawn the egg on is protected
+					--the violation gets reported
 					if minetest.is_protected(pointed_thing.under, name) then
 						minetest.record_protection_violation(pointed_thing.under, name)
 						return itemstack
 					end
+
 					if not privs.maphack then
 						minetest.chat_send_player(name, S("You need the “maphack” privilege to change the mob spawner."))
 						return itemstack
 					end
-					mcl_mobspawners.setup_spawner(pointed_thing.under, itemstack:get_name())
+
+					--Changes the mob spawner type with the egg that you used to click on it
+					--determining monster spawn lvl
+
+					local hold_light = 15 
+					local mon_name
+
+					--Extracts mob name from item name
+					for name in string.gmatch(itemstack:get_name(), ":%a.*") do
+							mon_name = name:gsub(":", "")
+					end
+
+					--For every monster in the monster_lightlvl table check if
+					--it matches the spawn egg you're holding
+					for name, lightlvl in pairs(monster_lightlvl) do
+						print(mon_name == name)
+						if name == mon_name then
+							hold_light = lightlvl
+						end
+					end
+
+					--Switch out the mob spawner to spawn mobs from the egg that you're holding
+					mcl_mobspawners.setup_spawner(pointed_thing.under, itemstack:get_name(), 0, hold_light)
+
 					if not mobs.is_creative(name) then
 						itemstack:take_item()
 					end
@@ -691,7 +643,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				if not minetest_registered_entities[mob] then
 					return itemstack
 				end
-
+				
+				--If only peaceful mobs are allowed, player is not allowed to spawn a monster
 				if minetest_settings:get_bool("only_peaceful_mobs", false)
 						and minetest_registered_entities[mob].type == "monster" then
 					minetest.chat_send_player(name, S("Only peaceful mobs allowed!"))
@@ -699,17 +652,10 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				end
 
 				local mob = minetest_add_entity(pos, mob)
+
+				--Log that a mob was spawned by the player who spawned it and the coordinates
 				minetest.log("action", "Mob spawned: "..name.." at "..minetest.pos_to_string(pos))
 				local ent = mob:get_luaentity()
-
-				-- don't set owner if monster or sneak pressed
-				--[[
-				if ent.type ~= "monster"
-				and not placer:get_player_control().sneak then
-					ent.owner = placer:get_player_name()
-					ent.tamed = true
-				end
-				]]--
 
 				-- set nametag
 				local nametag = itemstack:get_meta():get_string("name")
@@ -721,7 +667,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 					--update_tag(ent)
 				end
 
-				-- if not in creative then take item
+				-- if not in creative then remove the item from the stack
+				-- taking the player's item
 				if not mobs.is_creative(placer:get_player_name()) then
 					itemstack:take_item()
 				end

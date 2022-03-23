@@ -8,7 +8,7 @@ mcl_inventory = {}
 
 -- Returns a single itemstack in the given inventory to the main inventory, or drop it when there's no space left
 function return_item(itemstack, dropper, pos, inv)
-	if dropper:is_player() then
+	if mcl_util and mcl_util.is_player(dropper) then
 		-- Return to main inventory
 		if inv:room_for_item("main", itemstack) then
 			inv:add_item("main", itemstack)
@@ -47,6 +47,7 @@ function return_fields(player, name)
 end
 
 local function set_inventory(player, armor_change_only)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	if minetest.is_creative_enabled(player:get_player_name()) then
 		if armor_change_only then
 			-- Stay on survival inventory plage if only the armor has been changed
@@ -76,6 +77,10 @@ local function set_inventory(player, armor_change_only)
 		end
 	end
 
+	if inv:get_stack("offhand", 1):is_empty() then
+		armor_slot_imgs = armor_slot_imgs .. "image[3,2;1,1;mcl_inventory_empty_armor_slot_shield.png]"
+	end
+
 	local form = "size[9,8.75]"..
 	"background[-0.19,-0.25;9.41,9.49;crafting_formspec_bg.png]"..
 	player_preview..
@@ -88,6 +93,8 @@ local function set_inventory(player, armor_change_only)
 	mcl_formspec.get_itemslot_bg(0,1,1,1)..
 	mcl_formspec.get_itemslot_bg(0,2,1,1)..
 	mcl_formspec.get_itemslot_bg(0,3,1,1)..
+	"list[current_player;offhand;3,2;1,1]"..
+	mcl_formspec.get_itemslot_bg(3,2,1,1)..
 	armor_slot_imgs..
 	-- craft and inventory
 	"label[0,4;"..F(minetest.colorize("#313131", S("Inventory"))).."]"..
@@ -112,6 +119,7 @@ local function set_inventory(player, armor_change_only)
 	-- achievements button
 	"image_button[7,3;1,1;mcl_achievements_button.png;__mcl_achievements;]"..
 	"tooltip[__mcl_achievements;"..F(S("Achievements")).."]"..
+
 	-- for shortcuts
 	"listring[current_player;main]"..
 	"listring[current_player;armor]"..
@@ -123,6 +131,7 @@ end
 
 -- Drop items in craft grid and reset inventory on closing
 minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if not mcl_util or not mcl_util.is_player(player) then return end
 	if fields.quit then
 		return_fields(player,"craft")
 		return_fields(player,"enchanting_lapis")
@@ -135,6 +144,7 @@ end)
 
 if not minetest.is_creative_enabled("") then
 	function mcl_inventory.update_inventory_formspec(player)
+		if not mcl_util or not mcl_util.is_player(player) then return end
 		set_inventory(player)
 	end
 end
@@ -148,8 +158,11 @@ end)
 
 minetest.register_on_joinplayer(function(player)
 	--init inventory
-	player:get_inventory():set_width("main", 9)
-	player:get_inventory():set_size("main", 36)
+	local inv = player:get_inventory()
+	inv:set_width("main", 9)
+	inv:set_size("main", 36)
+	inv:set_size("offhand", 1)
+
 
 	--set hotbar size
 	player:hud_set_hotbar_itemcount(9)
@@ -177,7 +190,5 @@ minetest.register_on_joinplayer(function(player)
 	return_fields(player, "enchanting_lapis")
 end)
 
-if minetest.is_creative_enabled("") then
-	dofile(minetest.get_modpath(minetest.get_current_modname()).."/creative.lua")
-end
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/creative.lua")
 

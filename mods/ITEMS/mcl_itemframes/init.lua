@@ -33,6 +33,7 @@ minetest.register_entity("mcl_itemframes:item",{
 		end
 	end,
 	get_staticdata = function(self)
+		if not self then return end
 		if self._nodename and self._texture then
 			local ret = self._nodename .. ";" .. self._texture
 			if self._scale then

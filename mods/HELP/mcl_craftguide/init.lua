@@ -1,5 +1,7 @@
 mcl_craftguide = {}
 
+local awaiting_connection_player_names = {}
+
 local M = minetest
 local player_data = {}
 
@@ -1075,12 +1077,14 @@ if progressive_mode then
 		for i = 1, #players do
 			local player = players[i]
 			local name   = player:get_player_name()
-			local data   = player_data[name]
-			local inv_items = get_inv_items(player)
-			local diff      = table_diff(inv_items, data.inv_items)
+			if not awaiting_connection_player_names[name] then
+				local data   = player_data[name]
+				local inv_items = get_inv_items(player)
+				local diff      = table_diff(inv_items, data.inv_items)
 
-			if #diff > 0 then
-				data.inv_items = table_merge(diff, data.inv_items)
+				if #diff > 0 then
+					data.inv_items = table_merge(diff, data.inv_items)
+				end
 			end
 		end
 
@@ -1093,8 +1097,14 @@ if progressive_mode then
 
 	mcl_craftguide.add_recipe_filter("Default progressive filter", progressive_filter)
 
+	M.register_on_authplayer(function(name, ip, is_success)
+		if not is_success then return end
+		awaiting_connection_player_names[name] = true
+	end)
+
 	M.register_on_joinplayer(function(player)
 		local name = player:get_player_name()
+		awaiting_connection_player_names[name] = nil
 		init_data(name)
 		local meta = player:get_meta()
 		local data = player_data[name]
@@ -1126,7 +1136,9 @@ if progressive_mode then
 		local players = M.get_connected_players()
 		for i = 1, #players do
 			local player = players[i]
-			save_meta(player)
+			if not awaiting_connection_player_names[player:get_player_name()] then
+				save_meta(player)
+			end
 		end
 	end)
 else

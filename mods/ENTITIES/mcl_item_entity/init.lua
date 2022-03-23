@@ -6,9 +6,8 @@ local pool = {}
 
 local tick = false
 
-minetest.register_on_joinplayer(function(player)
-	local name
-	name = player:get_player_name()
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
 	pool[name] = 0
 end)
 
@@ -27,6 +26,11 @@ local mcl_item_entity = {}
 local item_drop_settings                 = {} --settings table
 item_drop_settings.dug_buffer            = 0.65 -- the warm up period before a dug item can be collected
 item_drop_settings.age                   = 1.0 --how old a dropped item (_insta_collect==false) has to be before collecting
+item_drop_settings.fluid_flow_rate       = 1.39 --the speed of a flowing fluid, used when computing push and drag forces of water on items; default is tuned to Minecraft
+item_drop_settings.fluid_drag            = 1.8 --how much drag water has on items (how quickly an item's motion will settle onto the water's flow speed)
+item_drop_settings.ground_drag           = 3.0 --how much friction with the ground slows items sliding on it
+item_drop_settings.slippery_drag_factor  = 0.25 --scales item friction with the ground on slippery floors (e.g. ice)
+item_drop_settings.slippery_fluid_drag_factor = 0.4 --scales item drag with waterflow on slippery floors (e.g. ice)
 item_drop_settings.radius_magnet         = 2.0 --radius of item magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.xp_radius_magnet      = 7.25 --radius of xp magnet. MUST BE LARGER THAN radius_collect!
 item_drop_settings.radius_collect        = 0.2 --radius of collection
@@ -37,6 +41,8 @@ item_drop_settings.drop_single_item      = false --if true, the drop control dro
 -- drop_single_item is disabled by default because it is annoying to throw away items from the intentory screen
 
 item_drop_settings.magnet_time           = 0.75 -- how many seconds an item follows the player before giving up
+
+local is_player = mcl_util.is_player
 
 local function get_gravity()
 	return tonumber(minetest.settings:get("movement_gravity")) or 9.81
@@ -128,7 +134,7 @@ minetest.register_globalstep(function(dtime)
 
 			--magnet and collection
 			for _,object in pairs(minetest.get_objects_inside_radius(checkpos, item_drop_settings.xp_radius_magnet)) do
-				if not object:is_player() and vector.distance(checkpos, object:get_pos()) < item_drop_settings.radius_magnet and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" and object:get_luaentity()._magnet_timer and (object:get_luaentity()._insta_collect or (object:get_luaentity().age > item_drop_settings.age)) then
+				if not is_player(object) and vector.distance(checkpos, object:get_pos()) < item_drop_settings.radius_magnet and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" and object:get_luaentity()._magnet_timer and (object:get_luaentity()._insta_collect or (object:get_luaentity().age > item_drop_settings.age)) then
 
 					if object:get_luaentity()._magnet_timer >= 0 and object:get_luaentity()._magnet_timer < item_drop_settings.magnet_time and inv and inv:room_for_item("main", ItemStack(object:get_luaentity().itemstring)) then
 
@@ -162,7 +168,7 @@ minetest.register_globalstep(function(dtime)
 						end
 					end
 
-				elseif not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "mcl_experience:orb" then
+				elseif not is_player(object) and object:get_luaentity() and object:get_luaentity().name == "mcl_experience:orb" then
 					local entity = object:get_luaentity()
 					entity.collector = player:get_player_name()
 					entity.collected = true
@@ -225,7 +231,7 @@ function minetest.handle_node_drops(pos, drops, digger)
 	-- This means there is no digger. This is a special case which allows this function to be called
 	-- by hand. Creative Mode is intentionally ignored in this case.
 
-	if (digger and digger:is_player() and minetest.is_creative_enabled(digger:get_player_name())) or doTileDrops == false then
+	if (digger and is_player(digger) and minetest.is_creative_enabled(digger:get_player_name())) or doTileDrops == false then
 		return
 	end
 
@@ -335,7 +341,7 @@ end
 
 -- Drop single items by default
 function minetest.item_drop(itemstack, dropper, pos)
-	if dropper and dropper:is_player() then
+	if dropper and is_player(dropper) then
 		local v = dropper:get_look_dir()
 		local p = {x=pos.x, y=pos.y+1.2, z=pos.z}
 		local cs = itemstack:get_count()
@@ -480,6 +486,7 @@ minetest.register_entity(":__builtin:item", {
 	end,
 
 	get_staticdata = function(self)
+		if not self then return end
 		local data = minetest.serialize({
 			itemstring = self.itemstring,
 			always_collect = self.always_collect,
@@ -778,11 +785,35 @@ minetest.register_entity(":__builtin:item", {
 			-- Just to make sure we don't manipulate the speed for no reason
 			if vec.x ~= 0 or vec.y ~= 0 or vec.z ~= 0 then
 				-- Minecraft Wiki: Flowing speed is "about 1.39 meters per second"
-				local f = 1.39
-				-- Set new item moving speed into the direciton of the liquid
-				local newv = vector.multiply(vec, f)
+				local f = item_drop_settings.fluid_flow_rate --1.39
+
+				-- Apply the force of the flowing liquid onto the item's velocity
+				local newv = vector.multiply(vec, f) 
 				self.object:set_acceleration({x = 0, y = 0, z = 0})
-				self.object:set_velocity({x = newv.x, y = -0.22, z = newv.z})
+
+				local oldvel = self.object:get_velocity() -- v is vector, vel is velocity
+
+				-- drag
+				local fluid_drag = item_drop_settings.fluid_drag
+
+                local floornn = minetest.get_node({x=p.x, y=p.y-0.5, z=p.z}).name
+                local floornode = floornn and minetest.registered_nodes[floornn]
+				if floornode and minetest.get_item_group(floornode.name, "slippery") then
+				    -- scale fluid drag on slippery floors
+				    fluid_drag = fluid_drag * item_drop_settings.slippery_fluid_drag_factor
+				end
+
+                newv.x = newv.x - (oldvel.x - newv.x) * fluid_drag * dtime
+                newv.y = newv.y - (oldvel.y - newv.y) * fluid_drag * dtime
+                newv.z = newv.z - (oldvel.z - newv.z) * fluid_drag * dtime
+
+                newv.y = newv.y + -0.22 -- (keep slight downward thrust from previous version of code)
+                                        -- NOTE:    is there any particular reason we have this, anyway?
+                                        --          since fluid drag is now on, we could as well just
+                                        --          apply gravity here; drag will slow down the fall
+                                        --          realistically
+				
+				self.object:set_velocity({x = oldvel.x + newv.x * dtime, y = oldvel.y + newv.y * dtime, z = oldvel.z + newv.z * dtime})
 
 				self.physical_state = true
 				self._flowing = true
@@ -794,15 +825,17 @@ minetest.register_entity(":__builtin:item", {
 		elseif self._flowing == true then
 			-- Disable flowing physics if not on/in flowing liquid
 			self._flowing = false
-			enable_physics(self.object, self, true)
+			--enable_physics(self.object, self, true) -- do not reset velocity upon leaving water!
+			self.object:set_acceleration({x=0,y=-get_gravity(),z=0}) -- resume applying gravity
 			return
 		end
 
 		-- If node is not registered or node is walkably solid and resting on nodebox
 		local nn = minetest.get_node({x=p.x, y=p.y-0.5, z=p.z}).name
 		local v = self.object:get_velocity()
+		local node = nn and minetest.registered_nodes[nn]
 
-		if not minetest.registered_nodes[nn] or minetest.registered_nodes[nn].walkable and v.y == 0 then
+		if not node or node.walkable and v.y == 0 then
 			if self.physical_state then
 				local own_stack = ItemStack(self.object:get_luaentity().itemstring)
 				-- Merge with close entities of the same item
@@ -815,7 +848,28 @@ minetest.register_entity(":__builtin:item", {
 						end
 					end
 				end
-				disable_physics(self.object, self)
+				--disable_physics(self.object, self)
+				-- apply ground drag
+				local oldvel = self.object:get_velocity()
+
+                -- ignore momentum if it's tiny
+				if math.abs(oldvel.x) < 0.05 and math.abs(oldvel.z) < 0.05 then
+				    disable_physics(self.object, self)
+				    return
+                end
+
+                local ground_drag = item_drop_settings.ground_drag
+
+                if node and minetest.get_item_group(node.name, "slippery") ~= 0 then
+                    ground_drag = ground_drag * item_drop_settings.slippery_drag_factor
+                end
+                
+				local newvel = {
+				    x = oldvel.x - oldvel.x * ground_drag * dtime,
+				    y = 0,
+				    z = oldvel.z - oldvel.z * ground_drag * dtime
+                }
+                self.object:set_velocity(newvel)
 			end
 		else
 			if self._magnet_active == false then

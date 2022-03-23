@@ -11,6 +11,7 @@ else
 	ice_drawtype = "normal"
 	ice_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false
 end
+local mossnodes = {"mcl_core:stone", "mcl_core:granite", "mcl_core:granite_smooth", "mcl_core:diorite", "mcl_core:diorite_smooth", "mcl_core:andesite", "mcl_core:andesite_smooth", "mcl_deepslate:deepslate", --[[glowberries, ]]"mcl_core:dirt", "mcl_core:dirt_with_grass", "mcl_core:podzol", "mcl_core:coarse_dirt", "mcl_core:mycelium"}
 
 mcl_core.fortune_drop_ore = {
 	discrete_uniform_distribution = true,
@@ -368,7 +369,7 @@ minetest.register_node("mcl_core:dirt_with_grass", {
 	color = "#8EB971",
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {handy=1,shovely=1,dirt=2,grass_block=1, grass_block_no_snow=1, soil=1, soil_sapling=2, soil_sugarcane=1, cultivatable=2, spreading_dirt_type=1, enderman_takable=1, building_block=1},
+	groups = {handy=1,shovely=1,dirt=2,grass_block=1, grass_block_no_snow=1, soil=1, soil_sapling=2, soil_sugarcane=1, cultivatable=2, spreading_dirt_type=1, enderman_takable=1, building_block=1, compostability=30},
 	drop = "mcl_core:dirt",
 	sounds = mcl_sounds.node_sound_dirt_defaults({
 		footstep = {name="default_grass_footstep", gain=0.1},
@@ -463,6 +464,19 @@ minetest.register_node("mcl_core:dirt", {
 	sounds = mcl_sounds.node_sound_dirt_defaults(),
 	_mcl_blast_resistance = 0.5,
 	_mcl_hardness = 0.5,
+})
+
+minetest.register_node("mcl_core:moss", {
+	description = S("Moss"),
+	_doc_items_longdesc = S("A moss block is a natural block that can be spread to some other blocks by using bone meal."),--TODO: Other desciption?
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	stack_max = 64,
+	groups = {handy=1, hoey=1, compostability=65},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
 })
 
 minetest.register_node("mcl_core:coarse_dirt", {
@@ -826,6 +840,19 @@ minetest.register_node("mcl_core:obsidian", {
 	end,
 })
 
+minetest.register_node("mcl_core:crying_obsidian", {
+	description = S("Crying Obsidian"),
+	_doc_items_longdesc = S("Crying obsidian is a luminous obsidian that can generate as part of ruined portals."),
+	tiles = {"default_obsidian.png^mcl_core_crying_obsidian.png"},
+	is_ground_content = false,
+	light_source = 10,
+	sounds = mcl_sounds.node_sound_stone_defaults(),
+	stack_max = 64,
+	groups = {pickaxey=5, building_block=1, material_stone=1},
+	_mcl_blast_resistance = 1200,
+	_mcl_hardness = 50,
+})
+
 minetest.register_node("mcl_core:ice", {
 	description = S("Ice"),
 	_doc_items_longdesc = S("Ice is a solid block usually found in cold areas. It melts near block light sources at a light level of 12 or higher. When it melts or is broken while resting on top of another block, it will turn into a water source."),
@@ -1062,10 +1089,79 @@ minetest.register_node("mcl_core:snowblock", {
 	_mcl_silk_touch_drop = true,
 })
 
+minetest.register_node("mcl_core:moss", {
+	description = S("Moss"),
+	_doc_items_longdesc = S("A moss block is a natural block that can be spread to some other blocks by using bone meal."),--TODO: Other desciption?
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	stack_max = 64,
+	groups = {handy=1, hoey=1, compostability=65},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+	if player:get_wielded_item():get_name() == "mcl_dye:white" then
+				if not minetest.is_creative_enabled(player) and not minetest.check_player_privs(player, "creative") then
+					itemstack:take_item()
+				end
+
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-1, y = pos.y-1, z = pos.z-1}, {x = pos.x+1, y = pos.y+1, z = pos.z+1}, mossnodes)) do
+					minetest.set_node(j, {name="mcl_core:moss"})
+				end
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-2, y = pos.y-1, z = pos.z-2}, {x = pos.x+2, y = pos.y+1, z = pos.z+2}, mossnodes)) do
+					if math.random(1,3) == 1 then minetest.set_node(j, {name="mcl_core:moss"}) end
+				end
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, mossnodes)) do
+					if math.random(1,9) == 1 then minetest.set_node(j, {name="mcl_core:moss"}) end
+				end
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
+					if math.random(1,2) == 1 then
+						minetest.set_node({x=j.x,y=j.y+1,z=j.z} ,{name="mcl_flowers:tallgrass"})
+					end
+				end
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
+					if math.random(1,4) == 1 then
+						minetest.set_node({x=j.x,y=j.y+1,z=j.z}, {name="mcl_core:moss_carpet"})
+					end
+				end
+				for i, j in pairs(minetest.find_nodes_in_area_under_air({x = pos.x-3, y = pos.y-1, z = pos.z-3}, {x = pos.x+3, y = pos.y+1, z = pos.z+3}, {"mcl_core:moss"})) do
+					if math.random(1,10) == 1 then
+						minetest.set_node({x=j.x,y=j.y+1,z=j.z} ,{name="mcl_flowers:double_grass"})
+						minetest.set_node({x=j.x,y=j.y+2,z=j.z} ,{name="mcl_flowers:double_grass_top"})
+					end
+				end
+			elseif minetest.registered_nodes[player:get_wielded_item():get_name()] then
+				itemstack:take_item()
+				minetest.set_node(pointed_thing.above, {name=player:get_wielded_item():get_name()})
+	    end
+	  end,
+})
+
+minetest.register_node("mcl_core:moss_carpet", {
+	description = S("Moss Carpet"),
+	_doc_items_longdesc = S("Moss Carpets are a thin decorative variant of the moss block."),
+	_doc_items_hidden = false,
+	tiles = {"mcl_core_moss_block.png"},
+	is_ground_content = true,
+	paramtype = "light",
+	stack_max = 64,
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-8/16, -8/16, -8/16, 8/16, -7/16, 8/16},
+		},
+	},
+	groups = {handy=1, hoey=1, compostability=30},
+	--sounds = TODO: add sound
+	_mcl_blast_resistance = 0.1,
+	_mcl_hardness = 0.1,
+})
+
 -- Add entry aliases for the Help
 if minetest.get_modpath("doc") then
 	doc.add_entry_alias("nodes", "mcl_core:stone_with_redstone", "nodes", "mcl_core:stone_with_redstone_lit")
 	doc.add_entry_alias("nodes", "mcl_core:water_source", "nodes", "mcl_core:water_flowing")
 	doc.add_entry_alias("nodes", "mcl_core:lava_source", "nodes", "mcl_core:lava_flowing")
 end
-

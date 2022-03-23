@@ -544,6 +544,16 @@ for s=1, #specialstones do
 		clust_size     = 3,
 		y_min          = mcl_vars.mg_nether_min,
 		y_max          = mcl_vars.mg_nether_max,
+		noise_params = {
+			offset  = 0,
+			scale   = 1,
+			spread  = {x=250, y=250, z=250},
+			seed    = 12345,
+			octaves = 3,
+			persist = 0.6,
+			lacunarity = 2,
+			flags = "defaults",
+		},
 	})
 	minetest.register_ore({
 		ore_type       = "blob",
@@ -554,6 +564,16 @@ for s=1, #specialstones do
 		clust_size     = 5,
 		y_min          = mcl_vars.mg_nether_min,
 		y_max          = mcl_vars.mg_nether_max,
+		noise_params = {
+			offset  = 0,
+			scale   = 1,
+			spread  = {x=250, y=250, z=250},
+			seed    = 12345,
+			octaves = 3,
+			persist = 0.6,
+			lacunarity = 2,
+			flags = "defaults",
+		},
 	})
 end
 
@@ -802,47 +822,5 @@ minetest.register_craft({
 	recipe = {
 		{ "mcl_nether:soul_sand" },
 		{ "mcl_core:stick" },
-	}
-})
-
-minetest.register_node("mcl_blackstone:soul_lantern", {
-	tiles = {
-		"lantern_top.png",
-		"lantern_bottom.png",
-		"lantern.png",
-		"lantern.png",
-		"lantern.png",
-		"lantern.png",
-	},
-	groups = {pickaxey=3},
-	inventory_image = "lantern.png",
-	light_source = 10,
-	description = S("Soul Lantern"),
-	drawtype = "nodebox",
-	paramtype = "light",
-	paramtype2 = "facedir",
-	_mcl_hardness = 1,
-	node_box = {
-		type = "fixed",
-		fixed = {
-			{-0.1875, -0.5000, -0.1875, 0.1875, -0.06250, 0.1875},
-			{-0.1250, -0.06250, -0.1250, 0.1250, 0.06250, 0.1250},
-			{-0.06250, 0.1250, -0.006250, 0.06250, 0.1875, 0.006250},
-			{-0.06250, 0.06250, -0.006250, -0.03125, 0.1250, 0.006250},
-			{0.03125, 0.06250, -0.006250, 0.06250, 0.1250, 0.006250},
-		}
-	},
-	stack_max = 64,
-})
-
-
-
-minetest.register_craft({
-	type = "shaped",
-	output = "mcl_blackstone:soul_lantern",
-	recipe = {
-		{"mcl_core:iron_nugget", "mcl_core:iron_nugget","mcl_core:iron_nugget"},
-		{"mcl_core:iron_nugget", "mcl_blackstone:soul_torch",  "mcl_core:iron_nugget"},
-		{"mcl_core:iron_nugget", "mcl_core:iron_nugget",  "mcl_core:iron_nugget"}
 	}
 })

@@ -73,7 +73,8 @@ local ARROW_ENTITY={
 	_stuckin=nil,	--Position of node in which arow is stuck.
 	_shooter=nil,	-- ObjectRef of player or mob who shot it
 	_is_arrow = true,
-
+	_in_player = false,
+	_blocked = false,
 	_viscosity=0,   -- Viscosity of node the arrow is currently in
 	_deflection_cooloff=0, -- Cooloff timer after an arrow deflection, to prevent many deflections in quick succession
 }
@@ -82,7 +83,7 @@ local ARROW_ENTITY={
 local function spawn_item(self, pos)
 	if not minetest.is_creative_enabled("") then
 		local item = minetest.add_item(pos, "mcl_bows:arrow")
-		item:set_velocity({x=0, y=0, z=0})
+		item:set_velocity(vector.new(0, 0, 0))
 		item:set_yaw(self.object:get_yaw())
 	end
 	mcl_burning.extinguish(self.object)
@@ -94,12 +95,10 @@ local function damage_particles(pos, is_critical)
 		minetest.add_particlespawner({
 			amount = 15,
 			time = 0.1,
-			minpos = {x=pos.x-0.5, y=pos.y-0.5, z=pos.z-0.5},
-			maxpos = {x=pos.x+0.5, y=pos.y+0.5, z=pos.z+0.5},
-			minvel = {x=-0.1, y=-0.1, z=-0.1},
-			maxvel = {x=0.1, y=0.1, z=0.1},
-			minacc = {x=0, y=0, z=0},
-			maxacc = {x=0, y=0, z=0},
+			minpos = vector.offset(pos, -0.5, -0.5, -0.5),
+			maxpos = vector.offset(pos, 0.5, 0.5, 0.5),
+			minvel = vector.new(-0.1, -0.1, -0.1),
+			maxvel = vector.new(0.1, 0.1, 0.1),
 			minexptime = 1,
 			maxexptime = 2,
 			minsize = 1.5,
@@ -146,7 +145,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 		-- Pickup arrow if player is nearby (not in Creative Mode)
 		local objects = minetest.get_objects_inside_radius(pos, 1)
 		for _,obj in ipairs(objects) do
-			if obj:is_player() then
+			if mcl_util and mcl_util.is_player(obj) then
 				if self._collectable and not minetest.is_creative_enabled(obj:get_player_name()) then
 					if obj:get_inventory():room_for_item("main", "mcl_bows:arrow") then
 						obj:get_inventory():add_item("main", "mcl_bows:arrow")
@@ -200,7 +199,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 		for k, obj in pairs(objs) do
 			local ok = false
 			-- Arrows can only damage players and mobs
-			if obj:is_player() then
+			if mcl_util and mcl_util.is_player(obj) then
 				ok = true
 			elseif obj:get_luaentity() then
 				if (obj:get_luaentity()._cmi_is_mob or obj:get_luaentity()._hittable_by_projectile) then
@@ -224,7 +223,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 		if closest_object then
 			local obj = closest_object
-			local is_player = obj:is_player()
+			local is_player = mcl_util and mcl_util.is_player(obj)
 			local lua = obj:get_luaentity()
 			if obj == self._shooter and self._time_in_air > 1.02 or obj ~= self._shooter and (is_player or (lua and (lua._cmi_is_mob or lua._hittable_by_projectile))) then
 				if obj:get_hp() > 0 then
@@ -248,50 +247,59 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 					-- Punch target object but avoid hurting enderman.
 					if not lua or lua.name ~= "mobs_mc:enderman" then
-						if self._in_player == false then
+						if not self._in_player then
 							damage_particles(self.object:get_pos(), self._is_critical)
 						end
 						if mcl_burning.is_burning(self.object) then
 							mcl_burning.set_on_fire(obj, 5)
 						end
-						if self._in_player == false then
+						if not self._in_player and not self._blocked then
 							obj:punch(self.object, 1.0, {
 								full_punch_interval=1.0,
 								damage_groups={fleshy=self._damage},
 							}, self.object:get_velocity())
-							if obj:is_player() then
-								local placement
-								self._placement = math.random(1, 2)
-								if self._placement == 1 then
-									placement = "front"
+							if mcl_util and mcl_util.is_player(obj) then
+								if not mcl_shields.is_blocking(obj) then
+									local placement
+									self._placement = math.random(1, 2)
+									if self._placement == 1 then
+										placement = "front"
+									else
+										placement = "back"
+									end
+									self._in_player = true
+									if self._placement == 2 then
+										self._rotation_station = 90
+									else
+										self._rotation_station = -90
+									end
+									self._y_position = random_arrow_positions("y", placement)
+									self._x_position = random_arrow_positions("x", placement)
+									if self._y_position > 6 and self._x_position < 2 and self._x_position > -2 then
+										self._attach_parent = "Head"
+										self._y_position = self._y_position - 6
+									elseif self._x_position > 2 then
+										self._attach_parent = "Arm_Right"
+										self._y_position = self._y_position - 3
+										self._x_position = self._x_position - 2
+									elseif self._x_position < -2 then
+										self._attach_parent = "Arm_Left"
+										self._y_position = self._y_position - 3
+										self._x_position = self._x_position + 2
+									else
+										self._attach_parent = "Body"
+									end
+									self._z_rotation = math.random(-30, 30)
+									self._y_rotation = math.random( -30, 30)
+									self.object:set_attach(
+										obj, self._attach_parent,
+										vector.new(self._x_position, self._y_position, random_arrow_positions("z", placement)),
+										vector.new(0, self._rotation_station + self._y_rotation, self._z_rotation)
+									)
 								else
-									placement = "back"
+									self._blocked = true
+									self.object:set_velocity(vector.multiply(self.object:get_velocity(), -0.25))
 								end
-								self._in_player = true
-								if self._placement == 2 then
-									self._rotation_station = 90
-								else
-									self._rotation_station = -90
-								end
-								self._y_position = random_arrow_positions("y", placement)
-								self._x_position = random_arrow_positions("x", placement)
-								if self._y_position > 6 and self._x_position < 2 and self._x_position > -2 then
-									self._attach_parent = "Head"
-									self._y_position = self._y_position - 6
-								elseif self._x_position > 2 then
-									self._attach_parent = "Arm_Right"
-									self._y_position = self._y_position - 3
-									self._x_position = self._x_position - 2
-								elseif self._x_position < -2 then
-									self._attach_parent = "Arm_Left"
-									self._y_position = self._y_position - 3
-									self._x_position = self._x_position + 2
-								else
-									self._attach_parent = "Body"
-								end
-								self._z_rotation = math.random(-30, 30)
-								self._y_rotation = math.random( -30, 30)
-								self.object:set_attach(obj, self._attach_parent, {x=self._x_position,y=self._y_position,z=random_arrow_positions("z", placement)}, {x=0,y=self._rotation_station + self._y_rotation,z=self._z_rotation})
 								minetest.after(150, function()
 									self.object:remove()
 								end)
@@ -301,7 +309,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 
 					if is_player then
-						if self._shooter and self._shooter:is_player() and self._in_player == false then
+						if self._shooter and (mcl_util and mcl_util.is_player(self._shooter)) and not self._in_player and not self._blocked then
 							-- “Ding” sound for hitting another player
 							minetest.sound_play({name="mcl_bows_hit_player", gain=0.1}, {to_player=self._shooter:get_player_name()}, true)
 						end
@@ -312,17 +320,18 @@ function ARROW_ENTITY.on_step(self, dtime)
 						-- Achievement for hitting skeleton, wither skeleton or stray (TODO) with an arrow at least 50 meters away
 						-- NOTE: Range has been reduced because mobs unload much earlier than that ... >_>
 						-- TODO: This achievement should be given for the kill, not just a hit
-						if self._shooter and self._shooter:is_player() and vector.distance(pos, self._startpos) >= 20 then
+						if self._shooter and (mcl_util and mcl_util.is_player(self._shooter)) and vector.distance(pos, self._startpos) >= 20 then
 							if mod_awards and (entity_name == "mobs_mc:skeleton" or entity_name == "mobs_mc:stray" or entity_name == "mobs_mc:witherskeleton") then
 								awards.unlock(self._shooter:get_player_name(), "mcl:snipeSkeleton")
 							end
 						end
 					end
-					if self._in_player == false then
+					if not self._in_player and not self._blocked then
+
 						minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
 					end
 				end
-				if not obj:is_player() then
+				if not mcl_util or not mcl_util.is_player(obj) then
 					mcl_burning.extinguish(self.object)
 					if self._piercing == 0 then
 						self.object:remove()
@@ -344,9 +353,9 @@ function ARROW_ENTITY.on_step(self, dtime)
 			local dir
 			if math.abs(vel.y) < 0.00001 then
 				if self._lastpos.y < pos.y then
-					dir = {x=0, y=1, z=0}
+					dir = vector.new(0, 1, 0)
 				else
-					dir = {x=0, y=-1, z=0}
+					dir = vector.new(0, -1, 0)
 				end
 			else
 				dir = minetest.facedir_to_dir(minetest.dir_to_facedir(minetest.yaw_to_dir(self.object:get_yaw()-YAW_OFFSET)))
@@ -374,8 +383,8 @@ function ARROW_ENTITY.on_step(self, dtime)
 				self._stucktimer = 0
 				self._stuckrechecktimer = 0
 
-				self.object:set_velocity({x=0, y=0, z=0})
-				self.object:set_acceleration({x=0, y=0, z=0})
+				self.object:set_velocity(vector.new(0, 0, 0))
+				self.object:set_acceleration(vector.new(0, 0, 0))
 
 				minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
 
@@ -419,12 +428,8 @@ function ARROW_ENTITY.on_step(self, dtime)
 		self.object:set_rotation({ x = 0, y = yaw, z = pitch })
 	end
 
-	if self._in_player and not self.object:get_attach() then
-		self.object:remove()
-	end
-
 	-- Update internal variable
-	self._lastpos={x=pos.x, y=pos.y, z=pos.z}
+	self._lastpos = pos
 end
 
 -- Force recheck of stuck arrows when punched.
@@ -436,6 +441,7 @@ function ARROW_ENTITY.on_punch(self)
 end
 
 function ARROW_ENTITY.get_staticdata(self)
+	if not self then return end
 	local out = {
 		lastpos = self._lastpos,
 		startpos = self._startpos,
@@ -443,6 +449,7 @@ function ARROW_ENTITY.get_staticdata(self)
 		is_critical = self._is_critical,
 		stuck = self._stuck,
 		stuckin = self._stuckin,
+		stuckin_player = self._in_player,
 	}
 	if self._stuck then
 		-- If _stucktimer is missing for some reason, assume the maximum
@@ -451,7 +458,7 @@ function ARROW_ENTITY.get_staticdata(self)
 		end
 		out.stuckstarttime = minetest.get_gametime() - self._stucktimer
 	end
-	if self._shooter and self._shooter:is_player() then
+	if self._shooter and mcl_util and mcl_util.is_player(self._shooter) then
 		out.shootername = self._shooter:get_player_name()
 	end
 	return minetest.serialize(out)
@@ -459,7 +466,6 @@ end
 
 function ARROW_ENTITY.on_activate(self, staticdata, dtime_s)
 	self._time_in_air = 1.0
-	self._in_player = false
 	local data = minetest.deserialize(staticdata)
 	if data then
 		self._stuck = data.stuck
@@ -488,13 +494,26 @@ function ARROW_ENTITY.on_activate(self, staticdata, dtime_s)
 		self._is_critical = data.is_critical
 		if data.shootername then
 			local shooter = minetest.get_player_by_name(data.shootername)
-			if shooter and shooter:is_player() then
+			if shooter and mcl_util and mcl_util.is_player(shooter) then
 				self._shooter = shooter
 			end
+		end
+
+		if data.stuckin_player then
+			self.object:remove()
 		end
 	end
 	self.object:set_armor_groups({ immortal = 1 })
 end
+
+minetest.register_on_respawnplayer(function(player)
+	for _, obj in pairs(player:get_children()) do
+		local ent = obj:get_luaentity()
+		if ent and ent.name and string.find(ent.name, "mcl_bows:arrow_entity") then
+			obj:remove()
+		end
+	end
+end)
 
 minetest.register_entity("mcl_bows:arrow_entity", ARROW_ENTITY)
 

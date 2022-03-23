@@ -139,6 +139,7 @@ local function egg_on_step(self, dtime)
 
 			-- Turn given object into a child
 			local function make_child(object)
+				if not object then return end
 				local ent = object:get_luaentity()
 				object:set_properties({
 					visual_size = { x = ent.base_size.x/2, y = ent.base_size.y/2 },

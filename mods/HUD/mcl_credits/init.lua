@@ -1,10 +1,40 @@
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
 
+local contributors_file_name = minetest.get_modpath(modname) .. "/CONTRUBUTOR_LIST.txt"
+
+local file = io.open(contributors_file_name)
+local contributors = {}
+if not file then
+	minetest.log("error", "[" .. modname .. "] Can't read contributors from " .. contributors_file_name)
+else
+	local contributor_list = file:read("*a")
+	file:close()
+	for contributor in contributor_list:gmatch("[^\r\n]+") do
+		table.insert(contributors, contributor)
+	end
+end
+
 mcl_credits = {
 	players = {},
 	description = S("A faithful Open Source clone of Minecraft"),
-	people = dofile(minetest.get_modpath(modname) .. "/people.lua"),
+	people = {
+		{S("Creator of MineClone"), 0x0A9400, {
+			"davedevils",
+		}},
+		{S("Creator of MineClone 2"), 0xFBF837, {
+			"Wuzzy",
+		}},
+		{S("Creators of MineClone 5"), 0x52FF00,
+			contributors
+		},
+		{S("Special thanks"), 0x00E9FF, {
+			"celeron55 for creating Minetest",
+			"Jordach for the jukebox music compilation from Big Freaking Dig",
+			"The workaholics who spent way too much time writing for the Minecraft Wiki. It's an invaluable resource for creating this game",
+			"Notch and Jeb for being the major forces behind Minecraft",
+		}}
+	}
 }
 
 local function add_hud_element(def, huds, y)

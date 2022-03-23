@@ -68,7 +68,7 @@ mobs:register_mob("mobs_mc:blaze", {
 	light_damage = 0,
 	view_range = 16,
 	attack_type = "projectile",
-	arrow = "mobs_mc:blaze_fireball",
+	arrow = "mobs_mc:blaze_fireball_entity",
 	shoot_interval = 3.5,
 	shoot_offset = 1.0,
 	passive = false,
@@ -89,10 +89,13 @@ mobs:register_mob("mobs_mc:blaze", {
 	end,
 
 	do_custom = function(self)
-		if self.attacking and self.state == "attack" and vector.distance(self.object:get_pos(), self.attacking:get_pos()) < 1.2 then
-			mcl_burning.set_on_fire(self.attacking, 5)
-		end
 		local pos = self.object:get_pos()
+		if self.attacking and self.state == "attack" then
+			local attacking_pos = self.attacking:get_pos()
+			if attacking_pos and vector.distance(pos, attacking_pos) < 1.2 then
+				mcl_burning.set_on_fire(self.attacking, 5)
+			end
+		end
 		minetest.add_particle({
 			pos = {x=pos.x+math.random(-0.7,0.7)*math.random()/2,y=pos.y+math.random(0.7,1.2),z=pos.z+math.random(-0.7,0.7)*math.random()/2},
 			velocity = {x=0, y=math.random(1,1), z=0},

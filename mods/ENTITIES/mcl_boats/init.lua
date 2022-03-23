@@ -41,7 +41,22 @@ local function check_object(obj)
 end
 
 local function get_visual_size(obj)
-	return obj:is_player() and {x = 1, y = 1, z = 1} or obj:get_luaentity()._old_visual_size or obj:get_properties().visual_size
+	if not obj or obj:is_player() then
+		return boat_visual_size
+	end
+	local luaentity = obj:get_luaentity()
+	if luaentity then
+		if luaentity._old_visual_size then
+			return luaentity._old_visual_size
+		else
+			return boat_visual_size
+		end
+	end
+	local obj_properties = obj:get_properties()
+	if not obj_properties then
+		return boat_visual_size
+	end
+	return obj_properties.visual_size
 end
 
 local function set_attach(boat)
@@ -97,7 +112,9 @@ local function detach_object(obj, change_pos)
 		mcl_player.player_attached[obj:get_player_name()] = false
 		mcl_player.player_set_animation(obj, "stand" , 30)
 	else
-		obj:get_luaentity()._old_visual_size = nil
+		local luaentity = obj:get_luaentity()
+		if not luaentity then return end
+		luaentity._old_visual_size = nil
 	end
 	if change_pos then
 		 obj:set_pos(vector.add(obj:get_pos(), vector.new(0, 0.2, 0)))
@@ -158,10 +175,13 @@ function boat.on_activate(self, staticdata, dtime_s)
 end
 
 function boat.get_staticdata(self)
+	if not self then return end
+	local object = self.object
+	local object_properties = object and object.get_properties and object:get_properties()
 	return minetest.serialize({
 		v = self._v,
 		itemstring = self._itemstring,
-		textures = self.object:get_properties().textures
+		textures = object_properties and object_properties.textures
 	})
 end
 
@@ -267,7 +287,7 @@ function boat.on_step(self, dtime, moveresult)
 			return
 		end
 		local yaw = self.object:get_yaw()
-		if ctrl.up then
+		if ctrl and ctrl.up then
 			-- Forwards
 			self._v = self._v + 0.1 * v_factor
 
@@ -276,7 +296,7 @@ function boat.on_step(self, dtime, moveresult)
 				self.object:set_animation({x=0, y=40}, paddling_speed, 0, true)
 				self._animation = 1
 			end
-		elseif ctrl.down then
+		elseif ctrl and ctrl.down then
 			-- Backwards
 			self._v = self._v - 0.1 * v_factor
 

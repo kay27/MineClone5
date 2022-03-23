@@ -3,6 +3,6 @@
 Food=Nourriture
 Saturation=Saturation
 %s: %.1f/%d=%s: %.1f/%d
-Exhaust.=Échappement.
+Exhaust.=Épuisement.
 %s: %d/%d=%s: %d/%d
 @1 starved to death.=@1 est mort de faim.

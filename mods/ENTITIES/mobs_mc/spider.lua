@@ -76,7 +76,122 @@ local spider = {
 }
 mobs:register_mob("mobs_mc:spider", spider)
 
--- Cave spider
+
+
+--Cave Spider
+
+local cave_spider = {
+	description = S("Cave Spider"),
+	type = "monster",
+	spawn_class = "hostile",
+	passive = false,
+	hostile = true,
+	always_climb = true,
+	docile_by_day = true,
+	rotate = 270,
+
+	--[[work-around for poison until punch augmentations are added to mob API
+	works functionally but the jump while punching animation in gone--]]
+	reach = 0.5, --makes it look like it's biting
+	attack_type = "projectile",
+	arrow = "spider_venom", --ultra short range projectile to inflict poison effect + punch damage
+	projectile_cooldown_min = 1,
+	projectile_cooldown_max = 1,
+	shoot_arrow = function(self, pos, dir)
+		local dmg = 2
+		mobs.shoot_projectile_handling("mobs_mc:spider_venom", pos, dir, self.object:get_yaw(), self.object, 1, dmg,nil,nil,nil,-0.6)
+	end,
+
+	hp_min = 12, --reflect Minecraft health
+	hp_max = 12,
+	ignores_cobwebs = true,
+	xp_min = 5,
+	xp_max = 5,
+	eye_height = 0.475,
+	armor = {fleshy = 100, arthropod = 100},
+	collisionbox = {-0.35, -0.01, -0.35, 0.35, 0.49, 0.35},
+	visual = "mesh",
+	mesh = "mobs_mc_spider.b3d",
+	textures = {
+		{"mobs_mc_cave_spider.png^(mobs_mc_spider_eyes.png^[makealpha:0,0,0)"},
+	},
+	visual_size = {x=1.66666, y=1.5},
+	makes_footstep_sound = false,
+	sounds = {
+		random = "mobs_mc_spider_random",
+		attack = "mobs_mc_spider_attack",
+		damage = "mobs_mc_spider_hurt",
+		death = "mobs_mc_spider_death",
+		-- TODO: sounds: walk
+		distance = 16,
+	},
+	base_pitch = 1.25,
+	walk_velocity = 1.3,
+	run_velocity = 3.5, --Compenstaing for the loss of aility to leap while attacking
+	jump = true,
+	jump_height = 4,
+	view_range = 16,
+	floats = 1,
+	drops = {
+		{name = mobs_mc.items.string, chance = 1, min = 0, max = 2, looting = "common"},
+		{name = mobs_mc.items.spider_eye, chance = 3, min = 1, max = 1, looting = "common", looting_chance_function = function(lvl)
+			return 1 - 2 / (lvl + 3)
+		end},
+	},
+	specific_attack = { "player", "mobs_mc:iron_golem" },
+	fear_height = 4,
+	animation = {
+		stand_speed = 10,
+		walk_speed = 25,
+		run_speed = 50,
+		stand_start = 20,
+		stand_end = 40,
+		walk_start = 0,
+		walk_end = 20,
+		run_start = 0,
+		run_end = 20,
+	},
+}
+mobs:register_mob("mobs_mc:cave_spider", cave_spider)
+
+
+-- spider_venom (projectile)
+mobs:register_arrow("mobs_mc:spider_venom", {
+	visual = "sprite",
+	visual_size = {x = 0.1, y = 0.1},
+	textures = {"hbhunger_icon_health_poison.png"},
+	velocity = 1,
+	collisionbox = {-.5, -.5, -.5, .5, .5, .5},
+	tail = 0,
+
+	hit_player = function(self, player)
+		player:punch(self.object, 1.0, {
+			full_punch_interval = 1.0,
+			damage_groups = {fleshy = self._damage},
+		}, nil)
+
+		mcl_potions.poison_func(player, 0.5, 8) --modified cuz MC rate is an unessesarily bad fraction
+		local vel = player:get_velocity()
+		player:add_velocity({x=(vel.x * -1.5), y=6, z=(vel.z * -1.5)}) --"chaos knockback" effect (Temporary until I understand how to implement knockback for a projectile)
+	end,
+
+	hit_mob = function(self, mob)
+		if mob ~= self then --due to low power of attack, spider can shoot itself while chasing a target
+			mob:punch(self.object, 1.0, {
+				full_punch_interval = 1.0,
+				damage_groups = {fleshy = self._damage},
+			}, nil)
+
+			if ((mob ~= "mobs_mc:cave_spider") and (mob ~= "mobs_mc:spider")) then --spider's don't have automatic immunity to poison yet so this is a stop gap solution
+				mcl_potions.poison_func(mob, 0.5, 8) --modified cuz MC rate is an unessesarily bad fraction
+			end
+			local vel = mob:get_velocity()
+			mob:add_velocity({x=(-1 * vel.z), y=6, z=(-1 * vel.x)}) --"chaos knockback" effect (Temporary until I understand how to implement knockback for a projectile)
+		end
+	end,
+})
+
+--[[ Cave spider (Previous code)
 local cave_spider = table.copy(spider)
 cave_spider.description = S("Cave Spider")
 cave_spider.textures = { {"mobs_mc_cave_spider.png^(mobs_mc_spider_eyes.png^[makealpha:0,0,0)"} }
@@ -91,7 +206,7 @@ cave_spider.walk_velocity = 1.3
 cave_spider.run_velocity = 3.2
 cave_spider.sounds = table.copy(spider.sounds)
 cave_spider.sounds.base_pitch = 1.25
-mobs:register_mob("mobs_mc:cave_spider", cave_spider)
+mobs:register_mob("mobs_mc:cave_spider", cave_spider)--]]
 
 
 mobs:spawn_specific(

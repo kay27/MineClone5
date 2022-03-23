@@ -32,7 +32,7 @@ minetest.register_node("mcl_mushroom:warped_fungus", {
 	sunlight_propagates = true,
 	paramtype = "light",
 	walkable = false,
-	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1},
+	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, compostability=65},
 
 	light_source = 1,
 	selection_box = {
@@ -67,7 +67,7 @@ minetest.register_node("mcl_mushroom:twisting_vines", {
 	walkable = false,
 	climbable = true,
 	buildable_to = true,
-	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1},
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=50},
 	selection_box = {
 		type = "fixed",
 		fixed = { -3/16, -0.5, -3/16, 3/16, 0.5, 3/16 },
@@ -108,7 +108,7 @@ minetest.register_node("mcl_mushroom:nether_sprouts", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = true,
-	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1},
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=50},
 	selection_box = {
 		type = "fixed",
 		fixed = { -4/16, -0.5, -4/16, 4/16, 0, 4/16 },
@@ -130,7 +130,7 @@ minetest.register_node("mcl_mushroom:warped_roots", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = true,
-	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1},
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=65},
 	selection_box = {
 		type = "fixed",
 		fixed = { -6/16, -0.5, -6/16, 6/16, -4/16, 6/16 },
@@ -144,7 +144,7 @@ minetest.register_node("mcl_mushroom:warped_roots", {
 minetest.register_node("mcl_mushroom:warped_wart_block", {
   description = S("Warped Wart Block"),
   tiles = {"warped_wart_block.png"},
-  groups = {handy=1,hoe=7,swordy=1, deco_block=1, },
+  groups = {handy=1,hoe=7,swordy=1, compostability=85, deco_block=1, },
   stack_max = 64,
   _mcl_hardness = 2,
 })
@@ -152,7 +152,7 @@ minetest.register_node("mcl_mushroom:warped_wart_block", {
 minetest.register_node("mcl_mushroom:shroomlight", {
   description = S("Shroomlight"),
   tiles = {"shroomlight.png"},
-  groups = {handy=1,hoe=7,swordy=1, leaves=1, deco_block=1, },
+  groups = {handy=1,hoe=7,swordy=1, leaves=1, deco_block=1, compostability=65, },
   stack_max = 64,
   _mcl_hardness = 2,
   -- this is 15 in Minecraft
@@ -305,7 +305,7 @@ minetest.register_node("mcl_mushroom:crimson_fungus", {
 	sunlight_propagates = true,
 	paramtype = "light",
 	walkable = false,
-	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1},
+	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1, compostability=65},
 
 	light_source = 1,
 	selection_box = {
@@ -339,7 +339,7 @@ minetest.register_node("mcl_mushroom:crimson_roots", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = true,
-	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1},
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=65},
 	selection_box = {
 		type = "fixed",
 		fixed = { -6/16, -0.5, -6/16, 6/16, -4/16, 6/16 },
@@ -470,8 +470,8 @@ minetest.register_abm({
 })
 
 function generate_warped_tree(pos)
-  breakgrow = false
-  breakgrow2 = false
+	local breakgrow = false
+	local breakgrow2 = false
   -- Baumgenerator
   -- erste und zweite Etage
   	for x = pos.x - 2,pos.x + 2 do
@@ -547,8 +547,8 @@ function generate_warped_tree(pos)
 end
 
 function generate_crimson_tree(pos)
-  breakgrow = false
-  breakgrow2 = false
+	local breakgrow = false
+	local breakgrow2 = false
   -- Baumgenerator
   -- erste und zweite Etage
   	for x = pos.x - 2,pos.x + 2 do
