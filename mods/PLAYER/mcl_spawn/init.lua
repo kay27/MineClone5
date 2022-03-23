@@ -460,7 +460,6 @@ function mcl_spawn.get_player_spawn_pos(player)
                     end
                     return result;
                  end
-                minetest.log(player:get_meta():get_string("mcl_beds:spawn"))
                 s = split(player:get_meta():get_string("mcl_beds:spawn"), ",")
                 x = nil
                 y = nil
