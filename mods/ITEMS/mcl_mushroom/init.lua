@@ -472,7 +472,7 @@ function generate_warped_tree(pos)
 	local breakgrow = false
 	local breakgrow2 = false
 	-- Tree generator
-	-- first and second floor
+	-- first and second layer
   	for x = pos.x - 2,pos.x + 2 do
         for y = pos.y + 3, pos.y + 4 do
             for z = pos.z - 2, pos.z + 2 do
@@ -483,7 +483,7 @@ function generate_warped_tree(pos)
 		end
     end
 
-  	-- third and fourth floors
+  	-- third and fourth layers
   	for x = pos.x - 1,pos.x + 1 do
   	    for y = pos.y + 5, pos.y + 6 do
 			for z = pos.z - 1, pos.z + 1 do
@@ -494,7 +494,7 @@ function generate_warped_tree(pos)
   	    end
   	end
 
- 	-- fifth floor
+ 	-- fifth layer
 	if not (minetest.get_node({x = pos.x, y = pos.y + 7, z = pos.z}).name == "air") then 
 		breakgrow = true 
 	end
@@ -513,7 +513,7 @@ function generate_warped_tree(pos)
 	end
 	if breakgrow == false then
 		-- Warts
-		-- first and second floor
+		-- first and second layer
 		for x = pos.x - 2,pos.x + 2 do
 			for y = pos.y + 3, pos.y + 4 do
 				for z = pos.z - 2, pos.z + 2 do
@@ -522,7 +522,7 @@ function generate_warped_tree(pos)
 			end
 		end
 
-		-- third and fourth floors
+		-- third and fourth layers
 		for x = pos.x - 1,pos.x + 1 do
 			for y = pos.y + 5, pos.y + 6 do
 				for z = pos.z - 1, pos.z + 1 do
@@ -531,7 +531,7 @@ function generate_warped_tree(pos)
 			end
 		end
 
-		-- fifth floor
+		-- fifth layer
 		minetest.set_node({x = pos.x, y = pos.y + 7, z = pos.z}, { name = "mcl_mushroom:warped_wart_block" })
 
 		-- Fungal
@@ -563,7 +563,7 @@ function generate_crimson_tree(pos)
 	local breakgrow = false
 	local breakgrow2 = false
 	-- Tree generator
-	-- first and second floor
+	-- first and second layer
   	for x = pos.x - 2,pos.x + 2 do
         for y = pos.y + 3, pos.y + 4 do
         	for z = pos.z - 2, pos.z + 2 do
@@ -574,7 +574,7 @@ function generate_crimson_tree(pos)
 		end
     end
 
-  	-- third and fourth floors
+  	-- third and fourth layers
   	for x = pos.x - 1,pos.x + 1 do
   	    for y = pos.y + 5, pos.y + 6 do
   	        for z = pos.z - 1, pos.z + 1 do
@@ -585,7 +585,7 @@ function generate_crimson_tree(pos)
   	    end
   	end
 
- 	-- fifth floor
+ 	-- fifth layer
 	if not (minetest.get_node({x = pos.x, y = pos.y + 7, z = pos.z}).name == "air") then 
 		breakgrow = true
 	end
@@ -604,7 +604,7 @@ function generate_crimson_tree(pos)
 	end
 	if breakgrow == false then
 		-- Warts
-		-- first and second floor
+		-- first and second layer
 		for x = pos.x - 2,pos.x + 2 do
 			for y = pos.y + 3, pos.y + 4 do
 				for z = pos.z - 2, pos.z + 2 do
@@ -613,7 +613,7 @@ function generate_crimson_tree(pos)
 			end
 		end
 
-		-- third and fourth floors
+		-- third and fourth layers
 		for x = pos.x - 1,pos.x + 1 do
 			for y = pos.y + 5, pos.y + 6 do
 				for z = pos.z - 1, pos.z + 1 do
@@ -622,7 +622,7 @@ function generate_crimson_tree(pos)
 			end
 		end
 
-		-- fifth floor
+		-- fifth layer
 		minetest.set_node({x = pos.x, y = pos.y + 7, z = pos.z}, { name = "mcl_nether:nether_wart_block" })
 
 		-- Fungal
