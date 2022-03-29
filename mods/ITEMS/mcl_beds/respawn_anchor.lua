@@ -5,7 +5,7 @@
 
 
 minetest.register_node("mcl_beds:respawn_anchor",{
-    description="respawn anchor",
+    description="Respawn Anchor",
     tiles = {
 		"respawn_anchor_top_off.png",
 		"respawn_anchor_bottom.png",
@@ -36,7 +36,7 @@ minetest.register_node("mcl_beds:respawn_anchor",{
     _mcl_hardness = 22.5
 })
 minetest.register_node("mcl_beds:respawn_anchor_charged_1",{
-    description="respawn anchor",
+    description="Respawn Anchor",
     tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -70,7 +70,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_1",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_2",{
-    description="respawn anchor",
+    description="Respawn Anchor",
     tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -104,7 +104,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_2",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_3",{
-    description="respawn anchor",
+    description="Respawn Anchor",
     tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -138,7 +138,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_3",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_4",{
-    description="respawn anchor",
+    description="Respawn Anchor",
     tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -160,6 +160,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_4",{
             mcl_explosions.explode(pos, 5, {drop_chance = 0, fire = true})
         else
             mcl_spawn.set_spawn_pos(player, pos, nil)
+            awards.unlock(player:get_player_name(), "mcl:notQuiteNineLives")
         end
     end,
     groups = {pickaxey=1, material_stone=1, not_in_creative_inventory=1},
