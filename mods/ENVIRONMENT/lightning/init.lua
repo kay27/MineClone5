@@ -238,7 +238,7 @@ after(5, function(dtime)
 end)
 
 minetest.register_chatcommand("lightning", {
-	params = "[<X> <Y> <Z>] | <player name> | <none>",
+	params = "[<X> <Y> <Z> | <player name>]",
 	description = S("Let lightning strike at the specified position or player. No parameter will strike yourself."),
 	privs = { maphack = true },
 	func = function(name, param)
