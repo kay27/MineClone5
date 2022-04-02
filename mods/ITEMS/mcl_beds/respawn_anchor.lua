@@ -25,10 +25,11 @@ minetest.register_node("mcl_beds:respawn_anchor",{
 	on_rightclick = function(pos, node, player, itemstack)
 		if itemstack.get_name(itemstack) == "mcl_nether:glowstone" then
 			minetest.set_node(pos, {name="mcl_beds:respawn_anchor_charged_1"})
-		itemstack:take_item()
-			else
+			itemstack:take_item()
+		else
 			if pos.y < -29077 or pos.y > -28933 then
-			mcl_explosions.explode(pos, 5, {drop_chance = 0, fire = true})
+				mcl_explosions.explode(pos, 5, {drop_chance = 0, fire = true})
+			end
 		end
 	end,
 	groups = {pickaxey=1, material_stone=1},
