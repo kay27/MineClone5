@@ -296,5 +296,5 @@ minetest.LIGHT_MAX+1,
 mobs_mc.spawn_height.nether_min, 
 mobs_mc.spawn_height.nether_max)
 -- spawn eggs
-mobs:register_egg("extra_mobs:piglin", S("piglin"), "extra_mobs_spawn_icon_piglin.png", 0)
-mobs:register_egg("extra_mobs:piglin_brute", S("piglin Brute"), "extra_mobs_spawn_icon_piglin.png", 0)
+mobs:register_egg("extra_mobs:piglin", S("Piglin"), "extra_mobs_spawn_icon_piglin.png", 0)
+mobs:register_egg("extra_mobs:piglin_brute", S("Piglin Brute"), "extra_mobs_spawn_icon_piglin.png", 0)

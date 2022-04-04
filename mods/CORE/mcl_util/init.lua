@@ -417,6 +417,7 @@ function mcl_util.deal_damage(target, damage, mcl_reason)
 			-- target:punch(puncher, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, vector.direction(puncher:get_pos(), target:get_pos()), damage)
 			if luaentity.health > 0 then
 				luaentity.health = luaentity.health - damage
+				luaentity.pause_timer = 0.4
 			end
 			return
 		end
