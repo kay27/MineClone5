@@ -101,6 +101,18 @@ awards.register_achievement("mcl:bookcase", {
 	}
 })
 
+awards.register_achievement("mcl:buildIronPickaxe", {
+	title = S("Isn't It Iron Pick"),
+	-- TODO: This achievement should support all non-wood pickaxes
+	description = S("Craft a iron pickaxe using sticks and iron."),
+	icon = "default_tool_steelpick.png",
+	trigger = {
+		type = "craft",
+		item = "mcl_tools:pick_iron",
+		target = 1
+	}
+})
+
 -- Item pickup achievements: These are awarded when picking up a certain item.
 -- The achivements are manually given in the mod mcl_item_entity.
 awards.register_achievement("mcl:diamonds", {
@@ -123,6 +135,24 @@ awards.register_achievement("mcl:mineWood", {
 	title = S("Getting Wood"),
 	description = S("Pick up a wood item from the ground.\nHint: Punch a tree trunk until it pops out as an item."),
 	icon = "default_tree.png",
+})
+
+awards.register_achievement("mcl:whosCuttingOnions", {
+	title = S("Who is Cutting Onions?"),
+	description = S("Pick up a crying obsidian from the floor."),
+	icon = "default_obsidian.png^mcl_core_crying_obsidian.png",
+})
+
+awards.register_achievement("mcl:hiddenInTheDepths", {
+	title = S("Hidden in the Depths"),
+	description = S("Pick up an Ancient Debris from the floor."),
+	icon = "mcl_nether_ancient_debris_side.png",
+})
+
+awards.register_achievement("mcl:notQuiteNineLives", {
+	title = S('Not Quite "Nine" Lives'),
+	description = S("Charge a Respawn Anchor to the maximum."),
+	icon = "respawn_anchor_side4.png",
 })
 
 -- Smelting achivements: These are awarded when picking up an item from a furnace
@@ -161,6 +191,12 @@ awards.register_achievement("mcl:buildNetherPortal", {
 	title = S("Into the Nether"),
 	description = S("Use obsidian and a fire starter to construct a Nether portal."),
 	icon = "default_obsidian.png",
+})
+
+awards.register_achievement("mcl:enterEndPortal", {
+	title = S("The End?"),
+	description = S("Or the beginning?\nHint: Enter an end portal."),
+	icon = "mcl_end_end_stone.png",
 })
 
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)
