@@ -729,8 +729,8 @@ mcl_structures.register_structure({name = "nether_portal", place_function = mcl_
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {PORTAL},
-	interval = 0.8,
-	chance = 3,
+	interval = 1,
+	chance = 2,
 	action = function(pos, node)
 		-- Don't use call stack!
 		local upper_node_name = get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
@@ -811,6 +811,7 @@ minetest.register_abm({
 				})
 			end
 		end
+		-- TODO: Move to playerinfo/playerplus/mob api
 		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and prevent_portal_chatter(obj) then
