@@ -62,6 +62,103 @@ mobs.mob_staticdata = function(self)
 	return minetest.serialize(tmp)
 end
 
+mobs.armor_setup = function(self)
+	local armor = self._armor
+	if not armor then
+		armor = {}
+		-- Source: https://minecraft.fandom.com/wiki/Zombie
+		local materials = {
+			{name = "leather", chance = 0.3706},
+			{name = "gold", chance = 0.4873},
+			{name = "chain", chance = 0.129},
+			{name = "iron", chance = 0.0127},
+			{name = "diamond", chance = 0.0004}
+		}
+		local types = {
+			{name = "helmet", chance = 0.15},
+			--{name = "helmet", chance = 1},
+			{name = "chestplate", chance = 0.75},
+			{name = "leggings", chance = 0.5625},
+			{name = "boots", chance = 0.4219}
+		}
+			
+		local material
+		if type(self._spawn_with_armor) == "string" then
+			material = self._spawn_with_armor
+		else
+			local chance = 0
+			for i, m in pairs(materials) do
+				chance = chance + m.chance
+				if math.random() <= chance then
+					material = m.name
+					break
+				end
+			end
+		end
+		for i, t in pairs(types) do
+			if math.random() <= t.chance then
+				armor[t.name] = material
+			else
+				break
+			end
+		end
+		self._armor = armor
+	end
+		
+	local t = ""
+	local first_image = true
+	for atype, material in pairs(armor) do
+		if not first_image then
+			t = t .. "^"
+		end
+		t = t .. "mcl_armor_" .. atype .. "_" .. material .. ".png"
+		first_image = false
+	end
+	if t == "" then
+		t = "mobs_mc_empty.png"
+	end
+		
+	-- Configure damage groups based on armor
+	-- Source: https://minecraft.fandom.com/wiki/Armor#Armor_points
+	local points = 2
+	for atype, material in pairs(self._armor) do
+		local item_name = "mcl_armor:" .. atype .. "_" .. material
+		points = points + minetest.get_item_group(item_name, "mcl_armor_points")
+	end
+	local armor_strength = 100 - 4 * points * 0.8 -- We should realy be using the full damage calculation
+	local armor_groups = self.object:get_armor_groups()
+	armor_groups.undead = armor_strength
+	armor_groups.fleshy = armor_strength
+	self.object:set_armor_groups(armor_groups)
+		
+	local props = self.object:get_properties()
+	props.textures[1] = t
+	self.object:set_properties(props)
+	minetest.chat_send_all(dump(self._armor))
+	
+	-- Rare chance of dropping armor on death
+	for atype, material in pairs(self._armor) do
+		local wear = math.random(1, 65535)
+		local item = "mcl_armor:" .. atype .. "_" .. material .. " 1 " .. wear
+		self.drops = table.copy(self.drops)
+		table.insert(self.drops, {
+			name = item,
+			chance = 1/0.085, -- 8.5%
+			min = 1,
+			max = 1,
+			looting = "common",
+			looting_factor = 0.01 / 3,
+		})
+	end
+	--[[for atype, material in pairs(self._armor) do
+		if math.random() <= 0.085 then
+			local wear = math.random(1, 65535)
+			local item = "mcl_armor:" .. atype .. "_" .. material .. " 1 " .. wear
+			minetest.add_item(pos, item)
+		end
+	end]]
+end
+
 
 -- activate mob and reload settings
 mobs.mob_activate = function(self, staticdata, def, dtime)
@@ -224,6 +321,9 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 
 	--update_tag(self)
 	--mobs.set_animation(self, "stand")
+	if self._spawn_with_armor then
+		mobs.armor_setup(self)
+	end	
 
 	-- run on_spawn function if found
 	if self.on_spawn and not self.on_spawn_run then

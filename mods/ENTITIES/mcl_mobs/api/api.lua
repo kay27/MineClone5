@@ -375,6 +375,7 @@ function mobs:register_mob(name, def)
 		--moves the wrong way
 		swap_y_with_x = def.swap_y_with_x or false,
 		reverse_head_yaw = def.reverse_head_yaw or false,
+		_spawn_with_armor = def.spawn_with_armor,
 
 		--END HEAD CODE VARIABLES
 
