@@ -9,7 +9,5 @@ Inventory=
 Uses fuel to smelt or cook items=
 Blast Furnace=
 Blast Furnaces cook or smelt several items, using a furnace fuel, into something else, but faster than a normal furnace.=
-Use the recipe book to see what you can smelt, what you can use as fuel and how long it will burn.=
 Smoker=
 Smokers cook or smelt several items, using a furnace fuel, into something else, but faster than a normal furnace.=
-Use the recipe book to see what you can smelt, what you can use as fuel and how long it will burn.=
