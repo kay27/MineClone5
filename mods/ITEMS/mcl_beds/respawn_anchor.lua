@@ -2,10 +2,11 @@
 
 --Nether ends at y -29077
 --Nether roof at y -28933
-
+local S = minetest.get_translator(minetest.get_current_modname())
+--local mod_doc = minetest.get_modpath("doc") -> maybe add documentation ?
 
 minetest.register_node("mcl_beds:respawn_anchor",{
-	description="Respawn Anchor",
+	description=S("Respawn Anchor"),
 	tiles = {
 		"respawn_anchor_top_off.png",
 		"respawn_anchor_bottom.png",
@@ -36,7 +37,7 @@ minetest.register_node("mcl_beds:respawn_anchor",{
 	_mcl_hardness = 22.5
 })
 minetest.register_node("mcl_beds:respawn_anchor_charged_1",{
-	description="Respawn Anchor",
+	description=S("Respawn Anchor"),
 	tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -104,7 +105,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_2",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_3",{
-	description="Respawn Anchor",
+	description=S("Respawn Anchor")
 	tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -138,7 +139,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_3",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_4",{
-	description="Respawn Anchor",
+	description=S("Respawn Anchor"),
 	tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
