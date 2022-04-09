@@ -284,3 +284,7 @@ Slows down movement=
 2×2 saplings @= large tree=
 Grows on sand or dirt next to water=
 Stackable=
+Moss=
+Moss Carpet=
+A moss block is a natural block that can be spread to some other blocks by using bone meal.=
+Moss Carpets are a thin decorative variant of the moss block.=

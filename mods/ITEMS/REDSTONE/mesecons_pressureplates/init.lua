@@ -164,6 +164,8 @@ local woods = {
 	{ "darkwood", "mcl_core:darkwood", "mcl_core_planks_big_oak.png", S("Dark Oak Pressure Plate" )},
 	{ "sprucewood", "mcl_core:sprucewood", "mcl_core_planks_spruce.png", S("Spruce Pressure Plate") },
 	{ "junglewood", "mcl_core:junglewood", "default_junglewood.png", S("Jungle Pressure Plate") },
+	{ "warped_hyphae_wood", "mcl_mushrooom:warped_hyphae_wood", "warped_hyphae_wood.png", S("Warped Hyphae Pressure Plate")},
+	{ "crimson_hyphae_wood", "mcl_mushrooom:crimson_hyphae_wood", "crimson_hyphae_wood.png", S("Crimson Hyphae Pressure Plate")},
 }
 
 for w=1, #woods do
@@ -202,6 +204,19 @@ mesecon.register_pressure_plate(
 	S("A stone pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else."))
 
 mesecon.register_pressure_plate(
+	"mesecons_pressureplates:pressure_plate_polished_blackstone",
+	S("Polished Blackstone Pressure Plate"),
+	{"mcl_blackstone_polished.png"},
+	{"mcl_blackstone_polished.png"},
+	"default_stone.png",
+	nil,
+	{{"mcl_blackstone:blackstone_polished", "mcl_blackstone:blackstone_polished"}},
+	mcl_sounds.node_sound_stone_defaults(),
+	{pickaxey=1, material_stone=1},
+	{ player = true, mob = true },
+	S("A polished blackstone pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else."))
+
+mesecon.register_pressure_plate(
 	"mesecons_pressureplates:pressure_plate_gold",
 	S("Light-Weighted Pressure Plate"),
 	{"default_gold_block.png"},
@@ -211,5 +226,18 @@ mesecon.register_pressure_plate(
 	{{"mcl_core:gold_ingot", "mcl_core:gold_ingot"}},
 	mcl_sounds.node_sound_metal_defaults(),
 	{pickaxey=1},
-	{ player = true, mob = true },
-	S("A light-weighted pressure plate is a redstone component which supplies its surrounding blocks with redstone power while a player or mob stands on top of it. It is not triggered by anything else."))
+	nil,
+	S("A light-weighted pressure plate is a redstone component which supplies its surrounding blocks with redstone power while any movable object (including dropped items, players and mobs) rests on top of it."))
+
+mesecon.register_pressure_plate(
+	"mesecons_pressureplates:pressure_plate_iron",
+	S("Heavy-Weighted Pressure Plate"),
+	{"default_steel_block.png"},
+	{"default_steel_block.png"},
+	"default_steel_block.png",
+	nil,
+	{{"mcl_core:iron_ingot", "mcl_core:iron_ingot"}},
+	mcl_sounds.node_sound_metal_defaults(),
+	{pickaxey=1},
+	nil,
+	S("A heavy-weighted pressure plate is a redstone component which supplies its surrounding blocks with redstone power while any movable object (including dropped items, players and mobs) rests on top of it."))
