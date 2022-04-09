@@ -206,7 +206,7 @@ mcl_compass.stereotype = "mcl_compass:"..tostring(stereotype_frame)
 
 
 minetest.register_node("mcl_compass:lodestone",{
-	description="Lodestone",
+	description=S("Lodestone"),
 	on_rightclick = function(pos, node, player, itemstack)
 		if itemstack.get_name(itemstack).match(itemstack.get_name(itemstack),"mcl_compass:") then
 			if itemstack.get_name(itemstack) ~= "mcl_compass:lodestone" then
