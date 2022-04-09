@@ -1,4 +1,4 @@
-local S = minetest.get_translator("mcl_lanterns")
+local S = minetest.get_translator(minetest.get_current_modname())
 
 mcl_lanterns.register_lantern("lantern", {
 	description = S("Lantern"),
