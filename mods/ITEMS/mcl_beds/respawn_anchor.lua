@@ -71,7 +71,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_1",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_2",{
-	description="Respawn Anchor",
+	description=S("Respawn Anchor"),
 	tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
@@ -105,7 +105,7 @@ minetest.register_node("mcl_beds:respawn_anchor_charged_2",{
 })
 
 minetest.register_node("mcl_beds:respawn_anchor_charged_3",{
-	description=S("Respawn Anchor")
+	description=S("Respawn Anchor"),
 	tiles = {
 		"portal.png",
 		"respawn_anchor_bottom.png",
