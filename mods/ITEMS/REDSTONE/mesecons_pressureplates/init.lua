@@ -164,6 +164,8 @@ local woods = {
 	{ "darkwood", "mcl_core:darkwood", "mcl_core_planks_big_oak.png", S("Dark Oak Pressure Plate" )},
 	{ "sprucewood", "mcl_core:sprucewood", "mcl_core_planks_spruce.png", S("Spruce Pressure Plate") },
 	{ "junglewood", "mcl_core:junglewood", "default_junglewood.png", S("Jungle Pressure Plate") },
+	{ "warped_hyphae_wood", "mcl_mushrooom:warped_hyphae_wood", "warped_hyphae_wood.png", S("Warped Hyphae Pressure Plate")},
+	{ "crimson_hyphae_wood", "mcl_mushrooom:crimson_hyphae_wood", "crimson_hyphae_wood.png", S("Crimson Hyphae Pressure Plate")},
 }
 
 for w=1, #woods do
