@@ -13,8 +13,13 @@ mobs.can_despawn = function(self)
 	if self.tamed or self.bred or self.nametag then return false end
 	local mob_pos = self.object:get_pos()
 	if not mob_pos then return true end
+	local players = minetest_get_connected_players()
+	if #players == 0 then return false end
+	-- If no players, probably this is being called from get_staticdata() at server shutdown time
+	-- Minetest is to buggy (as of 5.5) to delete entities at server shutdown time anyway
+	
 	local distance = 999
-	for _, player in pairs(minetest_get_connected_players()) do
+	for _, player in pairs(players) do
 		if player and player:get_hp() > 0 then
 			local player_pos = player:get_pos()
 			local new_distance = vector_distance(player_pos, mob_pos)
@@ -63,9 +68,8 @@ mobs.mob_staticdata = function(self)
 end
 
 mobs.armor_setup = function(self)
-	local armor = self._armor
-	if not armor then
-		armor = {}
+	if not self._armor_items then
+		local armor = {}
 		-- Source: https://minecraft.fandom.com/wiki/Zombie
 		local materials = {
 			{name = "leather", chance = 0.3706},
@@ -76,12 +80,11 @@ mobs.armor_setup = function(self)
 		}
 		local types = {
 			{name = "helmet", chance = 0.15},
-			--{name = "helmet", chance = 1},
 			{name = "chestplate", chance = 0.75},
-			{name = "leggings", chance = 0.5625},
-			{name = "boots", chance = 0.4219}
+			{name = "leggings", chance = 0.75},
+			{name = "boots", chance = 0.75}
 		}
-			
+		
 		local material
 		if type(self._spawn_with_armor) == "string" then
 			material = self._spawn_with_armor
@@ -95,6 +98,7 @@ mobs.armor_setup = function(self)
 				end
 			end
 		end
+		
 		for i, t in pairs(types) do
 			if math.random() <= t.chance then
 				armor[t.name] = material
@@ -102,61 +106,56 @@ mobs.armor_setup = function(self)
 				break
 			end
 		end
-		self._armor = armor
-	end
 		
-	local t = ""
-	local first_image = true
-	for atype, material in pairs(armor) do
-		if not first_image then
-			t = t .. "^"
+		-- Setup table containing the armor items
+		self._armor_items = {}
+		for atype, material in pairs(armor) do
+			local item = "mcl_armor:" .. atype .. "_" .. material
+			table.insert(self._armor_items, item)
 		end
-		t = t .. "mcl_armor_" .. atype .. "_" .. material .. ".png"
-		first_image = false
-	end
-	if t == "" then
-		t = "mobs_mc_empty.png"
-	end
 		
-	-- Configure damage groups based on armor
-	-- Source: https://minecraft.fandom.com/wiki/Armor#Armor_points
-	local points = 2
-	for atype, material in pairs(self._armor) do
-		local item_name = "mcl_armor:" .. atype .. "_" .. material
-		points = points + minetest.get_item_group(item_name, "mcl_armor_points")
-	end
-	local armor_strength = 100 - 4 * points * 0.8 -- We should realy be using the full damage calculation
-	local armor_groups = self.object:get_armor_groups()
-	armor_groups.undead = armor_strength
-	armor_groups.fleshy = armor_strength
-	self.object:set_armor_groups(armor_groups)
-		
-	local props = self.object:get_properties()
-	props.textures[1] = t
-	self.object:set_properties(props)
-	minetest.chat_send_all(dump(self._armor))
-	
-	-- Rare chance of dropping armor on death
-	for atype, material in pairs(self._armor) do
-		local wear = math.random(1, 65535)
-		local item = "mcl_armor:" .. atype .. "_" .. material .. " 1 " .. wear
-		self.drops = table.copy(self.drops)
-		table.insert(self.drops, {
-			name = item,
-			chance = 1/0.085, -- 8.5%
-			min = 1,
-			max = 1,
-			looting = "common",
-			looting_factor = 0.01 / 3,
-		})
-	end
-	--[[for atype, material in pairs(self._armor) do
-		if math.random() <= 0.085 then
+		-- Setup armor drops
+		for atype, material in pairs(armor) do
 			local wear = math.random(1, 65535)
 			local item = "mcl_armor:" .. atype .. "_" .. material .. " 1 " .. wear
-			minetest.add_item(pos, item)
+			self.drops = table.copy(self.drops)
+			table.insert(self.drops, {
+				name = item,
+				chance = 1/0.085, -- 8.5%
+				min = 1,
+				max = 1,
+				looting = "rare",
+				looting_factor = 0.01 / 3,
+			})
 		end
-	end]]
+		
+		-- Configure textures
+		local t = ""
+		local first_image = true
+		for atype, material in pairs(armor) do
+			if not first_image then
+				t = t .. "^"
+			end
+			t = t .. "mcl_armor_" .. atype .. "_" .. material .. ".png"
+			first_image = false
+		end
+		if t ~= "" then
+			self.base_texture = table.copy(self.base_texture)
+			self.base_texture[1] = t
+		end
+		
+		-- Configure damage groups based on armor
+		-- Source: https://minecraft.fandom.com/wiki/Armor#Armor_points
+		local points = 2
+		for atype, material in pairs(armor) do
+			local item_name = "mcl_armor:" .. atype .. "_" .. material
+			points = points + minetest.get_item_group(item_name, "mcl_armor_points")
+		end
+		local armor_strength = 100 - 4 * points
+		local armor_groups = self.object:get_armor_groups()
+		armor_groups.fleshy = armor_strength
+		self.armor = armor_groups
+	end
 end
 
 
@@ -200,6 +199,11 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 		self.base_size = self.visual_size
 		self.base_colbox = self.collisionbox
 		self.base_selbox = self.selectionbox
+	end
+	
+	-- Setup armor on mobs
+	if self._spawn_with_armor then
+		mobs.armor_setup(self)
 	end
 
 	-- for current mobs that dont have this set
@@ -321,9 +325,6 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 
 	--update_tag(self)
 	--mobs.set_animation(self, "stand")
-	if self._spawn_with_armor then
-		mobs.armor_setup(self)
-	end	
 
 	-- run on_spawn function if found
 	if self.on_spawn and not self.on_spawn_run then

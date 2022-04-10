@@ -207,7 +207,6 @@ local zombie = {
 	spawn_with_armor = true,
 }
 
-
 mobs:register_mob("mobs_mc:zombie", zombie)
 
 -- Baby zombie.
