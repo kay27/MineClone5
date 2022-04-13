@@ -204,6 +204,7 @@ local zombie = {
 	attack_type = "punch",
 	punch_timer_cooloff = 0.5,
 	harmed_by_heal = true,
+	spawn_with_armor = true,
 }
 
 mobs:register_mob("mobs_mc:zombie", zombie)

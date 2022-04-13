@@ -13,8 +13,13 @@ mobs.can_despawn = function(self)
 	if self.tamed or self.bred or self.nametag then return false end
 	local mob_pos = self.object:get_pos()
 	if not mob_pos then return true end
+	local players = minetest_get_connected_players()
+	if #players == 0 then return false end
+	-- If no players, probably this is being called from get_staticdata() at server shutdown time
+	-- Minetest is to buggy (as of 5.5) to delete entities at server shutdown time anyway
+	
 	local distance = 999
-	for _, player in pairs(minetest_get_connected_players()) do
+	for _, player in pairs(players) do
 		if player and player:get_hp() > 0 then
 			local player_pos = player:get_pos()
 			local new_distance = vector_distance(player_pos, mob_pos)
@@ -62,6 +67,102 @@ mobs.mob_staticdata = function(self)
 	return minetest.serialize(tmp)
 end
 
+mobs.armor_setup = function(self)
+	if not self._armor_items then
+		local armor = {}
+		-- Source: https://minecraft.fandom.com/wiki/Zombie
+		local materials = {
+			{name = "leather", chance = 0.3706},
+			{name = "gold", chance = 0.4873},
+			{name = "chain", chance = 0.129},
+			{name = "iron", chance = 0.0127},
+			{name = "diamond", chance = 0.0004}
+		}
+		local types = {
+			{name = "helmet", chance = 0.15},
+			{name = "chestplate", chance = 0.75},
+			{name = "leggings", chance = 0.75},
+			{name = "boots", chance = 0.75}
+		}
+		
+		local material
+		if type(self._spawn_with_armor) == "string" then
+			material = self._spawn_with_armor
+		else
+			local chance = 0
+			for i, m in pairs(materials) do
+				chance = chance + m.chance
+				if math.random() <= chance then
+					material = m.name
+					break
+				end
+			end
+		end
+		
+		for i, t in pairs(types) do
+			if math.random() <= t.chance then
+				armor[t.name] = material
+			else
+				break
+			end
+		end
+		
+		-- Save armor items in lua entity
+		self._armor_items = {}
+		for atype, material in pairs(armor) do
+			local item = "mcl_armor:" .. atype .. "_" .. material
+			self._armor_items[atype] = item
+		end
+		
+		-- Setup armor drops
+		for atype, material in pairs(armor) do
+			local wear = math.random(1, 65535)
+			local item = "mcl_armor:" .. atype .. "_" .. material .. " 1 " .. wear
+			self.drops = table.copy(self.drops)
+			table.insert(self.drops, {
+				name = item,
+				chance = 1/0.085, -- 8.5%
+				min = 1,
+				max = 1,
+				looting = "rare",
+				looting_factor = 0.01 / 3,
+			})
+		end
+		
+		-- Configure textures
+		local t = ""
+		local first_image = true
+		for atype, material in pairs(armor) do
+			if not first_image then
+				t = t .. "^"
+			end
+			t = t .. "mcl_armor_" .. atype .. "_" .. material .. ".png"
+			first_image = false
+		end
+		if t ~= "" then
+			self.base_texture = table.copy(self.base_texture)
+			self.base_texture[1] = t
+		end
+		
+		-- Configure damage groups based on armor
+		-- Source: https://minecraft.fandom.com/wiki/Armor#Armor_points
+		local points = 2
+		for atype, material in pairs(armor) do
+			local item_name = "mcl_armor:" .. atype .. "_" .. material
+			points = points + minetest.get_item_group(item_name, "mcl_armor_points")
+		end
+		local armor_strength = 100 - 4 * points
+		local armor_groups = self.object:get_armor_groups()
+		armor_groups.fleshy = armor_strength
+		self.armor = armor_groups
+		
+		-- Helmet protects mob from sun damage
+		if armor.helmet then
+			self.ignited_by_sunlight = false
+		end
+	end
+end
+
 
 -- activate mob and reload settings
 mobs.mob_activate = function(self, staticdata, def, dtime)
@@ -103,6 +204,11 @@ mobs.mob_activate = function(self, staticdata, def, dtime)
 		self.base_size = self.visual_size
 		self.base_colbox = self.collisionbox
 		self.base_selbox = self.selectionbox
+	end
+	
+	-- Setup armor on mobs
+	if self._spawn_with_armor then
+		mobs.armor_setup(self)
 	end
 
 	-- for current mobs that dont have this set
