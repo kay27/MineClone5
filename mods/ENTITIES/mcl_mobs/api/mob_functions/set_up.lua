@@ -107,11 +107,11 @@ mobs.armor_setup = function(self)
 			end
 		end
 		
-		-- Setup table containing the armor items
+		-- Save armor items in lua entity
 		self._armor_items = {}
 		for atype, material in pairs(armor) do
 			local item = "mcl_armor:" .. atype .. "_" .. material
-			table.insert(self._armor_items, item)
+			self._armor_items[atype] = item
 		end
 		
 		-- Setup armor drops
@@ -155,6 +155,11 @@ mobs.armor_setup = function(self)
 		local armor_groups = self.object:get_armor_groups()
 		armor_groups.fleshy = armor_strength
 		self.armor = armor_groups
+		
+		-- Helmet protects mob from sun damage
+		if armor.helmet then
+			self.ignited_by_sunlight = false
+		end
 	end
 end
 
