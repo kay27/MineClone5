@@ -240,10 +240,10 @@ minetest.register_craft({
 	})
 
 minetest.register_node("mcl_mushroom:stripped_warped_hyphae", {
-		description = description_stripped_trunk,
-		_doc_items_longdesc = longdesc,
+		description = S("Stripped Warped Hyphae"),
+		_doc_items_longdesc = S("The stripped stem of a warped hyphae"),
 		_doc_items_hidden = false,
-		tiles = {tile_stripped_inner, tile_stripped_inner, tile_stripped_bark},
+		tiles = {"stripped_warped_stem_top.png", "stripped_warped_stem_top.png", "stripped_warped_stem_side.png"},
 		paramtype2 = "facedir",
 		on_place = mcl_util.rotate_axis,
 		stack_max = 64,
@@ -255,9 +255,9 @@ minetest.register_node("mcl_mushroom:stripped_warped_hyphae", {
 	})
 
 minetest.register_node("mcl_mushroom:stripped_warped_hyphae_bark", {
-		description = description_stripped_bark,
-		_doc_items_longdesc = longdesc_wood,
-		tiles = {tile_stripped_bark},
+		description =  S("Stripped Warped Hyphae Bark"),
+		_doc_items_longdesc = S("The stripped wood of a warped hyphae"),
+		tiles = {"stripped_warped_stem_side.png"},
 		paramtype2 = "facedir",
 		on_place = mcl_util.rotate_axis,
 		stack_max = 64,
