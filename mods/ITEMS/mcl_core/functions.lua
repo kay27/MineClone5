@@ -54,47 +54,89 @@ minetest.register_abm({
 	end,
 })
 
+
+--
 -- Production of sparks from lava
-minetest.register_abm({
-	label = "Lava produce sparks",
-	nodenames = {"group:lava"},
-	neighbors = {"air"},
-	interval = 1,
-	chance = 100,
-	action = function(pos, node)
-		local above = minetest.get_node(vector.new(pos.x, pos.y + 1, pos.z))
-		if above.name ~= "air" then return end
+--
+
+local LAVA_SPARK_ABM_INTERVAL = 5
+local lava_spark_limit = minetest.settings:get("mcl_core_lava_spark_limit")
+if lava_spark_limit == nil then
+	lava_spark_limit = 10
+else
+	lava_spark_limit = tonumber(lava_spark_limit)
+end
+local lava_spark_chance = 0
+local lava_spark_abm_census = 0
+local lava_spark_census = 0
+
+function mcl_core.lava_spark_set_chance()
+	lava_spark_chance = lava_spark_limit / lava_spark_abm_census
+	minetest.after(LAVA_SPARK_ABM_INTERVAL, mcl_core.lava_spark_set_chance)
+	lava_spark_abm_census = 0
+	lava_spark_census = 0
+end
+
+if lava_spark_limit > 0 then
+	mcl_core.lava_spark_set_chance()
+
+	minetest.register_abm({
+		label = "Lava produce sparks",
+		nodenames = {"group:lava"},
+		neighbors = {"air"},
+		interval = LAVA_SPARK_ABM_INTERVAL,
+		chance = 18,
+		action = function(pos, node)
+			local above = minetest.get_node(vector.new(pos.x, pos.y + 1, pos.z))
+			if above.name ~= "air" then return end
 		
-		local pos_addend = vector.new(
-			(math.random() - 0.5) * 0.8,
-			(math.random() - 0.5) * 0.8,
-			(math.random() - 0.5) * 0.8
-		)
-		local spark_pos = vector.add(pos, pos_addend)
-		local spark = minetest.add_entity(spark_pos, "mcl_core:lava_spark")
-		if not spark then return end
+			lava_spark_abm_census = lava_spark_abm_census + 1
 		
-		local velocity = vector.new(
-			(math.random() - 0.5) * 3,
-			(math.random() + 2) * 2,
-			(math.random() - 0.5) * 3
-		)
-		spark:set_velocity(velocity)
+			if lava_spark_census >= lava_spark_limit then return end
+			if math.random() > lava_spark_chance then return end
 		
-		spark:set_acceleration(vector.new(0, -9, 0))
-		
-		-- Set a random size
-		local size = 0.2 + math.random() * 0.2
-		local props = spark:get_properties()
-		if not props then return end
-		props.visual_size = vector.new(size, size, size)
-		spark:set_properties(props)
-		
-		local luaentity = spark:get_luaentity()
-		if not luaentity then return end
-		luaentity._life_timer = 0.4 + math.random()
-	end
-})
+			lava_spark_census = lava_spark_census + 1
+			minetest.after(math.random() * LAVA_SPARK_ABM_INTERVAL, mcl_core.lava_spark_add, pos)
+		end
+	})
+end
+
+function mcl_core.lava_spark_add(pos)
+	local node = minetest.get_node(pos)
+	if minetest.get_node_group(node.name, "lava") == 0 then return end
+	
+	local above = minetest.get_node(vector.new(pos.x, pos.y + 1, pos.z))
+	if above.name ~= "air" then return end
+	
+	local pos_addend = vector.new(
+		(math.random() - 0.5) * 0.8,
+		(math.random() - 0.5) * 0.8,
+		(math.random() - 0.5) * 0.8
+	)
+	local spark_pos = vector.add(pos, pos_addend)
+	local spark = minetest.add_entity(spark_pos, "mcl_core:lava_spark")
+	if not spark then return end
+	
+	local velocity = vector.new(
+		(math.random() - 0.5) * 3,
+		(math.random() + 2) * 2,
+		(math.random() - 0.5) * 3
+	)
+	spark:set_velocity(velocity)
+	
+	spark:set_acceleration(vector.new(0, -9, 0))
+	
+	-- Set a random size
+	local size = 0.2 + math.random() * 0.2
+	local props = spark:get_properties()
+	if not props then return end
+	props.visual_size = vector.new(size, size, size)
+	spark:set_properties(props)
+	
+	local luaentity = spark:get_luaentity()
+	if not luaentity then return end
+	luaentity._life_timer = 0.4 + math.random()
+end
 
 minetest.register_entity("mcl_core:lava_spark", {
 	physical = true,
@@ -117,7 +159,7 @@ minetest.register_entity("mcl_core:lava_spark", {
 
 		self._smoke_timer = self._smoke_timer - dtime
 		if self._smoke_timer > 0 then return end
-		self._smoke_timer = math.random() * 0.4
+		self._smoke_timer = 0.2 + math.random() * 0.3
 		
 		local pos = self.object:get_pos()
 
