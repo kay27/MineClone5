@@ -178,7 +178,7 @@ minetest.register_node("mcl_mushroom:warped_hyphae", {
 	_mcl_blast_resistance = 2,
 	stack_max = 64,
 	_mcl_hardness = 2,
-	_mcl_stripped_variant = stripped_variant,
+	_mcl_stripped_variant = "mcl_mushroom:stripped_warped_hyphae",
 })
 
 minetest.register_node("mcl_mushroom:warped_nylium", {
@@ -442,7 +442,7 @@ minetest.register_node("mcl_mushroom:crimson_hyphae", {
 	_mcl_blast_resistance = 2,
 	stack_max = 64,
 	_mcl_hardness = 2,
-	_mcl_stripped_variant = stripped_variant,
+	_mcl_stripped_variant = "mcl_mushroom:stripped_crimson_hyphae",
 })
 
 --Stem bark, stripped stem and bark
