@@ -270,8 +270,6 @@ local woods = {
 	{ "spruce_trapdoor", S("Spruce Trapdoor"), "mcl_doors_trapdoor_spruce.png", "mcl_doors_trapdoor_spruce_side.png", "mcl_core:sprucewood" },
 	{ "dark_oak_trapdoor", S("Dark Oak Trapdoor"), "mcl_doors_trapdoor_dark_oak.png", "mcl_doors_trapdoor_dark_oak_side.png", "mcl_core:darkwood" },
 	{ "jungle_trapdoor", S("Jungle Trapdoor"), "mcl_doors_trapdoor_jungle.png", "mcl_doors_trapdoor_jungle_side.png", "mcl_core:junglewood" },
-	{ "crimson_trapdoor", S("Crimson Trapdoor"), "mcl_doors_trapdoor_crimson.png", "mcl_doors_trapdoor_crimson_side.png", "mcl_mushroom:crimson_hyphae_wood" },
-	{ "warped_trapdoor", S("Warped Trapdoor"), "mcl_doors_trapdoor_warped.png", "mcl_doors_trapdoor_warped_side.png", "mcl_mushroom:warped_hyphae_wood" },
 }
 
 for w=1, #woods do
@@ -302,6 +300,43 @@ for w=1, #woods do
 		burntime = 15,
 	})
 end
+
+local woods_nether = {
+	-- id, desc, texture, craftitem
+	{ "crimson_trapdoor", S("Crimson Trapdoor"), "mcl_doors_trapdoor_crimson.png", "mcl_doors_trapdoor_crimson_side.png", "mcl_mushroom:crimson_hyphae_wood" },
+	{ "warped_trapdoor", S("Warped Trapdoor"), "mcl_doors_trapdoor_warped.png", "mcl_doors_trapdoor_warped_side.png", "mcl_mushroom:warped_hyphae_wood" },
+}
+
+for w=1, #woods_nether do
+	mcl_doors:register_trapdoor("mcl_doors:"..woods[w][1], {
+		description = woods[w][2],
+		_doc_items_longdesc = S("Wooden trapdoors are horizontal barriers which can be opened and closed by hand or a redstone signal. They occupy the upper or lower part of a block, depending on how they have been placed. When open, they can be climbed like a ladder."),
+		_doc_items_usagehelp = S("To open or close the trapdoor, rightclick it or send a redstone signal to it."),
+		tile_front = woods[w][3],
+		tile_side = woods[w][4],
+		wield_image = woods[w][3],
+		groups = {handy=1,axey=1, mesecon_effector_on=1, material_wood=1},
+		_mcl_hardness = 3,
+		_mcl_blast_resistance = 3,
+		sounds = mcl_sounds.node_sound_wood_defaults(),
+	})
+
+	minetest.register_craft({
+		output = "mcl_doors:"..woods[w][1].." 2",
+		recipe = {
+			{woods[w][5], woods[w][5], woods[w][5]},
+			{woods[w][5], woods[w][5], woods[w][5]},
+		}
+	})
+
+	minetest.register_craft({
+		type = "fuel",
+		recipe = "mcl_doors:"..woods[w][1],
+		burntime = 15,
+	})
+end
+
+--Iron Trapdoor--
 
 mcl_doors:register_trapdoor("mcl_doors:iron_trapdoor", {
 	description = S("Iron Trapdoor"),
