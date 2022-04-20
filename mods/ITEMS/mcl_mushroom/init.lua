@@ -19,6 +19,7 @@ end
 
 -- Warped fungus
 -- Crimson fungus
+-- Nether woods
 -- Functions and Biomes
 
 -- WARNING: The most comments are in german. Please Translate with an translater if you don't speak good german
@@ -158,29 +159,6 @@ minetest.register_node("mcl_mushroom:shroomlight", {
 	light_source = 14,
 })
 
-minetest.register_node("mcl_mushroom:warped_hyphae", {
-	description = S("Warped Hyphae"),
-	_doc_items_longdesc = S("The stem of a warped hyphae"),
-	_doc_items_hidden = false,
-	tiles = {
-		"warped_hyphae.png",
-        "warped_hyphae.png",
-        "warped_hyphae_side.png",
-        "warped_hyphae_side.png",
-        "warped_hyphae_side.png",
-        "warped_hyphae_side.png",
-    },
-	paramtype2 = "facedir",
-	on_place = mcl_util.rotate_axis,
-	groups = {handy=1,axey=1, tree=1, building_block=1, material_wood=1},
-	sounds = mcl_sounds.node_sound_wood_defaults(),
-	on_rotate = on_rotate,
-	_mcl_blast_resistance = 2,
-	stack_max = 64,
-	_mcl_hardness = 2,
-	_mcl_stripped_variant = "mcl_mushroom:stripped_warped_hyphae",
-})
-
 minetest.register_node("mcl_mushroom:warped_nylium", {
 	description = S("Warped Nylium"),
 	tiles = {
@@ -220,6 +198,149 @@ minetest.register_node("mcl_mushroom:warped_checknode", {
 	drop = "mcl_nether:netherrack"
 })
 
+
+
+minetest.register_craft({
+	output = "mcl_mushroom:warped_nylium 2",
+	recipe = {
+		{"mcl_mushroom:warped_wart_block"},
+		{"mcl_nether:netherrack"},
+	}
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:warped_fungus",
+	nodenames = {"mcl_mushroom:warped_fungus"},
+	interval = 11,
+	chance = 128,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+    if nodepos.name == "mcl_mushroom:warped_nylium" or nodepos.name == "mcl_nether:netherrack" then
+		if pos.y < -28400 then
+			generate_warped_tree(pos)
+		end
+    end
+	end
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:warped_checknode",
+	nodenames = {"mcl_mushroom:warped_checknode"},
+	interval = 0.1,
+	chance = 1,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+    if nodepos.name == "air" then
+		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:warped_nylium" })
+		local randomg = math.random(1, 400)
+		if randomg <= 5 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_fungus" })
+		elseif randomg > 5 and randomg <= 15 then
+			local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
+			generate_warped_tree(pos1)
+		elseif randomg > 15 and randomg <= 45 then
+			grow_twisting_vines({ x = pos.x, y = pos.y, z = pos.z } ,math.random(1, 4))
+		elseif randomg > 45 and randomg <= 50 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
+		elseif randomg > 50 and randomg <= 150 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:nether_sprouts" })
+		elseif randomg > 150 and randomg <= 250 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_roots" })
+		end
+    else
+		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
+    end
+	end
+})
+
+
+--[[ FIXME mobs:spawn({
+	name = "mobs_mc:enderman",
+	nodes = {"mcl_mushroom:warped_nylium"},
+	--min_light = 14,
+	interval = 5,
+	chance = 10,
+	--min_height = 3,
+	--max_height = 200,
+})]]
+
+
+minetest.register_node("mcl_mushroom:crimson_fungus", {
+	description = S("Crimson Fungus Mushroom"),
+	drawtype = "plantlike",
+	tiles = { "farming_crimson_fungus.png" },
+	inventory_image = "farming_crimson_fungus.png",
+	wield_image = "farming_crimson_fungus.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	walkable = false,
+	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1, compostability=65},
+	light_source = 1,
+	selection_box = {
+		type = "fixed",
+		fixed = { -3/16, -0.5, -3/16, 3/16, -2/16, 3/16 },
+	},
+	node_placement_prediction = "",
+	on_rightclick = function(pos, node, pointed_thing, itemstack)
+    if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
+		itemstack:take_item()
+		local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+		if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
+			local random = math.random(1, 5)
+			if random == 1 then
+				generate_crimson_tree(pos)
+			end
+		end
+    end
+	end,
+	_mcl_blast_resistance = 0,
+	stack_max = 64,
+})
+
+minetest.register_node("mcl_mushroom:crimson_roots", {
+	description = S("Crimson Roots"),
+	drawtype = "plantlike",
+	tiles = { "crimson_roots.png" },
+	inventory_image = "crimson_roots.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	walkable = false,
+	buildable_to = true,
+	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=65},
+	selection_box = {
+		type = "fixed",
+		fixed = { -6/16, -0.5, -6/16, 6/16, -4/16, 6/16 },
+	},
+	node_placement_prediction = "",
+	_mcl_silk_touch_drop = false,
+	_mcl_blast_resistance = 0,
+	stack_max = 64,
+})
+
+---Nether Woods
+
+minetest.register_node("mcl_mushroom:warped_hyphae", {
+	description = S("Warped Hyphae"),
+	_doc_items_longdesc = S("The stem of a warped hyphae"),
+	_doc_items_hidden = false,
+	tiles = {
+		"warped_hyphae.png",
+        "warped_hyphae.png",
+        "warped_hyphae_side.png",
+        "warped_hyphae_side.png",
+        "warped_hyphae_side.png",
+        "warped_hyphae_side.png",
+    },
+	paramtype2 = "facedir",
+	on_place = mcl_util.rotate_axis,
+	groups = {handy=1,axey=1, tree=1, building_block=1, material_wood=1},
+	sounds = mcl_sounds.node_sound_wood_defaults(),
+	on_rotate = on_rotate,
+	_mcl_blast_resistance = 2,
+	stack_max = 64,
+	_mcl_hardness = 2,
+	_mcl_stripped_variant = "mcl_mushroom:stripped_warped_hyphae",
+})
 --Stem bark, stripped stem and bark
 
 minetest.register_node("mcl_mushroom:warped_hyphae_bark", {
@@ -303,124 +424,6 @@ minetest.register_craft({
 	recipe = {
 		{"mcl_mushroom:warped_hyphae"},
 	}
-})
-
-minetest.register_craft({
-	output = "mcl_mushroom:warped_nylium 2",
-	recipe = {
-		{"mcl_mushroom:warped_wart_block"},
-		{"mcl_nether:netherrack"},
-	}
-})
-
-minetest.register_abm({
-	label = "mcl_mushroom:warped_fungus",
-	nodenames = {"mcl_mushroom:warped_fungus"},
-	interval = 11,
-	chance = 128,
-	action = function(pos)
-    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
-    if nodepos.name == "mcl_mushroom:warped_nylium" or nodepos.name == "mcl_nether:netherrack" then
-		if pos.y < -28400 then
-			generate_warped_tree(pos)
-		end
-    end
-	end
-})
-
-minetest.register_abm({
-	label = "mcl_mushroom:warped_checknode",
-	nodenames = {"mcl_mushroom:warped_checknode"},
-	interval = 0.1,
-	chance = 1,
-	action = function(pos)
-    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
-    if nodepos.name == "air" then
-		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:warped_nylium" })
-		local randomg = math.random(1, 400)
-		if randomg <= 5 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_fungus" })
-		elseif randomg > 5 and randomg <= 15 then
-			local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
-			generate_warped_tree(pos1)
-		elseif randomg > 15 and randomg <= 45 then
-			grow_twisting_vines({ x = pos.x, y = pos.y, z = pos.z } ,math.random(1, 4))
-		elseif randomg > 45 and randomg <= 50 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
-		elseif randomg > 50 and randomg <= 150 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:nether_sprouts" })
-		elseif randomg > 150 and randomg <= 250 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_roots" })
-		end
-    else
-		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
-    end
-	end
-})
-
-
---[[ FIXME mobs:spawn({
-	name = "mobs_mc:enderman",
-	nodes = {"mcl_mushroom:warped_nylium"},
-	--min_light = 14,
-	interval = 5,
-	chance = 10,
-	--min_height = 3,
-	--max_height = 200,
-})]]
-
-
-
-minetest.register_node("mcl_mushroom:crimson_fungus", {
-	description = S("Crimson Fungus Mushroom"),
-	drawtype = "plantlike",
-	tiles = { "farming_crimson_fungus.png" },
-	inventory_image = "farming_crimson_fungus.png",
-	wield_image = "farming_crimson_fungus.png",
-	sunlight_propagates = true,
-	paramtype = "light",
-	walkable = false,
-	groups = {dig_immediate=3,mushroom=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,enderman_takable=1,deco_block=1, compostability=65},
-	light_source = 1,
-	selection_box = {
-		type = "fixed",
-		fixed = { -3/16, -0.5, -3/16, 3/16, -2/16, 3/16 },
-	},
-	node_placement_prediction = "",
-	on_rightclick = function(pos, node, pointed_thing, itemstack)
-    if pointed_thing:get_wielded_item():get_name() == "mcl_dye:white" then
-		itemstack:take_item()
-		local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
-		if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
-			local random = math.random(1, 5)
-			if random == 1 then
-				generate_crimson_tree(pos)
-			end
-		end
-    end
-	end,
-	_mcl_blast_resistance = 0,
-	stack_max = 64,
-})
-
-minetest.register_node("mcl_mushroom:crimson_roots", {
-	description = S("Crimson Roots"),
-	drawtype = "plantlike",
-	tiles = { "crimson_roots.png" },
-	inventory_image = "crimson_roots.png",
-	sunlight_propagates = true,
-	paramtype = "light",
-	walkable = false,
-	buildable_to = true,
-	groups = {dig_immediate=3,vines=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,deco_block=1, shearsy = 1, compostability=65},
-	selection_box = {
-		type = "fixed",
-		fixed = { -6/16, -0.5, -6/16, 6/16, -4/16, 6/16 },
-	},
-	node_placement_prediction = "",
-	_mcl_silk_touch_drop = false,
-	_mcl_blast_resistance = 0,
-	stack_max = 64,
 })
 
 minetest.register_node("mcl_mushroom:crimson_hyphae", {
@@ -521,6 +524,32 @@ minetest.register_node("mcl_mushroom:crimson_hyphae_wood", {
 	stack_max = 64,
 	_mcl_hardness = 2,
 })
+
+--Hyphae Stairs and slabs
+
+local barks = {
+	{ "warped", S("Warped Bark Stairs"), S("Warped Bark Slab"), S("Double Warped Bark Slab") },
+	{ "crimson", S("Crimson Bark Stairs"), S("Crimson Oak Bark Slab"), S("Double Crimson Bark Slab") },
+}
+
+for b=1, #barks do
+	local bark = barks[b]
+	local sub = bark[1].."_hyphae_bark"
+	local id = "mcl_mushroom:"..bark[1].."_hyphae"
+	
+	mcl_stairs.register_stair(sub, id,
+			{handy=1,axey=1, bark_stairs=1, material_wood=1},
+			{minetest.registered_nodes[id].tiles[3]},
+			bark[2],
+			mcl_sounds.node_sound_wood_defaults(), 3, 2,
+			"woodlike")
+	mcl_stairs.register_slab(sub, id,
+			{handy=1,axey=1, bark_slab=1, material_wood=1},
+			{minetest.registered_nodes[id].tiles[3]},
+			bark[3],
+			mcl_sounds.node_sound_wood_defaults(), 3, 2,
+			bark[4])
+end
 
 minetest.register_node("mcl_mushroom:crimson_nylium", {
 	description = S("Crimson Nylium"),
@@ -905,28 +934,3 @@ minetest.register_decoration({
     decoration = "mcl_mushroom:crimson_fungus",
 })
 
---Hyphae Stairs and slabs
-
-local barks = {
-	{ "warped", S("Warped Bark Stairs"), S("Warped Bark Slab"), S("Double Warped Bark Slab") },
-	{ "crimson", S("Crimson Bark Stairs"), S("Crimson Oak Bark Slab"), S("Double Crimson Bark Slab") },
-}
-
-for b=1, #barks do
-	local bark = barks[b]
-	local sub = bark[1].."_hyphae_bark"
-	local id = "mcl_mushroom:"..bark[1].."_hyphae"
-	
-	mcl_stairs.register_stair(sub, id,
-			{handy=1,axey=1, bark_stairs=1, material_wood=1},
-			{minetest.registered_nodes[id].tiles[3]},
-			bark[2],
-			mcl_sounds.node_sound_wood_defaults(), 3, 2,
-			"woodlike")
-	mcl_stairs.register_slab(sub, id,
-			{handy=1,axey=1, bark_slab=1, material_wood=1},
-			{minetest.registered_nodes[id].tiles[3]},
-			bark[3],
-			mcl_sounds.node_sound_wood_defaults(), 3, 2,
-			bark[4])
-end
