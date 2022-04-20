@@ -914,11 +914,9 @@ local barks = {
 
 for b=1, #barks do
 	local bark = barks[b]
-	local sub = bark[1].."hyphae_bark"
-	local id = "mcl_mushroom:hyphae"
-	if bark[1] ~= "" then
-		id = "mcl_mushroom:"..bark[1].."hyphae"
-	end
+	local sub = bark[1].."_hyphae_bark"
+	local id = "mcl_mushroom:"..bark[1].."_hyphae"
+	
 	mcl_stairs.register_stair(sub, id,
 			{handy=1,axey=1, bark_stairs=1, material_wood=1},
 			{minetest.registered_nodes[id].tiles[3]},
