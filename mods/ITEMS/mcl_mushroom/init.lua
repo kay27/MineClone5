@@ -246,7 +246,6 @@ minetest.register_craft({
 		}
 	})
 
-mcl_stairs.register_stair_and_slab_simple("warped_hyphae_bark", "mcl_mushroom:warped_hyphae_bark", S("Warped Bark Stair"), S("Warped Bark Slab"), S("Double Warped Bark Slab"), "woodlike")
 
 minetest.register_node("mcl_mushroom:stripped_warped_hyphae", {
 		description = S("Stripped Warped Hyphae"),
@@ -473,7 +472,6 @@ minetest.register_craft({
 		}
 	})
 
-mcl_stairs.register_stair_and_slab_simple("crimson_hyphae_bark", "mcl_mushroom:crimson_hyphae_bark", S("Crimson Bark Stair"), S("Crimson Bark Slab"), S("Double Crimson Bark Slab"), "woodlike")
 
 minetest.register_node("mcl_mushroom:stripped_crimson_hyphae", {
 		description = S("Stripped Crimson Hyphae"),
