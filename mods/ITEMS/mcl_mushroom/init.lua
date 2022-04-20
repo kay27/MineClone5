@@ -904,3 +904,31 @@ minetest.register_decoration({
     y_min = -29065,
     decoration = "mcl_mushroom:crimson_fungus",
 })
+
+--Hyphae Stairs and slabs
+
+local barks = {
+	{ "warped", S("Warped Bark Stairs"), S("Warped Bark Slab"), S("Double Warped Bark Slab") },
+	{ "crimson", S("Crimson Bark Stairs"), S("Crimson Oak Bark Slab"), S("Double Crimson Bark Slab") },
+}
+
+for b=1, #barks do
+	local bark = barks[b]
+	local sub = bark[1].."hyphae_bark"
+	local id = "mcl_mushroom:hyphae"
+	if bark[1] ~= "" then
+		id = "mcl_mushroom:"..bark[1].."hyphae"
+	end
+	mcl_stairs.register_stair(sub, id,
+			{handy=1,axey=1, bark_stairs=1, material_wood=1},
+			{minetest.registered_nodes[id].tiles[3]},
+			bark[2],
+			mcl_sounds.node_sound_wood_defaults(), 3, 2,
+			"woodlike")
+	mcl_stairs.register_slab(sub, id,
+			{handy=1,axey=1, bark_slab=1, material_wood=1},
+			{minetest.registered_nodes[id].tiles[3]},
+			bark[3],
+			mcl_sounds.node_sound_wood_defaults(), 3, 2,
+			bark[4])
+end
