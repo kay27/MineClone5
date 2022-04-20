@@ -17,7 +17,7 @@ local woods = {
 	{"spruce_door",S("Spruce Door"),"mcl_doors_door_spruce.png",{"mcl_doors_door_spruce_lower.png", "mcl_doors_door_spruce_side_lower.png"},{"mcl_doors_door_spruce_upper.png", "mcl_doors_door_spruce_side_upper.png"},"mcl_core:sprucewood"},
 }
 
-for w=1 #woods do
+for w=1, #woods do
 	mcl_doors:register_door("mcl_doors:"..woods[w][1], {
 		description = woods[w][2],
 		_doc_items_longdesc = wood_longdesc,
@@ -56,7 +56,7 @@ local woods_nether = {
 	{"warped_door",S("Warped Door"),"mcl_doors_door_warped.png",{"mcl_doors_door_warped_lower.png", "mcl_doors_door_warped_side_lower.png"},{"mcl_doors_door_warped_upper.png", "mcl_doors_door_warped_side_upper.png"},"mcl_mushroom:warped_hyphae_wood"},
 }
 
-for w=1 #woods_nether do
+for w=1, #woods_nether do
 	mcl_doors:register_door("mcl_doors:"..woods[w][1], {
 		description = woods[w][2],
 		_doc_items_longdesc = wood_longdesc,
