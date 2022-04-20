@@ -24,6 +24,7 @@ end
 
 -- WARNING: The most comments are in german. Please Translate with an translater if you don't speak good german
 
+---Warped fungus
 minetest.register_node("mcl_mushroom:warped_fungus", {
 	description = S("Warped Fungus Mushroom"),
 	drawtype = "plantlike",
@@ -264,7 +265,7 @@ minetest.register_abm({
 	--max_height = 200,
 })]]
 
-
+--- Crimson Fungus
 minetest.register_node("mcl_mushroom:crimson_fungus", {
 	description = S("Crimson Fungus Mushroom"),
 	drawtype = "plantlike",
@@ -316,6 +317,96 @@ minetest.register_node("mcl_mushroom:crimson_roots", {
 	_mcl_blast_resistance = 0,
 	stack_max = 64,
 })
+
+minetest.register_node("mcl_mushroom:crimson_nylium", {
+	description = S("Crimson Nylium"),
+	tiles = {
+		"crimson_nylium.png",
+        "mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png^crimson_nylium_side.png",
+		"mcl_nether_netherrack.png^crimson_nylium_side.png",
+		"mcl_nether_netherrack.png^crimson_nylium_side.png",
+		"mcl_nether_netherrack.png^crimson_nylium_side.png",
+	},
+	groups = {pickaxey=1, building_block=1, material_stone=1},
+	paramtype2 = "facedir",
+	stack_max = 64,
+	_mcl_hardness = 0.4,
+	_mcl_blast_resistance = 0.4,
+	is_ground_content = true,
+	drop = "mcl_nether:netherrack",
+	_mcl_silk_touch_drop = true,
+})
+
+minetest.register_node("mcl_mushroom:crimson_checknode", {
+	description = S("Crimson Checknode - only to check!"),
+	tiles = {
+		"mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png",
+        "mcl_nether_netherrack.png",
+    },
+	groups = {pickaxey=1, building_block=1, material_stone=1, not_in_creative_inventory=1},
+	paramtype2 = "facedir",
+	stack_max = 64,
+	_mcl_hardness = 0.4,
+	_mcl_blast_resistance = 0.4,
+	is_ground_content = true,
+	drop = "mcl_nether:netherrack"
+})
+
+
+minetest.register_craft({
+	output = "mcl_mushroom:crimson_nylium 2",
+	recipe = {
+		{"mcl_nether:nether_wart"},
+		{"mcl_nether:netherrack"},
+	}
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:crimson_fungus",
+	nodenames = {"mcl_mushroom:crimson_fungus"},
+	interval = 11,
+	chance = 128,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+    if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
+		if pos.y < -28400 then
+			generate_crimson_tree(pos)
+		end
+    end
+	end
+})
+
+minetest.register_abm({
+	label = "mcl_mushroom:crimson_checknode",
+	nodenames = {"mcl_mushroom:crimson_checknode"},
+	interval = 0.1,
+	chance = 1,
+	action = function(pos)
+    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+    if nodepos.name == "air" then
+		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:crimson_nylium" })
+		local randomg = math.random(1, 400)
+		if randomg <= 10 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
+		elseif randomg > 10 and randomg <= 25 then
+			local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
+			generate_crimson_tree(pos1)
+		elseif randomg > 25 and randomg <= 30 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_fungus" })
+		elseif randomg > 30 and randomg <= 130 then
+			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_roots" })
+		end
+    else
+		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
+    end
+	end
+})
+
 
 ---Nether Woods
 
@@ -525,6 +616,15 @@ minetest.register_node("mcl_mushroom:crimson_hyphae_wood", {
 	_mcl_hardness = 2,
 })
 
+minetest.register_craft({
+	output = "mcl_mushroom:crimson_hyphae_wood 4",
+	recipe = {
+		{"mcl_mushroom:crimson_hyphae"},
+	}
+})
+
+mcl_stairs.register_stair_and_slab_simple("crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood", "Crimson Stair", "Crimson Slab", "Double Crimson Slab", "woodlike")
+
 --Hyphae Stairs and slabs
 
 local barks = {
@@ -551,102 +651,7 @@ for b=1, #barks do
 			bark[4])
 end
 
-minetest.register_node("mcl_mushroom:crimson_nylium", {
-	description = S("Crimson Nylium"),
-	tiles = {
-		"crimson_nylium.png",
-        "mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png^crimson_nylium_side.png",
-		"mcl_nether_netherrack.png^crimson_nylium_side.png",
-		"mcl_nether_netherrack.png^crimson_nylium_side.png",
-		"mcl_nether_netherrack.png^crimson_nylium_side.png",
-	},
-	groups = {pickaxey=1, building_block=1, material_stone=1},
-	paramtype2 = "facedir",
-	stack_max = 64,
-	_mcl_hardness = 0.4,
-	_mcl_blast_resistance = 0.4,
-	is_ground_content = true,
-	drop = "mcl_nether:netherrack",
-	_mcl_silk_touch_drop = true,
-})
-
-minetest.register_node("mcl_mushroom:crimson_checknode", {
-	description = S("Crimson Checknode - only to check!"),
-	tiles = {
-		"mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png",
-        "mcl_nether_netherrack.png",
-    },
-	groups = {pickaxey=1, building_block=1, material_stone=1, not_in_creative_inventory=1},
-	paramtype2 = "facedir",
-	stack_max = 64,
-	_mcl_hardness = 0.4,
-	_mcl_blast_resistance = 0.4,
-	is_ground_content = true,
-	drop = "mcl_nether:netherrack"
-})
-
-minetest.register_craft({
-	output = "mcl_mushroom:crimson_hyphae_wood 4",
-	recipe = {
-		{"mcl_mushroom:crimson_hyphae"},
-	}
-})
-
-minetest.register_craft({
-	output = "mcl_mushroom:crimson_nylium 2",
-	recipe = {
-		{"mcl_nether:nether_wart"},
-		{"mcl_nether:netherrack"},
-	}
-})
-
-mcl_stairs.register_stair_and_slab_simple("crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood", "Crimson Stair", "Crimson Slab", "Double Crimson Slab", "woodlike")
-
-minetest.register_abm({
-	label = "mcl_mushroom:crimson_fungus",
-	nodenames = {"mcl_mushroom:crimson_fungus"},
-	interval = 11,
-	chance = 128,
-	action = function(pos)
-    local nodepos = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
-    if nodepos.name == "mcl_mushroom:crimson_nylium" or nodepos.name == "mcl_nether:netherrack" then
-		if pos.y < -28400 then
-			generate_crimson_tree(pos)
-		end
-    end
-	end
-})
-
-minetest.register_abm({
-	label = "mcl_mushroom:crimson_checknode",
-	nodenames = {"mcl_mushroom:crimson_checknode"},
-	interval = 0.1,
-	chance = 1,
-	action = function(pos)
-    local nodepos = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
-    if nodepos.name == "air" then
-		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_mushroom:crimson_nylium" })
-		local randomg = math.random(1, 400)
-		if randomg <= 10 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_fungus" })
-		elseif randomg > 10 and randomg <= 25 then
-			local pos1 = { x = pos.x, y = pos.y + 1, z = pos.z }
-			generate_crimson_tree(pos1)
-		elseif randomg > 25 and randomg <= 30 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:warped_fungus" })
-		elseif randomg > 30 and randomg <= 130 then
-			minetest.set_node({ x = pos.x, y = pos.y + 1, z = pos.z }, { name = "mcl_mushroom:crimson_roots" })
-		end
-    else
-		minetest.swap_node({ x = pos.x, y = pos.y, z = pos.z }, { name = "mcl_nether:netherrack" })
-    end
-	end
-})
+---Mapgen and fungus tree
 
 function generate_warped_tree(pos)
 	local breakgrow = false
