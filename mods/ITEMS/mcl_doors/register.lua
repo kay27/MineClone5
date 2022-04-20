@@ -57,31 +57,31 @@ local woods_nether = {
 }
 
 for w=1, #woods_nether do
-	mcl_doors:register_door("mcl_doors:"..woods[w][1], {
-		description = woods[w][2],
+	mcl_doors:register_door("mcl_doors:"..woods_nether[w][1], {
+		description = woods_nether[w][2],
 		_doc_items_longdesc = wood_longdesc,
 		_doc_items_usagehelp = wood_usagehelp,
-		inventory_image = woods[w][3],
+		inventory_image = woods_nether[w][3],
 		groups = {handy=1,axey=1, material_wood=1},
 		_mcl_hardness = 3,
 		_mcl_blast_resistance = 3,
-		tiles_bottom = woods[w][4],
-		tiles_top = woods[w][5],
+		tiles_bottom = woods_nether[w][4],
+		tiles_top = woods_nether[w][5],
 		sounds = mcl_sounds.node_sound_wood_defaults(),
 	})
 
 	minetest.register_craft({
-		output = "mcl_doors:"..woods[w][1].." 3",
+		output = "mcl_doors:"..woods_nether[w][1].." 3",
 		recipe = {
-		{woods[w][6], woods[w][6]},
-		{woods[w][6], woods[w][6]},
-		{woods[w][6], woods[w][6]}
+		{woods_nether[w][6], woods_nether[w][6]},
+		{woods_nether[w][6], woods_nether[w][6]},
+		{woods_nether[w][6], woods_nether[w][6]}
 		}
 	})
 
 	minetest.register_craft({
 		type = "fuel",
-		recipe = "mcl_doors:"..woods[w][1],
+		recipe = "mcl_doors:"..woods_nether[w][1],
 		burntime = 10,
 	})
 
@@ -168,13 +168,13 @@ local woods_nether = {
 }
 
 for w=1, #woods_nether do
-	mcl_doors:register_trapdoor("mcl_doors:"..woods[w][1], {
-		description = woods[w][2],
+	mcl_doors:register_trapdoor("mcl_doors:"..woods_nether[w][1], {
+		description = woods_nether[w][2],
 		_doc_items_longdesc = S("Wooden trapdoors are horizontal barriers which can be opened and closed by hand or a redstone signal. They occupy the upper or lower part of a block, depending on how they have been placed. When open, they can be climbed like a ladder."),
 		_doc_items_usagehelp = S("To open or close the trapdoor, rightclick it or send a redstone signal to it."),
-		tile_front = woods[w][3],
-		tile_side = woods[w][4],
-		wield_image = woods[w][3],
+		tile_front = woods_nether[w][3],
+		tile_side = woods_nether[w][4],
+		wield_image = woods_nether[w][3],
 		groups = {handy=1,axey=1, mesecon_effector_on=1, material_wood=1},
 		_mcl_hardness = 3,
 		_mcl_blast_resistance = 3,
@@ -182,16 +182,16 @@ for w=1, #woods_nether do
 	})
 
 	minetest.register_craft({
-		output = "mcl_doors:"..woods[w][1].." 2",
+		output = "mcl_doors:"..woods_nether[w][1].." 2",
 		recipe = {
-			{woods[w][5], woods[w][5], woods[w][5]},
-			{woods[w][5], woods[w][5], woods[w][5]},
+			{woods_nether[w][5], woods_nether[w][5], woods_nether[w][5]},
+			{woods_nether[w][5], woods_nether[w][5], woods_nether[w][5]},
 		}
 	})
 
 	minetest.register_craft({
 		type = "fuel",
-		recipe = "mcl_doors:"..woods[w][1],
+		recipe = "mcl_doors:"..woods_nether[w][1],
 		burntime = 15,
 	})
 end
