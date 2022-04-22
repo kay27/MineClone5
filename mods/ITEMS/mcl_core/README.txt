@@ -21,6 +21,14 @@ MIT License.
 The textures are taken from the Minecraft resource pack “Faithful 1.11” by Vattic and
 xMrVizzy and contributers.
 
+
+CC BY-SA 4.0
+
+mcl_core_lava_spark.png is based on the Pixel Perfection resource pack for Minecraft 1.11,
+authored by XSSheep.
+Source: <https://www.planetminecraft.com/texture_pack/131pixel-perfection/>
+License: [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/)
+
 Sounds
 ======
 All sounds included in this mod are under the MIT License.
