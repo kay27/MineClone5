@@ -51,6 +51,10 @@ mcl_showDeathMessages (Show death messages) bool true
 # If disabled, all recipes will be shown.
 mcl_craftguide_progressive_mode	(Learn crafting recipes progressively) bool true
 
+# Limit the number of sparks produced by lava per 5 seconds to this number.
+# 0 will disable lava sparks altogeter with no ABM being registered.
+mcl_core_lava_spark_limit (Number of sparks lava can produce per 5 seconds) int 10
+
 [Mobs]
 # If enabled, mobs will spawn naturally. This does not affect
 # affect mob spawners.

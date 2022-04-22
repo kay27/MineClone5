@@ -7,3 +7,7 @@ Burning Furnace=
 Recipe book=
 Inventory=
 Uses fuel to smelt or cook items=
+Blast Furnace=
+Blast Furnaces cook or smelt several items, using a furnace fuel, into something else, but faster than a normal furnace.=
+Smoker=
+Smokers cook or smelt several items, using a furnace fuel, into something else, but faster than a normal furnace.=

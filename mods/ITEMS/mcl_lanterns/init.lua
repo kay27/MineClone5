@@ -1,5 +1,5 @@
-local S = minetest.get_translator("mcl_lanterns")
-local modpath = minetest.get_modpath("mcl_lanterns")
+local S = minetest.get_translator(minetest.get_current_modname())
+local modpath = minetest.get_modpath(minetest.get_current_modname())
 
 mcl_lanterns = {}
 

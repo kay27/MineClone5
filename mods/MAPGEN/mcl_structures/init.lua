@@ -75,6 +75,7 @@ local function spawnstruct_function(name, param)
 
 	local pos = player:get_pos()
 	if not pos then return end
+	pos.y = math.floor(pos.y) + 1
 	local pr = PseudoRandom(math.floor(pos.x * 333 + pos.y * 19 - pos.z + 4))
 	pos = vector.round(pos)
 	local dir = minetest.yaw_to_dir(player:get_look_horizontal())
