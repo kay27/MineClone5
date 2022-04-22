@@ -57,7 +57,7 @@ local function on_chat_message(name, message)
 		last_messages.count = 1
 		last_messages.summary_length = length
 	end
-	last_messages.job = minetest.after(300, function()
+	last_messages.job = minetest.after(30, function()
 		last_messages.name = nil
 		last_messages.job = nil
 	end)
