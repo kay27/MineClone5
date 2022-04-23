@@ -166,11 +166,13 @@ function boat.on_activate(self, staticdata, dtime_s)
 		self._last_v = self._v
 		self._itemstring = data.itemstring
 
-		while #data.textures < 5 do
-			table.insert(data.textures, data.textures[1])
-		end
+		if data.textures then
+			while #data.textures < 5 do
+				table.insert(data.textures, data.textures[1])
+			end
 
-		self.object:set_properties({textures = data.textures})
+			self.object:set_properties({textures = data.textures})
+		end
 	end
 end
 
