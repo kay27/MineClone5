@@ -324,7 +324,7 @@ minetest.register_globalstep(function(dtime)
 		end
 
 		if wielded_def and wielded_def._mcl_toollike_wield then
-			set_bone_position_conditional(player,"Wield_Item", vector.new(0,4.7,3.1), vector.new(90,-45,90))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,4.7,3.1), vector.new(-90,225,90))
 		elseif string.find(wielded:get_name(), "mcl_bows:bow") then
 			set_bone_position_conditional(player,"Wield_Item", vector.new(1,4,0), vector.new(90,130,115))
 		elseif string.find(wielded:get_name(), "mcl_bows:crossbow_loaded") then
