@@ -244,8 +244,9 @@ end
 minetest.register_abm({
 	label = "End portal teleportation",
 	nodenames = {"mcl_portals:portal_end"},
-	interval = 0.1,
+	interval = 1,
 	chance = 1,
+	-- TODO: Move to playerinfo/playerplus/mob api
 	action = mcl_portals.end_portal_teleport,
 })
 

@@ -267,6 +267,8 @@ function mobs:spawn_setup(def)
 	local day_toggle       = def.day_toggle
 	local on_spawn         = def.on_spawn
 	local check_position   = def.check_position
+	local group_size_min   = def.group_size_min or 1
+	local group_size_max   = def.group_size_max or 1
 
 	-- chance/spawn number override in minetest.conf for registered mob
 	local numbers = minetest.settings:get(name)
@@ -300,9 +302,22 @@ function mobs:spawn_setup(def)
 		day_toggle       = day_toggle,
 		check_position   = check_position,
 		on_spawn         = on_spawn,
+		group_size_min   = group_size_min,
+		group_size_max   = group_size_max,
 	}
 	summary_chance = summary_chance + chance
 end
+
+function mobs.spawn_mob(name, pos)
+	local def = minetest.registered_entities[name]
+	if not def then return end
+	if def.spawn then
+		return def.spawn(pos)
+	end
+	return minetest.add_entity(pos, name)
+end
+
+local spawn_mob = mobs.spawn_mob
 
 function mobs:spawn_specific(name, dimension, type_of_spawning, biomes, min_light, max_light, interval, chance, aoc, min_height, max_height, day_toggle, on_spawn)
 
@@ -341,6 +356,8 @@ function mobs:spawn_specific(name, dimension, type_of_spawning, biomes, min_ligh
 	spawn_dictionary[key]["min_height"] = min_height
 	spawn_dictionary[key]["max_height"] = max_height
 	spawn_dictionary[key]["day_toggle"] = day_toggle
+	spawn_dictionary[key]["group_size_min"] = 1
+	spawn_dictionary[key]["group_size_max"] = 3
 
 	summary_chance = summary_chance + chance
 end
@@ -442,9 +459,9 @@ if mobs_spawn then
 				and (mob_def.check_position and mob_def.check_position(spawning_position) or true)
 				then
 					--everything is correct, spawn mob
-					local object = minetest.add_entity(spawning_position, mob_def.name)
+					local object = spawn_mob(mob_def.name, spawning_position)
 					if object then
-						return mob_def.on_spawn and mob_def.on_spawn(object, pos)
+						return mob_def.on_spawn and mob_def.on_spawn(object, spawning_position)
 					end
 			end
 			current_summary_chance = current_summary_chance - mob_chance

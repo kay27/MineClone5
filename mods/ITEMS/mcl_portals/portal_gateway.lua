@@ -106,9 +106,10 @@ local function teleport(pos, obj)
 end
 
 minetest.register_abm({
+	-- TODO: Move to playerinfo/playerplus/mob api
 	label = "End gateway portal teleportation",
 	nodenames = {"mcl_portals:portal_gateway"},
-	interval = 0.1,
+	interval = 1,
 	chance = 1,
 	action = function(pos)
 		if preparing[minetest.pos_to_string(pos)] then return end
