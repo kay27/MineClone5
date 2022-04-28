@@ -1,3 +1,6 @@
+local modpath = minetest.get_modpath(minetest.get_current_modname())
+dofile(modpath .. "/ratelimit.lua")
+
 local enable_anticheat = true
 local kick_cheaters = false
 local kick_threshold = 10
