@@ -188,7 +188,7 @@ minetest.register_node("mcl_blackstone:soul_fire", {
 	walkable = false,
 	buildable_to = true,
 	sunlight_propagates = true,
-	damage_per_second = 2,
+	damage_per_second = 1,
 	_mcl_node_death_message = minetest.registered_nodes["mcl_fire:fire"]._mcl_node_death_message,
 	groups = {fire = 1, dig_immediate = 3, not_in_creative_inventory = 1, dig_by_piston = 1, destroys_items = 1, set_on_fire=8},
 	floodable = true,
@@ -202,7 +202,9 @@ minetest.register_node("mcl_blackstone:soul_fire", {
 		if under ~= "mcl_nether:soul_sand" and under ~= "mcl_blackstone:soul_soil" then
 			minetest.swap_node(pos, {name = "air"})
 		end
-	end
+	end,
+	drop="",
+	_mcl_blast_resistance = 0,
 })
 
 local old_onconstruct=minetest.registered_nodes["mcl_fire:fire"].on_construct
