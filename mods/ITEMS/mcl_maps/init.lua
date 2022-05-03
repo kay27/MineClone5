@@ -55,7 +55,7 @@ function mcl_maps.create_map(pos)
 		local map_y_start = 64 * dx
 		local map_y_limit = 127 * dx
 
-		local pixels = {}
+		local pixels = ""
 		local last_heightmap
 		for x = 1, 128 do
 			local map_x = x + offset
@@ -125,13 +125,15 @@ function mcl_maps.create_map(pos)
 				height = map_y - map_z
 
 				heightmap[z] = height or minp.y
-				pixels[#pixels + 1] = color and {r = color[1], g = color[2], b = color[3]} or {r = 0, g = 0, b = 0}
+				
+				if not color then color = {0, 0, 0} end
+				pixels = pixels .. minetest.colorspec_to_bytes({r = color[1], g = color[2], b = color[3]})
 			end
 			last_heightmap = heightmap
 		end
 
 		local png = minetest.encode_png(128, 128, pixels)
-		local f = io.open(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".png", "w")
+		local f = io.open(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".png", "wb")
 		if not f then return end
 		f:write(png)
 		f:close()
@@ -219,6 +221,8 @@ filled_wield_def.drawtype = "mesh"
 filled_wield_def.node_placement_prediction = ""
 filled_wield_def.range = minetest.registered_items[""].range
 filled_wield_def.on_place = mcl_util.call_on_rightclick
+filled_wield_def.groups.no_wieldview = 1
+filled_wield_def._wieldview_item = "mcl_maps:empty_map"
 
 for _, texture in pairs(mcl_skins.list) do
 	local def = table.copy(filled_wield_def)
