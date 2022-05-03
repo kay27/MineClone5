@@ -142,14 +142,14 @@ local function egg_on_step(self, dtime)
 				if not object then return end
 				local ent = object:get_luaentity()
 				object:set_properties({
-					visual_size = { x = ent.base_size.x/2, y = ent.base_size.y/2 },
+					visual_size = { x = ent.base_size.x*ent.baby_size, y = ent.base_size.y*ent.baby_size },
 					collisionbox = {
-						ent.base_colbox[1]/2,
-						ent.base_colbox[2]/2,
-						ent.base_colbox[3]/2,
-						ent.base_colbox[4]/2,
-						ent.base_colbox[5]/2,
-						ent.base_colbox[6]/2,
+						ent.base_colbox[1]*ent.baby_size,
+						ent.base_colbox[2]*ent.baby_size,
+						ent.base_colbox[3]*ent.baby_size,
+						ent.base_colbox[4]*ent.baby_size,
+						ent.base_colbox[5]*ent.baby_size,
+						ent.base_colbox[6]*ent.baby_size,
 					}
 				})
 				ent.child = true
