@@ -62,7 +62,6 @@ local spawn_trident = function(player)
 			durability = durability * (unbreaking + 1)
 		end
 		wielditem:add_wear(65535/durability)
-		minetest.chat_send_all(wielditem:get_wear())
 		obj:set_velocity(vector.multiply(player:get_look_dir(), 20))
 		obj:set_acceleration({x=0, y=-GRAVITY, z=0})
 		obj:set_yaw(yaw)
@@ -78,10 +77,10 @@ minetest.register_tool("mcl_tridents:trident", {
 	stack_max = 1,
 	groups = {weapon=1,weapon_ranged=1,trident=1,enchantability=1},
 	_mcl_uses = TRIDENT_DURABILITY,
-    on_place = function(itemstack, placer, pointed_thing)
-      spawn_trident(placer)
-    end,
-    on_secondary_use = function(itemstack, user, pointed_thing)
-      spawn_trident(user)
-    end
+	on_place = function(itemstack, placer, pointed_thing)
+		spawn_trident(placer)
+	end,
+	on_secondary_use = function(itemstack, user, pointed_thing)
+		spawn_trident(user)
+	end
 })
