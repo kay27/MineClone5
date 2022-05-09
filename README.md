@@ -70,7 +70,11 @@ an explanation.
 
 ## Installation
 This game requires latest stable [Minetest](http://minetest.net) to run, please install
-it first. Only stable versions of Minetest are officially supported.
+it first. Only latest stable version of Minetest is officially supported.
+There are lots of questions about Ubuntu, which has minetest-5.1.1 still.
+Please, first of all, visit this page, it should fix the problem: https://launchpad.net/~minetestdevs/+archive/ubuntu/stable
+Also, here is endless issue #123: https://git.minetest.land/MineClone5/MineClone5/issues/123 - really less preferable way.
+
 There is no support for running MineClone 5 in development versions of Minetest.
 
 To install MineClone 5 (if you haven't already), move this directory into the
