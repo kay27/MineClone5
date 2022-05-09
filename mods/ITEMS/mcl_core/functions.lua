@@ -4,6 +4,11 @@
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 
+local minetest_get_item_group = minetest.get_item_group
+local minetest_get_node = minetest.get_node
+local math_random = math.random
+local minetest_after = minetest.after
+
 local mg_name = mcl_mapgen.name
 local v6 = mcl_mapgen.v6
 
@@ -77,33 +82,9 @@ function mcl_core.lava_spark_set_chance()
 	lava_spark_census = 0
 end
 
-if lava_spark_limit > 0 then
-	mcl_core.lava_spark_set_chance()
-
-	minetest.register_abm({
-		label = "Lava produce sparks",
-		nodenames = {"group:lava"},
-		neighbors = {"air"},
-		interval = LAVA_SPARK_ABM_INTERVAL,
-		chance = 18,
-		action = function(pos, node)
-			local above = minetest.get_node(vector.new(pos.x, pos.y + 1, pos.z))
-			if above.name ~= "air" then return end
-		
-			lava_spark_abm_census = lava_spark_abm_census + 1
-		
-			if lava_spark_census >= lava_spark_limit then return end
-			if math.random() > lava_spark_chance then return end
-		
-			lava_spark_census = lava_spark_census + 1
-			minetest.after(math.random() * LAVA_SPARK_ABM_INTERVAL, mcl_core.lava_spark_add, pos)
-		end
-	})
-end
-
-function mcl_core.lava_spark_add(pos)
-	local node = minetest.get_node(pos)
-	if minetest.get_node_group(node.name, "lava") == 0 then return end
+function lava_spark_add(pos)
+	local node = minetest_get_node(pos)
+	if minetest_get_item_group(node.name, "lava") == 0 then return end
 	
 	local above = minetest.get_node(vector.new(pos.x, pos.y + 1, pos.z))
 	if above.name ~= "air" then return end
@@ -136,6 +117,30 @@ function mcl_core.lava_spark_add(pos)
 	local luaentity = spark:get_luaentity()
 	if not luaentity then return end
 	luaentity._life_timer = 0.4 + math.random()
+end
+
+if lava_spark_limit > 0 then
+	mcl_core.lava_spark_set_chance()
+
+	minetest.register_abm({
+		label = "Lava produce sparks",
+		nodenames = {"group:lava"},
+		neighbors = {"air"},
+		interval = LAVA_SPARK_ABM_INTERVAL,
+		chance = 18,
+		action = function(pos, node)
+			local above = minetest_get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+			if above.name ~= "air" then return end
+
+			lava_spark_abm_census = lava_spark_abm_census + 1
+
+			if lava_spark_census >= lava_spark_limit then return end
+			if math_random() > lava_spark_chance then return end
+
+			lava_spark_census = lava_spark_census + 1
+			minetest_after(math_random() * LAVA_SPARK_ABM_INTERVAL, lava_spark_add, pos)
+		end
+	})
 end
 
 minetest.register_entity("mcl_core:lava_spark", {
