@@ -34,7 +34,12 @@ minetest.register_entity("mcl_wieldview:wieldnode", {
 		self._item = item
 		
 		if get_item_group(item, "no_wieldview") ~= 0 then
-			item = ""
+			local def = player:get_wielded_item():get_definition()
+			if def and def._wieldview_item then
+				item = def._wieldview_item
+			else
+				item = ""
+			end
 		end
 		
 		local item_def = minetest.registered_items[item]
