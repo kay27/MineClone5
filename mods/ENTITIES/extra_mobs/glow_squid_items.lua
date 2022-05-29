@@ -46,7 +46,7 @@ minetest.register_entity("extra_mobs:glow_item_frame_item",{
 				end
 			end
 		end
-		if self._texture ~= nil then
+		if self._texture then
 			self.object:set_properties({
 				textures={self._texture},
 				visual_size={x=VISUAL_SIZE/self._scale, y=VISUAL_SIZE/self._scale},
@@ -55,9 +55,9 @@ minetest.register_entity("extra_mobs:glow_item_frame_item",{
 	end,
 	get_staticdata = function(self)
 		if not self then return end
-		if self._nodename ~= nil and self._texture ~= nil then
+		if self._nodename  and self._texture then
 			local ret = self._nodename .. ';' .. self._texture
-			if self._scale ~= nil then
+			if self._scale then
 				ret = ret .. ';' .. tostring(self._scale)
 			end
 			return ret
@@ -66,7 +66,7 @@ minetest.register_entity("extra_mobs:glow_item_frame_item",{
 	end,
 
 	_update_texture = function(self)
-		if self._texture ~= nil then
+		if self._texture then
 			self.object:set_properties({
 				textures={self._texture},
 				visual_size={x=VISUAL_SIZE/self._scale, y=VISUAL_SIZE/self._scale},
@@ -75,6 +75,23 @@ minetest.register_entity("extra_mobs:glow_item_frame_item",{
 	end,
 })
 
+minetest.register_entity("extra_mobs:glow_item_frame_map", {
+	initial_properties = {
+		visual = "upright_sprite",
+		visual_size = {x = 1, y = 1},
+		pointable = false,
+		physical = false,
+		collide_with_objects = false,
+		textures = {"blank.png"},
+	},
+	on_activate = function(self, staticdata)
+		self.id = staticdata
+		self.object:set_properties({textures = {mcl_maps.load_map(self.id)}})
+	end,
+	get_staticdata = function(self)
+		return self.id
+	end,
+})
 
 local facedir = {}
 facedir[0] = {x=0,y=0,z=1}
@@ -83,18 +100,16 @@ facedir[2] = {x=0,y=0,z=-1}
 facedir[3] = {x=-1,y=0,z=0}
 
 local remove_item_entity = function(pos, node)
-	local objs = nil
 	if node.name == "extra_mobs:glow_item_frame" then
-		objs = minetest.get_objects_inside_radius(pos, .5)
-	end
-	if objs then
-		for _, obj in ipairs(objs) do
-			if obj and obj:get_luaentity() and obj:get_luaentity().name == "extra_mobs:glow_item_frame_item" then
+		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 0.5)) do
+			local entity = obj:get_luaentity()
+			if entity and (entity.name == "extra_mobs:glow_item_frame_item" or entity.name == "extra_mobs:glow_item_frame_map") then
 				obj:remove()
 			end
 		end
 	end
 end
+
 
 local update_item_entity = function(pos, node, param2)
 	remove_item_entity(pos, node)
@@ -111,27 +126,29 @@ local update_item_entity = function(pos, node, param2)
 			pos.y = pos.y + posad.y*6.5/16
 			pos.z = pos.z + posad.z*6.5/16
 		end
-		local e = minetest.add_entity(pos, "extra_mobs:glow_item_frame_item")
-		local lua = e:get_luaentity()
-		lua._nodename = node.name
-		local itemname = item:get_name()
-		if itemname == "" or itemname == nil then
-			lua._texture = "blank.png"
-			lua._scale = 1
-		else
-			lua._texture = itemname
-			local def = minetest.registered_items[itemname]
-			if def and def.wield_scale then
-				lua._scale = def.wield_scale.x
-			else
-				lua._scale = 1
-			end
-		end
-		lua:_update_texture()
-		if node.name == "extra_mobs:glow_item_frame" then
-			local yaw = math.pi*2 - param2 * math.pi/2
-			e:set_yaw(yaw)
-		end
+        local yaw = math.pi*2 - param2 * math.pi/2
+	    local map_id = item:get_meta():get_string("mcl_maps:id")
+		if map_id == "" then
+		    local e = minetest.add_entity(pos, "extra_mobs:glow_item_frame_item")
+		    local lua = e:get_luaentity()
+		    lua._nodename = node.name
+		    local itemname = item:get_name()
+		    if itemname == "" or itemname == nil then
+			    lua._texture = "blank.png"
+			    lua._scale = 1
+		    else
+			    lua._texture = itemname
+			    local def = minetest.registered_items[itemname]
+			    lua._scale = def and def.wield_scale and def.wield_scale.x or 1
+		    end
+		    lua:_update_texture()
+		    if node.name == "extra_mobs:glow_item_frame" then
+		    	e:set_yaw(yaw)
+		    end
+		    else
+			    local e = minetest.add_entity(pos, "extra_mobs:glow_item_frame_map", map_id)
+			    e:set_yaw(yaw)
+		    end
 	end
 end
 
@@ -174,6 +191,21 @@ minetest.register_node("extra_mobs:glow_item_frame",{
 	groups = { dig_immediate=3,deco_block=1,dig_by_piston=1,container=7,attached_node_facedir=1 },
 	sounds = mcl_sounds.node_sound_defaults(),
 	node_placement_prediction = "",
+    on_timer = function(pos)
+	    local inv = minetest.get_meta(pos):get_inventory()
+	    local stack = inv:get_stack("main", 1)
+	    local itemname = stack:get_name()
+	    if minetest.get_item_group(itemname, "clock") > 0 then
+	    	local new_name = "mcl_clock:clock_" .. (mcl_worlds.clock_works(pos) and mcl_clock.old_time or mcl_clock.random_frame)
+	    	if itemname ~= new_name then
+	    	    stack:set_name(new_name)
+	    	    inv:set_stack("main", 1, stack)
+	    	    local node = minetest.get_node(pos)
+	    	    update_item_entity(pos, node, node.param2)
+	    	end
+	    	minetest.get_node_timer(pos):start(1.0)
+	    end
+    end,
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return itemstack
@@ -214,6 +246,12 @@ minetest.register_node("extra_mobs:glow_item_frame",{
 		end
 		local put_itemstack = ItemStack(itemstack)
 		put_itemstack:set_count(1)
+		if minetest.get_item_group(itemname, "compass") > 0 then
+			put_itemstack:set_name("mcl_compass:" .. mcl_compass.get_compass_image(pos, minetest.dir_to_yaw(minetest.facedir_to_dir(node.param2))))
+		end
+		if minetest.get_item_group(itemname, "clock") > 0 then
+			minetest.get_node_timer(pos):start(1.0)
+		end
 		inv:set_stack("main", 1, put_itemstack)
 		update_item_entity(pos, node)
 		-- Add node infotext when item has been named
