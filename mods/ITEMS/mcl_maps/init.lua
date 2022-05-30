@@ -8,6 +8,8 @@ local map_textures_path = worldpath .. "/mcl_maps/"
 local math_min = math.min
 local math_max = math.max
 
+local dynamic_add_media = minetest.dynamic_add_media
+
 minetest.mkdir(map_textures_path)
 
 local function load_json_file(name)
@@ -144,7 +146,7 @@ end
 
 local loading_maps = {}
 
-function mcl_maps.load_map(id)
+function mcl_maps.load_map(id, callback)
 	if id == "" or creating_maps[id] or loading_maps[id] then
 		return
 	end
@@ -153,14 +155,28 @@ function mcl_maps.load_map(id)
 
 	if not loaded_maps[id] then
 		loading_maps[id] = true
-		minetest.dynamic_add_media({filepath = map_textures_path .. texture, ephemeral = true}, function(player_name)
-			loaded_maps[id] = true
-			loading_maps[id] = nil
-		end)
-		return
+        if not minetest.features.dynamic_add_media_table then
+            -- minetest.dynamic_add_media() blocks in
+			-- Minetest 5.3 and 5.4 until media loads
+			dynamic_add_media(map_textures_path .. texture, function(player_name) end)
+            loaded_maps[id] = true
+			if callback then callback(texture) end
+            loading_maps[id] = nil
+        else
+        	-- minetest.dynamic_add_media() never blocks
+			-- in Minetest 5.5, callback runs after load
+	    	dynamic_add_media(map_textures_path .. texture, function(player_name)
+			    loaded_maps[id] = true
+                if callback then callback(texture) end
+			    loading_maps[id] = nil
+		    end)
+        end
 	end
 
-	return texture
+    if loaded_maps[id] then
+        if callback then callback(texture) end
+	    return texture
+    end
 end
 
 function mcl_maps.load_map_item(itemstack)
