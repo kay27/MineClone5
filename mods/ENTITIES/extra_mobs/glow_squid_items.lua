@@ -86,7 +86,10 @@ minetest.register_entity("extra_mobs:glow_item_frame_map", {
 	},
 	on_activate = function(self, staticdata)
 		self.id = staticdata
-		self.object:set_properties({textures = {mcl_maps.load_map(self.id)}})
+		mcl_maps.load_map(self.id, function(texture)
+			-- will not crash even if self.object is invalid by now
+			self.object:set_properties({textures = {texture}})
+		end)
 	end,
 	get_staticdata = function(self)
 		return self.id
