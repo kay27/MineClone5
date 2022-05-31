@@ -174,7 +174,7 @@ for v=1, #vari do
     	paramtype2 = "facedir",
 
         --FIXME: should only be glowing, no light source. How is that possible with a node?
-        light_source = 1,
+        light_source = v-1,
         
         sunlight_propagates = true,
     	groups = { dig_immediate=3,deco_block=1,dig_by_piston=1,container=7,attached_node_facedir=1 },
