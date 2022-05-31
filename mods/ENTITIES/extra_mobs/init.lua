@@ -21,8 +21,3 @@ dofile(path .. "/cod.lua")
 dofile(path .. "/salmon.lua")
 dofile(path .. "/dolphin.lua")
 dofile(path .. "/glow_squid.lua")
-
---Items
-dofile(path .. "/glow_squid_items.lua")
-
-
