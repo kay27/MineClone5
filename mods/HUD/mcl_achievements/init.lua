@@ -216,8 +216,15 @@ awards.register_achievement("mcl:sweetDreams", {
 -- Triggered in mcl_smithing_table
 awards.register_achievement("mcl:seriousDedication", {
         title = S("Serious Dedication"),
-        description = S("Use a Netherite Ingot to upgrade a hoe, and then completely reevaluate your life choices"),
+        description = S("Use a Netherite Ingot to upgrade a hoe, and then completely reevaluate your life choices."),
         icon = "farming_tool_netheritehoe.png",
+})
+
+-- Triggered in mobs_mc
+awards.register_achievement("mcl:whatAdeal", {
+        title = S("What A Deal!"),
+        description = S("Successfully trade with a Villager."),
+        icon = "mcl_core_emerald.png",
 })
 
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)
