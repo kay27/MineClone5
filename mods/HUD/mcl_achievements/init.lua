@@ -234,6 +234,25 @@ awards.register_achievement("mcl:fishyBusiness", {
         icon = "mcl_fishing_fishing_rod.png",
 })
 
+-- Armor Advancements
+--[[awards.register_achievement("mcl:suitUp", {
+        title = S("Suit Up"),
+        description = S("Protect yourself with a piece of iron armor."),
+        icon = "mcl_armor_inv_chestplate_iron.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDiamonds", {
+        title = S("Cover Me with Diamonds"),
+        description = S("Diamond armor saves lives."),
+        icon = "mcl_armor_inv_chestplate_diamond.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDebris", {
+        title = S("Cover Me in Debris"),
+        description = S("Get a full suit of Netherite armor."),
+        icon = "mcl_armor_inv_chestplate_netherite.png",
+})]]--
+
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)
 
 if non_pc_achievements then
