@@ -74,3 +74,4 @@ Tool Smith=
 Cleric=
 Nitwit=
 Protects you from death while wielding it=
+Pillager=
