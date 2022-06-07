@@ -231,3 +231,13 @@ water)
 
 -- spawn egg
 mobs:register_egg("extra_mobs:glow_squid", S("Glow Squid"), "extra_mobs_spawn_icon_glow_squid.png", 0)
+
+-- dropped item (used to craft glowing itemframe)
+
+minetest.register_craftitem("extra_mobs:glow_ink_sac", {
+	description = S("Glow Ink Sac"),
+	_doc_items_longdesc = S("Use it to craft the Glow Item Frame."),
+	_doc_items_usagehelp = S("Use the Glow Ink Sac and the normal Item Frame to craft the Glow Item Frame."),
+	inventory_image = "extra_mobs_glow_ink_sac.png",
+	groups = { craftitem = 1 },
+})
