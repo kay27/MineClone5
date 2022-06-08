@@ -253,6 +253,13 @@ awards.register_achievement("mcl:fishyBusiness", {
 	icon = "mcl_armor_inv_chestplate_netherite.png",
 })]]--
 
+-- Triggered in extra_mobs
+awards.register_achievement("mcl:tacticalFishing", {
+	title = S("Tactical Fishing"),
+	description = S("Catch a fish... without a fishing rod!"),
+	icon = "pufferfish_bucket.png",
+})
+
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)
 
 if non_pc_achievements then
