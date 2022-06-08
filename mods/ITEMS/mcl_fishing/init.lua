@@ -75,6 +75,7 @@ local fish = function(itemstack, player, pointed_thing)
 									stacks_min = 1,
 									stacks_max = 1,
 								}, pr)
+								awards.unlock(player:get_player_name(), "mcl:fishyBusiness")
 							elseif r <= junk_value then
 								-- Junk
 								items = mcl_loot.get_loot({
