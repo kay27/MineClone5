@@ -525,10 +525,10 @@ for _, fish in ipairs(fish_names) do
 		end,
 		source_take = {"extra_mobs:" .. fish},
 		inventory_image = fish .. "_bucket.png",
-		name = S("Bucket of " .. fish),
-		longdesc = S("This bucket is filled with water and " .. fish .. "."),
-		usagehelp = S("Place it to empty the bucket and place a " .. fish .. ". Obtain by right clicking on a " .. fish .. " fish with a bucket of water."),
-		tt_help = S("Places a water source and " .. fish .. "."),
+		name = S("Bucket of @1", S(fish)),
+		longdesc = S("This bucket is filled with water and @1.", S(fish)),
+		usagehelp = S("Place it to empty the bucket and place a @1. Obtain by right clicking on a @2 fish with a bucket of water.", S(fish), S(fish)),
+		tt_help = S("Places a water source and a @1 fish.", S(fish)),
 		extra_check = function(pos, placer)
 			return true, true
 		end,
