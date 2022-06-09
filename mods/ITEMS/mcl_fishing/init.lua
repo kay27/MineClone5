@@ -512,3 +512,25 @@ minetest.register_on_item_eat(function (hp_change, replace_with_item, itemstack,
 	end
 
 end )
+
+-- Fish Buckets
+fish_names = {"cod", "salmon"}
+
+for _, fish in ipairs(fish_names) do
+	mcl_buckets.register_liquid({
+		bucketname = "mcl_fishing:bucket_" .. fish,
+		source_place = function(pos)
+			minetest.add_entity(pos, "extra_mobs:" .. fish)
+			return "mcl_core:water_source"
+		end,
+		source_take = {"extra_mobs:" .. fish},
+		inventory_image = fish .. "_bucket.png",
+		name = S("Bucket of @1", S(fish)),
+		longdesc = S("This bucket is filled with water and @1.", S(fish)),
+		usagehelp = S("Place it to empty the bucket and place a @1. Obtain by right clicking on a @2 fish with a bucket of water.", S(fish), S(fish)),
+		tt_help = S("Places a water source and a @1 fish.", S(fish)),
+		extra_check = function(pos, placer)
+			return true, true
+		end,
+	})
+end
