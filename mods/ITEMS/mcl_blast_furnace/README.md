@@ -1,5 +1,5 @@
-Blast Furnaces for MineClone 2.
-Heavily based on Minetest Game (default/furnace.lua) and the MineClone 2 Furnaces.
+Blast Furnaces for MineClone 5.
+Heavily based on Minetest Game (default/furnace.lua) and the MineClone 5 Furnaces.
 
 License of source code
 ----------------------
@@ -10,4 +10,4 @@ MCl 2 Furances modified by PrairieWind.
 
 License of media
 ----------------
-See the main MineClone 2 README.md file.
+See the main MineClone 5 README.md file.
