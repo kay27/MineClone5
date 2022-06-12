@@ -12,5 +12,5 @@ minetest.register_craftitem("mcl_copper:raw_copper", {
 	_doc_items_longdesc = S("Raw Copper. Mine a Copper Ore to get it."),
 	inventory_image = "mcl_copper_raw.png",
 	stack_max = 64,
-	groups = { craftitem=1 },
+	groups = { craftitem=1, blast_furnace_smeltable=1 },
 })
