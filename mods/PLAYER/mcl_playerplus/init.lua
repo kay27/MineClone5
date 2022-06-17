@@ -279,7 +279,7 @@ minetest.register_globalstep(function(dtime)
 		local fly_node = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.5, z = fly_pos.z}).name
 		local elytra = mcl_playerplus.elytra[name]
 
-		elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
+		elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra" or "mcl_armor:elytra_enchanted"
 			and not player:get_attach()
 			and (elytra.active or control.jump and player_velocity.y < -6)
 			and (fly_node == "air" or fly_node == "ignore")
