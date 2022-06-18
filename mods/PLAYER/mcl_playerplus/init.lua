@@ -229,7 +229,6 @@ local function set_bone_position_conditional(player,b,p,r) --bone,position,rotat
 	end
 	player:set_bone_position(b,p,r)
 end
-
 minetest.register_globalstep(function(dtime)
 
 	time = time + dtime
@@ -255,7 +254,7 @@ minetest.register_globalstep(function(dtime)
 		local wielded_def = wielded:get_definition()
 
 		local c_x, c_y = unpack(player_collision(player))
-
+		
 		--[[
 		if player_velocity.x + player_velocity.y < .5 and c_x + c_y > 0 then
 			local add_velocity = player.add_player_velocity or player.add_velocity
@@ -278,11 +277,20 @@ minetest.register_globalstep(function(dtime)
 		local fly_pos = player:get_pos()
 		local fly_node = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.5, z = fly_pos.z}).name
 		local elytra = mcl_playerplus.elytra[name]
-
-		elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
-			and not player:get_attach()
-			and (elytra.active or control.jump and player_velocity.y < -6)
-			and (fly_node == "air" or fly_node == "ignore")
+		elytra.inv = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
+		elytra.enchanted = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra_enchanted"
+		if not elytra.active then
+			elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra_enchanted" and not player:get_attach() and (elytra.active or control.jump and player_velocity.y < -6) and (fly_node == "air" or fly_node == "ignore") 
+			if not elytra.active then
+				elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra" and not player:get_attach() and (elytra.active or control.jump and player_velocity.y < -6) and (fly_node == "air" or fly_node == "ignore")
+			end
+		end
+		if not (fly_node == "air" or fly_node == "ignore") then		
+			elytra.active = false
+		end
+		if (not elytra.inv and not elytra.enchanted) then
+			elytra.active = false
+		end
 
 		if elytra.active then
 			mcl_player.player_set_animation(player, "fly")

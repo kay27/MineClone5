@@ -17,6 +17,7 @@ minetest.register_node("mcl_bells:bell", {
 			 4/16,  7/16,  4/16,
 		},
 	},
+	groups = { pickaxey = 1 }
 })
 
 if has_mcl_wip then

@@ -8,6 +8,8 @@ local map_textures_path = worldpath .. "/mcl_maps/"
 local math_min = math.min
 local math_max = math.max
 
+local dynamic_add_media = minetest.dynamic_add_media
+
 minetest.mkdir(map_textures_path)
 
 local function load_json_file(name)
@@ -55,7 +57,8 @@ function mcl_maps.create_map(pos)
 		local map_y_start = 64 * dx
 		local map_y_limit = 127 * dx
 
-		local pixels = {}
+		--local pixels = ""
+        local pixels = {}
 		local last_heightmap
 		for x = 1, 128 do
 			local map_x = x + offset
@@ -125,40 +128,59 @@ function mcl_maps.create_map(pos)
 				height = map_y - map_z
 
 				heightmap[z] = height or minp.y
-				pixels[#pixels + 1] = color and {r = color[1], g = color[2], b = color[3]} or {r = 0, g = 0, b = 0}
+				pixels[z] = pixels[z] or {}
+				pixels[z][x] = color or {0, 0, 0}
+				--if not color then color = {0, 0, 0} end
+				--pixels = pixels .. minetest.colorspec_to_bytes({r = color[1], g = color[2], b = color[3]})
 			end
 			last_heightmap = heightmap
 		end
 
-		local png = minetest.encode_png(128, 128, pixels)
-		local f = io.open(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".png", "w")
-		if not f then return end
-		f:write(png)
-		f:close()
-		creating_maps[id] = nil
+		--local png = minetest.encode_png(128, 128, pixels)
+		--local f = io.open(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".png", "wb")
+		--if not f then return end
+		--f:write(png)
+		--f:close()
+        tga_encoder.image(pixels):save(map_textures_path .. "mcl_maps_map_texture_" .. id .. ".tga")		
+        creating_maps[id] = nil
 	end)
 	return itemstack
 end
 
-local loading_maps = {}
+--local loading_maps = {}
 
-function mcl_maps.load_map(id)
-	if id == "" or creating_maps[id] or loading_maps[id] then
+function mcl_maps.load_map(id, callback)
+	if id == "" or creating_maps[id] then--or loading_maps[id] then
 		return
 	end
 
-	local texture = "mcl_maps_map_texture_" .. id .. ".png"
+	--local texture = "mcl_maps_map_texture_" .. id .. ".png"
+    local texture = "mcl_maps_map_texture_" .. id .. ".tga"
 
 	if not loaded_maps[id] then
-		loading_maps[id] = true
-		minetest.dynamic_add_media({filepath = map_textures_path .. texture, ephemeral = true}, function(player_name)
-			loaded_maps[id] = true
-			loading_maps[id] = nil
-		end)
-		return
+		--loading_maps[id] = true
+        if not minetest.features.dynamic_add_media_table then
+            -- minetest.dynamic_add_media() blocks in
+			-- Minetest 5.3 and 5.4 until media loads
+			dynamic_add_media(map_textures_path .. texture, function(player_name) end)
+            loaded_maps[id] = true
+			if callback then callback(texture) end
+            --loading_maps[id] = nil
+        else
+        	-- minetest.dynamic_add_media() never blocks
+			-- in Minetest 5.5, callback runs after load
+	    	dynamic_add_media(map_textures_path .. texture, function(player_name)
+			    loaded_maps[id] = true
+                if callback then callback(texture) end
+			    --loading_maps[id] = nil
+		    end)
+        end
 	end
 
-	return texture
+    if loaded_maps[id] then
+        if callback then callback(texture) end
+	    return texture
+    end
 end
 
 function mcl_maps.load_map_item(itemstack)
@@ -219,6 +241,8 @@ filled_wield_def.drawtype = "mesh"
 filled_wield_def.node_placement_prediction = ""
 filled_wield_def.range = minetest.registered_items[""].range
 filled_wield_def.on_place = mcl_util.call_on_rightclick
+filled_wield_def.groups.no_wieldview = 1
+filled_wield_def._wieldview_item = "mcl_maps:empty_map"
 
 for _, texture in pairs(mcl_skins.list) do
 	local def = table.copy(filled_wield_def)

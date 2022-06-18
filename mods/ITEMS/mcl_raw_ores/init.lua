@@ -10,7 +10,7 @@ local function register_raw_ore(description, n)
     	_doc_items_longdesc = S("Raw "..ore..". Mine a"..n.." "..ore.." ore to get it."),
     	inventory_image = texture..".png",
     	stack_max = 64,
-    	groups = { craftitem = 1 },
+    	groups = { craftitem = 1, blast_furnace_smeltable=1 },
     })
     minetest.register_node(raw_ingot.."_block", {
         description = S("Block of Raw "..description),

@@ -1,0 +1,5 @@
+Inventory=
+Blast Furnace=
+Smelts ores faster than furnace=
+Blast Furnaces smelt several items, mainly ores and armor, using a furnace fuel, into something else.=
+Active Blast Furnace=
