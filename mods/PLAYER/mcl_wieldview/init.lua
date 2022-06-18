@@ -18,9 +18,6 @@ minetest.register_entity("mcl_wieldview:wieldnode", {
 	collide_with_objects = false,
 	static_save = false,
 	visual_size  = {x = 0.21, y = 0.21},
-
-	_item = "",
-
 	on_step = function(self)
 		if not self._wielder or not self._wielder:is_player() then
 			self.object:remove()

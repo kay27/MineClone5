@@ -199,6 +199,67 @@ awards.register_achievement("mcl:enterEndPortal", {
 	icon = "mcl_end_end_stone.png",
 })
 
+-- Triggered in mcl_totems
+awards.register_achievement("mcl:postMortal", {
+	title = S("Postmortal"),
+	description = S("Use a Totem of Undying to cheat death."),
+	icon = "mcl_totems_totem.png",
+})
+
+-- Triggered in mcl_beds
+awards.register_achievement("mcl:sweetDreams", {
+	title = S("Sweet Dreams"),
+	description = S("Sleep in a bed to change your respawn point."),
+	icon = "mcl_beds_bed_red.png",
+})
+
+-- Triggered in mcl_smithing_table
+awards.register_achievement("mcl:seriousDedication", {
+	title = S("Serious Dedication"),
+	description = S("Use a Netherite Ingot to upgrade a hoe, and then completely reevaluate your life choices."),
+	icon = "farming_tool_netheritehoe.png",
+})
+
+-- Triggered in mobs_mc
+awards.register_achievement("mcl:whatAdeal", {
+	title = S("What A Deal!"),
+	description = S("Successfully trade with a Villager."),
+	icon = "mcl_core_emerald.png",
+})
+
+-- Triggered in mcl_fishing
+awards.register_achievement("mcl:fishyBusiness", {
+	title = S("Fishy Business"),
+	description = S("Catch a fish. \nHint: Catch a fish, salmon, clownfish, or pufferfish."),
+	icon = "mcl_fishing_fishing_rod.png",
+})
+
+-- Armor Advancements
+--[[awards.register_achievement("mcl:suitUp", {
+	title = S("Suit Up"),
+	description = S("Protect yourself with a piece of iron armor."),
+	icon = "mcl_armor_inv_chestplate_iron.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDiamonds", {
+	title = S("Cover Me with Diamonds"),
+	description = S("Diamond armor saves lives."),
+	icon = "mcl_armor_inv_chestplate_diamond.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDebris", {
+	title = S("Cover Me in Debris"),
+	description = S("Get a full suit of Netherite armor."),
+	icon = "mcl_armor_inv_chestplate_netherite.png",
+})]]--
+
+-- Triggered in extra_mobs
+awards.register_achievement("mcl:tacticalFishing", {
+	title = S("Tactical Fishing"),
+	description = S("Catch a fish... without a fishing rod!"),
+	icon = "pufferfish_bucket.png",
+})
+
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)
 
 if non_pc_achievements then
