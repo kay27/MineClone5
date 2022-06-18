@@ -611,9 +611,9 @@ do
 		io.close(file)
 		if string then
 			local savetable = minetest.deserialize(string)
-			local players_stored_data = savetable and savetable.players_stored_data
-			if players_stored_data then
-				for name, players_stored_data in pairs(savetable.players_stored_data) do
+			local savetable_players_stored_data = savetable and savetable.players_stored_data
+			if savetable_players_stored_data then
+				for name, players_stored_data in pairs(savetable_players_stored_data) do
 					doc.data.players[name] = {}
 					doc.data.players[name].stored_data = players_stored_data
 				end
