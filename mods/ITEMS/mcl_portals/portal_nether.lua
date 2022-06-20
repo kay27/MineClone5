@@ -209,39 +209,6 @@ local function get_target(p)
 	end
 end
 
--- Destroy portal if pos (portal frame or portal node) got destroyed
-local function destroy_nether_portal(pos, node)
-	if not node then return end
-	local nn, orientation = node.name, node.param2
-	local obsidian = nn == OBSIDIAN
-
-	local function check_remove(pos, orientation)
-		local node = get_node(pos)
-		if node and (node.name == PORTAL and (orientation == nil or (node.param2 == orientation))) then
-			minetest.remove_node(pos)
-			remove_exit(pos)
-		end
-	end
-	if obsidian then -- check each of 6 sides of it and destroy every portal:
-		check_remove({x = pos.x - 1, y = pos.y, z = pos.z}, 0)
-		check_remove({x = pos.x + 1, y = pos.y, z = pos.z}, 0)
-		check_remove({x = pos.x, y = pos.y, z = pos.z - 1}, 1)
-		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
-		check_remove({x = pos.x, y = pos.y - 1, z = pos.z})
-		check_remove({x = pos.x, y = pos.y + 1, z = pos.z})
-		return
-	end
-	if orientation == 0 then
-		check_remove({x = pos.x - 1, y = pos.y, z = pos.z}, 0)
-		check_remove({x = pos.x + 1, y = pos.y, z = pos.z}, 0)
-	else
-		check_remove({x = pos.x, y = pos.y, z = pos.z - 1}, 1)
-		check_remove({x = pos.x, y = pos.y, z = pos.z + 1}, 1)
-	end
-	check_remove({x = pos.x, y = pos.y - 1, z = pos.z})
-	check_remove({x = pos.x, y = pos.y + 1, z = pos.z})
-end
-
 local on_rotate
 if minetest.get_modpath("screwdriver") then
 	on_rotate = screwdriver.disallow
@@ -295,7 +262,6 @@ minetest.register_node(PORTAL, {
 	},
 	groups = { creative_breakable = 1, portal = 1, not_in_creative_inventory = 1 },
 	sounds = mcl_sounds.node_sound_glass_defaults(),
-	after_destruct = destroy_nether_portal,
 	on_rotate = on_rotate,
 
 	_mcl_hardness = -1,
@@ -764,9 +730,44 @@ minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {PORTAL},
 	interval = 1,
-	chance = 1,
+	chance = 2,
 	action = function(pos, node)
+		-- Don't use call stack!
+		local upper_node_name = get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
+		if upper_node_name ~= PORTAL and upper_node_name ~= OBSIDIAN then
+			minetest.remove_node(pos)
+			remove_exit(pos)
+			return
+		end
+		local lower_node_name = get_node({x = pos.x, y = pos.y - 1, z = pos.z}).name
+		if lower_node_name ~= PORTAL and lower_node_name ~= OBSIDIAN then
+			minetest.remove_node(pos)
+			remove_exit(pos)
+			return
+		end
+
+		if lower_node_name == OBSIDIAN and pos.y >= mcl_mapgen.overworld.min and random(1, 750) == 19 then
+			local pigman_obj = minetest.add_entity(pos, "mobs_mc:pigman")
+			if pigman_obj then
+				teleport_cooloff(pigman_obj)
+			end
+		end
+
 		local o = node.param2		-- orientation
+
+		local closer_node_name = get_node({x = pos.x - 1 + o, y = pos.y, z = pos.z - o}).name
+		if closer_node_name ~= PORTAL and closer_node_name ~= OBSIDIAN then
+			minetest.remove_node(pos)
+			remove_exit(pos)
+			return
+		end
+		local further_node_name = get_node({x = pos.x + 1 - o, y = pos.y, z = pos.z + o}).name
+		if further_node_name ~= PORTAL and further_node_name ~= OBSIDIAN then
+			minetest.remove_node(pos)
+			remove_exit(pos)
+			return
+		end
+
 		local d = random(0, 1)	-- direction
 		local time = random() * 1.9 + 0.5
 		local velocity, acceleration
@@ -810,6 +811,7 @@ minetest.register_abm({
 				})
 			end
 		end
+		-- TODO: Move to playerinfo/playerplus/mob api
 		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 1)) do	--maikerumine added for objects to travel
 			local lua_entity = obj:get_luaentity()				--maikerumine added for objects to travel
 			if (obj:is_player() or lua_entity) and prevent_portal_chatter(obj) then
@@ -829,7 +831,6 @@ local usagehelp = S("To open a Nether portal, place an upright frame of obsidian
 minetest.override_item(OBSIDIAN, {
 	_doc_items_longdesc = longdesc,
 	_doc_items_usagehelp = usagehelp,
-	after_destruct = destroy_nether_portal,
 	_on_ignite = function(user, pointed_thing)
 		local x, y, z = pointed_thing.under.x, pointed_thing.under.y, pointed_thing.under.z
 		-- Check empty spaces around obsidian and light all frames found:

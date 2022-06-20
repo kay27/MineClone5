@@ -17,16 +17,14 @@ mcl_mapgen.register_mapgen_block(function(minp, maxp)
 	local nodes = minetest_find_nodes_in_area(minp, maxp, debris_name)
 	if nodes then
 		for _, pos in pairs(nodes) do
-			minetest.log("warning","debris found at "..minetest.pos_to_string(pos))
 			local x, y, z = pos.x, pos.y, pos.z
-			if minetest_get_node({x = x-1, y = y, z = z}) == air_name
-			or minetest_get_node({x = x+1, y = y, z = z}) == air_name
-			or minetest_get_node({x = x, y = y-1, z = z}) == air_name
-			or minetest_get_node({x = x, y = y+1, z = z}) == air_name
-			or minetest_get_node({x = x, y = y, z = z-1}) == air_name
-			or minetest_get_node({x = x, y = y, z = z+1}) == air_name then
-				minetest_set_node(pos, netherrack_name)
-				minetest.log("warning","debris at "..minetest.pos_to_string(pos) .. " replaced to netherrack")
+			if minetest_get_node({x = x-1, y = y, z = z}).name == air_name
+			or minetest_get_node({x = x+1, y = y, z = z}).name == air_name
+			or minetest_get_node({x = x, y = y-1, z = z}).name == air_name
+			or minetest_get_node({x = x, y = y+1, z = z}).name == air_name
+			or minetest_get_node({x = x, y = y, z = z-1}).name == air_name
+			or minetest_get_node({x = x, y = y, z = z+1}).name == air_name then
+				minetest_set_node(pos, {name = netherrack_name})
 			end
 		end
 	end

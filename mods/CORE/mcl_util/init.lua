@@ -417,6 +417,7 @@ function mcl_util.deal_damage(target, damage, mcl_reason)
 			-- target:punch(puncher, 1.0, {full_punch_interval = 1.0, damage_groups = {fleshy = damage}}, vector.direction(puncher:get_pos(), target:get_pos()), damage)
 			if luaentity.health > 0 then
 				luaentity.health = luaentity.health - damage
+				luaentity.pause_timer = 0.4
 			end
 			return
 		end
@@ -498,3 +499,24 @@ function mcl_util.get_pointed_thing(player)
 		end
 	end
 end
+
+local possible_hackers = {}
+
+function mcl_util.is_player(obj)
+	if not obj then return end
+	if not obj.is_player then return end
+	if not obj:is_player() then return end
+	local name = obj:get_player_name()
+	if not name then return end
+	if possible_hackers[name] then return end
+	return true
+end
+
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
+	possible_hackers[name] = true
+end)
+
+minetest.register_on_joinplayer(function(player)
+	possible_hackers[player:get_player_name()] = nil
+end)

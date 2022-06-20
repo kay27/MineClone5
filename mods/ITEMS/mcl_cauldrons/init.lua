@@ -128,8 +128,9 @@ minetest.register_craft({
 minetest.register_abm({
 	label = "cauldrons",
 	nodenames = {"group:cauldron_filled"},
-	interval = 0.5,
+	interval = 1,
 	chance = 1,
+	-- TODO: Move to playerinfo/playerplus/mob api
 	action = function(pos, node)
 		for _, obj in pairs(minetest.get_objects_inside_radius(pos, 0.4)) do
 			if mcl_burning.is_burning(obj) then

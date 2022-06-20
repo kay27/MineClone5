@@ -3,6 +3,7 @@ Recipe book=
 Help=
 Select player skin=
 Achievements=
+Switch stack size=
 Building Blocks=
 Decoration Blocks=
 Redstone=

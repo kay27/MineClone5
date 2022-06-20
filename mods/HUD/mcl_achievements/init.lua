@@ -101,6 +101,18 @@ awards.register_achievement("mcl:bookcase", {
 	}
 })
 
+awards.register_achievement("mcl:buildIronPickaxe", {
+	title = S("Isn't It Iron Pick"),
+	-- TODO: This achievement should support all non-wood pickaxes
+	description = S("Craft a iron pickaxe using sticks and iron."),
+	icon = "default_tool_steelpick.png",
+	trigger = {
+		type = "craft",
+		item = "mcl_tools:pick_iron",
+		target = 1
+	}
+})
+
 -- Item pickup achievements: These are awarded when picking up a certain item.
 -- The achivements are manually given in the mod mcl_item_entity.
 awards.register_achievement("mcl:diamonds", {
@@ -123,6 +135,24 @@ awards.register_achievement("mcl:mineWood", {
 	title = S("Getting Wood"),
 	description = S("Pick up a wood item from the ground.\nHint: Punch a tree trunk until it pops out as an item."),
 	icon = "default_tree.png",
+})
+
+awards.register_achievement("mcl:whosCuttingOnions", {
+	title = S("Who is Cutting Onions?"),
+	description = S("Pick up a crying obsidian from the floor."),
+	icon = "default_obsidian.png^mcl_core_crying_obsidian.png",
+})
+
+awards.register_achievement("mcl:hiddenInTheDepths", {
+	title = S("Hidden in the Depths"),
+	description = S("Pick up an Ancient Debris from the floor."),
+	icon = "mcl_nether_ancient_debris_side.png",
+})
+
+awards.register_achievement("mcl:notQuiteNineLives", {
+	title = S('Not Quite "Nine" Lives'),
+	description = S("Charge a Respawn Anchor to the maximum."),
+	icon = "respawn_anchor_side4.png",
 })
 
 -- Smelting achivements: These are awarded when picking up an item from a furnace
@@ -161,6 +191,73 @@ awards.register_achievement("mcl:buildNetherPortal", {
 	title = S("Into the Nether"),
 	description = S("Use obsidian and a fire starter to construct a Nether portal."),
 	icon = "default_obsidian.png",
+})
+
+awards.register_achievement("mcl:enterEndPortal", {
+	title = S("The End?"),
+	description = S("Or the beginning?\nHint: Enter an end portal."),
+	icon = "mcl_end_end_stone.png",
+})
+
+-- Triggered in mcl_totems
+awards.register_achievement("mcl:postMortal", {
+	title = S("Postmortal"),
+	description = S("Use a Totem of Undying to cheat death."),
+	icon = "mcl_totems_totem.png",
+})
+
+-- Triggered in mcl_beds
+awards.register_achievement("mcl:sweetDreams", {
+	title = S("Sweet Dreams"),
+	description = S("Sleep in a bed to change your respawn point."),
+	icon = "mcl_beds_bed_red.png",
+})
+
+-- Triggered in mcl_smithing_table
+awards.register_achievement("mcl:seriousDedication", {
+	title = S("Serious Dedication"),
+	description = S("Use a Netherite Ingot to upgrade a hoe, and then completely reevaluate your life choices."),
+	icon = "farming_tool_netheritehoe.png",
+})
+
+-- Triggered in mobs_mc
+awards.register_achievement("mcl:whatAdeal", {
+	title = S("What A Deal!"),
+	description = S("Successfully trade with a Villager."),
+	icon = "mcl_core_emerald.png",
+})
+
+-- Triggered in mcl_fishing
+awards.register_achievement("mcl:fishyBusiness", {
+	title = S("Fishy Business"),
+	description = S("Catch a fish. \nHint: Catch a fish, salmon, clownfish, or pufferfish."),
+	icon = "mcl_fishing_fishing_rod.png",
+})
+
+-- Armor Advancements
+--[[awards.register_achievement("mcl:suitUp", {
+	title = S("Suit Up"),
+	description = S("Protect yourself with a piece of iron armor."),
+	icon = "mcl_armor_inv_chestplate_iron.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDiamonds", {
+	title = S("Cover Me with Diamonds"),
+	description = S("Diamond armor saves lives."),
+	icon = "mcl_armor_inv_chestplate_diamond.png",
+})]]--
+
+--[[awards.register_achievement("mcl:coverMeDebris", {
+	title = S("Cover Me in Debris"),
+	description = S("Get a full suit of Netherite armor."),
+	icon = "mcl_armor_inv_chestplate_netherite.png",
+})]]--
+
+-- Triggered in extra_mobs
+awards.register_achievement("mcl:tacticalFishing", {
+	title = S("Tactical Fishing"),
+	description = S("Catch a fish... without a fishing rod!"),
+	icon = "pufferfish_bucket.png",
 })
 
 -- NON-PC ACHIEVEMENTS (XBox, Pocket Edition, etc.)

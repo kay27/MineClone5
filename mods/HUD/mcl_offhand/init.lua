@@ -55,7 +55,7 @@ local function update_wear_bar(player, itemstack)
 end
 
 minetest.register_globalstep(function(dtime)
-	for _, player in pairs(minetest.get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do if mcl_util and mcl_util.is_player(player:get_player_name()) then
 		local itemstack = mcl_offhand.get_offhand(player)
 		local offhand_item = itemstack:get_name()
 		local offhand_hud = mcl_offhand[player].hud
@@ -148,7 +148,7 @@ minetest.register_globalstep(function(dtime)
 				remove_hud(player, index)
 			end
 		end
-	end
+	end end
 end)
 
 minetest.register_allow_player_inventory_action(function(player, action, inventory, inventory_info)

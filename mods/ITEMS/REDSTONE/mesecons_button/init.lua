@@ -216,6 +216,18 @@ mesecon.register_button(
 	S("A stone button is a redstone component made out of stone which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for 1 second."),
 	"mesecons_button_push")
 
+mesecon.register_button(
+	"polished_blackstone",
+	S("Polished Blackstone Button"),
+	"mcl_blackstone_polished.png",
+	"mcl_blackstone:blackstone_polished",
+	mcl_sounds.node_sound_stone_defaults(),
+	{material_stone=1,handy=1,pickaxey=1},
+	1,
+	false,
+	S("A polished blackstone button is a redstone component made out of polished blackstone which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for 1 second."),
+	"mesecons_button_push")
+
 local woods = {
 	{ "wood", "mcl_core:wood", "default_wood.png", S("Oak Button") },
 	{ "acaciawood", "mcl_core:acaciawood", "default_acacia_wood.png", S("Acacia Button") },
@@ -223,6 +235,8 @@ local woods = {
 	{ "darkwood", "mcl_core:darkwood", "mcl_core_planks_big_oak.png", S("Dark Oak Button") },
 	{ "sprucewood", "mcl_core:sprucewood", "mcl_core_planks_spruce.png", S("Spruce Button") },
 	{ "junglewood", "mcl_core:junglewood", "default_junglewood.png", S("Jungle Button") },
+	{ "warped_hyphae_wood", "mcl_mushroom:warped_hyphae_wood", "warped_hyphae_wood.png", S("Warped Hyphae Button") },
+	{ "crimson_hyphae_wood", "mcl_mushroom:crimson_hyphae_wood", "crimson_hyphae_wood.png", S("Crimson Hyphae Button") },
 }
 
 for w=1, #woods do

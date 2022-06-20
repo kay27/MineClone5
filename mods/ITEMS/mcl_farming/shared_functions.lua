@@ -129,7 +129,7 @@ function mcl_farming:grow_plant(identifier, pos, node, stages, ignore_light, low
 	if not stages then
 		stages = 1
 	end
-	stages = stages + math.ceil(intervals_counter)
+	stages = stages + math.floor(intervals_counter)
 	local new_node = {name = plant_info.names[step+stages]}
 	if new_node.name == nil then
 		new_node.name = plant_info.full_grown

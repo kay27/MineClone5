@@ -391,6 +391,7 @@ function mcl_potions.register_arrow(name, desc, color, def)
 	end
 
 	function ARROW_ENTITY.get_staticdata(self)
+		if not self then return end
 		local out = {
 			lastpos = self._lastpos,
 			startpos = self._startpos,

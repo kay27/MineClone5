@@ -4,7 +4,6 @@ local table = table
 
 mesecon.mvps_stoppers = {}
 mesecon.mvps_unsticky = {}
-mesecon.mvps_droppers = {}
 mesecon.on_mvps_move = {}
 mesecon.mvps_unmov = {}
 
@@ -15,24 +14,6 @@ end
 
 function mesecon.is_mvps_unmov(objectname)
 	return mesecon.mvps_unmov[objectname]
-end
-
-function mesecon.is_mvps_dropper(node, pushdir, stack, stackid)
-	local get_dropper = mesecon.mvps_droppers[node.name]
-	if type (get_dropper) == "function" then
-		get_dropper = get_dropper(node, pushdir, stack, stackid)
-	end
-	if not get_dropper then
-		get_dropper = minetest.get_item_group(node.name, "dig_by_piston") == 1
-	end
-	return get_dropper
-end
-
-function mesecon.register_mvps_dropper(nodename, get_dropper)
-	if get_dropper == nil then
-		get_dropper = true
-	end
-	mesecon.mvps_droppers[nodename] = get_dropper
 end
 
 -- Nodes that cannot be pushed / pulled by movestones, pistons
@@ -151,7 +132,7 @@ function mesecon.mvps_get_stack(pos, dir, maximum, piston_pos)
 			-- add connected nodes to frontiers, connected is a vector list
 			-- the vectors must be absolute positions
 			local connected = {}
-            local has_loop
+			local has_loop
 			if minetest.registered_nodes[nn.name]
 			and minetest.registered_nodes[nn.name].mvps_sticky then
 				connected, has_loop = minetest.registered_nodes[nn.name].mvps_sticky(np, nn, piston_pos)
@@ -220,19 +201,13 @@ end
 function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, player_name, piston_pos)
 	local nodes, has_loop = mesecon.mvps_get_stack(pos, movedir, maximum, piston_pos)
 
-	if has_loop then
-		return false
-	end
-
-	if not nodes then return end
+	if has_loop or not nodes then return end
 
 	local newpos={}
 	-- check node availability to push/pull into, and fill newpos[i]
 	for i in ipairs(nodes) do
 		newpos[i] = vector.add(nodes[i].pos, movedir)
-		if (newpos[i].x == piston_pos.x) and (newpos[i].y == piston_pos.y) and (newpos[i].z == piston_pos.z) then
-			return
-		end
+		if (newpos[i].x == piston_pos.x) and (newpos[i].y == piston_pos.y) and (newpos[i].z == piston_pos.z) then return end
 		if not is_available(newpos[i]) then
 			local available = false
 			for j in ipairs(nodes) do
@@ -243,23 +218,18 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, player_name,
 					end
 				end
 			end
-			if not available then
-				return
-			end
+			if not available then return end
 		end
 	end
 
-	if are_protected(nodes, player_name) then
-		return
-	end
+	if are_protected(nodes, player_name) then return end
 
 	local first_dropper = nil
 	-- remove all nodes
 	for id, n in ipairs(nodes) do
 		n.meta = minetest.get_meta(n.pos):to_table()
-		local is_dropper = mesecon.is_mvps_dropper(n.node, movedir, nodes, id)
+		local is_dropper = minetest.get_item_group(n.node.name, "dig_by_piston") == 1
 		if is_dropper then
-			--local drops = minetest.get_node_drops(n.node.name, "")
 			minetest.dig_node(n.pos)
 		else
 			minetest.remove_node(n.pos)

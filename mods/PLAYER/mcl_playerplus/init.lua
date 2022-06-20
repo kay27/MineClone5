@@ -2,7 +2,6 @@ mcl_playerplus = {
 	elytra = {},
 }
 
-local player_velocity_old = {x=0, y=0, z=0}
 local get_connected_players = minetest.get_connected_players
 local dir_to_yaw = minetest.dir_to_yaw
 local get_item_group = minetest.get_item_group
@@ -19,11 +18,14 @@ local playerphysics = playerphysics
 
 local vector = vector
 local math = math
+local math_min = math.min
 -- Internal player state
 local mcl_playerplus_internal = {}
 
 local time = 0
 local look_pitch = 0
+
+local player_pos_for_bubble_columns = {}
 
 local function player_collision(player)
 
@@ -34,9 +36,9 @@ local function player_collision(player)
 	local width = .75
 
 	for _,object in pairs(minetest.get_objects_inside_radius(pos, width)) do
-
-		if object and (object:is_player()
-		or (object:get_luaentity()._cmi_is_mob == true and object ~= player)) then
+		local luaentity = object:get_luaentity()
+		if object and ((mcl_util and mcl_util.is_player(object))
+		or (luaentity and luaentity._cmi_is_mob == true and object ~= player)) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
@@ -227,7 +229,6 @@ local function set_bone_position_conditional(player,b,p,r) --bone,position,rotat
 	end
 	player:set_bone_position(b,p,r)
 end
-
 minetest.register_globalstep(function(dtime)
 
 	time = time + dtime
@@ -253,7 +254,7 @@ minetest.register_globalstep(function(dtime)
 		local wielded_def = wielded:get_definition()
 
 		local c_x, c_y = unpack(player_collision(player))
-
+		
 		--[[
 		if player_velocity.x + player_velocity.y < .5 and c_x + c_y > 0 then
 			local add_velocity = player.add_player_velocity or player.add_velocity
@@ -275,12 +276,21 @@ minetest.register_globalstep(function(dtime)
 
 		local fly_pos = player:get_pos()
 		local fly_node = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.5, z = fly_pos.z}).name
-		local elytra = mcl_playerplus.elytra[player]
-
-		elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
-			and not player:get_attach()
-			and (elytra.active or control.jump and player_velocity.y < -6)
-			and (fly_node == "air" or fly_node == "ignore")
+		local elytra = mcl_playerplus.elytra[name]
+		elytra.inv = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra"
+		elytra.enchanted = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra_enchanted"
+		if not elytra.active then
+			elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra_enchanted" and not player:get_attach() and (elytra.active or control.jump and player_velocity.y < -6) and (fly_node == "air" or fly_node == "ignore") 
+			if not elytra.active then
+				elytra.active = player:get_inventory():get_stack("armor", 3):get_name() == "mcl_armor:elytra" and not player:get_attach() and (elytra.active or control.jump and player_velocity.y < -6) and (fly_node == "air" or fly_node == "ignore")
+			end
+		end
+		if not (fly_node == "air" or fly_node == "ignore") then		
+			elytra.active = false
+		end
+		if (not elytra.inv and not elytra.enchanted) then
+			elytra.active = false
+		end
 
 		if elytra.active then
 			mcl_player.player_set_animation(player, "fly")
@@ -322,19 +332,18 @@ minetest.register_globalstep(function(dtime)
 		end
 
 		if wielded_def and wielded_def._mcl_toollike_wield then
-			set_bone_position_conditional(player,"Wield_Item", vector.new(0,3.9,1.3), vector.new(90,0,0))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,4.7,3.1), vector.new(-90,225,90))
 		elseif string.find(wielded:get_name(), "mcl_bows:bow") then
-			set_bone_position_conditional(player,"Wield_Item", vector.new(.5,4.5,-1.6), vector.new(90,0,20))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(1,4,0), vector.new(90,130,115))
 		elseif string.find(wielded:get_name(), "mcl_bows:crossbow_loaded") then
-			set_bone_position_conditional(player,"Wield_Item", vector.new(-1.5,5.7,1.8), vector.new(64,90,0))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,5.2,1.2), vector.new(0,180,73))
 		elseif string.find(wielded:get_name(), "mcl_bows:crossbow") then
-			set_bone_position_conditional(player,"Wield_Item", vector.new(-1.5,5.7,1.8), vector.new(90,90,0))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,5.2,1.2), vector.new(0,180,45))
+		elseif wielded_def.inventory_image == "" then
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,6,2), vector.new(180,-45,0))
 		else
-			set_bone_position_conditional(player,"Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
+			set_bone_position_conditional(player,"Wield_Item", vector.new(0,5.3,2), vector.new(90,0,0))
 		end
-
-		player_velocity_old = player:get_velocity() or player:get_player_velocity()
-
 
 		-- controls right and left arms pitch when shooting a bow or blocking
 		if mcl_shields.is_blocking(player) == 2 then
@@ -349,7 +358,7 @@ minetest.register_globalstep(function(dtime)
 			set_bone_position_conditional(player,"Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(pitch+90,-30,pitch * -1 * .35))
 			set_bone_position_conditional(player,"Arm_Left_Pitch_Control", vector.new(3.5,5.785,0), vector.new(pitch+90,43,pitch * .35))
 		-- controls right and left arms pitch when loading a crossbow
-	elseif string.find(wielded:get_name(), "mcl_bows:crossbow_") then
+		elseif string.find(wielded:get_name(), "mcl_bows:crossbow_") then
 			set_bone_position_conditional(player,"Arm_Right_Pitch_Control", vector.new(-3,5.785,0), vector.new(45,-20,25))
 			set_bone_position_conditional(player,"Arm_Left_Pitch_Control", vector.new(3,5.785,0), vector.new(55,20,-45))
 		-- when punching
@@ -407,14 +416,15 @@ minetest.register_globalstep(function(dtime)
 			mcl_playerplus_internal[name].jump_cooldown = mcl_playerplus_internal[name].jump_cooldown - dtime
 		end
 
+		node_head = mcl_playerinfo[name].node_head
+		node_feet = mcl_playerinfo[name].node_feet
+
 		if control.jump and mcl_playerplus_internal[name].jump_cooldown <= 0 then
 
 			--pos = player:get_pos()
 
 			node_stand = mcl_playerinfo[name].node_stand
 			node_stand_below = mcl_playerinfo[name].node_stand_below
-			node_head = mcl_playerinfo[name].node_head
-			node_feet = mcl_playerinfo[name].node_feet
 			if not node_stand or not node_stand_below or not node_head or not node_feet then
 				return
 			end
@@ -451,6 +461,114 @@ minetest.register_globalstep(function(dtime)
 
 			-- Reset cooldown timer
 				mcl_playerplus_internal[name].jump_cooldown = 0.45
+			end
+		end
+
+		local bubble_column_feet = node_feet == "mcl_core:bubble_column_source"
+		if bubble_column_feet then
+			local bubble_column_head = node_head == "mcl_core:bubble_column_source"
+			if bubble_column_head then
+				if not player_pos_for_bubble_columns[name] then
+					player_pos_for_bubble_columns[name] = fly_pos
+				else
+					local head_alt_1 = fly_pos.y + 1.5
+					local head_alt_2 = head_alt_1 + time
+					while head_alt_1 < head_alt_2 do
+						local next_alt = math.min(head_alt_1 + 1, head_alt_2)
+						local next_node_head = minetest.get_node({x = fly_pos.x, y = next_alt, z = fly_pos.z}).name
+						if next_node_head == "mcl_core:bubble_column_source" then
+							head_alt_1 = next_alt
+						else
+							local ndef = minetest.registered_nodes[next_node_head]
+							if (ndef.walkable == nil or ndef.walkable == true)
+							and (ndef.collision_box == nil or ndef.collision_box.type == "regular")
+							and (ndef.node_box == nil or ndef.node_box.type == "regular")
+							and (ndef.groups.disable_suffocation ~= 1)
+							and (ndef.groups.opaque == 1)
+							then
+								break
+							else
+								-- pull head slightly above water level:
+								head_alt_1 = head_alt_1 + (next_alt - head_alt_1) * 0.5
+								break
+							end
+						end
+					end
+					local new_alt = head_alt_1 - 1.5
+					local delta_y = new_alt - fly_pos.y
+					if delta_y > 0 then
+						fly_pos.y = new_alt
+						player:set_pos(fly_pos)
+						local velocity_y = player_velocity.y
+						local add_velocity_y
+						if velocity_y > 1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y >= -1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					else
+						player_pos_for_bubble_columns[name] = nil
+					end
+				end
+			else
+				player_pos_for_bubble_columns[name] = nil
+			end
+		else
+			local whirlpool_feet = node_feet == "mcl_core:whirlpool_source"
+			if whirlpool_feet then
+				if not player_pos_for_bubble_columns[name] then
+					player_pos_for_bubble_columns[name] = fly_pos
+				else
+					local whirlpool_head = node_head == "mcl_core:whirlpool_source"
+					local stands_on = minetest.get_node({x = fly_pos.x, y = fly_pos.y - 0.0001, z = fly_pos.z}).name
+					if stands_on == "mcl_nether:magma" then
+						fly_pos.y = math.floor(fly_pos.y) + (control.sneak and 0.51 or 0.5)
+						player:set_pos(fly_pos)
+						local add_velocity_y
+						local velocity_y = player_velocity.y
+						if velocity_y < -1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y <= 1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					elseif stands_on == "mcl_core:whirlpool_source" then
+						local estimated_pos_y = player_pos_for_bubble_columns[name].y - (whirlpool_head and time/2 or time/5)
+						local next_pos_y = fly_pos.y
+						while next_pos_y > estimated_pos_y do
+							next_pos_y = next_pos_y - math.min(1, next_pos_y - estimated_pos_y)
+							local will_stand_on = minetest.get_node({x = fly_pos.x, y = next_pos_y - 0.0001, z = fly_pos.z}).name
+							if will_stand_on ~= "mcl_core:whirlpool_source" then
+								next_pos_y = math.floor(next_pos_y - 0.0001) + (control.sneak and 0.51 or 0.5)
+								break
+							end
+						end
+						fly_pos.y = next_pos_y
+						player:set_pos(fly_pos)
+						local add_velocity_y
+						local velocity_y = player_velocity.y
+						if velocity_y < -1 then
+							add_velocity_y = -velocity_y/5
+						elseif velocity_y <= 1 then
+							add_velocity_y = -velocity_y/2.5
+						else
+							add_velocity_y = -velocity_y/2
+						end
+						player:add_velocity({x = 0, y = add_velocity_y, z = 0})
+						player_pos_for_bubble_columns[name] = fly_pos
+					else
+						player_pos_for_bubble_columns[name] = nil
+					end
+				end
+			elseif player_pos_for_bubble_columns[name] then
+				player_pos_for_bubble_columns[name] = nil
 			end
 		end
 	end
@@ -625,15 +743,14 @@ minetest.register_globalstep(function(dtime)
 end)
 
 -- set to blank on join (for 3rd party mods)
-minetest.register_on_joinplayer(function(player)
-	local name = player:get_player_name()
-
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
 	mcl_playerplus_internal[name] = {
 		lastPos = nil,
 		swimDistance = 0,
 		jump_cooldown = -1,	-- Cooldown timer for jumping, we need this to prevent the jump exhaustion to increase rapidly
 	}
-	mcl_playerplus.elytra[player] = {active = false, rocketing = 0}
+	mcl_playerplus.elytra[name] = {active = false, rocketing = 0}
 end)
 
 -- clear when player leaves
@@ -641,10 +758,10 @@ minetest.register_on_leaveplayer(function(player)
 	local name = player:get_player_name()
 
 	mcl_playerplus_internal[name] = nil
-	mcl_playerplus.elytra[player] = nil
+	mcl_playerplus.elytra[name] = nil
 end)
 
--- Don't change HP if the player falls in the water or through End Portal:
+-- Don't change HP if the player falls in the liquid or through End Portal:
 mcl_damage.register_modifier(function(obj, damage, reason)
 	if reason.type == "fall" then
 		local pos = obj:get_pos()
@@ -662,7 +779,7 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 				if not def or def.walkable then
 					return
 				end
-				if minetest.get_item_group(node.name, "water") ~= 0 then
+				if minetest.get_item_group(node.name, "liquid") ~= 0 then
 					return 0
 				end
 				if node.name == "mcl_portals:portal_end" then

@@ -77,8 +77,7 @@ minetest.register_node("mcl_nether:netheriteblock", {
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 1200,
 	_mcl_hardness = 50,
-	_mcl_silk_touch_drop = true,
-	_mcl_fortune_drop = mcl_core.fortune_drop_ore
+	_mcl_silk_touch_drop = true
 })
 
 -- For eternal fire on top of netherrack and magma blocks
@@ -167,7 +166,6 @@ minetest.register_node("mcl_nether:soul_sand", {
 	sounds = mcl_sounds.node_sound_sand_defaults(),
 	_mcl_blast_resistance = 0.5,
 	_mcl_hardness = 0.5,
-	-- Movement handling is done in mcl_playerplus mod
 })
 
 minetest.register_node("mcl_nether:nether_brick", {
@@ -203,7 +201,7 @@ minetest.register_node("mcl_nether:nether_wart_block", {
 	stack_max = 64,
 	tiles = {"mcl_nether_nether_wart_block.png"},
 	is_ground_content = false,
-	groups = {handy=1, hoey=1, building_block=1},
+	groups = {handy=1, hoey=1, building_block=1, compostability=85},
 	sounds = mcl_sounds.node_sound_leaves_defaults(
 		{
 			footstep={name="default_dirt_footstep", gain=0.7},
@@ -418,3 +416,23 @@ minetest.register_craft({
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/nether_wart.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/lava.lua")
+
+local bubble_generation_schema = {
+	["mcl_nether:soul_sand"] = "mcl_core:bubble_column_source",
+	["mcl_nether:magma"]     = "mcl_core:whirlpool_source",
+}
+
+minetest.register_abm({
+	label = "Make whirlpools and bubble columns",
+	nodenames = {"mcl_nether:soul_sand", "mcl_nether:magma"},
+	neighbors = {"mcl_core:water_source"},
+	interval = 2,
+	chance = 1,
+	action = function(pos, node)
+		local pos_above = {x = pos.x, y = pos.y + 1, z = pos.z}
+		local above_node_name = minetest.get_node(pos_above).name
+		if above_node_name ~= "mcl_core:water_source" then return end
+		local new_above_node_name = bubble_generation_schema[node.name]
+		minetest.swap_node(pos_above, {name = new_above_node_name})
+	end,
+})

@@ -325,7 +325,7 @@ minetest.register_on_generated(function(minp, maxp, chunkseed)
 		--  mcl_mapgen.register_mapgen_lvm(function(vm_context), order_number)    --
 		--                                                                        --
 		for _, v in pairs(queue_chunks_lvm) do
-			vm_context = v.f(vm_context)
+			v.f(vm_context)
 		end
 		--                                                                                         --
 		--  mcl_mapgen.register_mapgen(function(minp, maxp, chunkseed, vm_context), order_number)  --
@@ -416,7 +416,7 @@ mcl_mapgen.bedrock_is_rough = normal
 overworld.min = -62
 if superflat then
 	mcl_mapgen.ground = tonumber(minetest.get_mapgen_setting("mgflat_ground_level")) or 8
-	overworld.min = ground - 3
+	overworld.min = mcl_mapgen.ground - 3
 end
 -- if singlenode then mcl_mapgen.overworld.min = -66 end -- DONT KNOW WHY
 overworld.max = mcl_mapgen.EDGE_MAX
@@ -480,7 +480,6 @@ function mcl_mapgen.get_voxel_manip(vm_context)
 	return vm_context.vm
 end
 
-local CS_NODES = mcl_mapgen.CS_NODES
 function mcl_mapgen.clamp_to_chunk(x, size)
 	if not size then
 		minetest.log("warning", "[mcl_mapgen] Couldn't clamp " .. tostring(x) .. " - missing size")
@@ -504,6 +503,33 @@ function mcl_mapgen.clamp_to_chunk(x, size)
 	end
 	return x - overflow
 end
+
 function mcl_mapgen.get_chunk_beginning(x)
-	return x - ((x + central_chunk_min_pos) % CS_NODES)
+	if tonumber(x) then
+		return x - ((x + central_chunk_min_pos) % CS_NODES)
+	end
+	if x.x then
+		return {
+			x = mcl_mapgen.get_chunk_beginning(x.x),
+			y = mcl_mapgen.get_chunk_beginning(x.y),
+			z = mcl_mapgen.get_chunk_beginning(x.z)
+		}
+	end
 end
+
+function mcl_mapgen.get_chunk_ending(x)
+	if tonumber(x) then
+		return mcl_mapgen.get_chunk_beginning(x) + LAST_NODE_IN_CHUNK
+	end
+	if x.x then
+		return {
+			x = mcl_mapgen.get_chunk_beginning(x.x) + LAST_NODE_IN_CHUNK,
+			y = mcl_mapgen.get_chunk_beginning(x.y) + LAST_NODE_IN_CHUNK,
+			z = mcl_mapgen.get_chunk_beginning(x.z) + LAST_NODE_IN_CHUNK
+		}
+	end
+end
+
+mcl_mapgen.get_block_seed = get_block_seed
+mcl_mapgen.get_block_seed2 = get_block_seed2
+mcl_mapgen.get_block_seed3 = get_block_seed3

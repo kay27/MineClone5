@@ -145,7 +145,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 		-- Pickup arrow if player is nearby (not in Creative Mode)
 		local objects = minetest.get_objects_inside_radius(pos, 1)
 		for _,obj in ipairs(objects) do
-			if obj:is_player() then
+			if mcl_util and mcl_util.is_player(obj) then
 				if self._collectable and not minetest.is_creative_enabled(obj:get_player_name()) then
 					if obj:get_inventory():room_for_item("main", "mcl_bows:arrow") then
 						obj:get_inventory():add_item("main", "mcl_bows:arrow")
@@ -199,7 +199,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 		for k, obj in pairs(objs) do
 			local ok = false
 			-- Arrows can only damage players and mobs
-			if obj:is_player() then
+			if mcl_util and mcl_util.is_player(obj) then
 				ok = true
 			elseif obj:get_luaentity() then
 				if (obj:get_luaentity()._cmi_is_mob or obj:get_luaentity()._hittable_by_projectile) then
@@ -223,7 +223,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 		if closest_object then
 			local obj = closest_object
-			local is_player = obj:is_player()
+			local is_player = mcl_util and mcl_util.is_player(obj)
 			local lua = obj:get_luaentity()
 			if obj == self._shooter and self._time_in_air > 1.02 or obj ~= self._shooter and (is_player or (lua and (lua._cmi_is_mob or lua._hittable_by_projectile))) then
 				if obj:get_hp() > 0 then
@@ -258,7 +258,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 								full_punch_interval=1.0,
 								damage_groups={fleshy=self._damage},
 							}, self.object:get_velocity())
-							if obj:is_player() then
+							if mcl_util and mcl_util.is_player(obj) then
 								if not mcl_shields.is_blocking(obj) then
 									local placement
 									self._placement = math.random(1, 2)
@@ -309,7 +309,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 
 					if is_player then
-						if self._shooter and self._shooter:is_player() and not self._in_player and not self._blocked then
+						if self._shooter and (mcl_util and mcl_util.is_player(self._shooter)) and not self._in_player and not self._blocked then
 							-- “Ding” sound for hitting another player
 							minetest.sound_play({name="mcl_bows_hit_player", gain=0.1}, {to_player=self._shooter:get_player_name()}, true)
 						end
@@ -320,7 +320,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 						-- Achievement for hitting skeleton, wither skeleton or stray (TODO) with an arrow at least 50 meters away
 						-- NOTE: Range has been reduced because mobs unload much earlier than that ... >_>
 						-- TODO: This achievement should be given for the kill, not just a hit
-						if self._shooter and self._shooter:is_player() and vector.distance(pos, self._startpos) >= 20 then
+						if self._shooter and (mcl_util and mcl_util.is_player(self._shooter)) and vector.distance(pos, self._startpos) >= 20 then
 							if mod_awards and (entity_name == "mobs_mc:skeleton" or entity_name == "mobs_mc:stray" or entity_name == "mobs_mc:witherskeleton") then
 								awards.unlock(self._shooter:get_player_name(), "mcl:snipeSkeleton")
 							end
@@ -331,7 +331,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 						minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
 					end
 				end
-				if not obj:is_player() then
+				if not mcl_util or not mcl_util.is_player(obj) then
 					mcl_burning.extinguish(self.object)
 					if self._piercing == 0 then
 						self.object:remove()
@@ -441,6 +441,7 @@ function ARROW_ENTITY.on_punch(self)
 end
 
 function ARROW_ENTITY.get_staticdata(self)
+	if not self then return end
 	local out = {
 		lastpos = self._lastpos,
 		startpos = self._startpos,
@@ -457,7 +458,7 @@ function ARROW_ENTITY.get_staticdata(self)
 		end
 		out.stuckstarttime = minetest.get_gametime() - self._stucktimer
 	end
-	if self._shooter and self._shooter:is_player() then
+	if self._shooter and mcl_util and mcl_util.is_player(self._shooter) then
 		out.shootername = self._shooter:get_player_name()
 	end
 	return minetest.serialize(out)
@@ -493,7 +494,7 @@ function ARROW_ENTITY.on_activate(self, staticdata, dtime_s)
 		self._is_critical = data.is_critical
 		if data.shootername then
 			local shooter = minetest.get_player_by_name(data.shootername)
-			if shooter and shooter:is_player() then
+			if shooter and mcl_util and mcl_util.is_player(shooter) then
 				self._shooter = shooter
 			end
 		end
