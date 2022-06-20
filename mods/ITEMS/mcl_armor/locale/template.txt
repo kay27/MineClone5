@@ -21,3 +21,4 @@ Iron Boots=
 Golden Boots=
 Diamond Boots=
 Chain Boots=
+Elytra=

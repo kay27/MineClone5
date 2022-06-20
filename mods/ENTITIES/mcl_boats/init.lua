@@ -166,19 +166,24 @@ function boat.on_activate(self, staticdata, dtime_s)
 		self._last_v = self._v
 		self._itemstring = data.itemstring
 
-		while #data.textures < 5 do
-			table.insert(data.textures, data.textures[1])
-		end
+		if data.textures then
+			while #data.textures < 5 do
+				table.insert(data.textures, data.textures[1])
+			end
 
-		self.object:set_properties({textures = data.textures})
+			self.object:set_properties({textures = data.textures})
+		end
 	end
 end
 
 function boat.get_staticdata(self)
+	if not self then return end
+	local object = self.object
+	local object_properties = object and object.get_properties and object:get_properties()
 	return minetest.serialize({
 		v = self._v,
 		itemstring = self._itemstring,
-		textures = self.object:get_properties().textures
+		textures = object_properties and object_properties.textures
 	})
 end
 

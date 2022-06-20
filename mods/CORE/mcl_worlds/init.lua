@@ -152,3 +152,23 @@ minetest.register_globalstep(function(dtime)
 		dimtimer = 0
 	end
 end)
+
+function mcl_worlds.get_cloud_parameters()
+	if mcl_mapgen.name == "valleys" then
+		return {
+			height = 384,
+			speed = {x=-2, z=0},
+			thickness=5,
+			color="#FFF0FEF",
+			ambient = "#201060",
+		}
+	else
+		-- MC-style clouds: Layer 127, thickness 4, fly to the “West”
+		return {
+			height = mcl_worlds.layer_to_y(127),
+			speed = {x=-2, z=0},
+			thickness = 4,
+			color = "#FFF0FEF",
+		}
+	end
+end

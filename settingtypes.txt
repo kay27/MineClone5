@@ -51,6 +51,10 @@ mcl_showDeathMessages (Show death messages) bool true
 # If disabled, all recipes will be shown.
 mcl_craftguide_progressive_mode	(Learn crafting recipes progressively) bool true
 
+# Limit the number of sparks produced by lava per 5 seconds to this number.
+# 0 will disable lava sparks altogeter with no ABM being registered.
+mcl_core_lava_spark_limit (Number of sparks lava can produce per 5 seconds) int 10
+
 [Mobs]
 # If enabled, mobs will spawn naturally. This does not affect
 # affect mob spawners.
@@ -165,6 +169,22 @@ kick_cheaters (Kick Cheaters) bool false
 # Cheat kicking threshold
 kick_threshold (Cheat Kicking Threshold) int 10
 
+[Antispam]
+# Maximum player messages in a sequence
+limit_messages (Maximum player messages in a sequence) int 10
+# Maximum message length
+limit_message_length (Maximum message length) int 200
+# Block special characters
+block_special_chars (Block special characters) bool true
+# Ban spammers
+ban_spammers (Ban spammers) bool true
+# Kick spammers
+kick_spammers (Kick spammers) bool true
+# Revoke shout priv for spammers
+revoke_shout_for_spammers (Revoke shout priv for spammers) bool true
+
 [Debugging]
 # If enabled, this will show the itemstring of an item in the description.
 mcl_item_id_debug (Item ID Debug) bool false
+mcl_debug_struct_noise (Show Structures Perlin Noise) bool false
+mcl_debug_chunk_borders (Show Chunk Borders) bool false

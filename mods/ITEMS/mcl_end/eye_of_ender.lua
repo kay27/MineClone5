@@ -10,7 +10,7 @@ minetest.register_entity("mcl_end:ender_eye", {
 
 	-- Save and restore age
 	get_staticdata = function(self)
-		return tostring(self._age) or "0"
+		return tostring(self and self._age) or "0"
 	end,
 	on_activate = function(self, staticdata, dtime_s)
 		local age = tonumber(staticdata)

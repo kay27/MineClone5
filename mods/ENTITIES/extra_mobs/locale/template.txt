@@ -1,0 +1,11 @@
+# textdomain:extra_mobs
+Hoglin=
+piglin=
+piglin Brute=
+Strider=
+Fox=
+Cod=
+Salmon=
+dolphin=
+Glow Squid=
+Glow Ink Sac=

@@ -1,0 +1,5 @@
+Inventory=
+Smoker=
+Cooks food faster than furnace=
+Smokers cook several items, mainly raw foods, into cooked foods, but twice as fast as a normal furnace.=
+Burning Smoker=

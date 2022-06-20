@@ -78,7 +78,7 @@ dyelocal.dyes = {
 	{"dark_green", "dye_dark_green",    S("Cactus Green"),{dye=1, craftitem=1, basecolor_green=1,   excolor_green=1,     unicolor_dark_green=1}},
 	{"green", "mcl_dye_lime",           S("Lime Dye"),     {dye=1, craftitem=1, basecolor_green=1,   excolor_green=1,     unicolor_green=1}},
 	{"yellow", "dye_yellow",            S("Dandelion Yellow"),    {dye=1, craftitem=1, basecolor_yellow=1,  excolor_yellow=1,    unicolor_yellow=1}},
-	{"brown", "mcl_dye_brown",          S("Cocoa Beans"),     {dye=1, craftitem=1, basecolor_brown=1,  excolor_orange=1,    unicolor_dark_orange=1}},
+	{"brown", "mcl_dye_brown",          S("Cocoa Beans"),     {dye=1, craftitem=1, basecolor_brown=1,  excolor_orange=1,    unicolor_dark_orange=1, compostability=65}},
 	{"orange", "dye_orange",            S("Orange Dye"),    {dye=1, craftitem=1, basecolor_orange=1,  excolor_orange=1,    unicolor_orange=1}},
 	{"red", "dye_red",                  S("Rose Red"),       {dye=1, craftitem=1, basecolor_red=1,     excolor_red=1,       unicolor_red=1}},
 	{"magenta", "dye_magenta",          S("Magenta Dye"),   {dye=1, craftitem=1, basecolor_magenta=1, excolor_red_violet=1,unicolor_red_violet=1}},
@@ -281,6 +281,11 @@ local function apply_bone_meal(pointed_thing)
 		if math.random(1, 100) <= 75 then
 			return mcl_farming:grow_plant("plant_beetroot", pos, n, 1, true)
 		end
+	-- Sweet berry bush advances 1 stage
+	elseif string.find(n.name, "mcl_farming:sweet_berry_bush_") then
+		mcl_dye.add_bone_meal_particle(pos)		
+		local stages = 1
+		return mcl_farming:grow_plant("plant_sweet_berry_bush", pos, n, stages, true)
 	elseif n.name == "mcl_cocoas:cocoa_1" or n.name == "mcl_cocoas:cocoa_2" then
 		mcl_dye.add_bone_meal_particle(pos)
 		-- Cocoa: Advance by 1 stage

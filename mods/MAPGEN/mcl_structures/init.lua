@@ -75,6 +75,7 @@ local function spawnstruct_function(name, param)
 
 	local pos = player:get_pos()
 	if not pos then return end
+	pos.y = math.floor(pos.y) + 1
 	local pr = PseudoRandom(math.floor(pos.x * 333 + pos.y * 19 - pos.z + 4))
 	pos = vector.round(pos)
 	local dir = minetest.yaw_to_dir(player:get_look_horizontal())
@@ -289,9 +290,9 @@ function mcl_structures.place_schematic(def)
 		pos             = vector.new(pos),
 		schematic       = loaded_schematic,
 		rotation        = rotation,
-		replacements    = replacements,
-		force_placement = force_placement,
-		flags           = flags,
+		replacements    = def.replacements,
+		force_placement = def.force_placement,
+		flags           = def.flags,
 		size            = vector.new(size),
 		pr              = pr,
 		on_placed       = on_placed,

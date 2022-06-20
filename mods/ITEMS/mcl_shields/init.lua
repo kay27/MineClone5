@@ -22,6 +22,8 @@ interact_priv.give_to_admin = false
 local overlay = mcl_enchanting.overlay
 local hud = "mcl_shield_hud.png"
 
+local is_player = mcl_util.is_player
+
 minetest.register_tool("mcl_shields:shield", {
 	description = S("Shield"),
 	_doc_items_longdesc = S("A shield is a tool used for protecting the player against attacks."),
@@ -107,6 +109,7 @@ for _, e in pairs(mcl_shields.enchantments) do
 end
 
 function mcl_shields.is_blocking(obj)
+	if not mcl_util or not mcl_util.is_player(obj) then return end
 	local blocking = mcl_shields.players[obj].blocking
 	if blocking > 0 then
 		local shieldstack = obj:get_wielded_item()
@@ -121,7 +124,7 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 	local type = reason.type
 	local damager = reason.direct
 	local blocking, shieldstack = mcl_shields.is_blocking(obj)
-	if obj:is_player() and blocking and mcl_shields.types[type] and damager then
+	if is_player(obj) and blocking and mcl_shields.types[type] and damager then
 		local entity = damager:get_luaentity()
 		if entity and (type == "arrow" or type == "generic") then
 			damager = entity._shooter
@@ -152,10 +155,13 @@ local function modify_shield(player, vpos, vrot, i)
 	if i == 1 then
 		arm = "Left"
 	end
-	local shield = mcl_shields.players[player].shields[i]
-	if shield then
-		shield:set_attach(player, "Arm_" .. arm, vpos, vrot, false)
-	end
+	local player_data = mcl_shields.players[player]
+	if not player_data then return end
+	local shields = player_data.shields
+	if not shields then return end
+	local shield = shields[i]
+	if not shield then return end
+	shield:set_attach(player, "Arm_" .. arm, vpos, vrot, false)
 end
 
 local function set_shield(player, block, i)
@@ -287,8 +293,7 @@ local function update_shield_entity(player, blocking, i)
 end
 
 minetest.register_globalstep(function(dtime)
-	for _, player in pairs(minetest.get_connected_players()) do
-
+	for _, player in pairs(minetest.get_connected_players()) do if is_player(player) then
 		handle_blocking(player)
 
 		local blocking, shieldstack = mcl_shields.is_blocking(player)
@@ -360,7 +365,7 @@ minetest.register_globalstep(function(dtime)
 		for i = 1, 2 do
 			update_shield_entity(player, blocking, i)
 		end
-	end
+	end end
 end)
 
 minetest.register_on_dieplayer(function(player)

@@ -13,7 +13,7 @@ Liquid container=Récipient de liquide
 
 A glass bottle is used as a container for liquids and can be used to collect water directly.=Une bouteille en verre est utilisée comme récipient pour les liquides et peut être utilisée pour collecter l'eau directement.
 
-To collect water, use it on a cauldron with water (which removes a level of water) or any water source (which removes no water).=Pour collecter l'eau, poser la sur un chaudron avec de l'eau (qui enlève un niveau d'eau) ou toute source d'eau (qui n'enlève pas d'eau).
+To collect water, use it on a cauldron with water (which removes a level of water) or any water source (which removes no water).=Pour collecter l'eau, poser la sur un chaudron avec de l'eau (ce qui enlève un niveau d'eau) ou toute source d'eau (ce qui n'enlève pas d'eau).
 
 Water Bottle=Bouteille d'eau
 Water bottles can be used to fill cauldrons. Drinking water has no effect.=Les bouteilles d'eau peuvent être utilisées pour remplir les chaudrons. L'eau potable n'a aucun effet.
@@ -21,11 +21,11 @@ Water bottles can be used to fill cauldrons. Drinking water has no effect.=Les b
 Use the “Place” key to drink. Place this item on a cauldron to pour the water into the cauldron.=Utilisez la touche "Utiliser" pour boire. Placez cet article sur un chaudron pour verser l'eau dans le chaudron.
 
 River Water Bottle=Bouteille d'eau de rivière
-River water bottles can be used to fill cauldrons. Drinking it has no effect.=Les bouteilles d'eau de rivière peuvent être utilisées pour remplir les chaudrons. Le boire n'a aucun effet.
+River water bottles can be used to fill cauldrons. Drinking it has no effect.=Les bouteilles d'eau de rivière peuvent être utilisées pour remplir les chaudrons. Les boire n'a aucun effet.
 
 Use the “Place” key to drink. Place this item on a cauldron to pour the river water into the cauldron.=Utilisez la touche "Utiliser" pour boire. Placez cet objet sur un chaudron pour verser l'eau de la rivière dans le chaudron.
 
-Splash Water Bottle=Bouteille d'eau jetable
+Splash Water Bottle=Bouteille d'eau éclaboussante
 Extinguishes fire and hurts some mobs=Éteint le feu et blesse certains mobs
 
 A throwable water bottle that will shatter on impact, where it extinguishes nearby fire and hurts mobs that are vulnerable to water.=Une bouteille d'eau jetable qui se brisera à l'impact, où elle éteint le feu à proximité et blesse les mobs vulnérables à l'eau.
@@ -46,29 +46,29 @@ Drinking a potion gives you a particular effect.=Boire une potion vous donne un 
 1 HP/@1s | @2=1 HP/@1s | @2
 @1 HP=@1 HP
 @1 Potion=Potion @1
-Splash @1 Potion=Potion @1 jetable
+Splash @1 Potion=Potion @1 éclaboussante
 Lingering @1 Potion=Potion @1 persistante
 Arrow of @1=Flêche de @1
  II= II
  IV= IV
 @1 Potion@2=@1 Potion@2
-Splash @1@2 Potion=Potion @1@2 jetable
+Splash @1@2 Potion=Potion @1@2 éclaboussante
 Lingering @1@2 Potion=Potion @1@2 persistante
 Arrow of @1@2=Flêche de @1@2
 @1 + Potion=@1 + Potion
-Splash @1 + Potion=Potion @1 + jetable
+Splash @1 + Potion=Potion @1 + éclaboussante
 Lingering @1 + Potion=Potion @1 + persistante
 Arrow of @1 +=Flêche de @1 +
 Awkward Potion=Potion étrange
-Awkward Splash Potion=Potion étrange jetable
+Awkward Splash Potion=Potion étrange éclaboussante
 Awkward Lingering Potion=Potion étrange persistante
 Has an awkward taste and is used for brewing potions.=A un goût étrange et est utilisé pour préparer des potions. 
 Mundane Potion=Potion banale
-Mundane Splash Potion=Potion banale jetable
+Mundane Splash Potion=Potion banale éclaboussante
 Mundane Lingering Potion=Potion banale persistante
 Has a terrible taste and is not useful for brewing potions.=A un goût terrible et n'est pas utile pour préparer des potions. 
 Thick Potion=Potion épaisse
-Thick Splash Potion=Potion épaisse jetable
+Thick Splash Potion=Potion épaisse éclaboussante
 Thick Lingering Potion=Potion épaisse persistante
 Has a bitter taste and is not useful for brewing potions.=A un goût amer et n'est pas utile pour préparer des potions. 
 Dragon's Breath=Souffle du dragon

@@ -27,19 +27,35 @@ Any Pull Request that isn't a bug fix can be closed within a week unless it rece
 
 Start coding!
 
-Refer to Minetest Lua API, Developer Wiki and other documentation.
+Refer to [Minetest Lua API](https://github.com/minetest/minetest/blob/master/doc/lua_api.txt), [Developer Wiki](https://dev.minetest.net/), [MineClone 5 Wiki](https://git.minetest.land/MineClone5/MineClone5/wiki/) and other documentation.
 
-Follow Lua code style guidelines. Use tabs, not spaces for indentation (tab size = 8). Never use `minetest.env`.
+Follow [Lua code style guidelines](https://dev.minetest.net/Lua_code_style_guidelines). Use tabs, not spaces for indentation (tab size = 8). Never use `minetest.env`.
 
 Check your code works as expected.
 
-Commit & push your changes to a new branch (not master, one change per branch)
+Commit & push your changes to a new branch (not master, one change per a branch).
 
 Commit messages should use the present tense and be descriptive.
 
 Once you are happy with your changes, submit a pull request.
 
-A pull-request is considered merge-able when:
+A pull-request is considered merge-able when it looks good to one person from the community.
+
+Please invite other developers to review your contribution when you know they are online. If there is no any reaction during 24 hours after posting the invitation and pinging developers - you are welcome to do a self-review and merge the request.
+
+If someone else's contribution looks good to you - you are free to merge it ASAP.
+
+Different git branches are welcomed! Releases by different people are welcomed! Releases from different branches are welcomed! Frequent releases are welcomed!
+
+It is nice not to block other developers by your work and don't dictate them what to do, unsless they really want that. Git branches and forks are recommended to avoid conflicts at development stage.
+
+It is nice to try splitting big features into small steps.
+
+It is nice to create an issue for any work and mention the issue in the commit text, like `#123 Fix blast resistance of cactus`, where `#123` is the issue number.
+
+Actually, it looks like we all love what we do, so any stupid situations should be carefully discussed before merging into upstreams. But nothing prevents us from releasing controversial stuff through dedicated branches. Release your contribution when you need more feedback.
+
+Feel free to break the rules if you're sure you have to.
 
 #### Contributors
 
