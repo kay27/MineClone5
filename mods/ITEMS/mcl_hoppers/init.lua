@@ -457,8 +457,9 @@ minetest.register_abm({
 
 		-- Try to move an item below before moving it sideways
 		local downnode = minetest.get_node(downpos)
-        if not minetest.registered_nodes[downnode.name] then return end
-        if mcl_util.move_item_container(pos, downpos) then return end
+
+        if minetest.registered_nodes[downnode.name] and \
+           mcl_util.move_item_container(pos, downpos) then return end
 
 		-- Move an item from the hopper into the container to which the hopper points to
 		local g = get_item_group(frontnode.name, "container")
