@@ -801,20 +801,6 @@ function mobs.mob_step(self, dtime)
 		return false
 	end
 
-
-	--DEBUG TIME!
-	--REMEMBER TO MOVE THIS AFTER DEATH CHECK
-
-	--if self.has_head then
-	--	mobs.do_head_logic(self,dtime)
-	--end
-
-
-
-	--if true then--DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
-	--	return
-	--end
-
 	--despawn mechanism
 	--don't despawned tamed or bred mobs
 	if not self.tamed and not self.bred then
@@ -833,7 +819,7 @@ function mobs.mob_step(self, dtime)
 		self.object:set_texture_mod("^[colorize:red:120")
 		--fix double death sound
 		if self.health > 0 then
-			mobs.play_sound(self,"damage")
+			mobs.play_sound(self, "damage")
 		end
 	end
 	self.old_health = self.health
@@ -863,7 +849,7 @@ function mobs.mob_step(self, dtime)
 		return
 	end
 
-	mobs.random_sound_handling(self,dtime)
+	mobs.random_sound_handling(self, dtime)
 
 	--mobs drowning mechanic
 	if not self.breathes_in_water then
@@ -893,13 +879,39 @@ function mobs.mob_step(self, dtime)
 		end
 	end
 
+	local pos = self.object:get_pos()
+	local node = minetest_get_node(pos).name
+
 	--water damage
-	if self.water_damage and self.water_damage ~= 0 then
-		local pos = self.object:get_pos()
-		local node = minetest_get_node(pos).name
-		if minetest_get_item_group(node, "water") ~= 0 then
+	if self.water_damage and self.water_damage ~= 0 and minetest_get_item_group(node, "water") ~= 0 then
+		self.water_counter = (self.water_counter or 0) + dtime
+		if self.water_counter >= 1 then
 			mobs.smoke_effect(self)
 			self.health = self.health - self.water_damage
+			self:teleport()
+			self.water_counter = 0
+		end
+	end
+
+	--lava damage
+	local lava_damage = self.lava_damage
+	if lava_damage and lava_damage ~= 0 and minetest_get_item_group(node, "lava") ~= 0 then
+		self.lava_counter = (self.lava_counter or 0) + dtime
+		if self.lava_counter >= 1 then
+			minetest.sound_play("default_punch", {
+				object = self.object,
+				max_hear_distance = 5
+			}, true)
+--[[			if not mcl_burning.is_burning(self.object) then
+				mcl_burning.set_on_fire(self.object, 1.1)
+			else
+]]				self.object:punch(self.object, 1.0, {
+					full_punch_interval = 1.0,
+					damage_groups = {fleshy = self.lava_damage}
+				}, nil)
+--			end
+			self.lava_counter = 0
+			self.health = self.health - lava_damage
 			self:teleport()
 		end
 	end

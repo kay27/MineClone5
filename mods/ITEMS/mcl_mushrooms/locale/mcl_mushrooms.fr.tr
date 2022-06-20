@@ -1,11 +1,11 @@
 # textdomain: mcl_mushrooms
 This decorative block is like a huge mushroom stem, but with the stem texture on all sides.=Ce bloc décoratif ressemble à une tige de champignon géant, mais avec la texture de la tige de tous les côtés.
-Huge red mushroom blocks are the cap parts of huge red mushrooms. It consists of a red skin and can have pores on each of its sides.=Blocs de champignons rouges géants sont les parties du chapeau d'énormes champignons rouges. Il se compose d'une peau rouge et peut avoir des pores sur chacun de ses côtés.
-The stem part of a huge red mushroom.=La partie tige d'un énorme champignon rouge.
+Huge red mushroom blocks are the cap parts of huge red mushrooms. It consists of a red skin and can have pores on each of its sides.=Les blocs de champignons rouges géants sont les parties du chapeau d'énormes champignons rouges. Ils se composent d'une peau rouge et peuvent avoir des pores sur chacun de leurs côtés.
+The stem part of a huge red mushroom.=La tige d'un énorme champignon rouge.
 Huge Red Mushroom Block=Bloc de Champignon Rouge Géant
 Huge Red Mushroom Stem=Tige de Champignon Rouge Géant
 Huge Red Mushroom All-Faces Stem=Tige de Champignon Rouge Géant avec Pores
-Huge brown mushroom blocks are the cap parts of huge brown mushrooms. It consists of a brown skin and can have pores on each of its sides.=D'énormes blocs de champignons bruns sont les parties du chapeau d'énormes champignons bruns. Il se compose d'une peau brune et peut avoir des pores sur chacun de ses côtés.
+Huge brown mushroom blocks are the cap parts of huge brown mushrooms. It consists of a brown skin and can have pores on each of its sides.=D'énormes blocs de champignons bruns sont les parties du chapeau d'énormes champignons bruns. Ils se composent d'une peau brune et peuvent avoir des pores sur chacun de leurs côtés.
 The stem part of a huge brown mushroom.=La partie tige d'un énorme champignon brun.
 Huge Brown Mushroom Block=Bloc de Champignon Marron Géant
 Huge Brown Mushroom Stem=Tige de Champignon Marron Géant
@@ -18,7 +18,7 @@ This mushroom can be placed on mycelium and podzol at any light level. It can al
 Brown Mushroom=Champignon Marron
 Red Mushroom=Champignon Rouge
 Mushroom Stew=Ragoût de Champignon
-Mushroom stew is a healthy soup which can be consumed to restore some hunger points.=Le ragoût de champignons est une soupe saine qui peut être consommée pour restaurer certains points de faim.
+Mushroom stew is a healthy soup which can be consumed to restore some hunger points.=Le ragoût de champignons est une soupe saine qui peut être consommée pour restaurer quelques points de faim.
 By placing huge mushroom blocks of the same species next to each other, the sides that touch each other will turn into pores permanently.=En plaçant d'énormes blocs de champignons de la même espèce les uns à côté des autres, les côtés qui se touchent se transformeront en pores de façon permanente.
-Grows on podzol, mycelium and other blocks=Pousse sur podzol, mycélium et autres blocs
+Grows on podzol, mycelium and other blocks=Pousse sur le podzol, mycélium et d'autres blocs
 Spreads in darkness=Se propage dans l'obscurité

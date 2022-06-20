@@ -32,8 +32,17 @@ minetest.is_creative_enabled = function(name)
 	return core_is_creative_enabled(name)
 end
 
+local registered_functions_on_gamemode_change = {}
+
 local function handle_gamemode_command(player_name, new_gamemode)
+	local old_gamemode_id = player_to_gamemode_id[player_name]
+	local old_gamemode = old_gamemode_id and id_to_gamemode[old_gamemode_id]
 	player_to_gamemode_id[player_name] = gamemode_ids[new_gamemode]
+	if old_gamemode ~= new_gamemode then
+		for _, function_ref in pairs(registered_functions_on_gamemode_change) do
+			 function_ref(player_name, old_gamemode, new_gamemode)
+		end
+	end
 	return true
 end
 
@@ -78,3 +87,41 @@ minetest.register_chatcommand("gamemode", {
 		end
 	end
 })
+
+local action_id_to_index = {}
+
+function mcl_commands.register_on_gamemode_change(action_id, function_ref)
+	if action_id_to_index[action_id] then
+		minetest.log("warning", "[mcl_command] [gamemode] Duplicate register_on_gamemode_change action_id")
+		return
+	end
+	local new_index = #registered_functions_on_gamemode_change + 1
+	registered_functions_on_gamemode_change[new_index] = function_ref
+	action_id_to_index[action_id] = new_index
+end
+
+function mcl_commands.unregister_on_gamemode_change(action_id)
+	local old_index = action_id_to_index[action_id]
+	if not old_index then
+		minetest.log("warning", "[mcl_command] [gamemode] Can't unregister not registered action_id in unregister_on_gamemode_change")
+		return
+	end
+	table.remove(registered_functions_on_gamemode_change, old_index)
+	action_to_id[action_id] = nil
+end
+
+mcl_commands.register_on_gamemode_change("check_fly_and_noclip", function(player_name, old_gamemode, new_gamemode)
+	if new_gamemode == "creative" then
+		local privs = minetest.get_player_privs(player_name)
+		if not privs then return end
+		privs.fly = true
+		privs.noclip = true
+		minetest.set_player_privs(player_name, privs)
+	elseif new_gamemode == "survival" then
+		local privs = minetest.get_player_privs(player_name)
+		if not privs then return end
+		privs.fly = nil
+		privs.noclip = nil
+		minetest.set_player_privs(player_name, privs)
+	end
+end)

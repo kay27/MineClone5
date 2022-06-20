@@ -346,8 +346,16 @@ function mesecon.vm_abort()
 	vm_cache = nil
 end
 
+local function is_player_close(pos)
+	for k,p in pairs(minetest.get_connected_players()) do
+		local d=vector.distance(pos,p:get_pos())
+		if d < 40 then return true end
+	end
+end
+
 -- Gets the cache entry covering a position, populating it if necessary.
 local function vm_get_or_create_entry(pos)
+	if not is_player_close(pos) then return end
 	local hash = hash_blockpos(pos)
 	local tbl = vm_cache[hash]
 	if not tbl then
@@ -364,6 +372,7 @@ end
 -- transaction.
 function mesecon.vm_get_node(pos)
 	local tbl = vm_get_or_create_entry(pos)
+	if not tbl then return end
 	local index = tbl.va:indexp(pos)
 	local node_value = tbl.data[index]
 	if node_value == minetest.CONTENT_IGNORE then
@@ -380,6 +389,7 @@ end
 -- Existing param1, param2, and metadata are left alone.
 function mesecon.vm_swap_node(pos, name)
 	local tbl = vm_get_or_create_entry(pos)
+	if not tbl then return end
 	local index = tbl.va:indexp(pos)
 	tbl.data[index] = minetest.get_content_id(name)
 	tbl.dirty = true
@@ -393,6 +403,7 @@ end
 --
 -- Inside a VM transaction, the transaction’s VM cache is used.
 function mesecon.get_node_force(pos)
+	if not is_player_close(pos) then return end
 	if vm_cache then
 		return mesecon.vm_get_node(pos)
 	else
@@ -424,6 +435,7 @@ function mesecon.swap_node_force(pos, name)
 		-- This serves to both ensure the mapblock is loaded and also hand us
 		-- the old node table so we can preserve param2.
 		local node = mesecon.get_node_force(pos)
+		if not node then return end
 		node.name = name
 		minetest.swap_node(pos, node)
 	end

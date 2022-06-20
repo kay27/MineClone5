@@ -18,12 +18,7 @@ local S = minetest.get_translator("extra_mobs")
 --################### fox
 --###################
 
-local followitem = ""
-if minetest.get_modpath("mc_sweet_berry") then
-    followitem = "mc_sweet_berry:sweet_berry"
-else
-    followitem = nil
-end
+local followitem = "mcl_farming:sweet_berry"
 
 local fox = {
 	type = "monster",
@@ -123,35 +118,30 @@ local fox = {
 mobs:register_mob("extra_mobs:fox", fox)
 
 -- spawning
-mobs:spawn_specific(
-"extra_mobs:fox", 
-"overworld", 
-"ground",
-{
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"ColdTaiga",
-"SunflowerPlains",
-"RoofedForest",
-"MesaPlateauFM_grasstop",
-"ExtremeHillsM",
-"BirchForestM",
-},
-0, 
-minetest.LIGHT_MAX+1, 
-30, 
-6000, 
-3, 
-mobs_mc.spawn_height.water, 
-mobs_mc.spawn_height.overworld_max)
+mobs:spawn_setup({
+	name      = "extra_mobs:fox",
+	biomes    = {
+		"FlowerForest",
+		"Swampland",
+		"Taiga",
+		"ExtremeHills",
+		"BirchForest",
+		"MegaSpruceTaiga",
+		"MegaTaiga",
+		"ExtremeHills+",
+		"Forest",
+		"Plains",
+		"ColdTaiga",
+		"SunflowerPlains",
+		"RoofedForest",
+		"MesaPlateauFM_grasstop",
+		"ExtremeHillsM",
+		"BirchForestM",
+	},
+	interval = 30,
+	chance = 6000,
+	min_height = mobs_mc.spawn_height.water,
+})
 
 --mobs:spawn_specific("extra_mobs:fox", "overworld", "ground", 0, minetest.LIGHT_MAX+1, 30, 6000, 3, 0, 500)
 --[[

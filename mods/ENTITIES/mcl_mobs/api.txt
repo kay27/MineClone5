@@ -227,6 +227,11 @@ functions needed for the mob to work properly which contains the following:
                      older mobs.
 	  'pushable'	Allows players, & other mobs to push the mob.
 
+    'spawn_with_armor' If set to true, the mob has a small chance of spawning with
+                        random matched armor. If set to a string, the string represents
+                        the material type of the armor. Any materials used by
+                        mcl_armor will work. Example: "gold"
+                        It is assumed that the first texture is for armor.
 
 
     MineClone 2 extensions:

@@ -102,8 +102,8 @@ function mcl_bossbars.update_boss(object, name, color)
 	end
 end
 
-minetest.register_on_joinplayer(function(player)
-	local name = player:get_player_name()
+minetest.register_on_authplayer(function(name, ip, is_success)
+	if not is_success then return end
 	mcl_bossbars.huds[name] = {}
 	mcl_bossbars.bars[name] = {}
 end)

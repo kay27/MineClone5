@@ -2,13 +2,13 @@
 [<player>] [<skin number>]=[<joueur>] [<numéro d'apparence>]
 Select player skin of yourself or another player=Sélectionner une apparence pour vous même ou un autre joueur
 Insufficient or wrong parameters=Paramètres insuffisants ou incorrects
-Player @1 not online!=Le joueur @1 n'est pas en ligne!
-You need the “server” privilege to change the skin of other players!=Vous avez besoin du privilège “server” pour changer l'apparence des autres joueurs!
+Player @1 not online!=Le joueur @1 n'est pas en ligne !
+You need the “server” privilege to change the skin of other players!=Vous avez besoin du privilège “server” pour changer l'apparence des autres joueurs !
 Invalid skin number! Valid numbers: 0 to @1=Numéro d'apparence incorrect! Numéros valides : 0 à @1 
-Your skin has been set to: @1=Votre apparence a été définie à: @1
-Your skin has been set to: @1 (@2)=Votre apparence a été définie à: @1 (@2)
-Skin of @1 set to: @2 (@3)=Apparence of @1 set to: @2 (@3)=
+Your skin has been set to: @1=Votre apparence a été définie en : @1
+Your skin has been set to: @1 (@2)=Votre apparence a été définie en : @1 (@2)
+Skin of @1 set to: @2 (@3)=Apparence de @1 definie en : @2 (@3)
 Select player skin:=Sélectionner l'apparence du joueur :
 @1 (@2)=@1 (@2)
-Name: @1=Nom : @
+Name: @1=Nom : @1
 

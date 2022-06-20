@@ -61,6 +61,7 @@ dofile(path .. "/villager.lua") -- KrupnoPavel Mesh and animation by toby109tt  
 --dofile(path .. "/agent.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
 
 -- Illagers and witch
+dofile(path .. "/pillager.lua") -- Mesh by KrupnoPavel and MrRar, animation by MrRar
 dofile(path .. "/villager_evoker.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
 dofile(path .. "/villager_vindicator.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
 dofile(path .. "/villager_zombie.lua") -- Mesh and animation by toby109tt  / https://github.com/22i

@@ -2,6 +2,8 @@
 --################### SILVERFISH
 --###################
 
+local PLAYER_SCAN_RADIUS = 5
+
 local S = minetest.get_translator(minetest.get_current_modname())
 
 mobs:register_mob("mobs_mc:silverfish", {
@@ -46,6 +48,20 @@ mobs:register_mob("mobs_mc:silverfish", {
 	view_range = 16,
 	attack_type = "punch",
 	damage = 1,
+	do_custom = function(self, dtime)
+		self.do_custom_time = (self.do_custom_time or 0) + dtime
+		if self.do_custom_time < 1.5 then return end
+		self.do_custom_time = 0
+		local selfpos = self.object:get_pos()
+		local objects = minetest.get_objects_inside_radius(selfpos, PLAYER_SCAN_RADIUS)
+		for _, obj in pairs(objects) do
+			if obj:is_player() and not minetest.is_creative_enabled(obj:get_player_name()) then
+				self.attacking = obj
+				mobs.group_attack_initialization(self)
+				return
+			end
+		end
+	end
 })
 
 mobs:register_egg("mobs_mc:silverfish", S("Silverfish"), "mobs_mc_spawn_icon_silverfish.png", 0)

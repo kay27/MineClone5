@@ -388,6 +388,14 @@ minetest.register_craft({
 --
 -- Crafting (tool repair)
 --
+
+minetest.register_craft({
+	output = "mcl_core:moss_carpet 3",
+	recipe = {
+		{"mcl_core:moss", "mcl_core:moss"},
+	}
+})
+
 minetest.register_craft({
 	type = "toolrepair",
 	additional_wear = -mcl_core.repair,

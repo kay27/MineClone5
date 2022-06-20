@@ -31,7 +31,7 @@ minetest.register_craftitem("mcl_farming:sweet_berry", {
 	inventory_image = "mcl_farming_sweet_berry.png",
 	_mcl_saturation = 0.2,
 	stack_max = 64,
-	groups = { food = 2, eatable = 1 },
+	groups = { food = 2, eatable = 1, compostability=30 },
 	on_secondary_use = minetest.item_eat(1),
 	on_place = function(itemstack, placer, pointed_thing)
 		local new = mcl_farming:place_seed(itemstack, placer, pointed_thing, "mcl_sweet_berry:sweet_berry_bush_0")
@@ -63,3 +63,6 @@ minetest.register_decoration({
 	y_min = 2,
 	decoration = "mcl_sweet_berry:sweet_berry_bush_3"
 })
+
+-- TODO: Find proper interval and chance values for sweet berry bushes. Current interval and chance values are copied from mcl_farming:beetroot which has similar growth stages.
+mcl_farming:add_plant("plant_sweet_berry_bush", "mcl_farming:sweet_berry_bush_3", {"mcl_farming:sweet_berry_bush_0", "mcl_farming:sweet_berry_bush_1", "mcl_farming:sweet_berry_bush_2"}, 68, 3)

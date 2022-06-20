@@ -246,4 +246,4 @@ water-16,
 water)
 
 --spawn egg
-mobs:register_egg("extra_mobs:dolphin", S("dolphin"), "extra_mobs_spawn_icon_dolphin.png", 0)
+mobs:register_egg("extra_mobs:dolphin", S("Dolphin"), "extra_mobs_spawn_icon_dolphin.png", 0)

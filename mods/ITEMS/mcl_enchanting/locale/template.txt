@@ -95,6 +95,7 @@ Enchant an item=
 Enchanted Book=
 Enchanting Table=
 
+Spend experience, and lapis to enchant various items.=
 Enchanting Tables will let you enchant armors, tools, weapons, and books with various abilities. But, at the cost of some experience, and lapis lazuli.=
 
 Enchanting succeded.=

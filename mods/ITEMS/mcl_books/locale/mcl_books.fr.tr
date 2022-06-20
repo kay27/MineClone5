@@ -1,6 +1,6 @@
 # textdomain: mcl_books
 Book=Livre
-Books are used to make bookshelves and book and quills.=Les livres sont utilisés pour fabriquer des étagères et des livres et des plumes.
+Books are used to make bookshelves and book and quills.=Les livres sont utilisés pour fabriquer des étagères et des livres avec une plumes.
 “@1”="@1"
 Copy of “@1”=Copie de "@1"
 Copy of Copy of “@1”=Copie de Copie de "@1"
@@ -24,5 +24,5 @@ Hold it in your hand, then rightclick to read the book.=Tenez-le dans votre main
 To copy the text of the written book, place it into the crafting grid together with a book and quill (or multiple of those) and craft. The written book will not be consumed. Copies of copies can not be copied.=Pour copier le texte du livre écrit, placez-le dans la grille d'artisanat avec un livre et une plume (ou plusieurs de ceux-ci) et de l'artisanat. Le livre écrit ne sera pas consommé. Les copies de copies ne peuvent pas être copiées.
 Bookshelf=Bibliothèque
 Bookshelves are used for decoration.=Les bibliothèques sont utilisées pour la décoration.
-Book and Quill=Livre et Plume
-Write down some notes=Notez quelques notes
+Book and Quill=Livre avec une Plume
+Write down some notes=Prenez quelques notes
