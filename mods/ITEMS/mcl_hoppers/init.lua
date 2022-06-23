@@ -439,6 +439,7 @@ minetest.register_abm({
 			front = {x=pos.x,y=pos.y,z=pos.z-1}
 		end
 		local above = {x=pos.x,y=pos.y+1,z=pos.z}
+		local downpos = {x=pos.x,y=pos.y-1,z=pos.z}
 
 		local frontnode = minetest.get_node(front)
 		if not minetest.registered_nodes[frontnode.name] then return end
