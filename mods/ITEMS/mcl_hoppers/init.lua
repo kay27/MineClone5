@@ -1,5 +1,7 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
+local get_item_group = minetest.get_item_group
+
 --[[ BEGIN OF NODE DEFINITIONS ]]
 
 local mcl_hoppers_formspec =
