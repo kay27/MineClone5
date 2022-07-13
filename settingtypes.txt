@@ -91,6 +91,8 @@ mobs_disable_blood (Disable mob damage particles) bool false
 [Audio]
 # Enable flame sound.
 flame_sound (Flame sound) bool true
+# Enable in-game music
+in_game_music (In-game music) bool true
 
 [Graphics]
 # How many vertical animation frames the fire texture (fire_basic_flame_animated.png) has.

@@ -84,7 +84,13 @@ local function play()
 				fade      = 0.0,
 				pitch     = 1.0,
 			}
-			handle = minetest.sound_play(spec, parameters, false)
+
+			-- load the music setting and only play if set to true
+			local in_game_music = minetest.settings:get_bool("in_game_music", true)
+			if in_game_music then
+				handle = minetest.sound_play(spec, parameters, false)
+			end
+
 			listeners[player_name] = {
 				spec       = spec,
 				parameters = parameters,
